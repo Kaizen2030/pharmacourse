@@ -19,7 +19,7 @@ export default function Login() {
   }
 
   async function handleGoogle() {
-    await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${window.location.origin}/dashboard` } })
+    await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: "https://pharmacourse.co.ke/dashboard" } })
   }
 
   return (

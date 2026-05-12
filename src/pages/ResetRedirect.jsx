@@ -12,20 +12,18 @@ export default function ResetRedirect({ app }) {
     // Supabase can pass token in hash fragment OR query params depending on flow
     // Hash example:  /reset/remedacare#access_token=xxx&type=recovery
     // Query example: /reset/remedacare?token=xxx&type=recovery
-    const hash = window.location.hash // e.g. "#access_token=xxx&refresh_token=yyy&type=recovery"
+    // Supabase puts tokens in the hash fragment: #access_token=xxx&refresh_token=yyy&type=recovery
+    // BUT hash fragments are stripped by the OS when firing custom protocol URLs (pharmacyos://)
+    // So we MUST pass tokens as query params instead — they survive the handoff.
+    const hash = window.location.hash.slice(1) // strip the leading #
+    const hashParams = new URLSearchParams(hash)
 
-    let deepLink
+    const accessToken  = hashParams.get("access_token")  || searchParams.get("access_token")  || ""
+    const refreshToken = hashParams.get("refresh_token") || searchParams.get("refresh_token") || ""
+    const type         = hashParams.get("type")          || searchParams.get("type")          || "recovery"
 
-    if (hash && hash.length > 1) {
-      // Pass the full hash through — Supabase token is already in there
-      deepLink = `${scheme}://reset${hash}`
-    } else {
-      // Fallback: reconstruct from query params
-      const token        = searchParams.get("token") || searchParams.get("access_token") || ""
-      const refreshToken = searchParams.get("refresh_token") || ""
-      const type         = searchParams.get("type") || "recovery"
-      deepLink = `${scheme}://reset#access_token=${token}&refresh_token=${refreshToken}&type=${type}`
-    }
+    // Pass as query params so Electron receives them intact
+    const deepLink = `${scheme}://reset?access_token=${encodeURIComponent(accessToken)}&refresh_token=${encodeURIComponent(refreshToken)}&type=${encodeURIComponent(type)}`
 
     // Small delay so the page renders before we redirect
     const timer = setTimeout(() => {
@@ -77,10 +75,13 @@ export default function ResetRedirect({ app }) {
       {status === "error" && (
         <button
           onClick={() => {
-            // Retry deep link
-            const hash = window.location.hash
+            const hash2 = window.location.hash.slice(1)
+            const hp = new URLSearchParams(hash2)
+            const at = hp.get("access_token") || ""
+            const rt = hp.get("refresh_token") || ""
+            const tp = hp.get("type") || "recovery"
             const scheme2 = app === "remedacare" ? "remedacare" : "pharmacyos"
-            window.location.href = `${scheme2}://reset${hash}`
+            window.location.href = `${scheme2}://reset?access_token=${encodeURIComponent(at)}&refresh_token=${encodeURIComponent(rt)}&type=${encodeURIComponent(tp)}`
           }}
           style={{
             padding: "12px 28px",
