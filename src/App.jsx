@@ -18,6 +18,7 @@ import SimulationAdmin from "./pages/admin/SimulationAdmin"
 import PharmacyOS from "./pages/Pharmacyos"
 import RemedacareOS from "./pages/Remedacareos"
 import Community from "./pages/Community"
+import ResetRedirect from "./pages/ResetRedirect"
 
 export default function App() {
   return (
@@ -42,6 +43,9 @@ export default function App() {
           <Route path="/admin/courses/:id/edit" element={<CourseForm />} />
           <Route path="/admin/simulations" element={<SimulationAdmin />} />
 
+          {/* Deep link redirect routes for Electron apps */}
+          <Route path="/reset/remedacare" element={<ResetRedirect app="remedacare" />} />
+          <Route path="/reset/pharmacyos" element={<ResetRedirect app="pharmacyos" />} />
         </Routes>
         <Footer />
       </BrowserRouter>
