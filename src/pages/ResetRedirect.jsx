@@ -20,10 +20,11 @@ export default function ResetRedirect({ app }) {
 
     const accessToken  = hashParams.get("access_token")  || searchParams.get("access_token")  || ""
     const refreshToken = hashParams.get("refresh_token") || searchParams.get("refresh_token") || ""
+    const tokenHash    = hashParams.get("token_hash")    || searchParams.get("token_hash")    || ""
     const type         = hashParams.get("type")          || searchParams.get("type")          || "recovery"
 
     // Pass as query params so Electron receives them intact
-    const deepLink = `${scheme}://reset?access_token=${encodeURIComponent(accessToken)}&refresh_token=${encodeURIComponent(refreshToken)}&type=${encodeURIComponent(type)}`
+    const deepLink = `${scheme}://reset?access_token=${encodeURIComponent(accessToken)}&refresh_token=${encodeURIComponent(refreshToken)}&token_hash=${encodeURIComponent(tokenHash)}&type=${encodeURIComponent(type)}`
 
     // Small delay so the page renders before we redirect
     const timer = setTimeout(() => {
@@ -79,9 +80,10 @@ export default function ResetRedirect({ app }) {
             const hp = new URLSearchParams(hash2)
             const at = hp.get("access_token") || ""
             const rt = hp.get("refresh_token") || ""
+            const th = hp.get("token_hash") || searchParams.get("token_hash") || ""
             const tp = hp.get("type") || "recovery"
             const scheme2 = app === "remedacare" ? "remedacare" : "pharmacyos"
-            window.location.href = `${scheme2}://reset?access_token=${encodeURIComponent(at)}&refresh_token=${encodeURIComponent(rt)}&type=${encodeURIComponent(tp)}`
+            window.location.href = `${scheme2}://reset?access_token=${encodeURIComponent(at)}&refresh_token=${encodeURIComponent(rt)}&token_hash=${encodeURIComponent(th)}&type=${encodeURIComponent(tp)}`
           }}
           style={{
             padding: "12px 28px",
