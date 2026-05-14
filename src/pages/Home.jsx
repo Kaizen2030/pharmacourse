@@ -2,6 +2,9 @@ import { useEffect, useState, useRef } from "react"
 import { Link } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
 import { motion, useInView } from "framer-motion"
+import pharmacyosDashboard from "../assets/pharmacyos-dashboard.svg"
+import pharmacourseDashboard from "../assets/pharmacourse-dashboard.svg"
+import remedacareDashboard from "../assets/remedacare-dashboard.svg"
 import {
   BookOpen,
   Download,
@@ -150,6 +153,48 @@ const ProductMockup = ({ type }) => {
   }
 
   const c = configs[type] || configs.pharmacyOS
+
+  if (type === "pharmaCourse") {
+    return (
+      <div className="product-mockup">
+        <div className="mockup-frame" style={{ background: "#fff", borderRadius: 14, overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
+          <img
+            src={pharmacourseDashboard}
+            alt="PharmaCourse My Learning dashboard showing learner progress, enrolled courses and certificates"
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        </div>
+      </div>
+    )
+  }
+
+  if (type === "pharmacyOS") {
+    return (
+      <div className="product-mockup">
+        <div className="mockup-frame" style={{ background: "#fff", borderRadius: 14, overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
+          <img
+            src={pharmacyosDashboard}
+            alt="PharmacyOS dashboard showing branch overview, revenue, inventory insights and recent sales"
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        </div>
+      </div>
+    )
+  }
+
+  if (type === "remedacareOS") {
+    return (
+      <div className="product-mockup">
+        <div className="mockup-frame" style={{ background: "#fff", borderRadius: 14, overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
+          <img
+            src={remedacareDashboard}
+            alt="RemedacareOS dashboard showing patient, admissions, finance and pharmacy workflow panels"
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="product-mockup">

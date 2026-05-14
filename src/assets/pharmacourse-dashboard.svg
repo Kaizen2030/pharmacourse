@@ -1,0 +1,137 @@
+<svg width="1440" height="900" viewBox="0 0 1440 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1440" height="900" rx="28" fill="#EEF5F2"/>
+  <rect x="20" y="20" width="1400" height="860" rx="24" fill="#F8FBFA" stroke="#DCE7E2" stroke-width="2"/>
+  <rect x="40" y="48" width="1360" height="112" rx="22" fill="#0F5A43"/>
+  <circle cx="92" cy="104" r="25" fill="#31584A" stroke="#688777" stroke-width="3"/>
+  <circle cx="92" cy="96" r="8" fill="#8A978E"/>
+  <path d="M78 118C78 110.82 83.82 105 91 105H93C100.18 105 106 110.82 106 118V122H78V118Z" fill="#8A978E"/>
+  <text x="132" y="104" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="32" font-weight="700">Welcome back, Julius</text>
+  <text x="132" y="132" fill="#D8E9E1" font-family="Arial, sans-serif" font-size="18">juliuswanjau55@gmail.com · Admin</text>
+  <rect x="1210" y="82" width="152" height="50" rx="12" fill="#FFFFFF"/>
+  <text x="1286" y="113" fill="#0F6E56" font-family="Arial, sans-serif" font-size="18" font-weight="700" text-anchor="middle">Browse Courses</text>
+  <path d="M1332 102L1344 113L1332 124" stroke="#0F6E56" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <g>
+    <rect x="40" y="190" width="320" height="94" rx="18" fill="#FFFFFF" stroke="#E2EBE6" stroke-width="2"/>
+    <rect x="62" y="212" width="40" height="40" rx="12" fill="#E8F5F0"/>
+    <path d="M73 220H91C94.314 220 97 222.686 97 226V244C97 247.314 94.314 250 91 250H73C69.686 250 67 247.314 67 244V226C67 222.686 69.686 220 73 220Z" stroke="#0F6E56" stroke-width="2.2"/>
+    <path d="M82 220V250" stroke="#0F6E56" stroke-width="2.2"/>
+    <text x="120" y="232" fill="#102233" font-family="Arial, sans-serif" font-size="32" font-weight="700">2</text>
+    <text x="120" y="256" fill="#6E7E77" font-family="Arial, sans-serif" font-size="16">Enrolled</text>
+  </g>
+  <g>
+    <rect x="380" y="190" width="320" height="94" rx="18" fill="#FFFFFF" stroke="#E2EBE6" stroke-width="2"/>
+    <rect x="402" y="212" width="40" height="40" rx="12" fill="#FFF7E4"/>
+    <circle cx="422" cy="232" r="10" stroke="#E09B00" stroke-width="2.2"/>
+    <path d="M422 225V232L427 236" stroke="#E09B00" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="460" y="232" fill="#102233" font-family="Arial, sans-serif" font-size="32" font-weight="700">2</text>
+    <text x="460" y="256" fill="#6E7E77" font-family="Arial, sans-serif" font-size="16">In Progress</text>
+  </g>
+  <g>
+    <rect x="720" y="190" width="320" height="94" rx="18" fill="#FFFFFF" stroke="#E2EBE6" stroke-width="2"/>
+    <rect x="742" y="212" width="40" height="40" rx="12" fill="#F3EEFF"/>
+    <circle cx="762" cy="230" r="7" stroke="#7C3AED" stroke-width="2.2"/>
+    <path d="M758 237L762 240L766 237" stroke="#7C3AED" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M762 223V240" stroke="#7C3AED" stroke-width="2.2"/>
+    <text x="800" y="232" fill="#102233" font-family="Arial, sans-serif" font-size="32" font-weight="700">0</text>
+    <text x="800" y="256" fill="#6E7E77" font-family="Arial, sans-serif" font-size="16">Certificates</text>
+  </g>
+  <g>
+    <rect x="1060" y="190" width="340" height="94" rx="18" fill="#FFFFFF" stroke="#E2EBE6" stroke-width="2"/>
+    <rect x="1082" y="212" width="40" height="40" rx="12" fill="#E8F0FB"/>
+    <path d="M1095 225H1109" stroke="#1A6BB5" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M1098 225V243C1098 245.761 1100.24 248 1103 248C1105.76 248 1108 245.761 1108 243V225" stroke="#1A6BB5" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="1140" y="232" fill="#102233" font-family="Arial, sans-serif" font-size="32" font-weight="700">1</text>
+    <text x="1140" y="256" fill="#6E7E77" font-family="Arial, sans-serif" font-size="16">Simulations</text>
+  </g>
+
+  <text x="54" y="350" fill="#0F6E56" font-family="Arial, sans-serif" font-size="18" font-weight="700">My Courses</text>
+  <text x="148" y="350" fill="#0F6E56" font-family="Arial, sans-serif" font-size="18" font-weight="700">2</text>
+  <text x="188" y="350" fill="#41524B" font-family="Arial, sans-serif" font-size="18" font-weight="700">Simulations</text>
+  <circle cx="301" cy="344" r="12" fill="#F1F4F3"/>
+  <text x="301" y="349" fill="#7F8B86" font-family="Arial, sans-serif" font-size="14" font-weight="700" text-anchor="middle">1</text>
+  <text x="344" y="350" fill="#41524B" font-family="Arial, sans-serif" font-size="18" font-weight="700">Certificates</text>
+  <circle cx="470" cy="344" r="12" fill="#F1F4F3"/>
+  <text x="470" y="349" fill="#7F8B86" font-family="Arial, sans-serif" font-size="14" font-weight="700" text-anchor="middle">0</text>
+  <text x="515" y="350" fill="#41524B" font-family="Arial, sans-serif" font-size="18" font-weight="700">Profile</text>
+  <path d="M40 372H1360" stroke="#E3EBE7" stroke-width="2"/>
+  <path d="M40 372H155" stroke="#0F6E56" stroke-width="3" stroke-linecap="round"/>
+
+  <rect x="40" y="398" width="660" height="176" rx="20" fill="#FFFFFF" stroke="#E2EBE6" stroke-width="2"/>
+  <rect x="40" y="398" width="214" height="176" fill="#FFFFFF"/>
+  <rect x="40" y="398" width="214" height="176" fill="#FFFFFF"/>
+  <rect x="52" y="438" width="190" height="102" rx="8" fill="#FFFFFF"/>
+  <path d="M60 438H194L242 482V540H60V438Z" fill="#FFFFFF"/>
+  <rect x="60" y="414" width="130" height="10" rx="5" fill="#FFFFFF"/>
+  <text x="58" y="438" fill="#2C2D73" font-family="Arial, sans-serif" font-size="14" font-weight="700">MASTERING ANTIBIOGRAM DEVELOPMENT</text>
+  <text x="58" y="456" fill="#6064A3" font-family="Arial, sans-serif" font-size="11" font-weight="700">FROM LAB DATA TO CLINICAL DECISIONS</text>
+  <text x="58" y="502" fill="#232A72" font-family="Arial, sans-serif" font-size="28" font-weight="700">ONLINE</text>
+  <text x="58" y="536" fill="#232A72" font-family="Arial, sans-serif" font-size="28" font-weight="700">COURSE</text>
+  <circle cx="194" cy="486" r="39" fill="#FFFFFF" stroke="#27256E" stroke-width="8"/>
+  <circle cx="194" cy="486" r="25" fill="#DCE7EF"/>
+  <rect x="174" y="468" width="40" height="36" rx="4" fill="#E6EEF2"/>
+  <rect x="178" y="472" width="18" height="30" fill="#C9D7E0"/>
+  <rect x="197" y="472" width="13" height="10" fill="#A6C38F"/>
+  <rect x="197" y="484" width="13" height="8" fill="#E0A56A"/>
+  <rect x="197" y="494" width="13" height="8" fill="#92A4B6"/>
+  <path d="M220 430L242 414V446L220 462V430Z" fill="#43459E"/>
+  <path d="M220 464L242 448V478L220 494V464Z" fill="#292C7C"/>
+  <path d="M220 496L242 480V540H220V496Z" fill="#2D317F"/>
+  <path d="M60 540H95L110 556H60V540Z" fill="#292C7C"/>
+  <path d="M110 556H146L160 540H120L110 556Z" fill="#B8B6F0"/>
+  <text x="58" y="554" fill="#2D317F" font-family="Arial, sans-serif" font-size="10" font-weight="700">Self-Paced • 8 Weeks</text>
+
+  <text x="278" y="438" fill="#0F6E56" font-family="Arial, sans-serif" font-size="16" font-weight="700">CLINICAL PHARMACY</text>
+  <rect x="272" y="420" width="130" height="26" rx="13" fill="#E9F7F1"/>
+  <text x="285" y="438" fill="#0F6E56" font-family="Arial, sans-serif" font-size="16" font-weight="700">CLINICAL PHARMACY</text>
+  <text x="278" y="486" fill="#0A2E1F" font-family="Georgia, serif" font-size="26" font-weight="700">Mastering Antibiogram Development:</text>
+  <text x="278" y="520" fill="#0A2E1F" font-family="Georgia, serif" font-size="26" font-weight="700">From Lab Data to Clinical Decisions</text>
+  <text x="278" y="556" fill="#556861" font-family="Arial, sans-serif" font-size="18">4 / 17 lessons completed</text>
+  <text x="278" y="604" fill="#607068" font-family="Arial, sans-serif" font-size="18">Progress</text>
+  <rect x="278" y="616" width="294" height="8" rx="4" fill="#E9ECEA"/>
+  <rect x="278" y="616" width="66" height="8" rx="4" fill="#0F6E56"/>
+  <text x="602" y="624" fill="#556861" font-family="Arial, sans-serif" font-size="18" font-weight="700" text-anchor="end">24%</text>
+  <path d="M560 398H700V574H560V398Z" fill="#FFFFFF"/>
+  <path d="M560 398H562" stroke="#E2EBE6" stroke-width="2"/>
+  <rect x="578" y="462" width="104" height="44" rx="10" fill="#0F6E56"/>
+  <text x="618" y="490" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="18" font-weight="700">Continue</text>
+  <path d="M655 484L666 484" stroke="#FFFFFF" stroke-width="2.8" stroke-linecap="round"/>
+  <path d="M660 478L666 484L660 490" stroke="#FFFFFF" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <rect x="720" y="398" width="680" height="176" rx="20" fill="#FFFFFF" stroke="#E2EBE6" stroke-width="2"/>
+  <rect x="720" y="398" width="218" height="176" fill="#FFFFFF"/>
+  <rect x="732" y="420" width="196" height="126" rx="8" fill="#FFFFFF" stroke="#E6EAE8"/>
+  <rect x="732" y="420" width="196" height="24" fill="#1B2468"/>
+  <text x="744" y="436" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="9" font-weight="700">PROFESSIONAL DEVELOPMENT COURSE</text>
+  <path d="M878 420H928V468L878 420Z" fill="#7281E0"/>
+  <path d="M876 420H914L928 434V442L900 442L876 420Z" fill="#2E348C"/>
+  <rect x="896" y="430" width="22" height="7" rx="3.5" fill="#FF7F2A"/>
+  <rect x="744" y="452" width="20" height="8" rx="3" fill="#FF7F2A"/>
+  <text x="744" y="492" fill="#243073" font-family="Arial, sans-serif" font-size="14" font-weight="700">ONLINE</text>
+  <text x="744" y="516" fill="#243073" font-family="Arial, sans-serif" font-size="14" font-weight="700">COURSE</text>
+  <text x="744" y="540" fill="#4A5A8A" font-family="Arial, sans-serif" font-size="8" font-weight="700">Leadership &amp;</text>
+  <text x="744" y="550" fill="#4A5A8A" font-family="Arial, sans-serif" font-size="8" font-weight="700">Hospital Pharmacy Management</text>
+  <circle cx="880" cy="488" r="28" fill="#DED3B8"/>
+  <rect x="858" y="472" width="44" height="24" rx="2" fill="#F6DA4B"/>
+  <text x="880" y="488" fill="#FF5A34" font-family="Arial, sans-serif" font-size="10" font-weight="700" text-anchor="middle">LEADERSHIP</text>
+  <rect x="732" y="548" width="196" height="18" fill="#F8FAFB"/>
+  <rect x="742" y="554" width="26" height="6" rx="3" fill="#E8EDF0"/>
+  <rect x="776" y="554" width="34" height="6" rx="3" fill="#E8EDF0"/>
+  <rect x="818" y="554" width="30" height="6" rx="3" fill="#E8EDF0"/>
+  <rect x="900" y="552" width="24" height="10" rx="2" fill="#FF7F2A"/>
+
+  <rect x="960" y="420" width="150" height="26" rx="13" fill="#E9F7F1"/>
+  <text x="976" y="438" fill="#0F6E56" font-family="Arial, sans-serif" font-size="16" font-weight="700">HOSPITAL PRACTICE</text>
+  <text x="960" y="486" fill="#0A2E1F" font-family="Georgia, serif" font-size="24" font-weight="700">Leadership &amp; Hospital Pharmacy Management</text>
+  <text x="960" y="522" fill="#556861" font-family="Arial, sans-serif" font-size="18">0 / 1 lessons completed</text>
+  <text x="960" y="604" fill="#607068" font-family="Arial, sans-serif" font-size="18">Progress</text>
+  <rect x="960" y="616" width="320" height="8" rx="4" fill="#E9ECEA"/>
+  <rect x="1270" y="616" width="10" height="8" rx="4" fill="#E9ECEA"/>
+  <text x="1310" y="624" fill="#556861" font-family="Arial, sans-serif" font-size="18" font-weight="700" text-anchor="end">0%</text>
+  <path d="M1284 398H1400V574H1284V398Z" fill="#FFFFFF"/>
+  <path d="M1284 398H1286" stroke="#E2EBE6" stroke-width="2"/>
+  <rect x="1304" y="462" width="82" height="44" rx="10" fill="#0F6E56"/>
+  <text x="1331" y="490" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="18" font-weight="700">Start</text>
+  <path d="M1360 484L1371 484" stroke="#FFFFFF" stroke-width="2.8" stroke-linecap="round"/>
+  <path d="M1365 478L1371 484L1365 490" stroke="#FFFFFF" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
