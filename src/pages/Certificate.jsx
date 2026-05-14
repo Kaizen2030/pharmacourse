@@ -3,7 +3,6 @@ import { useParams, Link } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
 import { useAuth } from "../context/AuthContext"
 import { jsPDF } from "jspdf"
-import html2canvas from "html2canvas"
 import QRCode from "qrcode"
 import { DEFAULT_CERTIFICATE_SETTINGS, normalizeCertificateSettings } from "../lib/certificateSettings"
 
@@ -120,25 +119,251 @@ export default function Certificate() {
     return date.toLocaleDateString("en-GB", { year: "numeric", month: "long", day: "numeric" })
   }
 
+  async function urlToImageData(url) {
+    if (!url) return null
+
+    const response = await fetch(url)
+    const blob = await response.blob()
+
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onloadend = () => resolve(reader.result)
+      reader.onerror = reject
+      reader.readAsDataURL(blob)
+    })
+  }
+
+  async function svgToPngData(url, size = 240) {
+    const response = await fetch(url)
+    const svgText = await response.text()
+    const svgBlob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" })
+    const objectUrl = URL.createObjectURL(svgBlob)
+
+    try {
+      return await new Promise((resolve, reject) => {
+        const image = new Image()
+        image.onload = () => {
+          const canvas = document.createElement("canvas")
+          canvas.width = size
+          canvas.height = size
+          const context = canvas.getContext("2d")
+          context.clearRect(0, 0, size, size)
+          context.drawImage(image, 0, 0, size, size)
+          resolve(canvas.toDataURL("image/png"))
+        }
+        image.onerror = reject
+        image.src = objectUrl
+      })
+    } finally {
+      URL.revokeObjectURL(objectUrl)
+    }
+  }
+
+  function fitRect(sourceWidth, sourceHeight, maxWidth, maxHeight) {
+    if (!sourceWidth || !sourceHeight) {
+      return { width: maxWidth, height: maxHeight }
+    }
+
+    const ratio = Math.min(maxWidth / sourceWidth, maxHeight / sourceHeight)
+    return {
+      width: sourceWidth * ratio,
+      height: sourceHeight * ratio,
+    }
+  }
+
   async function downloadPDF() {
-    if (!certRef.current) return
+    if (!cert) return
 
     setDownloading(true)
 
     try {
-      const canvas = await html2canvas(certRef.current, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: "#ffffff",
-        logging: false,
-      })
-
-      const imageData = canvas.toDataURL("image/png")
       const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" })
-      const width = doc.internal.pageSize.getWidth()
-      const height = doc.internal.pageSize.getHeight()
+      const pageWidth = doc.internal.pageSize.getWidth()
+      const pageHeight = doc.internal.pageSize.getHeight()
+      const margin = 10
+      const railWidth = 36
+      const innerX = margin + 6
+      const innerY = margin + 6
+      const innerWidth = pageWidth - margin * 2 - 12
+      const innerHeight = pageHeight - margin * 2 - 12
+      const contentX = innerX + railWidth + 10
+      const contentWidth = innerWidth - railWidth - 18
 
-      doc.addImage(imageData, "PNG", 0, 0, width, height)
+      const [logoData, signatureData] = await Promise.all([
+        svgToPngData(logoUrl),
+        settings.signature_image_url ? urlToImageData(settings.signature_image_url) : Promise.resolve(null),
+      ])
+
+      doc.setFillColor(255, 255, 255)
+      doc.rect(0, 0, pageWidth, pageHeight, "F")
+
+      doc.setDrawColor(15, 110, 86)
+      doc.setLineWidth(0.8)
+      doc.roundedRect(margin, margin, pageWidth - margin * 2, pageHeight - margin * 2, 4, 4, "S")
+
+      doc.setFillColor(15, 110, 86)
+      doc.roundedRect(margin, margin, railWidth, pageHeight - margin * 2, 4, 4, "F")
+      doc.setFillColor(10, 77, 64)
+      doc.triangle(margin, margin, margin + railWidth * 0.62, margin, margin, pageHeight - margin, "F")
+
+      doc.setTextColor(255, 255, 255)
+      doc.setFont("times", "bold")
+      doc.setFontSize(28)
+      doc.text("Rx", margin + railWidth / 2, 38, { align: "center" })
+
+      doc.setFillColor(62, 144, 126)
+      doc.roundedRect(margin + 5, 80, railWidth - 10, 16, 2.5, 2.5, "F")
+      doc.setTextColor(255, 255, 255)
+      doc.setFont("helvetica", "bold")
+      doc.setFontSize(15)
+      doc.text(settings.left_badge_title || "CPD", margin + railWidth / 2, 87, { align: "center" })
+      doc.setFont("helvetica", "normal")
+      doc.setFontSize(7)
+      doc.text(settings.left_badge_subtitle || "Certified", margin + railWidth / 2, 92, { align: "center" })
+
+      doc.setTextColor(220, 245, 238)
+      doc.setFont("helvetica", "bold")
+      doc.setFontSize(7)
+      doc.text((settings.left_vertical_text || "PharmaCourse Kenya").toUpperCase(), margin + railWidth / 2, pageHeight - 18, { align: "center" })
+
+      doc.setDrawColor(122, 217, 202)
+      doc.setLineWidth(0.6)
+      doc.line(contentX, innerY + 7, pageWidth - 58, innerY + 7)
+      for (let index = 0; index < 4; index += 1) {
+        const startX = contentX + 75 + index * 7
+        doc.setFillColor(122, 217, 202)
+        doc.triangle(startX, innerY + 3, startX + 5, innerY + 7, startX, innerY + 11, "F")
+      }
+
+      const badgeX = pageWidth - 66
+      const badgeY = innerY + 4
+      doc.setFillColor(240, 250, 245)
+      doc.setDrawColor(200, 231, 218)
+      doc.roundedRect(badgeX, badgeY, 50, 18, 2.4, 2.4, "FD")
+      if (logoData) {
+        doc.addImage(logoData, "PNG", badgeX + 3, badgeY + 3, 11, 11)
+      }
+      doc.setTextColor(15, 110, 86)
+      doc.setFont("helvetica", "bold")
+      doc.setFontSize(8)
+      doc.text(settings.organization_name || "PHARMACOURSE", badgeX + 17, badgeY + 7)
+      doc.setTextColor(96, 112, 104)
+      doc.setFont("helvetica", "normal")
+      doc.setFontSize(5.5)
+      doc.text(settings.organization_subtitle || "Professional Pharmacy CPD Platform - Kenya", badgeX + 17, badgeY + 11)
+
+      doc.setTextColor(96, 112, 104)
+      doc.setFont("helvetica", "bold")
+      doc.setFontSize(7)
+      doc.text((settings.certificate_label || "Certificate of Completion").toUpperCase(), contentX, 47)
+
+      if (settings.certificate_title) {
+        doc.setTextColor(17, 35, 29)
+        doc.setFont("times", "bold")
+        doc.setFontSize(28)
+        const titleLines = doc.splitTextToSize(settings.certificate_title, 90)
+        doc.text(titleLines, contentX, 58)
+      }
+
+      doc.setFillColor(15, 110, 86)
+      doc.roundedRect(contentX, 66, 16, 1.8, 0.9, 0.9, "F")
+
+      doc.setTextColor(96, 112, 104)
+      doc.setFont("helvetica", "normal")
+      doc.setFontSize(11)
+      doc.text(settings.certifies_text || "This is to certify that", contentX, 80)
+
+      doc.setTextColor(22, 185, 199)
+      doc.setFont("helvetica", "normal")
+      doc.setFontSize(30)
+      const learnerName = profile?.full_name || "Pharmacist"
+      const learnerLines = doc.splitTextToSize(learnerName, contentWidth - 18)
+      doc.text(learnerLines, contentX, 96)
+
+      let currentY = 96 + learnerLines.length * 11
+
+      if (profile?.professional_id) {
+        doc.setFillColor(240, 250, 245)
+        doc.setDrawColor(200, 231, 218)
+        doc.roundedRect(contentX, currentY + 2, 54, 8, 1.5, 1.5, "FD")
+        doc.setTextColor(96, 112, 104)
+        doc.setFont("helvetica", "normal")
+        doc.setFontSize(8)
+        doc.text(`License / Professional ID: ${profile.professional_id}`, contentX + 2, currentY + 7)
+        currentY += 15
+      } else {
+        currentY += 8
+      }
+
+      doc.setTextColor(96, 112, 104)
+      doc.setFont("helvetica", "normal")
+      doc.setFontSize(10.5)
+      doc.text(settings.completion_text || "has successfully completed the course", contentX, currentY)
+
+      currentY += 10
+      doc.setTextColor(17, 35, 29)
+      doc.setFont("helvetica", "bold")
+      doc.setFontSize(15)
+      const courseLines = doc.splitTextToSize(course?.title || "", contentWidth - 12)
+      doc.text(courseLines, contentX, currentY)
+
+      const footerTop = pageHeight - 40
+      doc.setDrawColor(233, 247, 241)
+      doc.setLineWidth(0.5)
+      doc.line(contentX, footerTop, pageWidth - 22, footerTop)
+
+      const signatureBaseY = footerTop + 12
+      if (signatureData) {
+        const image = doc.getImageProperties(signatureData)
+        const fitted = fitRect(image.width, image.height, 42, 18)
+        doc.addImage(signatureData, "PNG", contentX, signatureBaseY - fitted.height + 2, fitted.width, fitted.height)
+      } else {
+        doc.setTextColor(17, 35, 29)
+        doc.setFont("times", "italic")
+        doc.setFontSize(18)
+        doc.text(settings.signature_name || "Julius Wanjau", contentX, signatureBaseY)
+      }
+
+      doc.setDrawColor(17, 35, 29)
+      doc.setLineWidth(0.4)
+      doc.line(contentX, signatureBaseY + 3, contentX + 40, signatureBaseY + 3)
+      doc.setTextColor(17, 35, 29)
+      doc.setFont("helvetica", "bold")
+      doc.setFontSize(9)
+      doc.text(settings.signature_name || "Julius Wanjau", contentX, signatureBaseY + 8)
+      doc.setTextColor(96, 112, 104)
+      doc.setFont("helvetica", "normal")
+      doc.setFontSize(7.5)
+      doc.text(settings.signature_role || "Director, PharmaCourse", contentX, signatureBaseY + 12)
+
+      const dateX = contentX + 68
+      doc.setTextColor(147, 160, 152)
+      doc.setFont("helvetica", "bold")
+      doc.setFontSize(6.5)
+      doc.text("DATE ISSUED", dateX + 12, signatureBaseY - 2, { align: "center" })
+      doc.setTextColor(17, 35, 29)
+      doc.setFont("helvetica", "bold")
+      doc.setFontSize(9)
+      doc.text(issuedDate, dateX + 12, signatureBaseY + 4, { align: "center" })
+      doc.setTextColor(147, 160, 152)
+      doc.setFont("helvetica", "normal")
+      doc.setFontSize(6.5)
+      const idLines = doc.splitTextToSize(`ID: ${cert?.id}`, 34)
+      doc.text(idLines, dateX + 12, signatureBaseY + 9, { align: "center" })
+
+      if (qrDataUrl) {
+        doc.addImage(qrDataUrl, "PNG", pageWidth - 36, signatureBaseY - 10, 18, 18)
+        doc.setTextColor(96, 112, 104)
+        doc.setFont("helvetica", "normal")
+        doc.setFontSize(6.5)
+        doc.text("Scan to verify", pageWidth - 27, signatureBaseY + 10, { align: "center" })
+      }
+
+      doc.setTextColor(147, 160, 152)
+      doc.setFont("helvetica", "normal")
+      doc.setFontSize(6.5)
+      doc.text(settings.footer_text || "PharmaCourse - Professional Pharmacy CPD Platform - www.pharmacourse.co.ke", contentX, pageHeight - 14)
+
       doc.save(`PharmaCourse_Certificate_${(profile?.full_name || "Certificate").replace(/ /g, "_")}.pdf`)
     } finally {
       setDownloading(false)
@@ -248,13 +473,12 @@ export default function Certificate() {
             style={{
               position: "relative",
               zIndex: 1,
-              writingMode: "vertical-rl",
-              transform: "rotate(180deg)",
               letterSpacing: "0.18em",
               textTransform: "uppercase",
-              fontSize: "0.7rem",
+              fontSize: "0.72rem",
               fontWeight: 700,
               color: "rgba(255,255,255,0.62)",
+              textAlign: "center",
             }}
           >
             {settings.left_vertical_text}
@@ -394,7 +618,7 @@ export default function Certificate() {
                 <img
                   src={settings.signature_image_url}
                   alt={`${settings.signature_name} signature`}
-                  style={{ maxHeight: 66, maxWidth: 210, objectFit: "contain", display: "block", marginBottom: "0.15rem" }}
+                  style={{ maxHeight: 84, maxWidth: 250, objectFit: "contain", display: "block", marginBottom: "0.2rem" }}
                 />
               ) : (
                 <div style={{ fontFamily: "'Brush Script MT', cursive", fontSize: "2rem", lineHeight: 1, color: "#11231d", marginBottom: "0.15rem" }}>
