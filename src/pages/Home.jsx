@@ -3,7 +3,7 @@ import { Link } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
 import { motion, useInView } from "framer-motion"
 import pharmacyosDashboard from "../assets/pharmacyos-dashboard.svg"
-import pharmacourseDashboard from "../assets/pharmacourse-dashboard.svg"
+import pharmacourseHeroVisual from "../assets/pharmacourse-hero-visual.svg"
 import remedacareDashboard from "../assets/remedacare-dashboard.svg"
 import {
   BookOpen,
@@ -159,7 +159,7 @@ const ProductMockup = ({ type }) => {
       <div className="product-mockup">
         <div className="mockup-frame" style={{ background: "#fff", borderRadius: 14, overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
           <img
-            src={pharmacourseDashboard}
+            src={pharmacourseHeroVisual}
             alt="PharmaCourse My Learning dashboard showing learner progress, enrolled courses and certificates"
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
