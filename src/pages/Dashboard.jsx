@@ -6,7 +6,7 @@ import ProgressBar from "../components/ProgressBar"
 import { BookOpen, Award, Clock, User, ChevronRight, ArrowRight, FlaskConical } from "lucide-react"
 
 export default function Dashboard() {
-  const { user, profile } = useAuth()
+  const { user, profile, loading: authLoading } = useAuth()
   const [enrollments, setEnrollments] = useState([])
   const [progress, setProgress] = useState({})
   const [certificates, setCertificates] = useState([])
@@ -17,7 +17,12 @@ export default function Dashboard() {
   const [firstModules, setFirstModules] = useState({})
 
   useEffect(() => {
-    if (!user) return
+    if (authLoading) return
+    if (!user) {
+      setLoading(false)
+      return
+    }
+
     async function load() {
       const { data: enr } = await supabase
         .from("course_enrollments").select("*, courses(*)")
@@ -95,13 +100,25 @@ export default function Dashboard() {
     }
 
     load()
-  }, [user])
+  }, [authLoading, user])
 
   if (loading) return (
     <div className="page" style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh" }}>
       <div style={{ textAlign: "center", color: "var(--text-500)" }}>
         <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>⏳</div>
         <p>Loading your learning…</p>
+      </div>
+    </div>
+  )
+
+  if (!user) return (
+    <div className="page" style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh" }}>
+      <div style={{ textAlign: "center", maxWidth: 420 }}>
+        <h1 style={{ marginBottom: "0.75rem" }}>Sign in to view your dashboard</h1>
+        <p style={{ color: "var(--text-500)", marginBottom: "1.5rem" }}>
+          We could not restore an active session, so your learning dashboard is unavailable right now.
+        </p>
+        <Link to="/login" className="btn btn-primary">Go to Sign In</Link>
       </div>
     </div>
   )
@@ -230,7 +247,7 @@ export default function Dashboard() {
                 <Link to="/courses" className="btn btn-primary">Browse Courses</Link>
               </div>
             ) : (
-              <div style={{ display: "grid", gap: "1.25rem" }}>
+              <div className="dash-courses-grid" style={{ display: "grid", gap: "1.25rem" }}>
                 {enrollments.map(e => {
                   const p = progress[e.course_id]
                   const pct = p && p.total > 0 ? Math.round((p.completed / p.total) * 100) : 0
@@ -387,7 +404,7 @@ export default function Dashboard() {
                         <h3 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 700, color: "#0a2e1f" }}>{group.title}</h3>
                         <span style={{ fontSize: "0.75rem", color: "#888" }}>{group.sims.length} simulation{group.sims.length !== 1 ? "s" : ""}</span>
                       </div>
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "1rem" }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: "1rem" }}>
                         {group.sims.map(sim => (
                           <div key={sim.id} style={{ background: "#fff", border: "1px solid #eee", borderRadius: 16, padding: "1.5rem", boxShadow: "0 1px 6px rgba(0,0,0,0.05)", display: "flex", flexDirection: "column", gap: ".75rem" }}>
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -479,7 +496,7 @@ export default function Dashboard() {
                         <span style={{ fontSize: "1rem" }}>🔒</span>
                         <h3 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 700, color: "#888" }}>More simulations available</h3>
                       </div>
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "1rem" }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: "1rem" }}>
                         {locked.map(sim => (
                           <div key={sim.id} style={{ background: "#f8f8f8", border: "1px dashed #ddd", borderRadius: 16, padding: "1.5rem", display: "flex", flexDirection: "column", gap: ".75rem", opacity: 0.7 }}>
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -516,7 +533,7 @@ export default function Dashboard() {
                 <Link to="/courses" className="btn btn-primary">Browse Courses</Link>
               </div>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "1rem" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "1rem" }}>
                 {certificates.map(c => (
                   <div key={c.id} style={{
                     background: "#fff", border: "1px solid #eee",
@@ -581,6 +598,9 @@ export default function Dashboard() {
         .dashboard-tab-button.active { background: rgba(15,110,86,0.08); color: #0F6E56; border-color: rgba(15,110,86,0.15); }
         .dashboard-header-action { transition: transform 0.2s ease; }
         .dashboard-header-action:hover { transform: translateY(-1px); }
+        .dash-courses-grid {
+          grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        }
         .dash-course-card:hover {
           box-shadow: 0 12px 28px rgba(0,0,0,0.08);
         }
@@ -606,7 +626,7 @@ export default function Dashboard() {
             gap: 0.75rem !important;
           }
           .dashboard-tab-button {
-            width: calc(33.333% - 0.5rem) !important;
+            width: calc(50% - 0.375rem) !important;
             justify-content: center !important;
             border: 1px solid #eee !important;
             background: #fff !important;
@@ -616,38 +636,64 @@ export default function Dashboard() {
             border-color: #0F6E56 !important;
             background: #f0f8f5 !important;
           }
+          .dash-courses-grid {
+            grid-template-columns: repeat(2, minmax(0,1fr)) !important;
+            gap: 1rem !important;
+          }
           .dash-course-card {
             flex-direction: column !important;
             border-radius: 18px;
           }
           .dash-course-thumb {
             width: 100% !important;
-            height: 180px !important;
+            height: 150px !important;
             border-right: none !important;
             border-bottom: 1px solid #eee !important;
+          }
+          .dash-course-card > div:nth-child(2) {
+            padding: 1rem !important;
+          }
+          .dash-course-card h3 {
+            font-size: .9rem !important;
+            line-height: 1.35 !important;
           }
           .dash-course-action {
             border-left: none !important;
             border-top: 1px solid #eee !important;
-            flex-direction: row !important;
-            justify-content: space-between !important;
-            padding: 1rem 1.25rem !important;
-            gap: 0.75rem !important;
+            flex-direction: column !important;
+            justify-content: stretch !important;
+            align-items: stretch !important;
+            padding: .9rem 1rem !important;
+            gap: 0.55rem !important;
           }
           .dash-course-action a {
-            width: auto !important;
-            flex: 1 1 auto !important;
+            width: 100% !important;
+            flex: none !important;
+            justify-content: center !important;
           }
         }
         @media (max-width: 640px) {
           .dashboard-header { padding: 1.5rem 1rem !important; }
-          .dashboard-stats { grid-template-columns: 1fr !important; }
-          .dashboard-tabs { flex-direction: column !important; gap: 0.5rem !important; }
-          .dashboard-tab-button { width: 100% !important; }
+          .dashboard-stats { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+          .dashboard-tabs { flex-wrap: wrap !important; gap: 0.5rem !important; }
+          .dashboard-tab-button { width: calc(50% - 0.25rem) !important; }
+          .dash-courses-grid {
+            grid-template-columns: repeat(2, minmax(0,1fr)) !important;
+            gap: .75rem !important;
+          }
           .dash-course-card { box-shadow: none !important; border: 1px solid #f0f0f0 !important; }
-          .dash-course-action { flex-direction: column !important; align-items: stretch !important; }
-          .dash-course-action a { width: 100% !important; }
-          .dash-course-action a:last-child { margin-top: .5rem !important; }
+          .dash-course-thumb { height: 118px !important; }
+          .dash-course-card > div:nth-child(2) { padding: .8rem !important; }
+          .dash-course-card h3 { font-size: .82rem !important; }
+          .dash-course-card p { font-size: .74rem !important; }
+          .dash-course-action { padding: .75rem !important; gap: .45rem !important; }
+          .dash-course-action a { width: 100% !important; font-size: .74rem !important; padding: .55rem .75rem !important; }
+          .dash-course-action a:last-child { margin-top: 0 !important; }
+        }
+        @media (max-width: 420px) {
+          .dashboard-tab-button { width: 100% !important; }
+          .dashboard-stats { grid-template-columns: 1fr !important; }
+          .dash-courses-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>
     </div>

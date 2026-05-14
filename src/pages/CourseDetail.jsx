@@ -79,7 +79,7 @@ export default function CourseDetail() {
 
     const { error } = await supabase
       .from("course_enrollments")
-      .insert({ user_id: user.id, course_id: course.id })
+      .insert({ user_id: user.id, course_id: course.id, status: "enrolled" })
 
     if (error) {
       console.error("Enroll error:", error)

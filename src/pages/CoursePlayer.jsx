@@ -557,6 +557,39 @@ export default function CoursePlayer() {
         </aside>
 
         <main className="player-main">
+          <div className="player-mobile-nav">
+            <label htmlFor="mobile-module-select">Jump to module</label>
+            <select
+              id="mobile-module-select"
+              value={lessonId}
+              onChange={(e) => {
+                const nextId = e.target.value
+                const nextIndex = modules.findIndex((mod) => mod.id === nextId)
+                const locked = nextIndex > 0 && !completedIds.has(modules[nextIndex - 1]?.id) && !completedIds.has(nextId)
+
+                if (locked) return
+
+                if (videoRef.current && !completedIdsRef.current.has(lessonId)) {
+                  savePosition(videoRef.current.currentTime)
+                }
+
+                navigate(`/learn/${courseId}/${nextId}`)
+              }}
+            >
+              {modules.map((mod, idx) => {
+                const done = completedIds.has(mod.id)
+                const prevDone = idx === 0 || completedIds.has(modules[idx - 1]?.id)
+                const locked = !prevDone && !done
+
+                return (
+                  <option key={mod.id} value={mod.id} disabled={locked}>
+                    {locked ? "Locked: " : done ? "Done: " : ""}{mod.title}
+                  </option>
+                )
+              })}
+            </select>
+          </div>
+
           {isLocked ? (
             <div className="video-placeholder" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "400px", gap: "1rem" }}>
               <span style={{ fontSize: "3rem" }}>🔒</span>

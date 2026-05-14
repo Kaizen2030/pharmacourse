@@ -7,9 +7,10 @@ export default function Footer() {
         <span className="footer-logo">PharmaCourse</span>
         <ul className="footer-links">
           <li><Link to="/courses">Explore</Link></li>
+          <li><Link to="/community">Community</Link></li>
           <li><Link to="/login">Sign In</Link></li>
         </ul>
-        <span className="footer-copy">© 2026 PharmaCourse. All rights reserved.</span>
+        <span className="footer-copy">Copyright 2026 PharmaCourse. All rights reserved.</span>
       </div>
     </footer>
   )

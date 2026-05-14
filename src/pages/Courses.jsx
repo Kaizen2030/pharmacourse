@@ -7,8 +7,14 @@ export default function Courses() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.from("courses").select("*").eq("is_published", true)
-      .then(({ data }) => { setCourses(data || []); setLoading(false) })
+    supabase
+      .from("courses")
+      .select("*")
+      .eq("is_published", true)
+      .then(({ data }) => {
+        setCourses(data || [])
+        setLoading(false)
+      })
   }, [])
 
   return (
@@ -22,14 +28,16 @@ export default function Courses() {
 
       <div className="container" style={{ paddingTop: "2rem" }}>
         {loading ? (
-          <p style={{ color: "var(--text-500)" }}>Loading courses…</p>
+          <p style={{ color: "var(--text-500)" }}>Loading courses...</p>
         ) : courses.length === 0 ? (
           <div className="card" style={{ padding: "3rem", textAlign: "center" }}>
             <p style={{ color: "var(--text-500)" }}>No courses published yet. Check back soon.</p>
           </div>
         ) : (
           <div className="courses-full-grid">
-            {courses.map(c => <CourseCard key={c.id} course={c} />)}
+            {courses.map((course) => (
+              <CourseCard key={course.id} course={course} compact />
+            ))}
           </div>
         )}
       </div>

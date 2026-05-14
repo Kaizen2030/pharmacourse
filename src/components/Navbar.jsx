@@ -12,25 +12,37 @@ export default function Navbar() {
 
   const isActive = (path) => location.pathname === path
 
-  // Close menu on route change
-  useEffect(() => { setMenuOpen(false) }, [location.pathname])
-
-  // Close on outside click
   useEffect(() => {
-    if (!menuOpen) return
-    function handleClick(e) {
-      if (drawerRef.current && !drawerRef.current.contains(e.target)) {
+    setMenuOpen(false)
+  }, [location.pathname])
+
+  useEffect(() => {
+    if (!menuOpen) return undefined
+
+    function handleClick(event) {
+      if (drawerRef.current && !drawerRef.current.contains(event.target)) {
         setMenuOpen(false)
       }
     }
+
+    function handleKeyDown(event) {
+      if (event.key === "Escape") setMenuOpen(false)
+    }
+
     document.addEventListener("mousedown", handleClick)
-    return () => document.removeEventListener("mousedown", handleClick)
+    document.addEventListener("keydown", handleKeyDown)
+
+    return () => {
+      document.removeEventListener("mousedown", handleClick)
+      document.removeEventListener("keydown", handleKeyDown)
+    }
   }, [menuOpen])
 
-  // Prevent body scroll when menu open
   useEffect(() => {
     document.body.style.overflow = menuOpen ? "hidden" : ""
-    return () => { document.body.style.overflow = "" }
+    return () => {
+      document.body.style.overflow = ""
+    }
   }, [menuOpen])
 
   async function handleLogout() {
@@ -53,7 +65,6 @@ export default function Navbar() {
       <nav className="nav">
         <Link to="/" className="nav-logo">PharmaCourse</Link>
 
-        {/* Desktop links */}
         <div className="nav-desktop">
           <ul className="nav-links">
             {navLinks.map(({ to, label }) => (
@@ -62,6 +73,7 @@ export default function Navbar() {
               </li>
             ))}
           </ul>
+
           {user ? (
             <div style={{ display: "flex", alignItems: "center", gap: ".75rem" }}>
               <span style={{ fontSize: ".88rem", color: "var(--text-500)" }}>
@@ -79,12 +91,12 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* Hamburger button — mobile only */}
         <button
           className="nav-hamburger"
-          onClick={() => setMenuOpen(o => !o)}
+          onClick={() => setMenuOpen((open) => !open)}
           aria-label={menuOpen ? "Close menu" : "Open menu"}
           aria-expanded={menuOpen}
+          aria-controls="mobile-nav-drawer"
         >
           <span className={`hamburger-bar ${menuOpen ? "open" : ""}`} />
           <span className={`hamburger-bar ${menuOpen ? "open" : ""}`} />
@@ -92,14 +104,12 @@ export default function Navbar() {
         </button>
       </nav>
 
-      {/* Overlay */}
       {menuOpen && <div className="nav-overlay" onClick={() => setMenuOpen(false)} />}
 
-      {/* Mobile drawer */}
-      <div ref={drawerRef} className={`nav-drawer ${menuOpen ? "open" : ""}`}>
+      <div ref={drawerRef} id="mobile-nav-drawer" className={`nav-drawer ${menuOpen ? "open" : ""}`}>
         <div className="nav-drawer-header">
           <Link to="/" className="nav-logo" onClick={() => setMenuOpen(false)}>PharmaCourse</Link>
-          <button className="nav-drawer-close" onClick={() => setMenuOpen(false)} aria-label="Close menu">✕</button>
+          <button className="nav-drawer-close" onClick={() => setMenuOpen(false)} aria-label="Close menu">x</button>
         </div>
 
         <ul className="nav-drawer-links">
@@ -119,8 +129,15 @@ export default function Navbar() {
         <div className="nav-drawer-auth">
           {user ? (
             <>
-              <p className="nav-drawer-user">👤 {profile?.full_name?.split(" ")[0] || "Pharmacist"}</p>
-              <button onClick={() => { handleLogout(); setMenuOpen(false) }} className="btn btn-outline" style={{ width: "100%" }}>
+              <p className="nav-drawer-user">{profile?.full_name?.split(" ")[0] || "Pharmacist"}</p>
+              <button
+                onClick={() => {
+                  handleLogout()
+                  setMenuOpen(false)
+                }}
+                className="btn btn-outline"
+                style={{ width: "100%" }}
+              >
                 Sign Out
               </button>
             </>
@@ -134,62 +151,65 @@ export default function Navbar() {
       </div>
 
       <style>{`
-        /* ── Hamburger button ── */
         .nav-hamburger {
           display: none;
           flex-direction: column;
           justify-content: center;
           gap: 5px;
-          width: 40px;
-          height: 40px;
-          background: none;
+          width: 42px;
+          height: 42px;
           border: none;
           cursor: pointer;
           padding: 4px;
-          border-radius: 8px;
-          transition: background 0.2s;
+          border-radius: 12px;
+          transition: background 0.2s ease;
         }
-        .nav-hamburger:hover { background: rgba(0,0,0,0.06); }
+
+        .nav-hamburger:hover {
+          background: rgba(0, 0, 0, 0.05);
+        }
 
         .hamburger-bar {
           display: block;
-          height: 2px;
           width: 22px;
-          background: var(--text-900, #111);
+          height: 2px;
           border-radius: 2px;
+          background: var(--text-900, #111);
           transition: transform 0.25s ease, opacity 0.2s ease, width 0.2s ease;
           transform-origin: center;
         }
+
         .hamburger-bar:nth-child(1).open { transform: translateY(7px) rotate(45deg); }
         .hamburger-bar:nth-child(2).open { opacity: 0; width: 0; }
         .hamburger-bar:nth-child(3).open { transform: translateY(-7px) rotate(-45deg); }
 
-        /* ── Desktop nav wrapper ── */
         .nav-desktop {
           display: flex;
           align-items: center;
           gap: 1.5rem;
         }
 
-        /* ── Overlay ── */
         .nav-overlay {
           position: fixed;
           inset: 0;
-          background: rgba(0,0,0,0.45);
+          background: rgba(0, 0, 0, 0.45);
           z-index: 998;
           animation: fadeIn 0.2s ease;
         }
-        @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
 
-        /* ── Mobile drawer ── */
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
         .nav-drawer {
           position: fixed;
           top: 0;
           right: 0;
-          width: min(320px, 85vw);
+          width: min(320px, 86vw);
           height: 100dvh;
           background: #fff;
-          box-shadow: -4px 0 32px rgba(0,0,0,0.15);
+          box-shadow: -4px 0 32px rgba(0, 0, 0, 0.15);
           z-index: 999;
           display: flex;
           flex-direction: column;
@@ -197,7 +217,10 @@ export default function Navbar() {
           transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           overflow-y: auto;
         }
-        .nav-drawer.open { transform: translateX(0); }
+
+        .nav-drawer.open {
+          transform: translateX(0);
+        }
 
         .nav-drawer-header {
           display: flex;
@@ -208,20 +231,22 @@ export default function Navbar() {
         }
 
         .nav-drawer-close {
-          background: none;
-          border: none;
-          font-size: 1.1rem;
-          cursor: pointer;
-          color: var(--text-500, #888);
           width: 32px;
           height: 32px;
+          border: none;
+          border-radius: 8px;
+          color: var(--text-500, #888);
+          cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
-          border-radius: 6px;
-          transition: background 0.2s;
+          font-size: 1rem;
+          transition: background 0.2s ease;
         }
-        .nav-drawer-close:hover { background: #f0f0f0; }
+
+        .nav-drawer-close:hover {
+          background: #f0f0f0;
+        }
 
         .nav-drawer-links {
           list-style: none;
@@ -229,38 +254,40 @@ export default function Navbar() {
           margin: 0;
           flex: 1;
         }
+
         .nav-drawer-links li a {
           display: block;
           padding: .85rem 1.5rem;
           font-size: 1rem;
-          font-weight: 500;
+          font-weight: 600;
           color: var(--text-900, #111);
-          text-decoration: none;
           border-left: 3px solid transparent;
-          transition: background 0.15s, border-color 0.15s, color 0.15s;
+          transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
         }
+
         .nav-drawer-links li a:hover {
           background: #f5faf7;
           color: var(--green, #0F6E56);
         }
+
         .nav-drawer-links li a.active {
           border-left-color: var(--green, #0F6E56);
           color: var(--green, #0F6E56);
           background: #f0faf7;
-          font-weight: 600;
         }
 
         .nav-drawer-auth {
           padding: 1.25rem;
           border-top: 1px solid #eee;
         }
+
         .nav-drawer-user {
           font-size: .9rem;
           color: var(--text-500, #888);
           margin: 0 0 .75rem;
+          font-weight: 600;
         }
 
-        /* ── Responsive breakpoint ── */
         @media (max-width: 768px) {
           .nav-hamburger { display: flex; }
           .nav-desktop { display: none; }

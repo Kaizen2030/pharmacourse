@@ -27,7 +27,14 @@ export default function SimulationAdmin() {
   async function createSimulation() {
     if (!newSim.title || !newSim.patient_context) { alert('Please fill in title and patient context'); return }
     setLoading(true)
-    const { error } = await supabase.from('case_simulations').insert({ ...newSim, created_by: user.id })
+    const { error } = await supabase.from('case_simulations').insert({
+      title: newSim.title,
+      patient_scenario: newSim.patient_context,
+      difficulty_level: newSim.difficulty,
+      questions: [],
+      creator_id: user.id,
+      is_published: true,
+    })
     if (error) alert('Error: ' + error.message)
     else { setNewSim({ title: '', patient_context: '', difficulty: 'intermediate', competencies: [], antibiogram: {} }); loadData() }
     setLoading(false)
@@ -85,7 +92,7 @@ export default function SimulationAdmin() {
             {simulations.map(sim => (
               <div key={sim.id} className='card' style={{ padding: '1.5rem', marginBottom: '1rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                  <div><h3 style={{ marginBottom: '.5rem' }}>{sim.title}</h3><p style={{ color: 'var(--text-500)', fontSize: '.9rem' }}>{sim.patient_context.substring(0, 100)}...</p></div>
+                  <div><h3 style={{ marginBottom: '.5rem' }}>{sim.title}</h3><p style={{ color: 'var(--text-500)', fontSize: '.9rem' }}>{String(sim.patient_scenario || sim.patient_context || '').substring(0, 100)}...</p></div>
                   <button onClick={() => deleteSimulation(sim.id)} className='btn btn-error' style={{ fontSize: '.85rem' }}>Delete</button>
                 </div>
               </div>
