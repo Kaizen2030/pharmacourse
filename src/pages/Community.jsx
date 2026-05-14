@@ -3,6 +3,9 @@ import { useAuth } from "../context/AuthContext"
 import { useSearchParams } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
 import { MessageCircle, ThumbsUp, Plus, ChevronDown, ChevronUp, Pin, Lock, BookOpen, X } from "lucide-react"
+import Pagination from "../components/Pagination"
+
+const POSTS_PAGE_SIZE = 10
 
 const TAGS = ["Question", "Discussion", "Exam Prep", "Case Study", "General"]
 
@@ -20,6 +23,8 @@ export default function Community() {
   const [enrolledCourses, setEnrolledCourses] = useState([])
   const [selectedCourse, setSelectedCourse] = useState(null)
   const [posts, setPosts] = useState([])
+  const [page, setPage] = useState(1)
+  const [totalPosts, setTotalPosts] = useState(0)
   const [loading, setLoading] = useState(true)
   const [coursesLoading, setCoursesLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -71,23 +76,37 @@ export default function Community() {
     setCoursesLoading(false)
   }
 
-  useEffect(() => { if (selectedCourse) loadPosts() }, [selectedCourse, filterTag])
+  useEffect(() => {
+    if (selectedCourse) loadPosts(page)
+  }, [selectedCourse?.course_id, filterTag, page])
 
-  async function loadPosts() {
+  useEffect(() => {
+    setPage(1)
+    setExpandedPost(null)
+    setReplies({})
+  }, [selectedCourse?.course_id, filterTag])
+
+  async function loadPosts(targetPage = page) {
     setLoading(true)
+    const from = (targetPage - 1) * POSTS_PAGE_SIZE
+    const to = from + POSTS_PAGE_SIZE - 1
+
     let query = supabase
       .from("community_posts")
-      .select("id,title,content,category,tags,user_id,upvotes,is_pinned,is_locked,reply_count,created_at,course_id,module_id")
+      .select("id,title,content,category,tags,user_id,upvotes,is_pinned,is_locked,reply_count,created_at,course_id,module_id", { count: "exact" })
       .eq("course_id", selectedCourse.course_id)
       .order("is_pinned", { ascending: false })
       .order("created_at", { ascending: false })
+      .range(from, to)
     if (filterTag !== "All") query = query.contains("tags", [filterTag])
-    const { data, error } = await query
+    const { data, count, error } = await query
     if (error) {
       console.error("Error loading posts:", error)
       setPosts([])
+      setTotalPosts(0)
     } else {
       setPosts(data || [])
+      setTotalPosts(count || 0)
     }
     setLoading(false)
   }
@@ -106,7 +125,8 @@ export default function Community() {
     setSaving(false)
     if (error) { alert("Error: " + error.message); return }
     setTitle(""); setContent(""); setTag("General"); setShowForm(false)
-    loadPosts()
+    setPage(1)
+    loadPosts(1)
   }
 
   async function castVote(postId) {
@@ -161,6 +181,7 @@ export default function Community() {
   }
 
   const tagColor = (t) => TAG_COLORS[t] || TAG_COLORS["General"]
+  const totalPages = Math.max(1, Math.ceil(totalPosts / POSTS_PAGE_SIZE))
 
   if (!user) return (
     <div className="page" style={{ padding: "4rem 1.5rem", textAlign: "center" }}>
@@ -357,6 +378,7 @@ export default function Community() {
                       <p>No posts yet. Be the first to start a discussion!</p>
                     </div>
                   ) : (
+                    <>
                     <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
                       {posts.map(post => (
                         <article key={post.id} style={{
@@ -445,6 +467,15 @@ export default function Community() {
                         </article>
                       ))}
                     </div>
+                    <Pagination
+                      currentPage={page}
+                      totalPages={totalPages}
+                      totalItems={totalPosts}
+                      pageSize={POSTS_PAGE_SIZE}
+                      onPageChange={setPage}
+                      label="posts"
+                    />
+                    </>
                   )}
             </>
           )}
