@@ -24,6 +24,10 @@ const modules = [
   { icon: Shield, label: "SHA / NHIF Claims", desc: "Integrated SHA capitation and fee-for-service claim management for hospitals." },
   { icon: Bell, label: "Clinical Alerts", desc: "Drug interaction alerts, allergy warnings and critical value notifications at point of care." },
   { icon: TrendingUp, label: "Analytics Dashboard", desc: "Track census, revenue, top diagnoses, bed occupancy and staff productivity." },
+  { icon: Activity, label: "Antibiogram", desc: "Review microbiology susceptibility patterns and resistance signals to support better stewardship decisions." },
+  { icon: BarChart3, label: "Department Metrics", desc: "Track patient load, staffing visibility, and operational signals at department level." },
+  { icon: Users, label: "HR & Staff", desc: "Manage workforce roles, staff structure, and hospital team visibility across departments." },
+  { icon: Pill, label: "Pharmacy Workspace", desc: "Run the dispense queue, pharmacy POS, and stock panel without leaving the clinical workflow." },
 ]
 
 const pillars = [
@@ -42,6 +46,52 @@ const compliance = [
   "Multi-role audit trail for every clinical action",
 ]
 
+const clinicalFlows = [
+  {
+    icon: Stethoscope,
+    title: "Doctor queue by speciality",
+    desc: "Route patients into a live doctor queue, search them fast, and filter consultations by speciality before a clinician opens the chart.",
+  },
+  {
+    icon: Activity,
+    title: "Antibiogram and AMR signals",
+    desc: "Microbiology trends and susceptibility views support stewardship decisions instead of leaving resistance data buried in the lab.",
+  },
+  {
+    icon: Database,
+    title: "Department-aware operations",
+    desc: "Department metrics, bed views, and staff context make it easier for hospital teams to manage care load in real time.",
+  },
+  {
+    icon: Pill,
+    title: "Integrated dispensary workflow",
+    desc: "Prescriptions move straight into the pharmacy workspace where dispensing, stock checks, and billing stay tied to the visit.",
+  },
+]
+
+const operationsLayers = [
+  {
+    icon: Users,
+    title: "HR and workforce structure",
+    desc: "Support clinical, allied health, administrative, and support-service staffing from one hospital staff model.",
+  },
+  {
+    icon: BedDouble,
+    title: "Wards and admissions flow",
+    desc: "Ward movement, bed allocation, and admission status stay visible so the care team is not coordinating through phone calls alone.",
+  },
+  {
+    icon: FileText,
+    title: "Workflow-linked billing",
+    desc: "Clinical services, pharmacy actions, and invoice notes stay tied to the visit so revenue capture follows care delivery properly.",
+  },
+  {
+    icon: Shield,
+    title: "Claims-ready hospital operations",
+    desc: "SHA, NHIF, insurance, and audit trails fit into the workflow from consultation through pharmacy release and reporting.",
+  },
+]
+
 const DOT_PATTERN = `url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='2' cy='2' r='1.2' fill='%23ffffff'/%3E%3C/svg%3E")`
 
 const css = `
@@ -49,10 +99,10 @@ const css = `
     0%, 100% { transform: scale(1); opacity: 1; }
     50% { transform: scale(1.5); opacity: 0.65; }
   }
-  .rc-card, .rc-mod {
+  .rc-card, .rc-mod, .rc-flow-card, .rc-ops-card {
     transition: transform 0.22s ease, box-shadow 0.22s ease;
   }
-  .rc-card:hover, .rc-mod:hover {
+  .rc-card:hover, .rc-mod:hover, .rc-flow-card:hover, .rc-ops-card:hover {
     transform: translateY(-4px);
   }
   .rc-btn-white {
@@ -279,7 +329,7 @@ export default function RemedacareOS() {
           </div>
 
           <div className="rc-hero-stats" style={{ display: "flex", justifyContent: "center", marginTop: 56, flexWrap: "wrap", borderTop: "1px solid rgba(255,255,255,0.12)", paddingTop: 40 }}>
-            {[["12+", "HMIS Modules"], ["6", "Clinic Roles"], ["100%", "Kenyan-built"]].map(([n, l], i) => (
+            {[["16+", "HMIS Modules"], ["6", "Clinic Roles"], ["100%", "Kenyan-built"]].map(([n, l], i) => (
               <div key={l} className="rc-hero-stat" style={{ textAlign: "center", padding: "0 40px", borderRight: i < 2 ? "1px solid rgba(255,255,255,0.15)" : "none" }}>
                 <div className="rc-hero-stat-number" style={{ fontSize: 34, fontWeight: 800, letterSpacing: "-0.02em", color: "#fff" }}>{n}</div>
                 <div className="rc-hero-stat-label" style={{ fontSize: 13, opacity: 0.6, marginTop: 4, color: "#fff" }}>{l}</div>
@@ -416,6 +466,61 @@ export default function RemedacareOS() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="rc-section" style={{ padding: "76px 24px", background: "#f4faf7" }}>
+        <div style={{ maxWidth: 1180, margin: "0 auto" }}>
+          <div className="rc-section-heading" style={{ textAlign: "center", marginBottom: 46 }}>
+            <span style={{ color: GREEN, fontWeight: 700, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase" }}>Clinical workflows</span>
+            <h2 style={{ fontSize: "clamp(1.5rem, 3vw, 2.15rem)", fontWeight: 800, margin: "14px 0 14px", color: DARK, letterSpacing: "-0.02em" }}>
+              New workflows for real frontline hospital care.
+            </h2>
+            <p style={{ color: "#556", fontSize: 15, lineHeight: 1.75, maxWidth: 700, margin: "0 auto" }}>
+              The newer RemedacareOS build is not just records and billing. It now supports live consultation routing, AMR intelligence, department visibility, and a stronger pharmacy handoff.
+            </p>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 20 }}>
+            {clinicalFlows.map((item) => {
+              const Icon = item.icon
+              return (
+                <div key={item.title} className="rc-flow-card" style={{ background: "#fff", border: "1px solid #dcebe4", borderRadius: 18, padding: "24px 22px", boxShadow: "0 6px 22px rgba(15,110,86,0.06)" }}>
+                  <div style={{ width: 42, height: 42, borderRadius: 12, background: "#e8f5f0", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
+                    <Icon size={20} color={GREEN} />
+                  </div>
+                  <h3 style={{ fontSize: 16, fontWeight: 700, color: DARK, margin: "0 0 10px" }}>{item.title}</h3>
+                  <p style={{ fontSize: 14, lineHeight: 1.75, color: "#556", margin: 0 }}>{item.desc}</p>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section className="rc-section" style={{ padding: "72px 24px", background: "#fff" }}>
+        <div style={{ maxWidth: 1120, margin: "0 auto" }}>
+          <div className="rc-section-heading" style={{ textAlign: "center", marginBottom: 42 }}>
+            <span style={{ color: GREEN, fontWeight: 700, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase" }}>Hospital operations</span>
+            <h2 style={{ fontSize: "clamp(1.4rem, 3vw, 2rem)", fontWeight: 800, margin: "14px 0 14px", color: DARK, letterSpacing: "-0.02em" }}>
+              Operational depth beyond the consultation room.
+            </h2>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 18 }}>
+            {operationsLayers.map((item) => {
+              const Icon = item.icon
+              return (
+                <div key={item.title} className="rc-ops-card" style={{ background: "#f8faf9", border: "1px solid #e3ede8", borderRadius: 16, padding: "22px 20px" }}>
+                  <div style={{ width: 38, height: 38, borderRadius: 11, background: "#edf7f2", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
+                    <Icon size={18} color={GREEN} />
+                  </div>
+                  <h3 style={{ fontSize: 15, fontWeight: 700, color: DARK, margin: "0 0 8px" }}>{item.title}</h3>
+                  <p style={{ fontSize: 13.5, lineHeight: 1.7, color: "#66706b", margin: 0 }}>{item.desc}</p>
+                </div>
+              )
+            })}
           </div>
         </div>
       </section>

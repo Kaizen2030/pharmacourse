@@ -6,7 +6,7 @@ import {
   ShoppingCart, Package, AlertTriangle, CreditCard,
   FileText, BarChart3, Settings, Cpu, Shield,
   Building2, CheckCircle, ChevronRight, ArrowRight,
-  Receipt, Smartphone, TrendingUp,
+  Receipt, Smartphone, TrendingUp, Truck, Clock3, Users,
 } from "lucide-react"
 
 const WHATSAPP = "https://wa.me/254790059584?text=Hi%20Julius%2C%20I%27d%20like%20to%20book%20a%20demo%20of%20PharmacyOS."
@@ -24,6 +24,10 @@ const modules = [
   { icon: BarChart3, label: "Reports & Analytics", desc: "Sales bar charts, Top Drugs rankings, monthly summaries & PPB Narcotics CSV for regulatory submission.", color: "#7C3AED" },
   { icon: Settings, label: "Settings & Roles", desc: "Owner-protected settings. Manage pharmacy profile, PPB licence, KRA PIN, M-Pesa Paybill & staff roles.", color: "#0F6E56" },
   { icon: Cpu, label: "AI Drug Advisor", desc: "AI-powered chatbot for drug dosage, interactions & contraindications. Image upload supported.", color: "#1A6BB5" },
+  { icon: Building2, label: "Branches", desc: "Create branch locations, compare branch performance, and roll out starter inventory into new outlets.", color: "#0F6E56" },
+  { icon: Truck, label: "Suppliers", desc: "Manage supplier records, follow purchase orders, and track pending deliveries before stock arrives.", color: "#1A6BB5" },
+  { icon: Clock3, label: "Shifts", desc: "Open and close cashier shifts with float control, sales reconciliation, and variance summaries.", color: "#E24B4A" },
+  { icon: Users, label: "Patients", desc: "Store patient profiles, allergies, chronic conditions, insurer details, and pharmacy history.", color: "#7C3AED" },
 ]
 
 const compliance = [
@@ -49,6 +53,48 @@ const outcomes = [
   { icon: TrendingUp, title: "Better pharmacy margins", desc: "Spot fast-moving products, reduce losses and keep the business healthy with instant analytics." },
 ]
 
+const branchOperations = [
+  {
+    icon: Building2,
+    title: "Branch rollouts without chaos",
+    desc: "Launch new branches faster with branch profiles, branch stats, and inventory copy tools from the main store.",
+  },
+  {
+    icon: Truck,
+    title: "Supplier and ordering discipline",
+    desc: "Keep supplier contacts, purchase orders, and delivery follow-up inside one purchasing workflow.",
+  },
+  {
+    icon: Clock3,
+    title: "Shift accountability at the counter",
+    desc: "Track opening float, sales mix, closing float, and cashier variance before the day ends.",
+  },
+  {
+    icon: Users,
+    title: "Patient memory built in",
+    desc: "Pull up allergies, chronic conditions, insurance details, and prior pharmacy history when a patient returns.",
+  },
+]
+
+const controlLayers = [
+  {
+    title: "Offline-aware operations",
+    desc: "Connectivity and sync layers help the pharmacy keep moving when internet quality changes across branches.",
+  },
+  {
+    title: "Role-based staff handoff",
+    desc: "PIN-aware staff switching and protected owner actions reduce risk around sales, shifts, and pricing.",
+  },
+  {
+    title: "Audit-friendly workflows",
+    desc: "Sales, credit actions, and stock-sensitive operations are easier to review when accountability matters.",
+  },
+  {
+    title: "Growth-ready structure",
+    desc: "Branches, suppliers, patients, claims, and reports now behave like one operating system instead of scattered tools.",
+  },
+]
+
 const DOT_PATTERN = `url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='2' cy='2' r='1.2' fill='%23ffffff'/%3E%3C/svg%3E")`
 
 const css = `
@@ -57,11 +103,15 @@ const css = `
     50% { transform: scale(1.4); opacity: 0.7; }
   }
   .pharmacyos-card,
+  .po-ops-card,
+  .po-control-card,
   .po-outcome,
   .module-card {
     transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
   }
   .pharmacyos-card:hover,
+  .po-ops-card:hover,
+  .po-control-card:hover,
   .po-outcome:hover,
   .module-card:hover {
     transform: translateY(-4px);
@@ -339,7 +389,7 @@ export default function PharmacyOS() {
           </div>
 
           <div className="po-hero-stats" style={{ display: "flex", gap: 0, justifyContent: "center", marginTop: 56, flexWrap: "wrap", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 24, padding: "22px 12px", backdropFilter: "blur(10px)" }}>
-            {[["12", "Modules"], ["3", "Platforms Supported"], ["100%", "Kenya-built"]].map(([n, l], i) => (
+            {[["16", "Modules"], ["3", "Platforms Supported"], ["100%", "Kenya-built"]].map(([n, l], i) => (
               <div key={l} className="po-hero-stat" style={{ textAlign: "center", padding: "0 36px", color: "#fff", borderRight: i < 2 ? "1px solid rgba(255,255,255,0.18)" : "none" }}>
                 <div className="po-hero-stat-number" style={{ fontSize: 36, fontWeight: 800, letterSpacing: "-0.02em" }}>{n}</div>
                 <div className="po-hero-stat-label" style={{ fontSize: 13, opacity: 0.85, marginTop: 4 }}>{l}</div>
@@ -378,7 +428,7 @@ export default function PharmacyOS() {
           <div className="po-section-heading" style={{ textAlign: "center", marginBottom: 52 }}>
             <span style={{ color: "#0F6E56", fontWeight: 700, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase" }}>Everything in one app</span>
             <h2 style={{ fontSize: "clamp(1.6rem, 3vw, 2.3rem)", fontWeight: 800, margin: "14px 0 0", color: "#0a2e1f", letterSpacing: "-0.02em" }}>
-              12 powerful modules. Zero compromises.
+              16 practical modules. One connected pharmacy system.
             </h2>
           </div>
 
@@ -422,6 +472,31 @@ export default function PharmacyOS() {
 
       <section className="po-section" style={{ padding: "80px 24px", background: "#f8faf9" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <div className="po-section-heading" style={{ textAlign: "center", marginBottom: 48 }}>
+            <span style={{ color: "#0F6E56", fontWeight: 700, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase" }}>Growth workflows</span>
+            <h2 style={{ fontSize: "clamp(1.5rem, 3vw, 2.15rem)", fontWeight: 800, margin: "14px 0 14px", color: "#0a2e1f", letterSpacing: "-0.02em" }}>
+              Built for pharmacies growing beyond one counter.
+            </h2>
+            <p className="po-section-copy" style={{ color: "#556", fontSize: 16, maxWidth: 700, margin: "0 auto", lineHeight: 1.75 }}>
+              The newer PharmacyOS workflows now support branch expansion, supplier follow-up, cashier accountability, and better patient continuity.
+            </p>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 20, marginBottom: 64 }}>
+            {branchOperations.map((item) => {
+              const Icon = item.icon
+              return (
+                <div key={item.title} className="po-ops-card" style={{ background: "#fff", border: "1px solid #dcebe4", borderRadius: 18, padding: "24px 22px", boxShadow: "0 6px 22px rgba(15,110,86,0.06)" }}>
+                  <div style={{ width: 42, height: 42, borderRadius: 12, background: "#e8f5f0", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
+                    <Icon size={20} color="#0F6E56" />
+                  </div>
+                  <h3 style={{ fontSize: 16, fontWeight: 700, color: "#0a2e1f", margin: "0 0 10px" }}>{item.title}</h3>
+                  <p style={{ fontSize: 14, lineHeight: 1.75, color: "#556", margin: 0 }}>{item.desc}</p>
+                </div>
+              )
+            })}
+          </div>
+
           <div className="po-compliance-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 64, alignItems: "center" }}>
             <div>
               <span style={{ color: "#0F6E56", fontWeight: 700, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase" }}>Compliance</span>
@@ -451,6 +526,22 @@ export default function PharmacyOS() {
 
       <section className="po-section" style={{ background: "#fff", padding: "72px 24px" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+          <div className="po-section-heading" style={{ textAlign: "center", marginBottom: 42 }}>
+            <span style={{ color: "#0F6E56", fontWeight: 700, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase" }}>Operational control</span>
+            <h2 style={{ fontSize: "clamp(1.4rem, 3vw, 2rem)", fontWeight: 800, margin: "14px 0 14px", color: "#0a2e1f", letterSpacing: "-0.02em" }}>
+              More control for owners, less friction for staff.
+            </h2>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 18, marginBottom: 52 }}>
+            {controlLayers.map((item) => (
+              <div key={item.title} className="po-control-card" style={{ background: "#f8faf9", border: "1px solid #e3ede8", borderRadius: 16, padding: "22px 20px" }}>
+                <h3 style={{ fontSize: 15, fontWeight: 700, color: "#0a2e1f", margin: "0 0 8px" }}>{item.title}</h3>
+                <p style={{ fontSize: 13.5, lineHeight: 1.7, color: "#66706b", margin: 0 }}>{item.desc}</p>
+              </div>
+            ))}
+          </div>
+
           <div className="po-section-heading" style={{ textAlign: "center", marginBottom: 48 }}>
             <span style={{ color: "#0F6E56", fontWeight: 700, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase" }}>Real pharmacy outcomes</span>
             <h2 style={{ fontSize: "clamp(1.4rem, 3vw, 2rem)", fontWeight: 800, margin: "14px 0 0", color: "#0a2e1f", letterSpacing: "-0.02em" }}>
