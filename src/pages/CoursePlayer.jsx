@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext"
 
 export default function CoursePlayer() {
   const { courseId, lessonId } = useParams()
-  const { user } = useAuth()
+  const { user, isAdmin } = useAuth()
   const navigate = useNavigate()
   const [modules, setModules] = useState([])
   const [currentModule, setCurrentModule] = useState(null)
@@ -227,13 +227,13 @@ export default function CoursePlayer() {
     const blockContextMenu = (e) => e.preventDefault()
 
     const lockPlaybackRate = () => {
-      if (!completedIdsRef.current.has(lessonId) && video.playbackRate !== 1) {
+      if (!isAdmin && !completedIdsRef.current.has(lessonId) && video.playbackRate !== 1) {
         video.playbackRate = 1
       }
     }
 
     const handleTimeUpdate = () => {
-      if (completedIdsRef.current.has(lessonId)) {
+      if (isAdmin || completedIdsRef.current.has(lessonId)) {
         setWatchProgress(100)
         setVideoWatched(true)
         return
@@ -256,24 +256,24 @@ export default function CoursePlayer() {
     }
 
     const blockSpeedKeys = (e) => {
-      if (!completedIdsRef.current.has(lessonId) && [">", "<", ".", ","].includes(e.key)) {
+      if (!isAdmin && !completedIdsRef.current.has(lessonId) && [">", "<", ".", ","].includes(e.key)) {
         e.preventDefault()
         e.stopPropagation()
       }
     }
 
     saveIntervalRef.current = setInterval(() => {
-      if (video && !video.paused && video.currentTime > 0 && !completedIdsRef.current.has(lessonId)) {
+      if (!isAdmin && video && !video.paused && video.currentTime > 0 && !completedIdsRef.current.has(lessonId)) {
         savePosition(video.currentTime)
       }
     }, 10000)
 
     const saveOnPause = () => {
-      if (!completedIdsRef.current.has(lessonId)) savePosition(video.currentTime)
+      if (!isAdmin && !completedIdsRef.current.has(lessonId)) savePosition(video.currentTime)
     }
 
     const saveOnUnload = () => {
-      if (!completedIdsRef.current.has(lessonId)) savePosition(video.currentTime)
+      if (!isAdmin && !completedIdsRef.current.has(lessonId)) savePosition(video.currentTime)
     }
 
     const handleVideoEnd = async () => {
@@ -282,7 +282,7 @@ export default function CoursePlayer() {
       setVideoWatched(true)
       setWatchProgress(100)
 
-      if (quizAvailable && !quizPassed) {
+      if (!isAdmin && quizAvailable && !quizPassed) {
         return
       }
 
@@ -321,11 +321,11 @@ export default function CoursePlayer() {
       window.removeEventListener("beforeunload", saveOnUnload)
       if (saveIntervalRef.current) clearInterval(saveIntervalRef.current)
     }
-  }, [currentModule, lessonId, user?.id, modules, quizAvailable, quizPassed])
+  }, [currentModule, lessonId, user?.id, modules, quizAvailable, quizPassed, isAdmin])
 
   useEffect(() => {
-    if (currentModule && !currentModule.video_url) setVideoWatched(true)
-  }, [currentModule])
+    if (isAdmin || (currentModule && !currentModule.video_url)) setVideoWatched(true)
+  }, [currentModule, isAdmin])
 
   useEffect(() => {
     async function loadLessonExtras() {
@@ -390,11 +390,11 @@ export default function CoursePlayer() {
       alert("You must be logged in to mark a module as complete")
       return
     }
-    if (!videoWatched) {
+    if (!isAdmin && !videoWatched) {
       alert("Please watch at least 90% of the video before marking this module as complete.")
       return
     }
-    if (quizAvailable && !quizPassed) {
+    if (!isAdmin && quizAvailable && !quizPassed) {
       alert("Please complete the lesson quiz before marking this module as complete.")
       return
     }
@@ -490,7 +490,7 @@ export default function CoursePlayer() {
   const isCompleted = currentModule && completedIds.has(currentModule.id)
   const currentIndex = modules.findIndex(m => m.id === lessonId)
   const prevModuleDone = currentIndex === 0 || completedIds.has(modules[currentIndex - 1]?.id)
-  const isLocked = !prevModuleDone && !isCompleted
+  const isLocked = !isAdmin && !prevModuleDone && !isCompleted
 
   if (typeof document !== "undefined" && !document.getElementById("hide-video-overflow")) {
     const s = document.createElement("style")
@@ -533,7 +533,7 @@ export default function CoursePlayer() {
             const active = mod.id === lessonId
             const done = completedIds.has(mod.id)
             const prevDone = idx === 0 || completedIds.has(modules[idx - 1]?.id)
-            const locked = !prevDone && !done
+            const locked = !isAdmin && !prevDone && !done
             return (
               <div
                 key={mod.id}
@@ -565,7 +565,7 @@ export default function CoursePlayer() {
               onChange={(e) => {
                 const nextId = e.target.value
                 const nextIndex = modules.findIndex((mod) => mod.id === nextId)
-                const locked = nextIndex > 0 && !completedIds.has(modules[nextIndex - 1]?.id) && !completedIds.has(nextId)
+                const locked = !isAdmin && nextIndex > 0 && !completedIds.has(modules[nextIndex - 1]?.id) && !completedIds.has(nextId)
 
                 if (locked) return
 
@@ -579,7 +579,7 @@ export default function CoursePlayer() {
               {modules.map((mod, idx) => {
                 const done = completedIds.has(mod.id)
                 const prevDone = idx === 0 || completedIds.has(modules[idx - 1]?.id)
-                const locked = !prevDone && !done
+                const locked = !isAdmin && !prevDone && !done
 
                 return (
                   <option key={mod.id} value={mod.id} disabled={locked}>
@@ -623,7 +623,7 @@ export default function CoursePlayer() {
                         allowFullScreen
                         title={currentModule.title}
                         onLoad={() => {
-                          if (completedIdsRef.current.has(lessonId)) {
+                          if (isAdmin || completedIdsRef.current.has(lessonId)) {
                             setVideoWatched(true)
                             setWatchProgress(100)
                             return
@@ -687,7 +687,7 @@ export default function CoursePlayer() {
                 )}
               </div>
 
-              {resumePosition > 0 && !isCompleted && (
+              {resumePosition > 0 && !isCompleted && !isAdmin && (
                 <div style={{ padding: "0.5rem 2rem", background: "#fef9c3", borderBottom: "1px solid #fde68a", fontSize: "0.85rem", color: "#92400e", display: "flex", alignItems: "center", gap: "0.5rem" }}>
                   ▶ Resuming from {Math.floor(resumePosition / 60)}m {Math.floor(resumePosition % 60)}s — where you left off
                 </div>
@@ -699,7 +699,13 @@ export default function CoursePlayer() {
                 </div>
               )}
 
-              {currentModule.video_url && !isCompleted && (
+              {isAdmin && (
+                <div style={{ padding: "0.5rem 2rem", background: "#e8f5f0", borderBottom: "1px solid #b8dfd3", fontSize: "0.85rem", color: "#0F6E56", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  Admin preview mode - all modules unlocked, free scrubbing enabled, and certificate preview available.
+                </div>
+              )}
+
+              {currentModule.video_url && !isCompleted && !isAdmin && (
                 <div style={{ padding: "0.75rem 2rem", background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.4rem" }}>
                     <span style={{ fontSize: "0.8rem", color: "var(--text-500)" }}>
@@ -739,12 +745,12 @@ export default function CoursePlayer() {
                   {!isCompleted && (
                     <button
                       onClick={markComplete}
-                      disabled={marking || !videoWatched}
+                      disabled={marking || (!videoWatched && !isAdmin)}
                       className="btn btn-primary"
-                      title={!videoWatched ? "Watch at least 90% of the video first" : ""}
-                      style={{ opacity: videoWatched ? 1 : 0.5, cursor: videoWatched ? "pointer" : "not-allowed" }}
+                      title={!videoWatched && !isAdmin ? "Watch at least 90% of the video first" : ""}
+                      style={{ opacity: videoWatched || isAdmin ? 1 : 0.5, cursor: videoWatched || isAdmin ? "pointer" : "not-allowed" }}
                     >
-                      {marking ? "Saving…" : videoWatched ? "Mark as Complete →" : `Watch video to unlock (${watchProgress}%)`}
+                      {marking ? "Saving…" : isAdmin ? "Mark Complete (Admin Preview)" : videoWatched ? "Mark as Complete →" : `Watch video to unlock (${watchProgress}%)`}
                     </button>
                   )}
                   {isCompleted && (
@@ -764,7 +770,7 @@ export default function CoursePlayer() {
                           onClick={() => navigate(`/certificate/${courseId}`)}
                           style={{ background: "#16a34a", borderColor: "#16a34a" }}
                         >
-                          Get Certificate 🎓
+                          {isAdmin ? "Preview Certificate" : "Get Certificate 🎓"}
                         </button>
                       )}
                     </div>

@@ -3,7 +3,7 @@ import { supabase } from "../../lib/supabaseClient"
 import { useAuth } from "../../context/AuthContext"
 import {
   BookOpen, Home, LogOut, Plus, Edit2, Trash2, Eye, EyeOff,
-  Save, GripVertical, AlertCircle, RefreshCw, FlaskConical
+  Save, GripVertical, AlertCircle, RefreshCw, FlaskConical, Users
 } from "lucide-react"
 import "./AdminDashboard.css"
 
@@ -64,6 +64,13 @@ export default function AdminDashboard() {
             <FlaskConical size={20} />
             <span>Simulations</span>
           </button>
+          <button
+            className={`menu-item ${activeTab === "admins" ? "active" : ""}`}
+            onClick={() => setActiveTab("admins")}
+          >
+            <Users size={20} />
+            <span>Admins</span>
+          </button>
         </nav>
 
         <button className="logout-btn" onClick={logout}>
@@ -77,12 +84,204 @@ export default function AdminDashboard() {
         {activeTab === "homepage" && <HomepageTab />}
         {activeTab === "quizzes" && <QuizManagementTab />}
         {activeTab === "simulations" && <SimulationsTab />}
+        {activeTab === "admins" && <AdminUsersTab />}
       </div>
     </div>
   )
 }
 
 // ─── COURSES TAB ─────────────────────────────────────────────────────────────
+
+function AdminUsersTab() {
+  const [profiles, setProfiles] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [savingId, setSavingId] = useState(null)
+  const [search, setSearch] = useState("")
+  const [error, setError] = useState("")
+  const [message, setMessage] = useState("")
+
+  useEffect(() => {
+    loadProfiles()
+  }, [])
+
+  async function loadProfiles() {
+    setLoading(true)
+    setError("")
+
+    const { data, error } = await supabase
+      .from("user_profiles")
+      .select("id, full_name, email, professional_id, role")
+      .order("full_name", { ascending: true })
+
+    if (error) {
+      setError(error.message)
+      setProfiles([])
+    } else {
+      setProfiles(data || [])
+    }
+
+    setLoading(false)
+  }
+
+  async function promoteToAdmin(targetProfile) {
+    if (!window.confirm(`Make ${targetProfile.email || targetProfile.full_name || "this user"} an admin?`)) return
+
+    setSavingId(targetProfile.id)
+    setError("")
+    setMessage("")
+
+    const { error } = await supabase
+      .from("user_profiles")
+      .update({ role: "admin" })
+      .eq("id", targetProfile.id)
+
+    if (error) {
+      setError(`${error.message}. If this is a permissions issue, run the updated admin profile policy in supabase/rls_reset.sql.`)
+    } else {
+      setMessage(`${targetProfile.email || targetProfile.full_name || "User"} is now an admin.`)
+      await loadProfiles()
+    }
+
+    setSavingId(null)
+  }
+
+  const query = search.trim().toLowerCase()
+  const filtered = profiles.filter((profile) => {
+    if (!query) return true
+    return [profile.full_name, profile.email, profile.professional_id, profile.role]
+      .filter(Boolean)
+      .some((value) => String(value).toLowerCase().includes(query))
+  })
+
+  const admins = filtered.filter((profile) => profile.role === "admin")
+  const candidates = filtered.filter((profile) => profile.role !== "admin")
+
+  return (
+    <div className="admin-section">
+      <div className="section-header">
+        <div>
+          <h2>Admin Management</h2>
+          <p style={{ color: "var(--gray-500)", marginTop: "0.4rem" }}>
+            View current admins and promote signed-up users to admin.
+          </p>
+        </div>
+        <button className="btn-secondary" onClick={loadProfiles}>
+          <RefreshCw size={16} /> Refresh
+        </button>
+      </div>
+
+      <div style={{ marginBottom: "1.5rem" }}>
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by name, email, professional ID, or role"
+          style={{
+            width: "100%",
+            maxWidth: "420px",
+            padding: "0.85rem 1rem",
+            borderRadius: "0.75rem",
+            border: "1px solid var(--gray-300)",
+            fontSize: "0.95rem"
+          }}
+        />
+      </div>
+
+      {message && (
+        <div style={{ marginBottom: "1rem", padding: "0.9rem 1rem", borderRadius: "0.75rem", background: "#dcfce7", color: "#166534", fontWeight: 600 }}>
+          {message}
+        </div>
+      )}
+
+      {error && (
+        <div style={{ marginBottom: "1rem", padding: "0.9rem 1rem", borderRadius: "0.75rem", background: "#fee2e2", color: "#991b1b", fontWeight: 600 }}>
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <p style={{ color: "var(--gray-500)" }}>Loading users...</p>
+      ) : (
+        <div style={{ display: "grid", gap: "2rem" }}>
+          <section>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", marginBottom: "1rem", flexWrap: "wrap" }}>
+              <h3 style={{ margin: 0 }}>Current Admins</h3>
+              <span style={{ fontSize: "0.85rem", color: "var(--gray-500)" }}>{admins.length} admin{admins.length === 1 ? "" : "s"}</span>
+            </div>
+
+            {admins.length === 0 ? (
+              <div className="empty-state"><p>No admins found.</p></div>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "1rem" }}>
+                {admins.map((profile) => (
+                  <div key={profile.id} style={{ background: "var(--gray-50)", border: "1px solid var(--gray-300)", borderRadius: "0.9rem", padding: "1.1rem 1.15rem" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem", marginBottom: "0.8rem" }}>
+                      <strong style={{ color: "var(--gray-900)", fontSize: "1rem" }}>{profile.full_name || "Unnamed admin"}</strong>
+                      <span style={{ background: "#dcfce7", color: "#166534", borderRadius: "999px", padding: "0.25rem 0.65rem", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase" }}>
+                        Admin
+                      </span>
+                    </div>
+                    <p style={{ margin: "0 0 0.45rem", color: "var(--gray-600)", fontSize: "0.9rem" }}>{profile.email || "No email"}</p>
+                    <p style={{ margin: 0, color: "var(--gray-500)", fontSize: "0.82rem" }}>
+                      {profile.professional_id ? `Professional ID: ${profile.professional_id}` : "No professional ID"}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", marginBottom: "1rem", flexWrap: "wrap" }}>
+              <h3 style={{ margin: 0 }}>Promote Signed-up Users</h3>
+              <span style={{ fontSize: "0.85rem", color: "var(--gray-500)" }}>{candidates.length} user{candidates.length === 1 ? "" : "s"}</span>
+            </div>
+
+            {candidates.length === 0 ? (
+              <div className="empty-state">
+                <p>No non-admin signed-up users found for the current filter.</p>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+                {candidates.map((profile) => (
+                  <div
+                    key={profile.id}
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "minmax(0, 1fr) auto",
+                      alignItems: "center",
+                      gap: "1rem",
+                      padding: "1rem 1.15rem",
+                      background: "var(--gray-50)",
+                      border: "1px solid var(--gray-300)",
+                      borderRadius: "0.9rem"
+                    }}
+                  >
+                    <div style={{ minWidth: 0 }}>
+                      <strong style={{ display: "block", color: "var(--gray-900)", fontSize: "0.98rem", marginBottom: "0.3rem" }}>
+                        {profile.full_name || "Unnamed user"}
+                      </strong>
+                      <p style={{ margin: "0 0 0.3rem", color: "var(--gray-600)", fontSize: "0.9rem" }}>{profile.email || "No email"}</p>
+                      <p style={{ margin: 0, color: "var(--gray-500)", fontSize: "0.82rem" }}>
+                        {profile.professional_id ? `Professional ID: ${profile.professional_id}` : "No professional ID"} · Role: {profile.role || "student"}
+                      </p>
+                    </div>
+                    <button
+                      className="btn-primary"
+                      onClick={() => promoteToAdmin(profile)}
+                      disabled={savingId === profile.id}
+                    >
+                      {savingId === profile.id ? "Promoting..." : "Make Admin"}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
+      )}
+    </div>
+  )
+}
 
 function CoursesTab() {
   const [courses, setCourses] = useState([])

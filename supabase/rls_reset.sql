@@ -137,6 +137,13 @@ for select
 to authenticated
 using (public.is_admin());
 
+create policy "Admins can update all profiles"
+on public.user_profiles
+for update
+to authenticated
+using (public.is_admin())
+with check (public.is_admin());
+
 create policy "Public can view published courses"
 on public.courses
 for select

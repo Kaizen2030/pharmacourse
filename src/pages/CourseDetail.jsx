@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext"
 
 export default function CourseDetail() {
   const { id } = useParams()
-  const { user } = useAuth()
+  const { user, isAdmin } = useAuth()
   const navigate = useNavigate()
   const [course, setCourse] = useState(null)
   const [modules, setModules] = useState([])
@@ -157,6 +157,15 @@ export default function CourseDetail() {
               <Link to={`/learn/${course.id}/${modules[0]?.id}`} className="btn btn-primary" style={{ width: "100%", marginBottom: "1rem" }}>
                 Continue Learning →
               </Link>
+            ) : isAdmin && modules.length > 0 ? (
+              <div style={{ display: "grid", gap: "0.75rem", marginBottom: "1rem" }}>
+                <Link to={`/learn/${course.id}/${modules[0].id}`} className="btn btn-primary" style={{ width: "100%" }}>
+                  Preview Course
+                </Link>
+                <Link to={`/certificate/${course.id}`} className="btn btn-outline" style={{ width: "100%" }}>
+                  Preview Certificate
+                </Link>
+              </div>
             ) : (
               <button onClick={handleEnroll} disabled={enrolling} className="btn btn-primary" style={{ width: "100%", marginBottom: "1rem" }}>
                 {enrolling ? "Enrolling…" : user ? "Enroll Now — Free" : "Register to Enroll"}

@@ -6,12 +6,13 @@ import { jsPDF } from "jspdf"
 
 export default function Certificate() {
   const { courseId } = useParams()
-  const { user, profile } = useAuth()
+  const { user, profile, isAdmin } = useAuth()
   const [cert, setCert] = useState(null)
   const [course, setCourse] = useState(null)
   const [eligible, setEligible] = useState(false)
   const [blockedReason, setBlockedReason] = useState("")
   const [loading, setLoading] = useState(true)
+  const [previewMode, setPreviewMode] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -52,13 +53,17 @@ export default function Certificate() {
 
       setEligible(canIssueCertificate)
 
-      if (!enrollment) {
+      if (isAdmin) {
+        setPreviewMode(!canIssueCertificate)
+      }
+
+      if (!enrollment && !isAdmin) {
         setBlockedReason("Enroll in this course first to access its certificate.")
         setLoading(false)
         return
       }
 
-      if (!canIssueCertificate) {
+      if (!canIssueCertificate && !isAdmin) {
         setBlockedReason(`Finish all ${totalModules || 0} modules before generating your certificate.`)
         setLoading(false)
         return
@@ -71,7 +76,7 @@ export default function Certificate() {
         .eq("course_id", courseId)
         .maybeSingle()
 
-      if (!existingCert) {
+      if (!existingCert && canIssueCertificate) {
         const { data: newCert, error: insertError } = await supabase
           .from("certificates")
           .insert({ user_id: user.id, course_id: courseId })
@@ -88,12 +93,19 @@ export default function Certificate() {
         existingCert = newCert
       }
 
-      setCert(existingCert || null)
+      setCert(
+        existingCert || (isAdmin
+          ? {
+              id: `preview-${courseId}`,
+              issued_at: new Date().toISOString(),
+            }
+          : null)
+      )
       setLoading(false)
     }
 
     void load()
-  }, [courseId, user?.id])
+  }, [courseId, user?.id, isAdmin])
 
   function downloadPDF() {
     const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" })
@@ -175,7 +187,7 @@ export default function Certificate() {
     )
   }
 
-  if (!eligible || !cert) {
+  if ((!eligible && !isAdmin) || !cert) {
     return (
       <div className="page" style={{ maxWidth: 720, textAlign: "center" }}>
         <h1 style={{ fontSize: "2rem", marginBottom: ".75rem" }}>Certificate not ready yet</h1>
@@ -194,8 +206,14 @@ export default function Certificate() {
     <div className="page" style={{ maxWidth: 800, textAlign: "center" }}>
       <h1 style={{ fontSize: "2rem", marginBottom: ".5rem" }}>Certificate Ready</h1>
       <p style={{ color: "var(--text-500)", marginBottom: "2.5rem" }}>
-        You have completed <strong>{course?.title}</strong>
+        {previewMode ? <>Admin preview for <strong>{course?.title}</strong></> : <>You have completed <strong>{course?.title}</strong></>}
       </p>
+
+      {previewMode && (
+        <div style={{ marginBottom: "1.25rem", padding: "0.9rem 1rem", borderRadius: 12, background: "#e8f5f0", border: "1px solid #b8dfd3", color: "#0F6E56", fontSize: ".9rem", fontWeight: 600 }}>
+          Admin preview mode - this certificate view is available only to admins before learner completion.
+        </div>
+      )}
 
       <div
         style={{
