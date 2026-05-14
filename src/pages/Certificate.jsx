@@ -206,10 +206,11 @@ export default function Certificate() {
       doc.setFillColor(10, 77, 64)
       doc.triangle(margin, margin, margin + railWidth * 0.62, margin, margin, pageHeight - margin, "F")
 
-      doc.setTextColor(255, 255, 255)
-      doc.setFont("times", "bold")
-      doc.setFontSize(28)
-      doc.text("Rx", margin + railWidth / 2, 38, { align: "center" })
+      if (logoData) {
+        doc.setFillColor(255, 255, 255)
+        doc.circle(margin + railWidth / 2, 34, 10, "F")
+        doc.addImage(logoData, "PNG", margin + railWidth / 2 - 8, 26, 16, 16)
+      }
 
       doc.setFillColor(62, 144, 126)
       doc.roundedRect(margin + 5, 80, railWidth - 10, 16, 2.5, 2.5, "F")
@@ -224,7 +225,8 @@ export default function Certificate() {
       doc.setTextColor(220, 245, 238)
       doc.setFont("helvetica", "bold")
       doc.setFontSize(7)
-      doc.text((settings.left_vertical_text || "PharmaCourse Kenya").toUpperCase(), margin + railWidth / 2, pageHeight - 18, { align: "center" })
+      const railLabelLines = doc.splitTextToSize((settings.left_vertical_text || "PharmaCourse Kenya").toUpperCase(), 24)
+      doc.text(railLabelLines, margin + railWidth / 2, pageHeight - 22, { align: "center" })
 
       doc.setDrawColor(122, 217, 202)
       doc.setLineWidth(0.6)
@@ -273,7 +275,7 @@ export default function Certificate() {
       doc.setFontSize(11)
       doc.text(settings.certifies_text || "This is to certify that", contentX, 80)
 
-      doc.setTextColor(22, 185, 199)
+      doc.setTextColor(16, 168, 177)
       doc.setFont("helvetica", "normal")
       doc.setFontSize(30)
       const learnerName = profile?.full_name || "Pharmacist"
@@ -359,10 +361,16 @@ export default function Certificate() {
         doc.text("Scan to verify", pageWidth - 27, signatureBaseY + 10, { align: "center" })
       }
 
+      doc.setDrawColor(122, 217, 202)
+      doc.setLineWidth(0.6)
+      doc.line(pageWidth - 34, pageHeight - 28, pageWidth - 28, pageHeight - 22)
+      doc.line(pageWidth - 30, pageHeight - 28, pageWidth - 24, pageHeight - 22)
+      doc.line(pageWidth - 26, pageHeight - 28, pageWidth - 20, pageHeight - 22)
+
       doc.setTextColor(147, 160, 152)
       doc.setFont("helvetica", "normal")
       doc.setFontSize(6.5)
-      doc.text(settings.footer_text || "PharmaCourse - Professional Pharmacy CPD Platform - www.pharmacourse.co.ke", contentX, pageHeight - 14)
+      doc.text(settings.footer_text || "PharmaCourse - Professional Pharmacy CPD Platform - www.pharmacourse.co.ke", pageWidth / 2 + 16, pageHeight - 14, { align: "center" })
 
       doc.save(`PharmaCourse_Certificate_${(profile?.full_name || "Certificate").replace(/ /g, "_")}.pdf`)
     } finally {
@@ -448,8 +456,8 @@ export default function Certificate() {
             }}
           />
           <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
-            <div style={{ fontSize: "3.3rem", fontWeight: 700, letterSpacing: "-0.04em", fontFamily: "Georgia, serif", opacity: 0.18, lineHeight: 1 }}>
-              Rx
+            <div style={{ width: 92, height: 92, borderRadius: "999px", background: "rgba(255,255,255,0.16)", display: "grid", placeItems: "center", margin: "0 auto" }}>
+              <img src={logoUrl} alt={`${settings.organization_name} logo`} style={{ width: 62, height: 62, borderRadius: 18, objectFit: "cover" }} />
             </div>
           </div>
           <div
@@ -578,9 +586,9 @@ export default function Certificate() {
             <div style={{ color: "#607068", fontSize: "1rem", marginBottom: "0.45rem" }}>{settings.certifies_text}</div>
             <div
               style={{
-                fontSize: "3rem",
+                fontSize: "2.8rem",
                 lineHeight: 1.1,
-                color: "#16b9c7",
+                color: "#119eab",
                 fontFamily: "Georgia, serif",
                 marginBottom: "0.45rem",
                 wordBreak: "break-word",
@@ -648,7 +656,13 @@ export default function Certificate() {
             </div>
           </div>
 
-          <div style={{ marginTop: "1rem", fontSize: "0.74rem", color: "#93a098" }}>{settings.footer_text}</div>
+          <div style={{ marginTop: "1rem", fontSize: "0.74rem", color: "#93a098", textAlign: "center" }}>{settings.footer_text}</div>
+
+          <div style={{ position: "absolute", right: "2rem", bottom: "1.6rem", display: "flex", gap: "0.3rem", opacity: 0.55 }}>
+            <span style={{ width: 0, height: 0, borderTop: "8px solid transparent", borderBottom: "8px solid transparent", borderLeft: "11px solid #7ad9ca" }} />
+            <span style={{ width: 0, height: 0, borderTop: "8px solid transparent", borderBottom: "8px solid transparent", borderLeft: "11px solid #7ad9ca" }} />
+            <span style={{ width: 0, height: 0, borderTop: "8px solid transparent", borderBottom: "8px solid transparent", borderLeft: "11px solid #7ad9ca" }} />
+          </div>
         </div>
       </div>
 
