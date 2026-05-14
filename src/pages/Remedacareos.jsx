@@ -218,16 +218,16 @@ export default function RemedacareOS() {
   const [activeModule, setActiveModule] = useState(null)
   const [hoveredModule, setHoveredModule] = useState(null)
 
-  const BLUE = "#1a3a8a"
-  const DARK = "#0c1b4d"
+  const GREEN = "#0F6E56"
+  const DARK = "#0a2e1f"
 
   return (
-    <div style={{ fontFamily: "'Outfit', 'Segoe UI', sans-serif", background: "#f5f8ff", minHeight: "100vh" }}>
+    <div style={{ fontFamily: "'Outfit', 'Segoe UI', sans-serif", background: "#f8faf9", minHeight: "100vh" }}>
       <style>{css}</style>
 
-      <section className="rc-hero" style={{ position: "relative", overflow: "hidden", background: "linear-gradient(135deg, #080f2e 0%, #1a3a8a 55%, #2755c5 100%)", color: "#fff", padding: "96px 24px 72px", textAlign: "center" }}>
+      <section className="rc-hero" style={{ position: "relative", overflow: "hidden", background: "linear-gradient(135deg, #062318 0%, #0F6E56 58%, #1a9e7a 100%)", color: "#fff", padding: "96px 24px 72px", textAlign: "center" }}>
         <div style={{ position: "absolute", inset: 0, backgroundImage: DOT_PATTERN, backgroundSize: "20px 20px", opacity: 0.05, pointerEvents: "none" }} />
-        <div style={{ position: "absolute", top: "-10%", left: "50%", transform: "translateX(-50%)", width: 700, height: 400, borderRadius: "50%", background: "radial-gradient(ellipse, rgba(39,85,197,0.4) 0%, transparent 70%)", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", top: "-10%", left: "50%", transform: "translateX(-50%)", width: 700, height: 400, borderRadius: "50%", background: "radial-gradient(ellipse, rgba(26,158,122,0.35) 0%, transparent 70%)", pointerEvents: "none" }} />
 
         <div style={{ position: "relative", maxWidth: 820, margin: "0 auto" }}>
           <span className="rc-hero-badge" style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.22)", borderRadius: 99, fontSize: 11, fontWeight: 700, letterSpacing: 1.8, padding: "7px 18px", marginBottom: 28, textTransform: "uppercase" }}>
@@ -242,7 +242,7 @@ export default function RemedacareOS() {
           </p>
 
           <div className="rc-hero-actions" style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-            <a href={WHATSAPP} target="_blank" rel="noreferrer" className="rc-btn-white" style={{ background: "#fff", color: BLUE, fontWeight: 700, padding: "15px 30px", borderRadius: 10, textDecoration: "none", fontSize: 15, display: "flex", alignItems: "center", gap: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.2)" }}>
+            <a href={WHATSAPP} target="_blank" rel="noreferrer" className="rc-btn-white" style={{ background: "#fff", color: GREEN, fontWeight: 700, padding: "15px 30px", borderRadius: 10, textDecoration: "none", fontSize: 15, display: "flex", alignItems: "center", gap: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.15)" }}>
               Book a Demo <ArrowRight size={16} />
             </a>
             <a href={WHATSAPP} target="_blank" rel="noreferrer" className="rc-btn-ghost" style={{ background: "transparent", color: "#fff", fontWeight: 600, padding: "15px 30px", borderRadius: 10, textDecoration: "none", fontSize: 15, border: "1.5px solid rgba(255,255,255,0.35)" }}>
@@ -261,10 +261,10 @@ export default function RemedacareOS() {
         </div>
       </section>
 
-      <section className="rc-section" style={{ padding: "80px 24px", background: "#f5f8ff" }}>
+      <section className="rc-section" style={{ padding: "80px 24px", background: "#f8faf9" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <div className="rc-section-heading" style={{ textAlign: "center", marginBottom: 52 }}>
-            <span style={{ color: BLUE, fontWeight: 700, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase" }}>Why RemedacareOS</span>
+            <span style={{ color: GREEN, fontWeight: 700, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase" }}>Why RemedacareOS</span>
             <h2 style={{ fontSize: "clamp(1.6rem, 3vw, 2.3rem)", fontWeight: 800, margin: "14px 0 0", color: DARK, letterSpacing: "-0.02em" }}>
               Kenya's hospital software - finally done right.
             </h2>
@@ -274,12 +274,12 @@ export default function RemedacareOS() {
             {pillars.map((pillar) => {
               const Icon = pillar.icon
               return (
-                <div key={pillar.title} className="rc-card" style={{ background: "#fff", border: "1px solid #d8e2f8", borderRadius: 16, padding: "28px 22px", boxShadow: "0 2px 12px rgba(26,58,138,0.05)" }}>
-                  <div className="rc-card-icon" style={{ width: 44, height: 44, borderRadius: 12, background: "#e8eefc", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
-                    <Icon size={20} color={BLUE} />
+                <div key={pillar.title} className="rc-card" style={{ background: "#fff", border: "1px solid #e0ece8", borderRadius: 16, padding: "28px 22px", boxShadow: "0 2px 12px rgba(15,110,86,0.05)" }}>
+                  <div className="rc-card-icon" style={{ width: 44, height: 44, borderRadius: 12, background: "#e8f5f0", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
+                    <Icon size={20} color={GREEN} />
                   </div>
                   <h3 className="rc-card-title" style={{ fontSize: 15, fontWeight: 700, color: DARK, margin: "0 0 10px" }}>{pillar.title}</h3>
-                  <p className="rc-card-body" style={{ color: "#556", fontSize: 14, lineHeight: 1.7, margin: 0 }}>{pillar.body}</p>
+                  <p className="rc-card-body" style={{ color: "#666", fontSize: 14, lineHeight: 1.7, margin: 0 }}>{pillar.body}</p>
                 </div>
               )
             })}
@@ -289,15 +289,15 @@ export default function RemedacareOS() {
 
       <section className="rc-section" style={{ background: "#fff", padding: "80px 24px" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-          <div className="rc-integration-grid" style={{ background: "linear-gradient(135deg, #e8eefc 0%, #f0f5ff 100%)", border: "1.5px solid #c4d3f8", borderRadius: 24, padding: "52px 48px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 48, alignItems: "center", boxShadow: "0 8px 40px rgba(26,58,138,0.07)" }}>
+          <div className="rc-integration-grid" style={{ background: "linear-gradient(135deg, #e2f4ed 0%, #f0faf7 100%)", border: "1.5px solid #b8dfd3", borderRadius: 24, padding: "52px 48px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 48, alignItems: "center", boxShadow: "0 8px 40px rgba(15,110,86,0.08)" }}>
             <div className="rc-integration-copy">
-              <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: BLUE, color: "#fff", borderRadius: 99, fontSize: 12, fontWeight: 700, padding: "7px 16px", marginBottom: 20 }}>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: GREEN, color: "#fff", borderRadius: 99, fontSize: 12, fontWeight: 700, padding: "7px 16px", marginBottom: 20 }}>
                 <Link2 size={13} /> PharmacyOS Integration
               </div>
               <h3 style={{ fontSize: "1.5rem", fontWeight: 800, color: DARK, margin: "0 0 14px", letterSpacing: "-0.02em" }}>
                 Prescriptions flow directly to the dispensary.
               </h3>
-              <p style={{ color: "#3a4d8a", fontSize: 15, lineHeight: 1.75, margin: "0 0 24px" }}>
+              <p style={{ color: "#3a6b57", fontSize: 15, lineHeight: 1.75, margin: "0 0 24px" }}>
                 When a doctor issues a prescription in RemedacareOS, it lands instantly in PharmacyOS with no paper, no transcription errors and no delays.
               </p>
               <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
@@ -307,20 +307,20 @@ export default function RemedacareOS() {
                   "Drug dispensed and stock auto-updated",
                   "Patient billed across both systems",
                 ].map((step, index) => (
-                  <li key={index} style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 14, color: "#2a3a7a", marginBottom: 12 }}>
-                    <span style={{ width: 24, height: 24, borderRadius: "50%", background: BLUE, color: "#fff", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{index + 1}</span>
+                  <li key={index} style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 14, color: "#2a5a47", marginBottom: 12 }}>
+                    <span style={{ width: 24, height: 24, borderRadius: "50%", background: GREEN, color: "#fff", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{index + 1}</span>
                     {step}
                   </li>
                 ))}
               </ul>
             </div>
-            <div className="rc-integration-console" style={{ background: "#0c1b4d", borderRadius: 16, padding: "24px 20px", boxShadow: "0 12px 40px rgba(8,15,46,0.25)" }}>
+            <div className="rc-integration-console" style={{ background: "#0a2e1f", borderRadius: 16, padding: "24px 20px", boxShadow: "0 12px 40px rgba(6,35,24,0.3)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18 }}>
                 <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#4ade80", animation: "pulse-dot 2s ease-in-out infinite" }} />
-                <span style={{ color: "#93c5fd", fontSize: 11, fontWeight: 700, letterSpacing: 1 }}>LIVE CONNECTION</span>
+                <span style={{ color: "#5dcaa5", fontSize: 11, fontWeight: 700, letterSpacing: 1 }}>LIVE CONNECTION</span>
               </div>
               <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: 10, padding: "12px 14px", marginBottom: 10 }}>
-                <div style={{ color: "#93c5fd", fontSize: 10, fontWeight: 700, marginBottom: 5, letterSpacing: 0.5 }}>REMEDACAREOS | DOCTOR</div>
+                <div style={{ color: "#5dcaa5", fontSize: 10, fontWeight: 700, marginBottom: 5, letterSpacing: 0.5 }}>REMEDACAREOS | DOCTOR</div>
                 <div style={{ color: "#fff", fontSize: 12, lineHeight: 1.55 }}>
                   Dr. Kamau issued: <strong style={{ color: "#86efac" }}>Amoxicillin 500mg x 21 tabs</strong><br />
                   Patient: Jane Wanjiku | Ward: OPD
@@ -343,10 +343,10 @@ export default function RemedacareOS() {
         </div>
       </section>
 
-      <section className="rc-section" style={{ padding: "80px 24px", background: "#f5f8ff" }}>
+      <section className="rc-section" style={{ padding: "80px 24px", background: "#f8faf9" }}>
         <div style={{ maxWidth: 1280, margin: "0 auto" }}>
           <div className="rc-section-heading" style={{ textAlign: "center", marginBottom: 52 }}>
-            <span style={{ color: BLUE, fontWeight: 700, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase" }}>Modules</span>
+            <span style={{ color: GREEN, fontWeight: 700, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase" }}>Modules</span>
             <h2 style={{ fontSize: "clamp(1.6rem, 3vw, 2.3rem)", fontWeight: 800, margin: "14px 0 0", color: DARK, letterSpacing: "-0.02em" }}>
               Everything a Kenyan hospital needs.
             </h2>
@@ -363,14 +363,14 @@ export default function RemedacareOS() {
                   onClick={() => setActiveModule(isActive ? null : index)}
                   onMouseEnter={() => setHoveredModule(index)}
                   onMouseLeave={() => setHoveredModule(null)}
-                  style={{ background: isActive ? "#eef3ff" : "#fff", cursor: "pointer", border: `1.5px solid ${isActive ? BLUE : isHovered ? "#a8c4f8" : "#dde6fa"}`, borderRadius: 14, padding: "22px 20px", boxShadow: isActive ? "0 6px 24px rgba(26,58,138,0.15)" : isHovered ? "0 4px 16px rgba(26,58,138,0.08)" : "none" }}
+                  style={{ background: isActive ? "#eef8f4" : "#fff", cursor: "pointer", border: `1.5px solid ${isActive ? GREEN : isHovered ? "#b8dfd3" : "#e0ece8"}`, borderRadius: 14, padding: "22px 20px", boxShadow: isActive ? "0 6px 24px rgba(15,110,86,0.15)" : isHovered ? "0 4px 16px rgba(15,110,86,0.08)" : "none" }}
                 >
-                  <div className="rc-mod-icon" style={{ width: 40, height: 40, borderRadius: 10, background: isActive ? "#dce8ff" : "#edf1fb", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
-                    <Icon size={19} color={isActive ? BLUE : "#8da4d0"} />
+                  <div className="rc-mod-icon" style={{ width: 40, height: 40, borderRadius: 10, background: isActive ? "#d7f0e6" : "#edf7f2", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
+                    <Icon size={19} color={isActive ? GREEN : "#7db8a1"} />
                   </div>
                   <h3 className="rc-mod-title" style={{ fontSize: 14, fontWeight: 700, color: DARK, margin: "0 0 7px" }}>{module.label}</h3>
                   {isActive ? (
-                    <p className="rc-mod-text" style={{ fontSize: 13, color: "#445", lineHeight: 1.65, margin: 0 }}>{module.desc}</p>
+                    <p className="rc-mod-text" style={{ fontSize: 13, color: "#444", lineHeight: 1.65, margin: 0 }}>{module.desc}</p>
                   ) : (
                     <p className="rc-mod-text" style={{ fontSize: 12, color: "#aaa", margin: 0 }}>Click to expand</p>
                   )}
@@ -385,24 +385,24 @@ export default function RemedacareOS() {
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <div className="rc-compliance-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 64, alignItems: "center" }}>
             <div>
-              <span style={{ color: BLUE, fontWeight: 700, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase" }}>Compliance</span>
+              <span style={{ color: GREEN, fontWeight: 700, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase" }}>Compliance</span>
               <h2 style={{ fontSize: "clamp(1.5rem, 3vw, 2.1rem)", fontWeight: 800, margin: "14px 0 18px", color: DARK, letterSpacing: "-0.02em" }}>
                 Built around Kenya's health system standards.
               </h2>
-              <p style={{ color: "#556", fontSize: 15, lineHeight: 1.75, marginBottom: 32 }}>
+              <p style={{ color: "#666", fontSize: 15, lineHeight: 1.75, marginBottom: 32 }}>
                 RemedacareOS handles every Kenyan regulatory requirement out of the box so your clinical staff can focus on patients, not paperwork.
               </p>
-              <a href={WHATSAPP} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: BLUE, color: "#fff", textDecoration: "none", padding: "13px 24px", borderRadius: 10, fontWeight: 700, fontSize: 14, boxShadow: "0 4px 16px rgba(26,58,138,0.3)" }}>
+              <a href={WHATSAPP} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: GREEN, color: "#fff", textDecoration: "none", padding: "13px 24px", borderRadius: 10, fontWeight: 700, fontSize: 14, boxShadow: "0 4px 16px rgba(15,110,86,0.3)" }}>
                 Book a Live Demo <ChevronRight size={16} />
               </a>
             </div>
-            <div className="rc-compliance-card" style={{ background: "#f8faff", borderRadius: 16, padding: "8px 24px", border: "1px solid #d8e2f8", boxShadow: "0 4px 20px rgba(26,58,138,0.06)" }}>
+            <div className="rc-compliance-card" style={{ background: "#fff", borderRadius: 16, padding: "8px 24px", border: "1px solid #e0ece8", boxShadow: "0 4px 20px rgba(15,110,86,0.06)" }}>
               {compliance.map((item, index) => (
-                <div key={index} className="rc-compliance-item" style={{ display: "flex", alignItems: "flex-start", gap: 14, padding: "16px 0", borderBottom: index < compliance.length - 1 ? "1px solid #e8eefa" : "none" }}>
-                  <div style={{ width: 22, height: 22, borderRadius: "50%", background: "#e0e8fb", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
-                    <CheckCircle size={14} color={BLUE} />
+                <div key={index} className="rc-compliance-item" style={{ display: "flex", alignItems: "flex-start", gap: 14, padding: "16px 0", borderBottom: index < compliance.length - 1 ? "1px solid #edf2ef" : "none" }}>
+                  <div style={{ width: 22, height: 22, borderRadius: "50%", background: "#e8f5f0", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
+                    <CheckCircle size={14} color={GREEN} />
                   </div>
-                  <span style={{ fontSize: 15, color: "#2a3060", fontWeight: 500 }}>{item}</span>
+                  <span style={{ fontSize: 15, color: "#2a3a30", fontWeight: 500 }}>{item}</span>
                 </div>
               ))}
             </div>
@@ -410,7 +410,7 @@ export default function RemedacareOS() {
         </div>
       </section>
 
-      <section className="rc-cta" style={{ position: "relative", overflow: "hidden", background: "linear-gradient(135deg, #080f2e 0%, #1a3a8a 100%)", padding: "80px 24px", textAlign: "center" }}>
+      <section className="rc-cta" style={{ position: "relative", overflow: "hidden", background: "linear-gradient(135deg, #062318 0%, #0F6E56 100%)", padding: "80px 24px", textAlign: "center" }}>
         <div style={{ position: "absolute", inset: 0, backgroundImage: DOT_PATTERN, backgroundSize: "20px 20px", opacity: 0.04, pointerEvents: "none" }} />
         <div style={{ position: "relative", maxWidth: 680, margin: "0 auto" }}>
           <h2 style={{ fontSize: "clamp(1.6rem, 3vw, 2.4rem)", fontWeight: 800, color: "#fff", margin: "0 0 18px", letterSpacing: "-0.02em" }}>
@@ -420,7 +420,7 @@ export default function RemedacareOS() {
             RemedacareOS is available now for Kenyan hospitals and clinics. Book a free demo and see the full HMIS live from patient registration to MOH reporting.
           </p>
           <div className="rc-cta-actions" style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
-            <a href={WHATSAPP} target="_blank" rel="noreferrer" className="rc-btn-white" style={{ background: "#fff", color: BLUE, fontWeight: 700, padding: "15px 30px", borderRadius: 10, textDecoration: "none", fontSize: 15, display: "flex", alignItems: "center", gap: 8, boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}>
+            <a href={WHATSAPP} target="_blank" rel="noreferrer" className="rc-btn-white" style={{ background: "#fff", color: GREEN, fontWeight: 700, padding: "15px 30px", borderRadius: 10, textDecoration: "none", fontSize: 15, display: "flex", alignItems: "center", gap: 8, boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}>
               Book Free Demo <ArrowRight size={16} />
             </a>
             <Link to="/pharmacyos" style={{ background: "transparent", color: "#fff", fontWeight: 600, padding: "15px 30px", borderRadius: 10, textDecoration: "none", fontSize: 15, border: "1.5px solid rgba(255,255,255,0.35)", display: "flex", alignItems: "center", gap: 8 }}>
