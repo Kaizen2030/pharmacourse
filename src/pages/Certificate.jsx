@@ -371,7 +371,7 @@ export default function Certificate() {
   }
 
   const dots = Array.from({ length: 36 })
-  const issuedDate = formatDate(cert?.issued_at)
+  const issuedDate = formatDate(cert?.issued_date || cert?.issued_at)
   const logoUrl = "/favicon.svg"
 
   if (loading) return <div className="page" style={{ color: "var(--text-500)" }}>Loading...</div>

@@ -54,6 +54,34 @@ $$;
 
 grant execute on function public.is_admin() to authenticated, anon;
 
+create or replace function public.verify_certificate(cert_id uuid)
+returns table (
+  certificate_id uuid,
+  issued_date timestamptz,
+  learner_name text,
+  professional_id text,
+  course_title text
+)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select
+    c.id as certificate_id,
+    c.issued_date,
+    up.full_name as learner_name,
+    up.professional_id,
+    co.title as course_title
+  from public.certificates c
+  join public.user_profiles up on up.id = c.user_id
+  join public.courses co on co.id = c.course_id
+  where c.id = cert_id
+  limit 1;
+$$;
+
+grant execute on function public.verify_certificate(uuid) to authenticated, anon;
+
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql

@@ -12,6 +12,7 @@ import CourseDetail from "./pages/CourseDetail"
 import CoursePlayer from "./pages/CoursePlayer"
 import Dashboard from "./pages/Dashboard"
 import Certificate from "./pages/Certificate"
+import VerifyCertificate from "./pages/VerifyCertificate"
 import CaseSimulation from "./pages/CaseSimulation"
 import AdminDashboard from "./pages/admin/AdminDashboard"
 import CourseForm from "./pages/admin/CourseForm"
@@ -38,6 +39,7 @@ export default function App() {
           <Route path="/learn/:courseId/:lessonId" element={<CoursePlayer />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/certificate/:courseId" element={<Certificate />} />
+          <Route path="/verify/:certificateId" element={<VerifyCertificate />} />
           <Route path="/simulation/:simulationId" element={<CaseSimulation />} />
           <Route path="/pharmacyos" element={<PharmacyOS />} />
           <Route path="/remedacareos" element={<RemedacareOS />} />

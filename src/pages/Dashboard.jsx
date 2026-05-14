@@ -548,7 +548,7 @@ export default function Dashboard() {
                       {c.courses?.title}
                     </h3>
                     <p style={{ fontSize: ".78rem", color: "var(--text-500)", margin: "0 0 1rem" }}>
-                      Issued {new Date(c.issued_at).toLocaleDateString("en-KE", { year: "numeric", month: "long", day: "numeric" })}
+                      Issued {new Date(c.issued_date || c.issued_at).toLocaleDateString("en-KE", { year: "numeric", month: "long", day: "numeric" })}
                     </p>
                     <Link to={`/certificate/${c.course_id}`} className="btn btn-primary" style={{ fontSize: ".82rem", width: "100%", textAlign: "center" }}>
                       View Certificate
