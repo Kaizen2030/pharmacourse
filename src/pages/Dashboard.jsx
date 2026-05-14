@@ -6,7 +6,7 @@ import ProgressBar from "../components/ProgressBar"
 import { BookOpen, Award, Clock, User, ChevronRight, ArrowRight, FlaskConical } from "lucide-react"
 
 export default function Dashboard() {
-  const { user, profile, loading: authLoading } = useAuth()
+  const { user, profile, loading: authLoading, updateProfile } = useAuth()
   const [enrollments, setEnrollments] = useState([])
   const [progress, setProgress] = useState({})
   const [certificates, setCertificates] = useState([])
@@ -15,6 +15,10 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("courses")
   const [firstModules, setFirstModules] = useState({})
+  const [profileForm, setProfileForm] = useState({ full_name: "", professional_id: "" })
+  const [profileSaving, setProfileSaving] = useState(false)
+  const [profileMessage, setProfileMessage] = useState("")
+  const [profileError, setProfileError] = useState("")
 
   useEffect(() => {
     if (authLoading) return
@@ -102,6 +106,46 @@ export default function Dashboard() {
     load()
   }, [authLoading, user])
 
+  useEffect(() => {
+    setProfileForm({
+      full_name: profile?.full_name || "",
+      professional_id: profile?.professional_id || "",
+    })
+  }, [profile?.full_name, profile?.professional_id])
+
+  function handleProfileFieldChange(key) {
+    return (event) => {
+      const value = event.target.value
+      setProfileForm((current) => ({ ...current, [key]: value }))
+    }
+  }
+
+  async function handleProfileSave(event) {
+    event.preventDefault()
+    setProfileMessage("")
+    setProfileError("")
+
+    const fullName = profileForm.full_name.trim()
+    if (!fullName) {
+      setProfileError("Full name is required for your certificate.")
+      return
+    }
+
+    setProfileSaving(true)
+
+    try {
+      await updateProfile({
+        full_name: fullName,
+        professional_id: profileForm.professional_id,
+      })
+      setProfileMessage("Profile updated. New certificates will use this name.")
+    } catch (error) {
+      setProfileError(error.message || "Unable to save your profile right now.")
+    } finally {
+      setProfileSaving(false)
+    }
+  }
+
   if (loading) return (
     <div className="page" style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh" }}>
       <div style={{ textAlign: "center", color: "var(--text-500)" }}>
@@ -125,6 +169,16 @@ export default function Dashboard() {
 
   const firstName = profile?.full_name?.split(" ")[0] || "Pharmacist"
   const inProgress = enrollments.filter(e => !e.completed_at).length
+  const profileInputStyle = {
+    width: "100%",
+    padding: ".8rem .95rem",
+    border: "1.5px solid #dbe5df",
+    borderRadius: 10,
+    fontSize: ".95rem",
+    fontFamily: "inherit",
+    background: "#fff",
+    boxSizing: "border-box",
+  }
 
   return (
     <div className="page">
@@ -586,6 +640,77 @@ export default function Dashboard() {
                 </div>
               ))}
             </div>
+
+            <form onSubmit={handleProfileSave} style={{ marginTop: "2rem" }}>
+              <div style={{
+                background: "#f8faf9",
+                border: "1px solid #e6eeea",
+                borderRadius: 14,
+                padding: "1.5rem"
+              }}>
+                <div style={{ marginBottom: "1rem" }}>
+                  <h3 style={{ fontSize: "1rem", fontWeight: 700, margin: "0 0 .35rem", color: "#0a2e1f" }}>
+                    Edit Certificate Details
+                  </h3>
+                  <p style={{ margin: 0, color: "var(--text-500)", fontSize: ".88rem", lineHeight: 1.6 }}>
+                    This is the name and professional ID shown on your certificate.
+                  </p>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1rem" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: ".78rem", color: "var(--text-500)", fontWeight: 700, marginBottom: ".4rem", textTransform: "uppercase", letterSpacing: .5 }}>
+                      Full Name
+                    </label>
+                    <input
+                      value={profileForm.full_name}
+                      onChange={handleProfileFieldChange("full_name")}
+                      placeholder="Dr. Jane Mwangi"
+                      required
+                      style={profileInputStyle}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: "block", fontSize: ".78rem", color: "var(--text-500)", fontWeight: 700, marginBottom: ".4rem", textTransform: "uppercase", letterSpacing: .5 }}>
+                      Professional ID
+                    </label>
+                    <input
+                      value={profileForm.professional_id}
+                      onChange={handleProfileFieldChange("professional_id")}
+                      placeholder="PPB-12345"
+                      style={profileInputStyle}
+                    />
+                  </div>
+                </div>
+
+                {profileError && (
+                  <p style={{ margin: "1rem 0 0", color: "#c0392b", fontSize: ".88rem", fontWeight: 600 }}>
+                    {profileError}
+                  </p>
+                )}
+
+                {profileMessage && (
+                  <p style={{ margin: "1rem 0 0", color: "#0F6E56", fontSize: ".88rem", fontWeight: 600 }}>
+                    {profileMessage}
+                  </p>
+                )}
+
+                <div style={{ display: "flex", alignItems: "center", gap: ".85rem", marginTop: "1.25rem", flexWrap: "wrap" }}>
+                  <button
+                    type="submit"
+                    disabled={profileSaving}
+                    className="btn btn-primary"
+                    style={{ padding: ".75rem 1.35rem" }}
+                  >
+                    {profileSaving ? "Saving..." : "Save Profile"}
+                  </button>
+                  <span style={{ fontSize: ".82rem", color: "var(--text-500)" }}>
+                    Your next certificate view or download will use the updated details.
+                  </span>
+                </div>
+              </div>
+            </form>
           </div>
         )}
 

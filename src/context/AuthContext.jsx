@@ -91,10 +91,17 @@ export function AuthProvider({ children }) {
     const existingProfile = await fetchProfile(nextUser.id)
     if (existingProfile) return existingProfile
 
+    const fullName =
+      nextUser.user_metadata?.full_name ??
+      nextUser.user_metadata?.name ??
+      [nextUser.user_metadata?.given_name, nextUser.user_metadata?.family_name]
+        .filter(Boolean)
+        .join(" ")
+
     const profilePayload = {
       id: nextUser.id,
       email: nextUser.email ?? "",
-      full_name: nextUser.user_metadata?.full_name ?? "",
+      full_name: fullName,
       professional_id: nextUser.user_metadata?.professional_id ?? "",
       role: "student",
     }
@@ -109,8 +116,42 @@ export function AuthProvider({ children }) {
     return fetchProfile(nextUser.id)
   }
 
+  async function updateProfile(updates) {
+    if (!user?.id) {
+      throw new Error("You must be signed in to update your profile.")
+    }
+
+    const profileUpdates = {
+      full_name: updates.full_name?.trim() ?? profile?.full_name ?? "",
+      professional_id: updates.professional_id?.trim() ?? profile?.professional_id ?? "",
+    }
+
+    const { error: profileError } = await withTimeout(
+      supabase.from("user_profiles").update(profileUpdates).eq("id", user.id),
+      "Timed out while saving your profile."
+    )
+
+    if (profileError) throw profileError
+
+    const metadataUpdates = {
+      full_name: profileUpdates.full_name,
+      professional_id: profileUpdates.professional_id,
+    }
+
+    const { error: authError } = await withTimeout(
+      supabase.auth.updateUser({ data: metadataUpdates }),
+      "Timed out while syncing your account details."
+    )
+
+    if (authError) throw authError
+
+    const nextProfile = await fetchProfile(user.id)
+    setProfile(nextProfile)
+    return nextProfile
+  }
+
   return (
-    <AuthContext.Provider value={{ user, profile, loading, isAdmin: profile?.role === "admin" }}>
+    <AuthContext.Provider value={{ user, profile, loading, isAdmin: profile?.role === "admin", updateProfile }}>
       {children}
     </AuthContext.Provider>
   )

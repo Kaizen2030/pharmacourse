@@ -1,19 +1,16 @@
 import { useEffect, useState } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
+import { getAuthRedirectUrl } from "../lib/authRedirect"
 
 export default function Login() {
-  const authRedirectBase =
-    window.location.hostname === "localhost"
-      ? window.location.origin
-      : "https://www.pharmacourse.co.ke"
-
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [info, setInfo] = useState("")
 
@@ -47,10 +44,18 @@ export default function Login() {
   }
 
   async function handleGoogle() {
-    await supabase.auth.signInWithOAuth({
+    setError("")
+    setGoogleLoading(true)
+
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${authRedirectBase}/dashboard` },
+      options: { redirectTo: getAuthRedirectUrl("/dashboard") },
     })
+
+    if (oauthError) {
+      setError(oauthError.message)
+      setGoogleLoading(false)
+    }
   }
 
   return (
@@ -60,8 +65,8 @@ export default function Login() {
         <h1>Welcome back</h1>
         <p>Sign in to continue your learning</p>
 
-        <button onClick={handleGoogle} className="btn-google">
-          <span>G</span> Continue with Google
+        <button onClick={handleGoogle} className="btn-google" type="button" disabled={googleLoading || loading}>
+          <span>G</span> {googleLoading ? "Connecting to Google..." : "Continue with Google"}
         </button>
 
         <div className="auth-divider"><span>or</span></div>
