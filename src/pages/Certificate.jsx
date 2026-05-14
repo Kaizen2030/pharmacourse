@@ -266,9 +266,6 @@ export default function Certificate() {
         doc.setFontSize(28)
         const titleLines = doc.splitTextToSize(settings.certificate_title, 90)
         doc.text(titleLines, contentX, 58)
-        const titleEndY = 58 + titleLines.length * 9
-        doc.setFillColor(15, 110, 86)
-        doc.roundedRect(contentX, titleEndY + 6, 18, 1.8, 0.9, 0.9, "F")
       }
 
       doc.setTextColor(96, 112, 104)
@@ -361,12 +358,6 @@ export default function Certificate() {
         doc.setFontSize(6.5)
         doc.text("Scan to verify", pageWidth - 29, signatureBaseY + 7.5, { align: "center" })
       }
-
-      doc.setDrawColor(122, 217, 202)
-      doc.setLineWidth(0.6)
-      doc.line(pageWidth - 34, pageHeight - 28, pageWidth - 28, pageHeight - 22)
-      doc.line(pageWidth - 30, pageHeight - 28, pageWidth - 24, pageHeight - 22)
-      doc.line(pageWidth - 26, pageHeight - 28, pageWidth - 20, pageHeight - 22)
 
       doc.setTextColor(147, 160, 152)
       doc.setFont("helvetica", "normal")
@@ -584,7 +575,6 @@ export default function Certificate() {
                 {settings.certificate_title}
               </h2>
             )}
-            <div style={{ width: 56, height: 4, background: "#0f6e56", borderRadius: "999px", marginBottom: "1.3rem", marginTop: "-0.35rem" }} />
 
             <div style={{ color: "#607068", fontSize: "1rem", marginBottom: "0.45rem" }}>{settings.certifies_text}</div>
             <div
