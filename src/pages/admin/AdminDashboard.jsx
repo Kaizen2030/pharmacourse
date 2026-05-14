@@ -5,8 +5,12 @@ import {
   BookOpen, Home, LogOut, Plus, Edit2, Trash2, Eye, EyeOff,
   Save, GripVertical, AlertCircle, RefreshCw, FlaskConical, Users, Award
 } from "lucide-react"
+import Pagination from "../../components/Pagination"
 import "./AdminDashboard.css"
 import { DEFAULT_CERTIFICATE_SETTINGS, normalizeCertificateSettings } from "../../lib/certificateSettings"
+
+const ADMIN_USERS_PAGE_SIZE = 12
+const ADMIN_COURSES_PAGE_SIZE = 10
 
 export default function AdminDashboard() {
   const { user, profile } = useAuth()
@@ -88,11 +92,11 @@ export default function AdminDashboard() {
       </div>
 
       <div className="admin-content">
-        {activeTab === "courses" && <CoursesTab />}
+        {activeTab === "courses" && <PaginatedCoursesTab />}
         {activeTab === "homepage" && <HomepageTab />}
         {activeTab === "quizzes" && <QuizManagementTab />}
         {activeTab === "simulations" && <SimulationsTab />}
-        {activeTab === "admins" && <AdminUsersTab />}
+        {activeTab === "admins" && <ScalableAdminUsersTab />}
         {activeTab === "certificate" && <CertificateSettingsTab />}
       </div>
     </div>
@@ -422,6 +426,429 @@ function CoursesTab() {
           course={editingCourse}
           onClose={() => setEditingCourse(null)}
           onSave={() => { setEditingCourse(null); loadCourses() }}
+        />
+      )}
+    </div>
+  )
+}
+
+function ScalableAdminUsersTab() {
+  const { user } = useAuth()
+  const [admins, setAdmins] = useState([])
+  const [candidates, setCandidates] = useState([])
+  const [adminCount, setAdminCount] = useState(0)
+  const [candidateCount, setCandidateCount] = useState(0)
+  const [adminPage, setAdminPage] = useState(1)
+  const [candidatePage, setCandidatePage] = useState(1)
+  const [loading, setLoading] = useState(true)
+  const [savingId, setSavingId] = useState(null)
+  const [search, setSearch] = useState("")
+  const [error, setError] = useState("")
+  const [message, setMessage] = useState("")
+
+  useEffect(() => {
+    loadProfiles()
+  }, [adminPage, candidatePage, search])
+
+  useEffect(() => {
+    setAdminPage(1)
+    setCandidatePage(1)
+  }, [search])
+
+  function buildSearchFilter(query) {
+    const normalized = query.trim()
+    if (!normalized) return null
+
+    const escaped = normalized.replace(/[%_]/g, "\\$&")
+    return `full_name.ilike.%${escaped}%,email.ilike.%${escaped}%,professional_id.ilike.%${escaped}%,role.ilike.%${escaped}%`
+  }
+
+  async function loadProfiles() {
+    setLoading(true)
+    setError("")
+
+    const searchFilter = buildSearchFilter(search)
+    const adminFrom = (adminPage - 1) * ADMIN_USERS_PAGE_SIZE
+    const adminTo = adminFrom + ADMIN_USERS_PAGE_SIZE - 1
+    const candidateFrom = (candidatePage - 1) * ADMIN_USERS_PAGE_SIZE
+    const candidateTo = candidateFrom + ADMIN_USERS_PAGE_SIZE - 1
+
+    let adminQuery = supabase
+      .from("user_profiles")
+      .select("id, full_name, email, professional_id, role", { count: "exact" })
+      .eq("role", "admin")
+      .order("full_name", { ascending: true })
+      .range(adminFrom, adminTo)
+
+    let candidateQuery = supabase
+      .from("user_profiles")
+      .select("id, full_name, email, professional_id, role", { count: "exact" })
+      .neq("role", "admin")
+      .order("full_name", { ascending: true })
+      .range(candidateFrom, candidateTo)
+
+    if (searchFilter) {
+      adminQuery = adminQuery.or(searchFilter)
+      candidateQuery = candidateQuery.or(searchFilter)
+    }
+
+    const [
+      { data: adminData, count: adminTotal, error: adminError },
+      { data: candidateData, count: candidateTotal, error: candidateError }
+    ] = await Promise.all([adminQuery, candidateQuery])
+
+    if (adminError || candidateError) {
+      setError(adminError?.message || candidateError?.message || "Failed to load users.")
+      setAdmins([])
+      setCandidates([])
+      setAdminCount(0)
+      setCandidateCount(0)
+    } else {
+      setAdmins(adminData || [])
+      setCandidates(candidateData || [])
+      setAdminCount(adminTotal || 0)
+      setCandidateCount(candidateTotal || 0)
+    }
+
+    setLoading(false)
+  }
+
+  async function promoteToAdmin(targetProfile) {
+    if (!window.confirm(`Make ${targetProfile.email || targetProfile.full_name || "this user"} an admin?`)) return
+
+    setSavingId(targetProfile.id)
+    setError("")
+    setMessage("")
+
+    const { error: promoteError } = await supabase
+      .from("user_profiles")
+      .update({ role: "admin" })
+      .eq("id", targetProfile.id)
+
+    if (promoteError) {
+      setError(`${promoteError.message}. If this is a permissions issue, run the updated admin profile policy in supabase/rls_reset.sql.`)
+    } else {
+      setMessage(`${targetProfile.email || targetProfile.full_name || "User"} is now an admin.`)
+      await loadProfiles()
+    }
+
+    setSavingId(null)
+  }
+
+  async function demoteAdmin(targetProfile) {
+    if (targetProfile.id === user?.id) {
+      setError("You cannot remove your own admin access from this screen.")
+      return
+    }
+
+    if (adminCount <= 1) {
+      setError("You cannot demote the last remaining admin.")
+      return
+    }
+
+    if (!window.confirm(`Remove admin access from ${targetProfile.email || targetProfile.full_name || "this admin"}?`)) return
+
+    setSavingId(targetProfile.id)
+    setError("")
+    setMessage("")
+
+    const { error: demoteError } = await supabase
+      .from("user_profiles")
+      .update({ role: "student" })
+      .eq("id", targetProfile.id)
+
+    if (demoteError) {
+      setError(demoteError.message)
+    } else {
+      setMessage(`${targetProfile.email || targetProfile.full_name || "User"} is no longer an admin.`)
+      await loadProfiles()
+    }
+
+    setSavingId(null)
+  }
+
+  const adminTotalPages = Math.max(1, Math.ceil(adminCount / ADMIN_USERS_PAGE_SIZE))
+  const candidateTotalPages = Math.max(1, Math.ceil(candidateCount / ADMIN_USERS_PAGE_SIZE))
+
+  return (
+    <div className="admin-section">
+      <div className="section-header">
+        <div>
+          <h2>Admin Management</h2>
+          <p style={{ color: "var(--gray-500)", marginTop: "0.4rem" }}>
+            View current admins, promote signed-up users, and remove admin access when needed.
+          </p>
+        </div>
+        <button className="btn-secondary" onClick={loadProfiles}>
+          <RefreshCw size={16} /> Refresh
+        </button>
+      </div>
+
+      <div style={{ marginBottom: "1.5rem" }}>
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by name, email, professional ID, or role"
+          style={{
+            width: "100%",
+            maxWidth: "420px",
+            padding: "0.85rem 1rem",
+            borderRadius: "0.75rem",
+            border: "1px solid var(--gray-300)",
+            fontSize: "0.95rem"
+          }}
+        />
+      </div>
+
+      {message && (
+        <div style={{ marginBottom: "1rem", padding: "0.9rem 1rem", borderRadius: "0.75rem", background: "#dcfce7", color: "#166534", fontWeight: 600 }}>
+          {message}
+        </div>
+      )}
+
+      {error && (
+        <div style={{ marginBottom: "1rem", padding: "0.9rem 1rem", borderRadius: "0.75rem", background: "#fee2e2", color: "#991b1b", fontWeight: 600 }}>
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <p style={{ color: "var(--gray-500)" }}>Loading users...</p>
+      ) : (
+        <div style={{ display: "grid", gap: "2rem" }}>
+          <section>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", marginBottom: "1rem", flexWrap: "wrap" }}>
+              <div>
+                <h3 style={{ margin: 0 }}>Current Admins</h3>
+                <p style={{ margin: "0.35rem 0 0", color: "var(--gray-500)", fontSize: "0.84rem" }}>
+                  You cannot remove yourself or the last remaining admin.
+                </p>
+              </div>
+              <span style={{ fontSize: "0.85rem", color: "var(--gray-500)" }}>{adminCount} admin{adminCount === 1 ? "" : "s"}</span>
+            </div>
+
+            {admins.length === 0 ? (
+              <div className="empty-state"><p>No admins found.</p></div>
+            ) : (
+              <>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "1rem" }}>
+                  {admins.map((profile) => (
+                    <div key={profile.id} style={{ background: "var(--gray-50)", border: "1px solid var(--gray-300)", borderRadius: "0.9rem", padding: "1.1rem 1.15rem" }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem", marginBottom: "0.8rem" }}>
+                        <strong style={{ color: "var(--gray-900)", fontSize: "1rem" }}>{profile.full_name || "Unnamed admin"}</strong>
+                        <span style={{ background: "#dcfce7", color: "#166534", borderRadius: "999px", padding: "0.25rem 0.65rem", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase" }}>
+                          Admin
+                        </span>
+                      </div>
+                      <p style={{ margin: "0 0 0.45rem", color: "var(--gray-600)", fontSize: "0.9rem" }}>{profile.email || "No email"}</p>
+                      <p style={{ margin: 0, color: "var(--gray-500)", fontSize: "0.82rem" }}>
+                        {profile.professional_id ? `Professional ID: ${profile.professional_id}` : "No professional ID"}
+                      </p>
+                      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.9rem" }}>
+                        <button
+                          className="btn-secondary"
+                          onClick={() => demoteAdmin(profile)}
+                          disabled={savingId === profile.id || profile.id === user?.id || adminCount <= 1}
+                          style={{
+                            borderColor: "#fecaca",
+                            color: "#b91c1c",
+                            background: profile.id === user?.id || adminCount <= 1 ? "#f9fafb" : "#fff"
+                          }}
+                        >
+                          {savingId === profile.id ? "Updating..." : profile.id === user?.id ? "Your Account" : adminCount <= 1 ? "Last Admin" : "Remove Admin"}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <Pagination
+                  currentPage={adminPage}
+                  totalPages={adminTotalPages}
+                  totalItems={adminCount}
+                  pageSize={ADMIN_USERS_PAGE_SIZE}
+                  onPageChange={setAdminPage}
+                  label="admins"
+                />
+              </>
+            )}
+          </section>
+
+          <section>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", marginBottom: "1rem", flexWrap: "wrap" }}>
+              <h3 style={{ margin: 0 }}>Promote Signed-up Users</h3>
+              <span style={{ fontSize: "0.85rem", color: "var(--gray-500)" }}>{candidateCount} user{candidateCount === 1 ? "" : "s"}</span>
+            </div>
+
+            {candidates.length === 0 ? (
+              <div className="empty-state">
+                <p>No non-admin signed-up users found for the current filter.</p>
+              </div>
+            ) : (
+              <>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+                  {candidates.map((profile) => (
+                    <div
+                      key={profile.id}
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "minmax(0, 1fr) auto",
+                        alignItems: "center",
+                        gap: "1rem",
+                        padding: "1rem 1.15rem",
+                        background: "var(--gray-50)",
+                        border: "1px solid var(--gray-300)",
+                        borderRadius: "0.9rem"
+                      }}
+                    >
+                      <div style={{ minWidth: 0 }}>
+                        <strong style={{ display: "block", color: "var(--gray-900)", fontSize: "0.98rem", marginBottom: "0.3rem" }}>
+                          {profile.full_name || "Unnamed user"}
+                        </strong>
+                        <p style={{ margin: "0 0 0.3rem", color: "var(--gray-600)", fontSize: "0.9rem" }}>{profile.email || "No email"}</p>
+                        <p style={{ margin: 0, color: "var(--gray-500)", fontSize: "0.82rem" }}>
+                          {profile.professional_id ? `Professional ID: ${profile.professional_id}` : "No professional ID"} | Role: {profile.role || "student"}
+                        </p>
+                      </div>
+                      <button
+                        className="btn-primary"
+                        onClick={() => promoteToAdmin(profile)}
+                        disabled={savingId === profile.id}
+                      >
+                        {savingId === profile.id ? "Promoting..." : "Make Admin"}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <Pagination
+                  currentPage={candidatePage}
+                  totalPages={candidateTotalPages}
+                  totalItems={candidateCount}
+                  pageSize={ADMIN_USERS_PAGE_SIZE}
+                  onPageChange={setCandidatePage}
+                  label="users"
+                />
+              </>
+            )}
+          </section>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function PaginatedCoursesTab() {
+  const [courses, setCourses] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [editingCourse, setEditingCourse] = useState(null)
+  const [page, setPage] = useState(1)
+  const [totalCourses, setTotalCourses] = useState(0)
+
+  useEffect(() => {
+    loadCourses(page)
+  }, [page])
+
+  async function loadCourses(targetPage = page) {
+    setLoading(true)
+
+    const from = (targetPage - 1) * ADMIN_COURSES_PAGE_SIZE
+    const to = from + ADMIN_COURSES_PAGE_SIZE - 1
+
+    const { data, count, error } = await supabase
+      .from("courses")
+      .select("*", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .range(from, to)
+
+    if (error) {
+      console.error("Failed to load courses:", error)
+      setCourses([])
+      setTotalCourses(0)
+    } else {
+      setCourses(data || [])
+      setTotalCourses(count || 0)
+    }
+
+    setLoading(false)
+  }
+
+  async function togglePublish(id, current) {
+    await supabase.from("courses").update({ is_published: !current }).eq("id", id)
+    await loadCourses(page)
+  }
+
+  async function deleteCourse(id) {
+    if (!window.confirm("Delete this course and all lessons?")) return
+    await supabase.from("courses").delete().eq("id", id)
+
+    const nextTotal = Math.max(totalCourses - 1, 0)
+    const nextTotalPages = Math.max(1, Math.ceil(nextTotal / ADMIN_COURSES_PAGE_SIZE))
+    const nextPage = Math.min(page, nextTotalPages)
+
+    setPage(nextPage)
+    await loadCourses(nextPage)
+  }
+
+  const totalPages = Math.max(1, Math.ceil(totalCourses / ADMIN_COURSES_PAGE_SIZE))
+
+  return (
+    <div className="admin-section">
+      <div className="section-header">
+        <h2>Course Management</h2>
+        <button className="btn-primary" onClick={() => setEditingCourse({ id: "new" })}>
+          <Plus size={16} /> Create Course
+        </button>
+      </div>
+
+      {loading ? (
+        <p style={{ color: "var(--gray-500)" }}>Loading...</p>
+      ) : courses.length === 0 ? (
+        <div className="empty-state"><p>No courses yet. Create your first course!</p></div>
+      ) : (
+        <>
+          <div className="courses-list">
+            {courses.map((course) => (
+              <div key={course.id} className="course-item">
+                <div className="course-info">
+                  <h3>{course.title}</h3>
+                  <p className="course-desc">{course.short_desc || course.description}</p>
+                  <div className="course-meta">
+                    <span>{course.is_free ? "Free" : `KES ${course.price}`}</span>
+                    <span className={`status ${course.is_published ? "published" : "draft"}`}>
+                      {course.is_published ? "Published" : "Draft"}
+                    </span>
+                  </div>
+                </div>
+                <div className="course-actions">
+                  <button className="btn-icon" title={course.is_published ? "Unpublish" : "Publish"}
+                    onClick={() => togglePublish(course.id, course.is_published)}>
+                    {course.is_published ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                  <button className="btn-icon" title="Edit course" onClick={() => setEditingCourse(course)}>
+                    <Edit2 size={16} />
+                  </button>
+                  <button className="btn-icon danger" title="Delete course" onClick={() => deleteCourse(course.id)}>
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            totalItems={totalCourses}
+            pageSize={ADMIN_COURSES_PAGE_SIZE}
+            onPageChange={setPage}
+            label="courses"
+          />
+        </>
+      )}
+
+      {editingCourse && (
+        <CourseEditorModal
+          course={editingCourse}
+          onClose={() => setEditingCourse(null)}
+          onSave={() => { setEditingCourse(null); loadCourses(page) }}
         />
       )}
     </div>
