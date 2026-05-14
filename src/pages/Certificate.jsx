@@ -268,7 +268,7 @@ export default function Certificate() {
         doc.text(titleLines, contentX, 58)
         const titleEndY = 58 + titleLines.length * 9
         doc.setFillColor(15, 110, 86)
-        doc.roundedRect(contentX, titleEndY + 2, 18, 1.8, 0.9, 0.9, "F")
+        doc.roundedRect(contentX, titleEndY + 6, 18, 1.8, 0.9, 0.9, "F")
       }
 
       doc.setTextColor(96, 112, 104)
@@ -313,7 +313,7 @@ export default function Certificate() {
       const footerTop = pageHeight - 44
       doc.setDrawColor(233, 247, 241)
       doc.setLineWidth(0.5)
-      doc.line(contentX, footerTop, pageWidth - 22, footerTop)
+      doc.line(contentX, footerTop, pageWidth - 46, footerTop)
 
       const signatureBaseY = footerTop + 12
       if (signatureData) {
@@ -578,13 +578,13 @@ export default function Certificate() {
                   color: "#11231d",
                   fontFamily: "Georgia, serif",
                   fontWeight: 700,
-                  marginBottom: "1.25rem",
+                  marginBottom: "1.6rem",
                 }}
               >
                 {settings.certificate_title}
               </h2>
             )}
-            <div style={{ width: 56, height: 4, background: "#0f6e56", borderRadius: "999px", marginBottom: "1.3rem" }} />
+            <div style={{ width: 56, height: 4, background: "#0f6e56", borderRadius: "999px", marginBottom: "1.3rem", marginTop: "-0.35rem" }} />
 
             <div style={{ color: "#607068", fontSize: "1rem", marginBottom: "0.45rem" }}>{settings.certifies_text}</div>
             <div
@@ -623,7 +623,17 @@ export default function Certificate() {
             </div>
           </div>
 
-          <div style={{ marginTop: "auto", paddingTop: "1.4rem", borderTop: "1px solid #e9f7f1", display: "grid", gridTemplateColumns: "minmax(0, 1.2fr) minmax(0, 0.85fr) auto", gap: "1rem", alignItems: "end" }}>
+          <div style={{ marginTop: "auto", paddingTop: "1.4rem", display: "grid", gridTemplateColumns: "minmax(0, 1.2fr) minmax(0, 0.85fr) auto", gap: "1rem", alignItems: "end", position: "relative" }}>
+            <div
+              style={{
+                position: "absolute",
+                left: 0,
+                right: "7rem",
+                top: 0,
+                height: 1,
+                background: "#e9f7f1",
+              }}
+            />
             <div>
               {settings.signature_image_url ? (
                 <img
