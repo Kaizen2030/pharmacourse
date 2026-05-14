@@ -237,22 +237,23 @@ export default function Certificate() {
         doc.triangle(startX, innerY + 3, startX + 5, innerY + 7, startX, innerY + 11, "F")
       }
 
-      const badgeX = pageWidth - 66
+      const badgeX = pageWidth - 76
       const badgeY = innerY + 4
       doc.setFillColor(240, 250, 245)
       doc.setDrawColor(200, 231, 218)
-      doc.roundedRect(badgeX, badgeY, 50, 18, 2.4, 2.4, "FD")
+      doc.roundedRect(badgeX, badgeY, 60, 18, 2.4, 2.4, "FD")
       if (logoData) {
         doc.addImage(logoData, "PNG", badgeX + 3, badgeY + 3, 11, 11)
       }
       doc.setTextColor(15, 110, 86)
       doc.setFont("helvetica", "bold")
-      doc.setFontSize(8)
+      doc.setFontSize(7.6)
       doc.text(settings.organization_name || "PHARMACOURSE", badgeX + 17, badgeY + 7)
       doc.setTextColor(96, 112, 104)
       doc.setFont("helvetica", "normal")
-      doc.setFontSize(5.5)
-      doc.text(settings.organization_subtitle || "Professional Pharmacy CPD Platform - Kenya", badgeX + 17, badgeY + 11)
+      doc.setFontSize(4.8)
+      const subtitleLines = doc.splitTextToSize(settings.organization_subtitle || "Professional Pharmacy CPD Platform - Kenya", 38)
+      doc.text(subtitleLines.slice(0, 2), badgeX + 17, badgeY + 10.2)
 
       doc.setTextColor(96, 112, 104)
       doc.setFont("helvetica", "bold")
@@ -265,24 +266,24 @@ export default function Certificate() {
         doc.setFontSize(28)
         const titleLines = doc.splitTextToSize(settings.certificate_title, 90)
         doc.text(titleLines, contentX, 58)
+        const titleEndY = 58 + titleLines.length * 9
+        doc.setFillColor(15, 110, 86)
+        doc.roundedRect(contentX, titleEndY + 2, 18, 1.8, 0.9, 0.9, "F")
       }
-
-      doc.setFillColor(15, 110, 86)
-      doc.roundedRect(contentX, 66, 16, 1.8, 0.9, 0.9, "F")
 
       doc.setTextColor(96, 112, 104)
       doc.setFont("helvetica", "normal")
       doc.setFontSize(11)
-      doc.text(settings.certifies_text || "This is to certify that", contentX, 80)
+      doc.text(settings.certifies_text || "This is to certify that", contentX, 84)
 
-      doc.setTextColor(16, 168, 177)
+      doc.setTextColor(15, 110, 86)
       doc.setFont("helvetica", "normal")
       doc.setFontSize(30)
       const learnerName = profile?.full_name || "Pharmacist"
       const learnerLines = doc.splitTextToSize(learnerName, contentWidth - 18)
-      doc.text(learnerLines, contentX, 96)
+      doc.text(learnerLines, contentX, 100)
 
-      let currentY = 96 + learnerLines.length * 11
+      let currentY = 100 + learnerLines.length * 11
 
       if (profile?.professional_id) {
         doc.setFillColor(240, 250, 245)
@@ -309,7 +310,7 @@ export default function Certificate() {
       const courseLines = doc.splitTextToSize(course?.title || "", contentWidth - 12)
       doc.text(courseLines, contentX, currentY)
 
-      const footerTop = pageHeight - 40
+      const footerTop = pageHeight - 44
       doc.setDrawColor(233, 247, 241)
       doc.setLineWidth(0.5)
       doc.line(contentX, footerTop, pageWidth - 22, footerTop)
@@ -354,11 +355,11 @@ export default function Certificate() {
       doc.text(idLines, dateX + 12, signatureBaseY + 9, { align: "center" })
 
       if (qrDataUrl) {
-        doc.addImage(qrDataUrl, "PNG", pageWidth - 36, signatureBaseY - 10, 18, 18)
+        doc.addImage(qrDataUrl, "PNG", pageWidth - 38, signatureBaseY - 13, 18, 18)
         doc.setTextColor(96, 112, 104)
         doc.setFont("helvetica", "normal")
         doc.setFontSize(6.5)
-        doc.text("Scan to verify", pageWidth - 27, signatureBaseY + 10, { align: "center" })
+        doc.text("Scan to verify", pageWidth - 29, signatureBaseY + 7.5, { align: "center" })
       }
 
       doc.setDrawColor(122, 217, 202)
@@ -542,11 +543,12 @@ export default function Certificate() {
                 border: "1px solid #c8e7da",
                 borderRadius: 14,
                 padding: "0.8rem 1rem",
-                minWidth: 220,
+                width: 270,
                 boxShadow: "0 14px 32px rgba(15,110,86,0.10)",
                 display: "flex",
                 alignItems: "center",
                 gap: "0.85rem",
+                flexShrink: 0,
               }}
             >
               <img
@@ -558,7 +560,7 @@ export default function Certificate() {
                 <div style={{ fontSize: "0.72rem", letterSpacing: "0.16em", textTransform: "uppercase", fontWeight: 800, color: "#0f6e56", marginBottom: "0.15rem" }}>
                   {settings.organization_name}
                 </div>
-                <div style={{ fontSize: "0.76rem", color: "#607068" }}>{settings.organization_subtitle}</div>
+                <div style={{ fontSize: "0.72rem", color: "#607068", lineHeight: 1.35 }}>{settings.organization_subtitle}</div>
               </div>
             </div>
           </div>
@@ -576,19 +578,20 @@ export default function Certificate() {
                   color: "#11231d",
                   fontFamily: "Georgia, serif",
                   fontWeight: 700,
+                  marginBottom: "1.25rem",
                 }}
               >
                 {settings.certificate_title}
               </h2>
             )}
-            <div style={{ width: 56, height: 4, background: "#0f6e56", borderRadius: "999px", marginTop: "0.95rem", marginBottom: "1.3rem" }} />
+            <div style={{ width: 56, height: 4, background: "#0f6e56", borderRadius: "999px", marginBottom: "1.3rem" }} />
 
             <div style={{ color: "#607068", fontSize: "1rem", marginBottom: "0.45rem" }}>{settings.certifies_text}</div>
             <div
               style={{
                 fontSize: "2.8rem",
                 lineHeight: 1.1,
-                color: "#119eab",
+                color: "#0f6e56",
                 fontFamily: "Georgia, serif",
                 marginBottom: "0.45rem",
                 wordBreak: "break-word",
@@ -646,7 +649,7 @@ export default function Certificate() {
               <div style={{ fontSize: "0.72rem", color: "#93a098", wordBreak: "break-all" }}>ID: {cert?.id}</div>
             </div>
 
-            <div style={{ textAlign: "center" }}>
+            <div style={{ textAlign: "center", paddingRight: "0.35rem" }}>
               {qrDataUrl ? (
                 <img src={qrDataUrl} alt="Verification QR" style={{ width: 88, height: 88, display: "block", margin: "0 auto 0.35rem" }} />
               ) : (
@@ -657,12 +660,6 @@ export default function Certificate() {
           </div>
 
           <div style={{ marginTop: "1rem", fontSize: "0.74rem", color: "#93a098", textAlign: "center" }}>{settings.footer_text}</div>
-
-          <div style={{ position: "absolute", right: "2rem", bottom: "1.6rem", display: "flex", gap: "0.3rem", opacity: 0.55 }}>
-            <span style={{ width: 0, height: 0, borderTop: "8px solid transparent", borderBottom: "8px solid transparent", borderLeft: "11px solid #7ad9ca" }} />
-            <span style={{ width: 0, height: 0, borderTop: "8px solid transparent", borderBottom: "8px solid transparent", borderLeft: "11px solid #7ad9ca" }} />
-            <span style={{ width: 0, height: 0, borderTop: "8px solid transparent", borderBottom: "8px solid transparent", borderLeft: "11px solid #7ad9ca" }} />
-          </div>
         </div>
       </div>
 
