@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { Link, useParams } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
+import SEO from "../components/SEO"
 
 export default function VerifyCertificate() {
   const { certificateId } = useParams()
@@ -52,6 +53,13 @@ export default function VerifyCertificate() {
 
   return (
     <div className="page" style={{ maxWidth: 900 }}>
+      <SEO
+        title="Certificate Verification"
+        description="Verify a PharmaCourse certificate using its certificate ID."
+        path={`/verify/${certificateId || ""}`}
+        noindex
+      />
+
       <div
         style={{
           background: "linear-gradient(180deg, #f7fcf9 0%, #ffffff 100%)",

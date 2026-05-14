@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext"
 import { jsPDF } from "jspdf"
 import QRCode from "qrcode"
 import { DEFAULT_CERTIFICATE_SETTINGS, normalizeCertificateSettings } from "../lib/certificateSettings"
+import SEO from "../components/SEO"
 
 export default function Certificate() {
   const { courseId } = useParams()
@@ -403,6 +404,13 @@ export default function Certificate() {
 
   return (
     <div className="page" style={{ maxWidth: 1280 }}>
+      <SEO
+        title="Certificate"
+        description="Learner certificate page."
+        path={`/certificate/${courseId || ""}`}
+        noindex
+      />
+
       <div style={{ textAlign: "center", marginBottom: "2rem" }}>
         <h1 style={{ fontSize: "2rem", marginBottom: ".5rem" }}>{isAdmin ? "Certificate Preview" : "Certificate Ready"}</h1>
         <p style={{ color: "var(--text-500)", marginBottom: 0 }}>

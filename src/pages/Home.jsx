@@ -2,6 +2,8 @@ import { useEffect, useState, useRef } from "react"
 import { Link } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
 import { motion, useInView } from "framer-motion"
+import SEO from "../components/SEO"
+import { SITE_URL } from "../lib/siteConfig"
 import pharmacyosDashboard from "../assets/pharmacyos-dashboard.svg"
 import pharmacourseHeroVisual from "../assets/pharmacourse-hero-visual.svg"
 import remedacareDashboard from "../assets/remedacare-dashboard.svg"
@@ -335,6 +337,21 @@ export default function Home() {
 
   return (
     <div className="home">
+      <SEO
+        title="Pharmacy CPD Courses, PharmacyOS & RemedacareOS Kenya"
+        description="PharmaCourse helps Kenyan pharmacy professionals learn practical skills, earn certificates, and explore PharmacyOS and RemedacareOS software."
+        path="/"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: "PharmaCourse",
+          url: SITE_URL,
+          logo: `${SITE_URL}/favicon.svg`,
+          description:
+            "Kenyan pharmacy education and health-tech platform offering CPD courses, PharmacyOS, and RemedacareOS.",
+        }}
+      />
+
       <div className="section-nav">
         {sortedSections.map(([key]) => (
           <button

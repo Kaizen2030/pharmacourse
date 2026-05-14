@@ -2,6 +2,7 @@ import { useState } from "react"
 import { Link } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
 import { getAuthRedirectUrl } from "../lib/authRedirect"
+import SEO from "../components/SEO"
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("")
@@ -30,6 +31,13 @@ export default function ForgotPassword() {
 
   return (
     <div className="auth-wrap">
+      <SEO
+        title="Forgot Password"
+        description="Request a secure password reset link for your PharmaCourse account."
+        path="/forgot-password"
+        noindex
+      />
+
       <div className="auth-card">
         <div className="auth-logo">PharmaCourse</div>
         <h1>Reset your password</h1>

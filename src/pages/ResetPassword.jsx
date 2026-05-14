@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
+import SEO from "../components/SEO"
 
 function getRecoveryParams() {
   const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""))
@@ -131,6 +132,12 @@ export default function ResetPassword() {
   if (checking) {
     return (
       <div className="auth-wrap">
+        <SEO
+          title="Reset Password"
+          description="Reset your PharmaCourse password securely."
+          path="/reset-password"
+          noindex
+        />
         <div className="auth-card" style={{ textAlign: "center" }}>
           <h1>Preparing password reset</h1>
           <p style={{ color: "var(--text-500)" }}>Checking your secure reset link...</p>
@@ -142,6 +149,12 @@ export default function ResetPassword() {
   if (!ready) {
     return (
       <div className="auth-wrap">
+        <SEO
+          title="Reset Password"
+          description="Reset your PharmaCourse password securely."
+          path="/reset-password"
+          noindex
+        />
         <div className="auth-card" style={{ textAlign: "center" }}>
           <h1>Reset link expired</h1>
           <p style={{ color: "var(--text-500)", lineHeight: 1.7 }}>
@@ -162,6 +175,13 @@ export default function ResetPassword() {
 
   return (
     <div className="auth-wrap">
+      <SEO
+        title="Reset Password"
+        description="Reset your PharmaCourse password securely."
+        path="/reset-password"
+        noindex
+      />
+
       <div className="auth-card">
         <div className="auth-logo">PharmaCourse</div>
         <h1>Set a new password</h1>

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
 import { useAuth } from "../context/AuthContext"
 import ProgressBar from "../components/ProgressBar"
+import SEO from "../components/SEO"
 import { BookOpen, Award, Clock, User, ChevronRight, ArrowRight, FlaskConical } from "lucide-react"
 
 export default function Dashboard() {
@@ -182,6 +183,13 @@ export default function Dashboard() {
 
   return (
     <div className="page">
+      <SEO
+        title="Dashboard"
+        description="Your PharmaCourse learning dashboard."
+        path="/dashboard"
+        noindex
+      />
+
       <div className="container-wide dashboard-shell" style={{ paddingTop: "2rem", paddingBottom: "4rem" }}>
 
         {/* ── Header ── */}

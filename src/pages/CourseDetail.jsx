@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { useParams, Link, useNavigate } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
 import { useAuth } from "../context/AuthContext"
+import SEO from "../components/SEO"
 
 export default function CourseDetail() {
   const { id } = useParams()
@@ -109,6 +110,31 @@ export default function CourseDetail() {
 
   return (
     <div className="page">
+      <SEO
+        title={course.title}
+        description={
+          course.short_desc ||
+          course.description ||
+          "Pharmacy course with practical lessons, downloadable resources, and a completion certificate."
+        }
+        path={`/courses/${course.slug || course.id}`}
+        type="article"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "Course",
+          name: course.title,
+          description:
+            course.short_desc ||
+            course.description ||
+            "Pharmacy course with practical lessons and a certificate.",
+          provider: {
+            "@type": "Organization",
+            name: "PharmaCourse",
+            sameAs: "https://www.pharmacourse.co.ke",
+          },
+        }}
+      />
+
       <div className="detail-layout">
         <div className="detail-main">
           <span className="detail-badge">{course.category}</span>

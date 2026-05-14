@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
+import SEO from "../components/SEO"
 
 function getSafeNextPath(nextPath) {
   if (!nextPath || !nextPath.startsWith("/")) {
@@ -69,6 +70,12 @@ export default function CompleteProfile() {
   if (loading || !user) {
     return (
       <div className="auth-wrap">
+        <SEO
+          title="Complete Profile"
+          description="Complete your PharmaCourse profile details."
+          path="/complete-profile"
+          noindex
+        />
         <div className="auth-card" style={{ textAlign: "center" }}>
           <h1>Preparing your profile</h1>
           <p style={{ color: "var(--text-500)" }}>Loading your certificate details...</p>
@@ -79,6 +86,13 @@ export default function CompleteProfile() {
 
   return (
     <div className="auth-wrap">
+      <SEO
+        title="Complete Profile"
+        description="Complete your PharmaCourse profile details."
+        path="/complete-profile"
+        noindex
+      />
+
       <div className="auth-card">
         <div className="auth-logo">PharmaCourse</div>
         <h1>Complete your profile</h1>

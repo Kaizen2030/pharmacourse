@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { supabase } from "../lib/supabaseClient"
 import CourseCard from "../components/CourseCard"
+import SEO from "../components/SEO"
 
 export default function Courses() {
   const [courses, setCourses] = useState([])
@@ -19,6 +20,13 @@ export default function Courses() {
 
   return (
     <div className="page">
+      <SEO
+        title="Pharmacy Courses"
+        description="Explore self-paced pharmacy CPD courses with practical lessons, downloadable resources, and completion certificates from PharmaCourse."
+        path="/courses"
+        type="website"
+      />
+
       <div className="page-header">
         <div className="container-wide">
           <h1>Explore Courses</h1>

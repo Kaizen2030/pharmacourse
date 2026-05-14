@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
 import pharmacyosCopilot from "../assets/pharmacyos-copilot.svg"
+import SEO from "../components/SEO"
 import {
   ShoppingCart, Package, AlertTriangle, CreditCard,
   FileText, BarChart3, Settings, Cpu, Shield,
@@ -286,6 +287,29 @@ export default function PharmacyOS() {
 
   return (
     <div style={{ fontFamily: "'Outfit', 'Segoe UI', sans-serif", background: "#f8faf9", minHeight: "100vh" }}>
+      <SEO
+        title="PharmacyOS Kenya"
+        description="PharmacyOS is a Kenyan pharmacy management system with POS, inventory, SHA claims, eTIMS/KRA reporting, M-Pesa support, and PPB compliance workflows."
+        path="/pharmacyos"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          name: "PharmacyOS",
+          applicationCategory: "BusinessApplication",
+          operatingSystem: "Windows",
+          description:
+            "Kenyan pharmacy management system with POS, inventory, claims, compliance, and M-Pesa workflows.",
+          offers: {
+            "@type": "Offer",
+            availability: "https://schema.org/InStock",
+          },
+          provider: {
+            "@type": "Organization",
+            name: "PharmaCourse",
+          },
+        }}
+      />
+
       <style>{css}</style>
 
       <section className="po-hero" style={{ position: "relative", overflow: "hidden", background: "linear-gradient(135deg, #062318 0%, #0F6E56 58%, #1a9e7a 100%)", color: "#fff", padding: "96px 24px 72px", textAlign: "center" }}>

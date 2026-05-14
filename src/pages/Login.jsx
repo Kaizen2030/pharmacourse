@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
 import { getAuthRedirectUrl } from "../lib/authRedirect"
+import SEO from "../components/SEO"
 
 export default function Login() {
   const navigate = useNavigate()
@@ -60,6 +61,13 @@ export default function Login() {
 
   return (
     <div className="auth-wrap">
+      <SEO
+        title="Sign In"
+        description="Sign in to your PharmaCourse account to continue learning and manage your courses."
+        path="/login"
+        noindex
+      />
+
       <div className="auth-card">
         <div className="auth-logo">PharmaCourse</div>
         <h1>Welcome back</h1>

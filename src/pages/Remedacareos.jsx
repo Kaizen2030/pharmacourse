@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
 import remedacareDashboard from "../assets/remedacare-dashboard.svg"
+import SEO from "../components/SEO"
 import {
   ClipboardList, BarChart3, Users, Link2, Calendar,
   FileText, Shield, Activity, Pill, BedDouble,
@@ -227,6 +228,29 @@ export default function RemedacareOS() {
 
   return (
     <div style={{ fontFamily: "'Outfit', 'Segoe UI', sans-serif", background: "#f8faf9", minHeight: "100vh" }}>
+      <SEO
+        title="RemedacareOS Kenya"
+        description="RemedacareOS is a Kenyan hospital management system with patient records, MOH reports, SHA claims, billing, and PharmacyOS integration."
+        path="/remedacareos"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          name: "RemedacareOS",
+          applicationCategory: "BusinessApplication",
+          operatingSystem: "Cloud",
+          description:
+            "Kenyan hospital management system with patient records, billing, MOH reporting, SHA claims, and pharmacy integration.",
+          offers: {
+            "@type": "Offer",
+            availability: "https://schema.org/InStock",
+          },
+          provider: {
+            "@type": "Organization",
+            name: "PharmaCourse",
+          },
+        }}
+      />
+
       <style>{css}</style>
 
       <section className="rc-hero" style={{ position: "relative", overflow: "hidden", background: "linear-gradient(135deg, #062318 0%, #0F6E56 58%, #1a9e7a 100%)", color: "#fff", padding: "96px 24px 72px", textAlign: "center" }}>

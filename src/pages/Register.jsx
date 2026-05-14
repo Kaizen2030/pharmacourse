@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
+import SEO from "../components/SEO"
 
 export default function Register() {
   const [form, setForm] = useState({ full_name: "", professional_id: "", email: "", password: "", confirm: "" })
@@ -62,6 +63,13 @@ export default function Register() {
 
   return (
     <div className="auth-wrap">
+      <SEO
+        title="Register"
+        description="Create your PharmaCourse account to start pharmacy learning and earn certificates."
+        path="/register"
+        noindex
+      />
+
       <div className="auth-card">
         <div className="auth-logo">PharmaCourse</div>
         <h1>Create your account</h1>
