@@ -11,6 +11,8 @@ import { DEFAULT_CERTIFICATE_SETTINGS, normalizeCertificateSettings } from "../.
 
 const ADMIN_USERS_PAGE_SIZE = 12
 const ADMIN_COURSES_PAGE_SIZE = 10
+const ADMIN_SIMULATIONS_PAGE_SIZE = 8
+const ADMIN_PEARLS_PAGE_SIZE = 8
 
 export default function AdminDashboard() {
   const { user, profile } = useAuth()
@@ -95,7 +97,7 @@ export default function AdminDashboard() {
         {activeTab === "courses" && <PaginatedCoursesTab />}
         {activeTab === "homepage" && <HomepageTab />}
         {activeTab === "quizzes" && <QuizManagementTab />}
-        {activeTab === "simulations" && <SimulationsTab />}
+        {activeTab === "simulations" && <ScalableSimulationsTab />}
         {activeTab === "admins" && <ScalableAdminUsersTab />}
         {activeTab === "certificate" && <CertificateSettingsTab />}
       </div>
@@ -1935,6 +1937,348 @@ function SimulationsTab() {
               <button onClick={() => deletePearl(pearl.id)} style={{ background: "#fdf2f2", color: "#E24B4A", border: "1px solid #f5c6c6", borderRadius: 8, padding: "0.4rem 0.9rem", fontWeight: 700, fontSize: "0.82rem", cursor: "pointer", flexShrink: 0 }}>Delete</button>
             </div>
           ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ScalableSimulationsTab() {
+  const { user } = useAuth()
+  const [tab, setTab] = useState("simulations")
+  const [simulations, setSimulations] = useState([])
+  const [pearls, setPearls] = useState([])
+  const [simulationCount, setSimulationCount] = useState(0)
+  const [pearlCount, setPearlCount] = useState(0)
+  const [simulationPage, setSimulationPage] = useState(1)
+  const [pearlPage, setPearlPage] = useState(1)
+  const [courses, setCourses] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [listLoading, setListLoading] = useState(true)
+  const [newSim, setNewSim] = useState({ title: "", patient_context: "", difficulty: "intermediate", course_id: "" })
+  const [questions, setQuestions] = useState([{ text: "", model_answer: "" }])
+  const [newPearl, setNewPearl] = useState({ title: "", content: "", category: "" })
+
+  useEffect(() => {
+    loadData(simulationPage, pearlPage)
+  }, [simulationPage, pearlPage])
+
+  async function loadData(targetSimulationPage = simulationPage, targetPearlPage = pearlPage) {
+    setListLoading(true)
+
+    const simulationFrom = (targetSimulationPage - 1) * ADMIN_SIMULATIONS_PAGE_SIZE
+    const simulationTo = simulationFrom + ADMIN_SIMULATIONS_PAGE_SIZE - 1
+    const pearlFrom = (targetPearlPage - 1) * ADMIN_PEARLS_PAGE_SIZE
+    const pearlTo = pearlFrom + ADMIN_PEARLS_PAGE_SIZE - 1
+
+    const [simRes, pearlRes, courseRes] = await Promise.all([
+      supabase
+        .from("case_simulations")
+        .select("*, courses(title)", { count: "exact" })
+        .order("created_at", { ascending: false })
+        .range(simulationFrom, simulationTo),
+      supabase
+        .from("clinical_pearls")
+        .select("*", { count: "exact" })
+        .order("created_at", { ascending: false })
+        .range(pearlFrom, pearlTo),
+      supabase.from("courses").select("id, title").order("title")
+    ])
+
+    setSimulations(simRes.data || [])
+    setPearls(pearlRes.data || [])
+    setSimulationCount(simRes.count || 0)
+    setPearlCount(pearlRes.count || 0)
+    setCourses(courseRes.data || [])
+    setListLoading(false)
+  }
+
+  function addQuestion() {
+    setQuestions([...questions, { text: "", model_answer: "" }])
+  }
+
+  function removeQuestion(index) {
+    setQuestions(questions.filter((_, currentIndex) => currentIndex !== index))
+  }
+
+  function updateQuestion(index, field, value) {
+    const updated = [...questions]
+    updated[index] = { ...updated[index], [field]: value }
+    setQuestions(updated)
+  }
+
+  async function createSimulation() {
+    if (!newSim.title || !newSim.patient_context) {
+      alert("Fill in title and patient context.")
+      return
+    }
+
+    if (!newSim.course_id) {
+      alert("Please select a course for this simulation.")
+      return
+    }
+
+    if (questions.some((question) => !question.text.trim())) {
+      alert("All questions need text. Remove empty ones or fill them in.")
+      return
+    }
+
+    setLoading(true)
+
+    const { error } = await supabase.from("case_simulations").insert({
+      title: newSim.title,
+      patient_scenario: newSim.patient_context,
+      difficulty_level: newSim.difficulty,
+      course_id: newSim.course_id || null,
+      questions: questions.filter((question) => question.text.trim()),
+      creator_id: user.id,
+      is_published: true,
+    })
+
+    if (error) {
+      alert("Error: " + error.message)
+    } else {
+      setNewSim({ title: "", patient_context: "", difficulty: "intermediate", course_id: "" })
+      setQuestions([{ text: "", model_answer: "" }])
+
+      if (simulationPage !== 1) setSimulationPage(1)
+      else await loadData(1, pearlPage)
+    }
+
+    setLoading(false)
+  }
+
+  async function deleteSimulation(id) {
+    if (!window.confirm("Delete this simulation?")) return
+
+    await supabase.from("case_simulations").delete().eq("id", id)
+
+    const nextTotal = Math.max(simulationCount - 1, 0)
+    const nextTotalPages = Math.max(1, Math.ceil(nextTotal / ADMIN_SIMULATIONS_PAGE_SIZE))
+    const nextPage = Math.min(simulationPage, nextTotalPages)
+
+    if (nextPage !== simulationPage) setSimulationPage(nextPage)
+    else await loadData(simulationPage, pearlPage)
+  }
+
+  async function createPearl() {
+    if (!newPearl.title || !newPearl.content || !newPearl.category) {
+      alert("Fill in all pearl fields.")
+      return
+    }
+
+    setLoading(true)
+
+    const { error } = await supabase.from("clinical_pearls").insert({
+      title: newPearl.title,
+      content: newPearl.content,
+      category: newPearl.category,
+    })
+
+    if (error) {
+      alert("Error: " + error.message)
+    } else {
+      setNewPearl({ title: "", content: "", category: "" })
+
+      if (pearlPage !== 1) setPearlPage(1)
+      else await loadData(simulationPage, 1)
+    }
+
+    setLoading(false)
+  }
+
+  async function deletePearl(id) {
+    if (!window.confirm("Delete this pearl?")) return
+
+    await supabase.from("clinical_pearls").delete().eq("id", id)
+
+    const nextTotal = Math.max(pearlCount - 1, 0)
+    const nextTotalPages = Math.max(1, Math.ceil(nextTotal / ADMIN_PEARLS_PAGE_SIZE))
+    const nextPage = Math.min(pearlPage, nextTotalPages)
+
+    if (nextPage !== pearlPage) setPearlPage(nextPage)
+    else await loadData(simulationPage, pearlPage)
+  }
+
+  const inputStyle = {
+    width: "100%",
+    padding: "0.7rem 0.9rem",
+    border: "1.5px solid #e0e0e0",
+    borderRadius: 8,
+    fontSize: "0.9rem",
+    fontFamily: "inherit",
+    boxSizing: "border-box",
+    marginBottom: "1rem"
+  }
+  const difficultyColor = { beginner: "#0F6E56", intermediate: "#E09B00", advanced: "#E24B4A" }
+  const simulationTotalPages = Math.max(1, Math.ceil(simulationCount / ADMIN_SIMULATIONS_PAGE_SIZE))
+  const pearlTotalPages = Math.max(1, Math.ceil(pearlCount / ADMIN_PEARLS_PAGE_SIZE))
+
+  return (
+    <div className="admin-section">
+      <div className="section-header">
+        <h2>Simulations &amp; Clinical Pearls</h2>
+      </div>
+
+      <div style={{ display: "flex", gap: "0.75rem", marginBottom: "2rem", borderBottom: "2px solid #eee", paddingBottom: 0 }}>
+        {[["simulations", "Case Simulations", simulationCount], ["pearls", "Clinical Pearls", pearlCount]].map(([key, label, count]) => (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: "0.5rem 1rem 0.75rem",
+              fontWeight: tab === key ? 700 : 500,
+              color: tab === key ? "#0F6E56" : "#888",
+              borderBottom: tab === key ? "3px solid #0F6E56" : "3px solid transparent",
+              marginBottom: "-2px",
+              fontSize: "0.95rem"
+            }}
+          >
+            {label} <span style={{ background: "#f0f0f0", borderRadius: 99, padding: "1px 8px", fontSize: "0.78rem", marginLeft: 4 }}>{count}</span>
+          </button>
+        ))}
+      </div>
+
+      {tab === "simulations" && (
+        <div>
+          <div style={{ background: "#fff", border: "1px solid #e8ede9", borderRadius: 14, padding: "1.75rem", marginBottom: "2rem" }}>
+            <h3 style={{ margin: "0 0 1.25rem", fontSize: "1rem", fontWeight: 700 }}>Create New Simulation</h3>
+
+            <label style={{ display: "block", fontWeight: 600, fontSize: "0.8rem", color: "#555", marginBottom: "0.3rem", textTransform: "uppercase", letterSpacing: 0.4 }}>Case Title</label>
+            <input style={inputStyle} value={newSim.title} onChange={(event) => setNewSim({ ...newSim, title: event.target.value })} placeholder="e.g. Diabetic patient with suspected UTI" />
+
+            <label style={{ display: "block", fontWeight: 600, fontSize: "0.8rem", color: "#555", marginBottom: "0.3rem", textTransform: "uppercase", letterSpacing: 0.4 }}>Patient Context</label>
+            <textarea style={{ ...inputStyle, minHeight: 120, resize: "vertical" }} value={newSim.patient_context} onChange={(event) => setNewSim({ ...newSim, patient_context: event.target.value })} placeholder="Describe the patient: age, complaint, vitals, history, meds, lab results..." />
+
+            <label style={{ display: "block", fontWeight: 600, fontSize: "0.8rem", color: "#555", marginBottom: "0.3rem", textTransform: "uppercase", letterSpacing: 0.4 }}>Linked Course</label>
+            <select style={inputStyle} value={newSim.course_id} onChange={(event) => setNewSim({ ...newSim, course_id: event.target.value })}>
+              <option value="">-- Select a course --</option>
+              {courses.map((course) => <option key={course.id} value={course.id}>{course.title}</option>)}
+            </select>
+
+            <label style={{ display: "block", fontWeight: 600, fontSize: "0.8rem", color: "#555", marginBottom: "0.3rem", textTransform: "uppercase", letterSpacing: 0.4 }}>Difficulty</label>
+            <select style={inputStyle} value={newSim.difficulty} onChange={(event) => setNewSim({ ...newSim, difficulty: event.target.value })}>
+              <option value="beginner">Beginner</option>
+              <option value="intermediate">Intermediate</option>
+              <option value="advanced">Advanced</option>
+            </select>
+
+            <div style={{ marginTop: "0.5rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+                <label style={{ fontWeight: 700, fontSize: "0.95rem", color: "#0a2e1f" }}>Questions ({questions.length})</label>
+                <button onClick={addQuestion} style={{ background: "#e8f5f0", color: "#0F6E56", border: "none", borderRadius: 8, padding: "0.4rem 0.9rem", fontWeight: 700, fontSize: "0.85rem", cursor: "pointer" }}>+ Add Question</button>
+              </div>
+
+              {questions.map((question, index) => (
+                <div key={index} style={{ background: "#f8faf9", border: "1.5px solid #e0ede8", borderRadius: 10, padding: "1rem", marginBottom: "0.75rem" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                    <span style={{ fontWeight: 700, fontSize: "0.85rem", color: "#0F6E56" }}>Q{index + 1}</span>
+                    {questions.length > 1 && (
+                      <button onClick={() => removeQuestion(index)} style={{ background: "none", border: "none", color: "#E24B4A", cursor: "pointer", fontSize: "0.8rem", fontWeight: 600 }}>Remove</button>
+                    )}
+                  </div>
+                  <input
+                    style={{ ...inputStyle, marginBottom: "0.5rem" }}
+                    value={question.text}
+                    onChange={(event) => updateQuestion(index, "text", event.target.value)}
+                    placeholder="e.g. What is your drug of choice and why?"
+                  />
+                  <textarea
+                    style={{ ...inputStyle, minHeight: 80, marginBottom: 0, resize: "vertical" }}
+                    value={question.model_answer}
+                    onChange={(event) => updateQuestion(index, "model_answer", event.target.value)}
+                    placeholder="Model answer used by AI to score the learner response"
+                  />
+                </div>
+              ))}
+            </div>
+
+            <button onClick={createSimulation} disabled={loading} style={{ marginTop: "1rem", background: "#0F6E56", color: "#fff", border: "none", borderRadius: 9, padding: "0.75rem 1.75rem", fontWeight: 700, cursor: "pointer", opacity: loading ? 0.7 : 1 }}>
+              {loading ? "Creating..." : "Create Simulation"}
+            </button>
+          </div>
+
+          <h3 style={{ margin: "0 0 1rem", fontSize: "0.95rem", fontWeight: 700 }}>Existing Simulations ({simulationCount})</h3>
+          {listLoading ? (
+            <p style={{ color: "#888" }}>Loading simulations...</p>
+          ) : simulations.length === 0 ? (
+            <p style={{ color: "#aaa", fontStyle: "italic" }}>No simulations yet. Create one above.</p>
+          ) : (
+            <>
+              {simulations.map((simulation) => (
+                <div key={simulation.id} style={{ background: "#fff", border: "1px solid #e8ede9", borderRadius: 12, padding: "1.25rem 1.5rem", marginBottom: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem" }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.4rem", flexWrap: "wrap" }}>
+                      <span style={{ fontWeight: 700, fontSize: "0.95rem", color: "#0a2e1f" }}>{simulation.title}</span>
+                      <span style={{ fontSize: "0.72rem", fontWeight: 700, background: `${difficultyColor[simulation.difficulty_level] || "#888"}22`, color: difficultyColor[simulation.difficulty_level] || "#888", padding: "2px 9px", borderRadius: 99, textTransform: "capitalize" }}>{simulation.difficulty_level}</span>
+                      <span style={{ fontSize: "0.72rem", color: "#888" }}>{Array.isArray(simulation.questions) ? simulation.questions.length : 0} questions</span>
+                      {simulation.courses?.title && <span style={{ fontSize: "0.72rem", background: "#f0f0f0", color: "#555", padding: "2px 9px", borderRadius: 99 }}>Course: {simulation.courses.title}</span>}
+                    </div>
+                    <p style={{ color: "#666", fontSize: "0.85rem", margin: "0 0 0.75rem", lineHeight: 1.5 }}>{simulation.patient_scenario?.slice(0, 120)}...</p>
+                  </div>
+                  <button onClick={() => deleteSimulation(simulation.id)} style={{ background: "#fdf2f2", color: "#E24B4A", border: "1px solid #f5c6c6", borderRadius: 8, padding: "0.4rem 0.9rem", fontWeight: 700, fontSize: "0.82rem", cursor: "pointer", flexShrink: 0 }}>Delete</button>
+                </div>
+              ))}
+              <Pagination
+                currentPage={simulationPage}
+                totalPages={simulationTotalPages}
+                totalItems={simulationCount}
+                pageSize={ADMIN_SIMULATIONS_PAGE_SIZE}
+                onPageChange={setSimulationPage}
+                label="simulations"
+              />
+            </>
+          )}
+        </div>
+      )}
+
+      {tab === "pearls" && (
+        <div>
+          <div style={{ background: "#fff", border: "1px solid #e8ede9", borderRadius: 14, padding: "1.75rem", marginBottom: "2rem" }}>
+            <h3 style={{ margin: "0 0 1.25rem", fontSize: "1rem", fontWeight: 700 }}>Create New Clinical Pearl</h3>
+            <label style={{ display: "block", fontWeight: 600, fontSize: "0.8rem", color: "#555", marginBottom: "0.3rem", textTransform: "uppercase", letterSpacing: 0.4 }}>Title</label>
+            <input style={inputStyle} value={newPearl.title} onChange={(event) => setNewPearl({ ...newPearl, title: event.target.value })} placeholder="e.g. AMR Stewardship in Kenya" />
+            <label style={{ display: "block", fontWeight: 600, fontSize: "0.8rem", color: "#555", marginBottom: "0.3rem", textTransform: "uppercase", letterSpacing: 0.4 }}>Category</label>
+            <input style={inputStyle} value={newPearl.category} onChange={(event) => setNewPearl({ ...newPearl, category: event.target.value })} placeholder="e.g. Antimicrobials, Pharmacovigilance, Therapeutics" />
+            <label style={{ display: "block", fontWeight: 600, fontSize: "0.8rem", color: "#555", marginBottom: "0.3rem", textTransform: "uppercase", letterSpacing: 0.4 }}>Content</label>
+            <textarea style={{ ...inputStyle, minHeight: 120, resize: "vertical" }} value={newPearl.content} onChange={(event) => setNewPearl({ ...newPearl, content: event.target.value })} placeholder="The clinical pearl content kept to 3-5 minutes of reading" />
+            <button onClick={createPearl} disabled={loading} style={{ background: "#0F6E56", color: "#fff", border: "none", borderRadius: 9, padding: "0.75rem 1.75rem", fontWeight: 700, cursor: "pointer", opacity: loading ? 0.7 : 1 }}>
+              {loading ? "Creating..." : "Create Pearl"}
+            </button>
+          </div>
+
+          <h3 style={{ margin: "0 0 1rem", fontSize: "0.95rem", fontWeight: 700 }}>Existing Pearls ({pearlCount})</h3>
+          {listLoading ? (
+            <p style={{ color: "#888" }}>Loading pearls...</p>
+          ) : pearls.length === 0 ? (
+            <p style={{ color: "#aaa", fontStyle: "italic" }}>No pearls yet. Create one above.</p>
+          ) : (
+            <>
+              {pearls.map((pearl) => (
+                <div key={pearl.id} style={{ background: "#fff", border: "1px solid #e8ede9", borderRadius: 12, padding: "1.25rem 1.5rem", marginBottom: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem" }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.4rem" }}>
+                      <span style={{ fontWeight: 700, fontSize: "0.95rem", color: "#0a2e1f" }}>{pearl.title}</span>
+                      <span style={{ fontSize: "0.72rem", background: "#e8f5f0", color: "#0F6E56", padding: "2px 9px", borderRadius: 99, fontWeight: 600 }}>{pearl.category}</span>
+                    </div>
+                    <p style={{ color: "#666", fontSize: "0.85rem", margin: 0, lineHeight: 1.5 }}>{pearl.content?.slice(0, 150)}...</p>
+                  </div>
+                  <button onClick={() => deletePearl(pearl.id)} style={{ background: "#fdf2f2", color: "#E24B4A", border: "1px solid #f5c6c6", borderRadius: 8, padding: "0.4rem 0.9rem", fontWeight: 700, fontSize: "0.82rem", cursor: "pointer", flexShrink: 0 }}>Delete</button>
+                </div>
+              ))}
+              <Pagination
+                currentPage={pearlPage}
+                totalPages={pearlTotalPages}
+                totalItems={pearlCount}
+                pageSize={ADMIN_PEARLS_PAGE_SIZE}
+                onPageChange={setPearlPage}
+                label="pearls"
+              />
+            </>
+          )}
         </div>
       )}
     </div>
