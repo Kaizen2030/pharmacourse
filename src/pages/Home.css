@@ -50,13 +50,13 @@
 .home .features-section,
 .home .testimonials-section,
 .home .faq-section {
-  padding: clamp(3rem, 7vw, 5rem) 0;
+  padding: clamp(4rem, 8vw, 6.25rem) 0;
 }
 
 .home .product-section,
 .home .courses-section,
 .home .stats-section {
-  padding: clamp(3rem, 7vw, 5rem) 0;
+  padding: clamp(4rem, 8vw, 6.25rem) 0;
 }
 
 .home .hero-section {
@@ -87,7 +87,8 @@
 
 .home .hero-content-top h1 {
   margin-top: 1rem;
-  font-size: clamp(2.4rem, 7vw, 4.7rem);
+  max-width: 1100px;
+  font-size: clamp(2.4rem, 5.1vw, 4.1rem);
   line-height: 1.02;
 }
 
@@ -300,11 +301,16 @@
   max-width: none;
   margin: 0 0 2.2rem;
   text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
 }
 
 .home .section-header h2 {
-  font-size: clamp(2rem, 4vw, 3rem);
-  margin: 0.8rem 0;
+  max-width: 920px;
+  font-size: clamp(1.95rem, 3.6vw, 2.95rem);
+  line-height: 1.08;
+  margin: 0.35rem 0 0;
 }
 
 .home .section-header p {
@@ -321,6 +327,10 @@
 }
 
 .home .platform-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.home .features-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
@@ -395,6 +405,17 @@
 .home .courses-section,
 .home .stats-section {
   background: linear-gradient(180deg, rgba(232, 247, 241, 0.55), rgba(248, 251, 250, 0.25));
+}
+
+.home .ecosystem-section,
+.home .product-section,
+.home .features-section,
+.home .courses-section,
+.home .testimonials-section,
+.home .stats-section,
+.home .faq-section,
+.home .cta-section {
+  border-top: 1px solid rgba(223, 232, 227, 0.72);
 }
 
 .home .product-grid {
@@ -599,7 +620,7 @@
 }
 
 .home .cta-section {
-  padding: clamp(3rem, 7vw, 5rem) 0;
+  padding: clamp(4rem, 8vw, 6.25rem) 0;
 }
 
 .home .cta-content {
@@ -733,14 +754,15 @@
     text-align: center;
   }
 
+  .home .hero-content-top h1 {
+    max-width: none;
+    font-size: 2rem;
+  }
+
   .home .hero-content-top p,
   .home .section-header p {
     margin-left: auto;
     margin-right: auto;
-  }
-
-  .home .hero-content-top h1 {
-    font-size: 2rem;
   }
 
   .home .hero-content-top p {
@@ -774,17 +796,21 @@
 
   .home .hero-services-grid,
   .home .platform-grid,
-  .home .features-grid,
   .home .courses-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.55rem;
   }
 
-  .home .hero-benefits,
-  .home .hero-stats,
-  .home .stats-grid,
+  .home .features-grid,
   .home .testimonials-grid,
   .home .faq-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .home .hero-benefits,
+  .home .hero-stats,
+  .home .stats-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.55rem;
   }
