@@ -595,7 +595,8 @@ export default function Dashboard() {
         .dashboard-stats { transition: all 0.2s ease; }
         .dashboard-tabs { transition: all 0.2s ease; }
         .dashboard-shell {
-          width: 100%;
+          width: calc(100% - clamp(2rem, 4vw, 4rem));
+          margin: 0 auto;
         }
         .dashboard-tab-button { border-radius: 12px; background: transparent; border: 1px solid transparent; }
         .dashboard-tab-button.active { background: rgba(15,110,86,0.08); color: #0F6E56; border-color: rgba(15,110,86,0.15); }

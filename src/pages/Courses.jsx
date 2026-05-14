@@ -20,13 +20,13 @@ export default function Courses() {
   return (
     <div className="page">
       <div className="page-header">
-        <div className="container">
+        <div className="container-wide">
           <h1>Explore Courses</h1>
           <p>Self-paced pharmacy professional development courses with downloadable resources and certificates.</p>
         </div>
       </div>
 
-      <div className="container" style={{ paddingTop: "2rem" }}>
+      <div className="container-wide" style={{ paddingTop: "2rem" }}>
         {loading ? (
           <p style={{ color: "var(--text-500)" }}>Loading courses...</p>
         ) : courses.length === 0 ? (
