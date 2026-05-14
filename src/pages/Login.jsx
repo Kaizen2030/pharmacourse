@@ -49,7 +49,7 @@ export default function Login() {
 
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: getAuthRedirectUrl("/dashboard") },
+      options: { redirectTo: getAuthRedirectUrl("/complete-profile?next=/dashboard") },
     })
 
     if (oauthError) {
@@ -68,6 +68,10 @@ export default function Login() {
         <button onClick={handleGoogle} className="btn-google" type="button" disabled={googleLoading || loading}>
           <span>G</span> {googleLoading ? "Connecting to Google..." : "Continue with Google"}
         </button>
+
+        <p style={{ margin: ".75rem 0 0", color: "var(--text-500)", fontSize: ".8rem", lineHeight: 1.6 }}>
+          Google users will confirm their certificate name on the next step before entering the dashboard.
+        </p>
 
         <div className="auth-divider"><span>or</span></div>
 
