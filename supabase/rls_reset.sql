@@ -11,6 +11,28 @@ add column if not exists professional_id text;
 alter table public.course_enrollments
 add column if not exists status text default 'enrolled';
 
+create table if not exists public.certificate_settings (
+  id integer primary key default 1 check (id = 1),
+  organization_name text not null default 'PHARMACOURSE',
+  organization_subtitle text not null default 'Professional Pharmacy CPD Platform - Kenya',
+  certificate_label text not null default 'Certificate of Completion',
+  certificate_title text not null default 'Academic Achievement',
+  certifies_text text not null default 'This is to certify that',
+  completion_text text not null default 'has successfully completed the course',
+  signature_name text not null default 'Julius Wanjau',
+  signature_role text not null default 'Director, PharmaCourse',
+  footer_text text not null default 'PharmaCourse - Professional Pharmacy CPD Platform - www.pharmacourse.co.ke',
+  signature_image_url text,
+  left_badge_title text not null default 'CPD',
+  left_badge_subtitle text not null default 'Certified',
+  left_vertical_text text not null default 'PharmaCourse Kenya',
+  updated_at timestamptz not null default now()
+);
+
+insert into public.certificate_settings (id)
+values (1)
+on conflict (id) do nothing;
+
 update public.course_enrollments
 set status = 'enrolled'
 where status is null;
@@ -83,6 +105,7 @@ alter table public.course_enrollments enable row level security;
 alter table public.course_progress enable row level security;
 alter table public.certificates enable row level security;
 alter table public.simulation_responses enable row level security;
+alter table public.certificate_settings enable row level security;
 
 do $$
 declare pol record;
@@ -99,7 +122,8 @@ begin
         'course_enrollments',
         'course_progress',
         'certificates',
-        'simulation_responses'
+        'simulation_responses',
+        'certificate_settings'
       )
   loop
     execute format(
@@ -140,6 +164,19 @@ using (public.is_admin());
 create policy "Admins can update all profiles"
 on public.user_profiles
 for update
+to authenticated
+using (public.is_admin())
+with check (public.is_admin());
+
+create policy "Public can read certificate settings"
+on public.certificate_settings
+for select
+to public
+using (true);
+
+create policy "Admins can manage certificate settings"
+on public.certificate_settings
+for all
 to authenticated
 using (public.is_admin())
 with check (public.is_admin());

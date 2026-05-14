@@ -3,9 +3,10 @@ import { supabase } from "../../lib/supabaseClient"
 import { useAuth } from "../../context/AuthContext"
 import {
   BookOpen, Home, LogOut, Plus, Edit2, Trash2, Eye, EyeOff,
-  Save, GripVertical, AlertCircle, RefreshCw, FlaskConical, Users
+  Save, GripVertical, AlertCircle, RefreshCw, FlaskConical, Users, Award
 } from "lucide-react"
 import "./AdminDashboard.css"
+import { DEFAULT_CERTIFICATE_SETTINGS, normalizeCertificateSettings } from "../../lib/certificateSettings"
 
 export default function AdminDashboard() {
   const { user, profile } = useAuth()
@@ -71,6 +72,13 @@ export default function AdminDashboard() {
             <Users size={20} />
             <span>Admins</span>
           </button>
+          <button
+            className={`menu-item ${activeTab === "certificate" ? "active" : ""}`}
+            onClick={() => setActiveTab("certificate")}
+          >
+            <Award size={20} />
+            <span>Certificate</span>
+          </button>
         </nav>
 
         <button className="logout-btn" onClick={logout}>
@@ -85,6 +93,7 @@ export default function AdminDashboard() {
         {activeTab === "quizzes" && <QuizManagementTab />}
         {activeTab === "simulations" && <SimulationsTab />}
         {activeTab === "admins" && <AdminUsersTab />}
+        {activeTab === "certificate" && <CertificateSettingsTab />}
       </div>
     </div>
   )
@@ -93,6 +102,7 @@ export default function AdminDashboard() {
 // ─── COURSES TAB ─────────────────────────────────────────────────────────────
 
 function AdminUsersTab() {
+  const { user } = useAuth()
   const [profiles, setProfiles] = useState([])
   const [loading, setLoading] = useState(true)
   const [savingId, setSavingId] = useState(null)
@@ -145,6 +155,40 @@ function AdminUsersTab() {
     setSavingId(null)
   }
 
+  async function demoteAdmin(targetProfile) {
+    const adminCount = profiles.filter((profile) => profile.role === "admin").length
+
+    if (targetProfile.id === user?.id) {
+      setError("You cannot remove your own admin access from this screen.")
+      return
+    }
+
+    if (adminCount <= 1) {
+      setError("You cannot demote the last remaining admin.")
+      return
+    }
+
+    if (!window.confirm(`Remove admin access from ${targetProfile.email || targetProfile.full_name || "this admin"}?`)) return
+
+    setSavingId(targetProfile.id)
+    setError("")
+    setMessage("")
+
+    const { error } = await supabase
+      .from("user_profiles")
+      .update({ role: "student" })
+      .eq("id", targetProfile.id)
+
+    if (error) {
+      setError(error.message)
+    } else {
+      setMessage(`${targetProfile.email || targetProfile.full_name || "User"} is no longer an admin.`)
+      await loadProfiles()
+    }
+
+    setSavingId(null)
+  }
+
   const query = search.trim().toLowerCase()
   const filtered = profiles.filter((profile) => {
     if (!query) return true
@@ -162,7 +206,7 @@ function AdminUsersTab() {
         <div>
           <h2>Admin Management</h2>
           <p style={{ color: "var(--gray-500)", marginTop: "0.4rem" }}>
-            View current admins and promote signed-up users to admin.
+            View current admins, promote signed-up users, and remove admin access when needed.
           </p>
         </div>
         <button className="btn-secondary" onClick={loadProfiles}>
@@ -204,7 +248,12 @@ function AdminUsersTab() {
         <div style={{ display: "grid", gap: "2rem" }}>
           <section>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", marginBottom: "1rem", flexWrap: "wrap" }}>
-              <h3 style={{ margin: 0 }}>Current Admins</h3>
+              <div>
+                <h3 style={{ margin: 0 }}>Current Admins</h3>
+                <p style={{ margin: "0.35rem 0 0", color: "var(--gray-500)", fontSize: "0.84rem" }}>
+                  You cannot remove yourself or the last remaining admin.
+                </p>
+              </div>
               <span style={{ fontSize: "0.85rem", color: "var(--gray-500)" }}>{admins.length} admin{admins.length === 1 ? "" : "s"}</span>
             </div>
 
@@ -224,6 +273,20 @@ function AdminUsersTab() {
                     <p style={{ margin: 0, color: "var(--gray-500)", fontSize: "0.82rem" }}>
                       {profile.professional_id ? `Professional ID: ${profile.professional_id}` : "No professional ID"}
                     </p>
+                    <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.9rem" }}>
+                      <button
+                        className="btn-secondary"
+                        onClick={() => demoteAdmin(profile)}
+                        disabled={savingId === profile.id || profile.id === user?.id || admins.length <= 1}
+                        style={{
+                          borderColor: "#fecaca",
+                          color: "#b91c1c",
+                          background: profile.id === user?.id || admins.length <= 1 ? "#f9fafb" : "#fff"
+                        }}
+                      >
+                        {savingId === profile.id ? "Updating..." : profile.id === user?.id ? "Your Account" : admins.length <= 1 ? "Last Admin" : "Remove Admin"}
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -623,6 +686,374 @@ function CourseEditorModal({ course, onClose, onSave }) {
 }
 
 // ─── HOMEPAGE TAB ─────────────────────────────────────────────────────────────
+
+function CertificateSettingsTab() {
+  const [form, setForm] = useState(DEFAULT_CERTIFICATE_SETTINGS)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState("")
+  const [message, setMessage] = useState("")
+  const signatureInputRef = useRef(null)
+
+  useEffect(() => {
+    loadSettings()
+  }, [])
+
+  async function loadSettings() {
+    setLoading(true)
+    setError("")
+    setMessage("")
+
+    const { data, error } = await supabase
+      .from("certificate_settings")
+      .select("*")
+      .eq("id", 1)
+      .maybeSingle()
+
+    if (error) {
+      setError(`${error.message}. Re-run supabase/rls_reset.sql to create certificate settings.`)
+      setForm(DEFAULT_CERTIFICATE_SETTINGS)
+    } else {
+      setForm(normalizeCertificateSettings(data))
+    }
+
+    setLoading(false)
+  }
+
+  async function uploadSignature(file) {
+    setUploading(true)
+    setError("")
+    setMessage("")
+
+    try {
+      const extension = (file.name.split(".").pop() || "png").toLowerCase()
+      const safeName = `certificates/signatures/${Date.now()}-signature.${extension}`
+      const { error: uploadError } = await supabase.storage
+        .from("media")
+        .upload(safeName, file, { cacheControl: "3600", upsert: true })
+
+      if (uploadError) throw uploadError
+
+      const { data: urlData } = supabase.storage
+        .from("media")
+        .getPublicUrl(safeName)
+
+      setForm((current) => ({ ...current, signature_image_url: urlData.publicUrl }))
+      setMessage("Signature uploaded. Save settings to apply it to certificates.")
+    } catch (uploadError) {
+      setError(uploadError.message || "Unable to upload signature image.")
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  async function handleSignatureUpload(event) {
+    const file = event.target.files?.[0]
+    event.target.value = ""
+    if (!file) return
+
+    if (!file.type.startsWith("image/")) {
+      setError("Please upload an image file for the signature.")
+      return
+    }
+
+    await uploadSignature(file)
+  }
+
+  async function saveSettings() {
+    setSaving(true)
+    setError("")
+    setMessage("")
+
+    const payload = {
+      ...normalizeCertificateSettings(form),
+      id: 1,
+      updated_at: new Date().toISOString(),
+    }
+
+    const { error } = await supabase
+      .from("certificate_settings")
+      .upsert(payload, { onConflict: "id" })
+
+    if (error) {
+      setError(error.message)
+    } else {
+      setMessage("Certificate settings saved successfully.")
+    }
+
+    setSaving(false)
+  }
+
+  const inputStyle = {
+    width: "100%",
+    padding: "0.8rem 0.95rem",
+    borderRadius: "0.8rem",
+    border: "1px solid var(--gray-300)",
+    fontSize: "0.95rem",
+    fontFamily: "inherit",
+    background: "#fff",
+  }
+
+  if (loading) {
+    return (
+      <div className="admin-section">
+        <div className="section-header">
+          <h2>Certificate Design</h2>
+        </div>
+        <p style={{ color: "var(--gray-500)" }}>Loading certificate settings...</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="admin-section">
+      <div className="section-header">
+        <div>
+          <h2>Certificate Design</h2>
+          <p style={{ color: "var(--gray-500)", marginTop: "0.35rem" }}>
+            Manage one official signature and edit the certificate header, footer, and supporting text.
+          </p>
+        </div>
+        <button className="btn-secondary" onClick={loadSettings}>
+          <RefreshCw size={16} /> Refresh
+        </button>
+      </div>
+
+      {message && (
+        <div style={{ marginBottom: "1rem", padding: "0.9rem 1rem", borderRadius: "0.75rem", background: "#dcfce7", color: "#166534", fontWeight: 600 }}>
+          {message}
+        </div>
+      )}
+
+      {error && (
+        <div style={{ marginBottom: "1rem", padding: "0.9rem 1rem", borderRadius: "0.75rem", background: "#fee2e2", color: "#991b1b", fontWeight: 600 }}>
+          {error}
+        </div>
+      )}
+
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.3fr) minmax(320px, 0.9fr)", gap: "1.5rem", alignItems: "start" }}>
+        <div style={{ display: "grid", gap: "1.25rem" }}>
+          <section style={{ background: "#fff", border: "1px solid #e6ece8", borderRadius: "1rem", padding: "1.35rem" }}>
+            <h3 style={{ margin: "0 0 1rem" }}>Top branding</h3>
+            <div style={{ display: "grid", gap: "1rem" }}>
+              <div>
+                <label style={{ display: "block", marginBottom: "0.45rem", fontWeight: 600 }}>Organisation name</label>
+                <input
+                  style={inputStyle}
+                  value={form.organization_name || ""}
+                  onChange={(event) => setForm({ ...form, organization_name: event.target.value })}
+                  placeholder="PHARMACOURSE"
+                />
+              </div>
+              <div>
+                <label style={{ display: "block", marginBottom: "0.45rem", fontWeight: 600 }}>Organisation subtitle</label>
+                <input
+                  style={inputStyle}
+                  value={form.organization_subtitle || ""}
+                  onChange={(event) => setForm({ ...form, organization_subtitle: event.target.value })}
+                  placeholder="Professional Pharmacy CPD Platform - Kenya"
+                />
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Certificate label</label>
+                  <input
+                    style={inputStyle}
+                    value={form.certificate_label || ""}
+                    onChange={(event) => setForm({ ...form, certificate_label: event.target.value })}
+                    placeholder="Certificate of Completion"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Certificate title</label>
+                  <input
+                    style={inputStyle}
+                    value={form.certificate_title || ""}
+                    onChange={(event) => setForm({ ...form, certificate_title: event.target.value })}
+                    placeholder="Academic Achievement"
+                  />
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section style={{ background: "#fff", border: "1px solid #e6ece8", borderRadius: "1rem", padding: "1.35rem" }}>
+            <h3 style={{ margin: "0 0 1rem" }}>Certificate copy</h3>
+            <div style={{ display: "grid", gap: "1rem" }}>
+              <div>
+                <label style={{ display: "block", marginBottom: "0.45rem", fontWeight: 600 }}>Text above learner name</label>
+                <input
+                  style={inputStyle}
+                  value={form.certifies_text || ""}
+                  onChange={(event) => setForm({ ...form, certifies_text: event.target.value })}
+                  placeholder="This is to certify that"
+                />
+              </div>
+              <div>
+                <label style={{ display: "block", marginBottom: "0.45rem", fontWeight: 600 }}>Text above course title</label>
+                <input
+                  style={inputStyle}
+                  value={form.completion_text || ""}
+                  onChange={(event) => setForm({ ...form, completion_text: event.target.value })}
+                  placeholder="has successfully completed the course"
+                />
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Left badge title</label>
+                  <input
+                    style={inputStyle}
+                    value={form.left_badge_title || ""}
+                    onChange={(event) => setForm({ ...form, left_badge_title: event.target.value })}
+                    placeholder="CPD"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Left badge subtitle</label>
+                  <input
+                    style={inputStyle}
+                    value={form.left_badge_subtitle || ""}
+                    onChange={(event) => setForm({ ...form, left_badge_subtitle: event.target.value })}
+                    placeholder="Certified"
+                  />
+                </div>
+              </div>
+              <div>
+                <label style={{ display: "block", marginBottom: "0.45rem", fontWeight: 600 }}>Left rail text</label>
+                <input
+                  style={inputStyle}
+                  value={form.left_vertical_text || ""}
+                  onChange={(event) => setForm({ ...form, left_vertical_text: event.target.value })}
+                  placeholder="PharmaCourse Kenya"
+                />
+              </div>
+              <div>
+                <label style={{ display: "block", marginBottom: "0.45rem", fontWeight: 600 }}>Footer text</label>
+                <input
+                  style={inputStyle}
+                  value={form.footer_text || ""}
+                  onChange={(event) => setForm({ ...form, footer_text: event.target.value })}
+                  placeholder="Footer line shown at the bottom of every certificate"
+                />
+              </div>
+            </div>
+          </section>
+
+          <section style={{ background: "#fff", border: "1px solid #e6ece8", borderRadius: "1rem", padding: "1.35rem" }}>
+            <h3 style={{ margin: "0 0 1rem" }}>Official signature</h3>
+            <div style={{ display: "grid", gap: "1rem" }}>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Signer name</label>
+                  <input
+                    style={inputStyle}
+                    value={form.signature_name || ""}
+                    onChange={(event) => setForm({ ...form, signature_name: event.target.value })}
+                    placeholder="Julius Wanjau"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Signer role</label>
+                  <input
+                    style={inputStyle}
+                    value={form.signature_role || ""}
+                    onChange={(event) => setForm({ ...form, signature_role: event.target.value })}
+                    placeholder="Director, PharmaCourse"
+                  />
+                </div>
+              </div>
+
+              <input
+                ref={signatureInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleSignatureUpload}
+                style={{ display: "none" }}
+              />
+
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", alignItems: "center" }}>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={() => !uploading && signatureInputRef.current?.click()}
+                  disabled={uploading}
+                >
+                  {uploading ? "Uploading..." : "Upload Signature"}
+                </button>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => setForm({ ...form, signature_image_url: "" })}
+                  disabled={!form.signature_image_url}
+                >
+                  Remove Signature
+                </button>
+                <span style={{ color: "var(--gray-500)", fontSize: "0.88rem" }}>
+                  Best result: transparent PNG with a dark ink signature on a light background.
+                </span>
+              </div>
+
+              <div>
+                <label style={{ display: "block", marginBottom: "0.45rem", fontWeight: 600 }}>Signature image URL</label>
+                <input
+                  style={inputStyle}
+                  value={form.signature_image_url || ""}
+                  onChange={(event) => setForm({ ...form, signature_image_url: event.target.value })}
+                  placeholder="Public image URL"
+                />
+              </div>
+            </div>
+          </section>
+
+          <div style={{ display: "flex", justifyContent: "flex-end" }}>
+            <button className="btn-primary" onClick={saveSettings} disabled={saving}>
+              <Save size={16} /> {saving ? "Saving..." : "Save Certificate Settings"}
+            </button>
+          </div>
+        </div>
+
+        <aside style={{ background: "#fff", border: "1px solid #e6ece8", borderRadius: "1rem", padding: "1.35rem", position: "sticky", top: "1rem" }}>
+          <h3 style={{ margin: "0 0 0.85rem" }}>Quick preview notes</h3>
+          <div style={{ display: "grid", gap: "0.75rem" }}>
+            <div style={{ padding: "0.95rem", borderRadius: "0.85rem", background: "#f7faf8", border: "1px solid #e6ece8" }}>
+              <strong style={{ display: "block", marginBottom: "0.3rem" }}>What changes live</strong>
+              <span style={{ color: "var(--gray-600)", fontSize: "0.9rem" }}>
+                The live certificate page and PDF export will both use these saved settings.
+              </span>
+            </div>
+            <div style={{ padding: "0.95rem", borderRadius: "0.85rem", background: "#f7faf8", border: "1px solid #e6ece8" }}>
+              <strong style={{ display: "block", marginBottom: "0.3rem" }}>Recommended signature</strong>
+              <span style={{ color: "var(--gray-600)", fontSize: "0.9rem" }}>
+                Use one clean transparent signature image so every learner gets the same official sign-off.
+              </span>
+            </div>
+            <div style={{ padding: "0.95rem", borderRadius: "0.85rem", background: "#f7faf8", border: "1px solid #e6ece8" }}>
+              <strong style={{ display: "block", marginBottom: "0.3rem" }}>Suggested polish</strong>
+              <span style={{ color: "var(--gray-600)", fontSize: "0.9rem" }}>
+                Keep the organisation name short, use a simple subtitle, and avoid long footer text so the certificate stays premium.
+              </span>
+            </div>
+            {form.signature_image_url ? (
+              <div style={{ padding: "1rem", borderRadius: "0.85rem", background: "#fbfdfc", border: "1px dashed #c8ddd3" }}>
+                <div style={{ fontSize: "0.84rem", color: "var(--gray-500)", marginBottom: "0.5rem" }}>Current signature preview</div>
+                <img
+                  src={form.signature_image_url}
+                  alt="Certificate signature preview"
+                  style={{ maxWidth: "100%", maxHeight: "100px", objectFit: "contain", display: "block", filter: "contrast(1.1)" }}
+                />
+              </div>
+            ) : (
+              <div style={{ padding: "1rem", borderRadius: "0.85rem", background: "#fbfdfc", border: "1px dashed #c8ddd3", color: "var(--gray-500)" }}>
+                No signature image uploaded yet. The certificate will fall back to the signer name as text until you add one.
+              </div>
+            )}
+          </div>
+        </aside>
+      </div>
+    </div>
+  )
+}
 
 function HomepageTab() {
   const [sections, setSections] = useState([])
