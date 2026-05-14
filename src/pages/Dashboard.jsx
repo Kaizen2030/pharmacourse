@@ -264,16 +264,19 @@ export default function Dashboard() {
                       {/* Thumbnail */}
                       <div className="dash-course-thumb" style={{
                         width: 220, minHeight: 150, flexShrink: 0,
-                        background: "linear-gradient(135deg, #e8f5f0, #d0ece4)",
+                        background: "linear-gradient(135deg, #f7fbf9, #edf6f1)",
                         display: "flex", alignItems: "center", justifyContent: "center",
                         fontSize: "2.5rem", borderRight: "1px solid #eee",
-                        overflow: "hidden", position: "relative"
+                        overflow: "hidden", position: "relative",
+                        padding: "0.6rem"
                       }}>
                         {course?.image_url
                           ? <img src={course.image_url} alt={course.title} style={{
                               position: "absolute", inset: 0,
                               width: "100%", height: "100%",
-                              objectFit: "cover", objectPosition: "top center"
+                              objectFit: "contain", objectPosition: "center",
+                              padding: "0.55rem",
+                              background: "#fff"
                             }} />
                           : "💊"}
                       </div>
@@ -609,7 +612,7 @@ export default function Dashboard() {
           box-shadow: 0 12px 28px rgba(0,0,0,0.08);
         }
         .dash-course-thumb img {
-          width: 100%; height: 100%; object-fit: cover; object-position: top center;
+          width: 100%; height: 100%; object-fit: contain; object-position: center;
         }
         @media (max-width: 900px) {
           .dashboard-header {
