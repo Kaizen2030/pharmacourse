@@ -3,6 +3,11 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
 
 export default function Login() {
+  const authRedirectBase =
+    window.location.hostname === "localhost"
+      ? window.location.origin
+      : "https://www.pharmacourse.co.ke"
+
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [email, setEmail] = useState("")
@@ -44,7 +49,7 @@ export default function Login() {
   async function handleGoogle() {
     await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/dashboard` },
+      options: { redirectTo: `${authRedirectBase}/dashboard` },
     })
   }
 

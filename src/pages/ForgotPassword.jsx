@@ -3,6 +3,11 @@ import { Link } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
 
 export default function ForgotPassword() {
+  const resetRedirectUrl =
+    window.location.hostname === "localhost"
+      ? `${window.location.origin}/reset-password`
+      : "https://www.pharmacourse.co.ke/reset-password"
+
   const [email, setEmail] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -14,7 +19,7 @@ export default function ForgotPassword() {
     setLoading(true)
 
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: resetRedirectUrl,
     })
 
     if (resetError) {
