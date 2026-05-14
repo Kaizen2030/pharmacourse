@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
+import pharmacyosCopilot from "../assets/pharmacyos-copilot.svg"
 import {
   ShoppingCart, Package, AlertTriangle, CreditCard,
   FileText, BarChart3, Settings, Cpu, Shield,
@@ -236,10 +237,13 @@ const css = `
       margin: 0 0 10px !important;
     }
     .po-ai-copy p,
-    .po-ai-copy li,
-    .po-ai-console {
+    .po-ai-copy li {
       font-size: 11px !important;
       line-height: 1.5 !important;
+    }
+    .po-ai-shot {
+      padding: 10px !important;
+      border-radius: 14px !important;
     }
     .po-ai-copy li {
       margin-bottom: 8px !important;
@@ -476,22 +480,12 @@ export default function PharmacyOS() {
                 ))}
               </ul>
             </div>
-            <div className="po-ai-console" style={{ background: "#0a2e1f", borderRadius: 16, padding: "24px 20px", fontFamily: "'Fira Code', 'Courier New', monospace", fontSize: 13, color: "#a8e6cf", boxShadow: "0 12px 40px rgba(6,35,24,0.3)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#4ade80", animation: "pulse-dot 2s ease-in-out infinite" }} />
-                <span style={{ color: "#5dcaa5", fontSize: 11, letterSpacing: 1, fontWeight: 700 }}>AI DRUG ADVISOR</span>
-              </div>
-              <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: 10, padding: "12px 14px", marginBottom: 10, color: "#fff", fontSize: 13 }}>
-                What is the adult dose for Amoxicillin for a chest infection?
-              </div>
-              <div style={{ background: "#0F6E5622", border: "1px solid #0F6E5644", borderRadius: 10, padding: "12px 14px", lineHeight: 1.65, fontSize: 12 }}>
-                <strong style={{ color: "#5dcaa5" }}>PharmacyOS AI:</strong> For community-acquired pneumonia, the standard adult dose is Amoxicillin 500mg three times daily for 5-7 days. High-dose therapy may apply for severe infections.
-              </div>
-              <div style={{ marginTop: 12, display: "flex", gap: 7, flexWrap: "wrap" }}>
-                {["Amoxicillin dose", "Warfarin interactions", "Cipro in children"].map((query) => (
-                  <span key={query} style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.13)", borderRadius: 99, padding: "5px 11px", fontSize: 11, color: "#a8e6cf" }}>{query}</span>
-                ))}
-              </div>
+            <div className="po-ai-shot" style={{ background: "#ffffff", borderRadius: 20, padding: 14, border: "1px solid #cfe5dc", boxShadow: "0 12px 36px rgba(15,110,86,0.16)" }}>
+              <img
+                src={pharmacyosCopilot}
+                alt="PharmacyOS AI Copilot dashboard showing branch-aware pharmacy operations and clinical guidance"
+                style={{ display: "block", width: "100%", height: "auto", borderRadius: 14, border: "1px solid #dbe8e2" }}
+              />
             </div>
           </div>
         </div>

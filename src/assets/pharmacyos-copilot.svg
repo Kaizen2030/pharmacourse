@@ -1,0 +1,129 @@
+<svg width="1440" height="780" viewBox="0 0 1440 780" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1440" height="780" rx="26" fill="#EEF3F1"/>
+  <rect x="18" y="18" width="1404" height="744" rx="22" fill="#F7FAF9" stroke="#DCE7E2" stroke-width="2"/>
+  <rect x="18" y="18" width="184" height="744" rx="22" fill="#0F6E56"/>
+  <rect x="18" y="18" width="184" height="74" fill="#11765D"/>
+  <rect x="34" y="38" width="32" height="32" rx="10" fill="#CDEDE0"/>
+  <text x="50" y="59" fill="#0F6E56" font-family="Arial, sans-serif" font-size="18" font-weight="700" text-anchor="middle">Rx</text>
+  <text x="76" y="52" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="24" font-weight="700">PharmacyOS</text>
+  <text x="76" y="72" fill="#9DE2C9" font-family="Arial, sans-serif" font-size="13">ReMEDcare</text>
+
+  <rect x="32" y="110" width="146" height="120" rx="12" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.16)"/>
+  <text x="46" y="132" fill="#9DE2C9" font-family="Arial, sans-serif" font-size="11" font-weight="700" letter-spacing="1.2">WORKING BRANCH</text>
+  <text x="46" y="154" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="12">Inventory, sales, shifts, patients,</text>
+  <text x="46" y="172" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="12">claims, and reports will use this</text>
+  <text x="46" y="190" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="12">branch.</text>
+  <rect x="46" y="198" width="118" height="30" rx="8" fill="#FFFFFF"/>
+  <text x="58" y="217" fill="#102233" font-family="Arial, sans-serif" font-size="11">ReMEDcare (Main)</text>
+  <text x="152" y="216" fill="#102233" font-family="Arial, sans-serif" font-size="11">⌄</text>
+
+  <text x="32" y="252" fill="#8FD5BB" font-family="Arial, sans-serif" font-size="12" font-weight="700" letter-spacing="1.4">OPERATIONS</text>
+  <g fill="#FFFFFF" font-family="Arial, sans-serif" font-size="12">
+    <text x="50" y="282">Pharmacy &amp; POS</text>
+    <text x="50" y="312">Drug Inventory</text>
+    <text x="50" y="342">Billing</text>
+    <text x="50" y="372">Credit &amp; Debts</text>
+    <text x="50" y="402">Prescriptions</text>
+  </g>
+
+  <text x="32" y="446" fill="#8FD5BB" font-family="Arial, sans-serif" font-size="12" font-weight="700" letter-spacing="1.4">FINANCE</text>
+  <g fill="#FFFFFF" font-family="Arial, sans-serif" font-size="12">
+    <text x="50" y="476">M-Pesa</text>
+    <text x="50" y="506">SHA Claims</text>
+    <text x="50" y="536">Insurance Claims</text>
+    <text x="50" y="566">eTIMS / KRA</text>
+  </g>
+
+  <text x="32" y="608" fill="#8FD5BB" font-family="Arial, sans-serif" font-size="12" font-weight="700" letter-spacing="1.4">ADMIN</text>
+  <g fill="#FFFFFF" font-family="Arial, sans-serif" font-size="12">
+    <text x="50" y="638">Branches</text>
+    <rect x="18" y="650" width="184" height="34" fill="rgba(255,255,255,0.12)"/>
+    <rect x="18" y="650" width="4" height="34" fill="#C5F0DE"/>
+    <text x="50" y="672" font-weight="700">AI Drug Advisor</text>
+    <text x="50" y="704">Reports</text>
+    <text x="50" y="734">Settings</text>
+  </g>
+
+  <rect x="32" y="604" width="142" height="118" rx="12" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.16)"/>
+  <text x="44" y="626" fill="#9DE2C9" font-family="Arial, sans-serif" font-size="11" font-weight="700">ACTIVE POS STAFF</text>
+  <text x="44" y="650" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="12" font-weight="700">KAIZEN</text>
+  <text x="44" y="670" fill="#D8F3E8" font-family="Arial, sans-serif" font-size="11">Administrator | Signed-in</text>
+  <text x="44" y="686" fill="#D8F3E8" font-family="Arial, sans-serif" font-size="11">account</text>
+  <rect x="44" y="700" width="64" height="24" rx="8" fill="#8EE9BB"/>
+  <text x="76" y="716" fill="#0F6E56" font-family="Arial, sans-serif" font-size="11" font-weight="700" text-anchor="middle">Switch PIN</text>
+
+  <rect x="30" y="726" width="144" height="34" rx="12" fill="#0D6A52"/>
+  <circle cx="48" cy="743" r="14" fill="#D7F2E6"/>
+  <text x="48" y="748" fill="#0F6E56" font-family="Arial, sans-serif" font-size="12" font-weight="700" text-anchor="middle">M</text>
+  <text x="72" y="740" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="11" font-weight="700">Marwadi Phar...</text>
+  <text x="72" y="756" fill="#9DE2C9" font-family="Arial, sans-serif" font-size="10">ReMEDcare</text>
+  <rect x="138" y="730" width="34" height="26" rx="8" fill="#F04E45"/>
+  <text x="155" y="747" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="11" font-weight="700" text-anchor="middle">Out</text>
+
+  <rect x="224" y="36" width="1180" height="54" rx="12" fill="#F5FBF8" stroke="#CDE7D9"/>
+  <text x="242" y="58" fill="#6E8379" font-family="Arial, sans-serif" font-size="10" font-weight="700" letter-spacing="1.2">VIEWING BRANCH</text>
+  <text x="242" y="77" fill="#0F6E56" font-family="Arial, sans-serif" font-size="18" font-weight="700">ReMEDcare</text>
+  <rect x="326" y="62" width="52" height="20" rx="10" fill="#DCE8FF"/>
+  <text x="352" y="76" fill="#3957FF" font-family="Arial, sans-serif" font-size="11" font-weight="700" text-anchor="middle">Main</text>
+  <text x="970" y="58" fill="#49635B" font-family="Arial, sans-serif" font-size="12">This screen is using the selected working branch for inventory, sales, patients, claims, M-Pesa, and</text>
+  <text x="970" y="76" fill="#49635B" font-family="Arial, sans-serif" font-size="12">the other operational records.</text>
+
+  <text x="224" y="120" fill="#102233" font-family="Arial, sans-serif" font-size="16" font-weight="700">AI Pharmacy Copilot</text>
+  <text x="224" y="140" fill="#0F6E56" font-family="Arial, sans-serif" font-size="12">Branch-aware pharmacy operations and clinical guidance</text>
+
+  <rect x="224" y="160" width="1180" height="34" rx="10" fill="#FFF9E9" stroke="#F0C34A"/>
+  <text x="240" y="182" fill="#9F5A00" font-family="Arial, sans-serif" font-size="12"><tspan font-weight="700">Safety note:</tspan> Business answers are based on the live branch snapshot below. Clinical answers still need pharmacist review and current guideline verification before dispensing or treatment decisions.</text>
+
+  <rect x="224" y="208" width="1180" height="172" rx="14" fill="#FFFFFF" stroke="#DDE6E2"/>
+  <text x="242" y="236" fill="#102233" font-family="Arial, sans-serif" font-size="14" font-weight="700">AI data scope</text>
+  <text x="242" y="256" fill="#607983" font-family="Arial, sans-serif" font-size="12">Ask about workers, sales, reports, inventory, patients, M-Pesa, claims, shifts, suppliers, and prescriptions for the current branch, a selected</text>
+  <text x="242" y="274" fill="#607983" font-family="Arial, sans-serif" font-size="12">branch, or all branches.</text>
+  <rect x="1070" y="220" width="190" height="34" rx="8" fill="#FFFFFF" stroke="#CCD7D3"/>
+  <text x="1086" y="242" fill="#102233" font-family="Arial, sans-serif" font-size="12">ReMEDcare (Current)</text>
+  <text x="1242" y="242" fill="#102233" font-family="Arial, sans-serif" font-size="11">⌄</text>
+  <rect x="1270" y="220" width="116" height="34" rx="8" fill="#FFFFFF" stroke="#CCD7D3"/>
+  <text x="1328" y="242" fill="#102233" font-family="Arial, sans-serif" font-size="12" font-weight="700" text-anchor="middle">Refresh Context</text>
+
+  <g>
+    <rect x="242" y="286" width="210" height="56" rx="10" fill="#FBFCFC" stroke="#E3EAE6"/>
+    <text x="258" y="304" fill="#7A8F88" font-family="Arial, sans-serif" font-size="10" letter-spacing="1.2">SCOPE</text>
+    <text x="258" y="328" fill="#0F6E56" font-family="Arial, sans-serif" font-size="16" font-weight="700">ReMEDcare</text>
+  </g>
+  <g>
+    <rect x="462" y="286" width="210" height="56" rx="10" fill="#FBFCFC" stroke="#E3EAE6"/>
+    <text x="478" y="304" fill="#7A8F88" font-family="Arial, sans-serif" font-size="10" letter-spacing="1.2">WORKERS</text>
+    <text x="478" y="328" fill="#0F6E56" font-family="Arial, sans-serif" font-size="16" font-weight="700">1</text>
+  </g>
+  <g>
+    <rect x="682" y="286" width="210" height="56" rx="10" fill="#FBFCFC" stroke="#E3EAE6"/>
+    <text x="698" y="304" fill="#7A8F88" font-family="Arial, sans-serif" font-size="10" letter-spacing="1.2">PATIENTS</text>
+    <text x="698" y="328" fill="#0F6E56" font-family="Arial, sans-serif" font-size="16" font-weight="700">0</text>
+  </g>
+  <g>
+    <rect x="902" y="286" width="210" height="56" rx="10" fill="#FBFCFC" stroke="#E3EAE6"/>
+    <text x="918" y="304" fill="#7A8F88" font-family="Arial, sans-serif" font-size="10" letter-spacing="1.2">INVENTORY</text>
+    <text x="918" y="328" fill="#0F6E56" font-family="Arial, sans-serif" font-size="16" font-weight="700">5</text>
+  </g>
+  <g>
+    <rect x="1122" y="286" width="210" height="56" rx="10" fill="#FBFCFC" stroke="#E3EAE6"/>
+    <text x="1138" y="304" fill="#7A8F88" font-family="Arial, sans-serif" font-size="10" letter-spacing="1.2">SALES ROWS</text>
+    <text x="1138" y="328" fill="#0F6E56" font-family="Arial, sans-serif" font-size="16" font-weight="700">0</text>
+  </g>
+  <g>
+    <rect x="1342" y="286" width="62" height="56" rx="10" fill="#FBFCFC" stroke="#E3EAE6"/>
+    <text x="1354" y="304" fill="#7A8F88" font-family="Arial, sans-serif" font-size="9" letter-spacing="1">OPEN SHIFTS</text>
+    <text x="1358" y="328" fill="#0F6E56" font-family="Arial, sans-serif" font-size="16" font-weight="700">1</text>
+  </g>
+  <line x1="242" y1="354" x2="1384" y2="354" stroke="#E4EBE7"/>
+  <text x="242" y="370" fill="#6F8790" font-family="Arial, sans-serif" font-size="11">Last synced: 14/05/2026, 11:24:16</text>
+
+  <rect x="224" y="394" width="1180" height="322" rx="14" fill="#FFFFFF" stroke="#DDE6E2"/>
+  <rect x="242" y="410" width="930" height="86" rx="10" fill="#FBFCFB" stroke="#E2E9E4"/>
+  <text x="256" y="428" fill="#0F6E56" font-family="Arial, sans-serif" font-size="11">PharmacyOS AI</text>
+  <text x="256" y="446" fill="#102233" font-family="Arial, sans-serif" font-size="13">Hello. I am your PharmacyOS copilot for ReMEDcare.</text>
+  <text x="256" y="480" fill="#102233" font-family="Arial, sans-serif" font-size="13">I can answer both clinical questions and branch business questions about workers, inventory, sales, patients, M-Pesa, claims, suppliers, shifts, prescriptions, and reports.</text>
+  <rect x="242" y="506" width="52" height="24" rx="8" fill="#FFFFFF" stroke="#CFDAD5"/>
+  <text x="268" y="522" fill="#102233" font-family="Arial, sans-serif" font-size="11" font-weight="700" text-anchor="middle">Helpful</text>
+  <rect x="302" y="506" width="58" height="24" rx="8" fill="#FFFFFF" stroke="#CFDAD5"/>
+  <text x="331" y="522" fill="#102233" font-family="Arial, sans-serif" font-size="11" font-weight="700" text-anchor="middle">Improve</text>
+</svg>
