@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
+import remedacareDashboard from "../assets/remedacare-dashboard.svg"
 import {
   ClipboardList, BarChart3, Users, Link2, Calendar,
   FileText, Shield, Activity, Pill, BedDouble,
@@ -156,10 +157,13 @@ const css = `
       margin: 0 0 10px !important;
     }
     .rc-integration-copy p,
-    .rc-integration-copy li,
-    .rc-integration-console {
+    .rc-integration-copy li {
       font-size: 11px !important;
       line-height: 1.5 !important;
+    }
+    .rc-integration-shot {
+      padding: 10px !important;
+      border-radius: 14px !important;
     }
     .rc-modules-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
@@ -314,30 +318,12 @@ export default function RemedacareOS() {
                 ))}
               </ul>
             </div>
-            <div className="rc-integration-console" style={{ background: "#0a2e1f", borderRadius: 16, padding: "24px 20px", boxShadow: "0 12px 40px rgba(6,35,24,0.3)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18 }}>
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#4ade80", animation: "pulse-dot 2s ease-in-out infinite" }} />
-                <span style={{ color: "#5dcaa5", fontSize: 11, fontWeight: 700, letterSpacing: 1 }}>LIVE CONNECTION</span>
-              </div>
-              <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: 10, padding: "12px 14px", marginBottom: 10 }}>
-                <div style={{ color: "#5dcaa5", fontSize: 10, fontWeight: 700, marginBottom: 5, letterSpacing: 0.5 }}>REMEDACAREOS | DOCTOR</div>
-                <div style={{ color: "#fff", fontSize: 12, lineHeight: 1.55 }}>
-                  Dr. Kamau issued: <strong style={{ color: "#86efac" }}>Amoxicillin 500mg x 21 tabs</strong><br />
-                  Patient: Jane Wanjiku | Ward: OPD
-                </div>
-              </div>
-              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 6, margin: "10px 0" }}>
-                <div style={{ width: 40, height: 1, background: "rgba(74,222,128,0.4)" }} />
-                <ArrowRight size={16} color="#4ade80" />
-                <div style={{ width: 40, height: 1, background: "rgba(74,222,128,0.4)" }} />
-              </div>
-              <div style={{ background: "rgba(15,110,86,0.18)", border: "1px solid rgba(15,110,86,0.38)", borderRadius: 10, padding: "12px 14px" }}>
-                <div style={{ color: "#5dcaa5", fontSize: 10, fontWeight: 700, marginBottom: 5, letterSpacing: 0.5 }}>PHARMACYOS | DISPENSARY QUEUE</div>
-                <div style={{ color: "#a8e6cf", fontSize: 12, lineHeight: 1.55 }}>
-                  Rx received | <strong>Amoxicillin 500mg</strong> | 21 tabs<br />
-                  Patient: Jane Wanjiku | Ready to dispense
-                </div>
-              </div>
+            <div className="rc-integration-shot" style={{ background: "#ffffff", borderRadius: 20, padding: 14, border: "1px solid #cfe5dc", boxShadow: "0 12px 36px rgba(15,110,86,0.16)" }}>
+              <img
+                src={remedacareDashboard}
+                alt="RemedacareOS dashboard showing patient, admissions, finance and pharmacy workflow panels"
+                style={{ display: "block", width: "100%", height: "auto", borderRadius: 14, border: "1px solid #dbe8e2" }}
+              />
             </div>
           </div>
         </div>
