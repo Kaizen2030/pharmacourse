@@ -128,7 +128,7 @@ export default function Dashboard() {
 
   return (
     <div className="page">
-      <div className="container" style={{ paddingTop: "2rem", paddingBottom: "4rem" }}>
+      <div className="container-wide dashboard-shell" style={{ paddingTop: "2rem", paddingBottom: "4rem" }}>
 
         {/* ── Header ── */}
         <div className="dashboard-header" style={{
@@ -594,6 +594,9 @@ export default function Dashboard() {
         .dashboard-header { transition: all 0.2s ease; }
         .dashboard-stats { transition: all 0.2s ease; }
         .dashboard-tabs { transition: all 0.2s ease; }
+        .dashboard-shell {
+          width: 100%;
+        }
         .dashboard-tab-button { border-radius: 12px; background: transparent; border: 1px solid transparent; }
         .dashboard-tab-button.active { background: rgba(15,110,86,0.08); color: #0F6E56; border-color: rgba(15,110,86,0.15); }
         .dashboard-header-action { transition: transform 0.2s ease; }

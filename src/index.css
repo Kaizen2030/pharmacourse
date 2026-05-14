@@ -98,6 +98,11 @@ button {
   margin: 0 auto;
 }
 
+.container-wide {
+  width: calc(100% - clamp(2rem, 4vw, 4rem));
+  margin: 0 auto;
+}
+
 .page,
 .page-sm {
   width: 100%;
@@ -839,6 +844,10 @@ code {
   }
 
   .container {
+    width: min(100%, calc(100% - 1rem));
+  }
+
+  .container-wide {
     width: min(100%, calc(100% - 1rem));
   }
 
