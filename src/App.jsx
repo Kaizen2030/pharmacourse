@@ -1,3 +1,4 @@
+import { useEffect } from "react"
 import { BrowserRouter, Routes, Route } from "react-router-dom"
 import { AuthProvider } from "./context/AuthContext"
 import Navbar from "./components/Navbar"
@@ -9,6 +10,10 @@ import CompleteProfile from "./pages/CompleteProfile"
 import ForgotPassword from "./pages/ForgotPassword"
 import ResetPassword from "./pages/ResetPassword"
 import Courses from "./pages/Courses"
+import Workshops from "./pages/Workshops"
+import Blog from "./pages/Blog"
+import BlogPost from "./pages/BlogPost"
+import TeamPlans from "./pages/TeamPlans"
 import CourseDetail from "./pages/CourseDetail"
 import CoursePlayer from "./pages/CoursePlayer"
 import Dashboard from "./pages/Dashboard"
@@ -24,10 +29,72 @@ import RemedacareOS from "./pages/Remedacareos"
 import Community from "./pages/Community"
 import ResetRedirect from "./pages/ResetRedirect"
 
+function MediaProtection() {
+  useEffect(() => {
+    const protectedMediaSelector = "img, picture, figure, video, canvas, svg"
+
+    function isProtectedMediaTarget(target) {
+      return target instanceof Element && !!target.closest(protectedMediaSelector)
+    }
+
+    function applyDragProtection(root = document) {
+      root.querySelectorAll("img, video, canvas, svg").forEach((node) => {
+        node.setAttribute("draggable", "false")
+      })
+    }
+
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (!(node instanceof Element)) return
+          if (node.matches("img, video, canvas, svg")) {
+            node.setAttribute("draggable", "false")
+          }
+          applyDragProtection(node)
+        })
+      })
+    })
+
+    function handleContextMenu(event) {
+      if (isProtectedMediaTarget(event.target)) {
+        event.preventDefault()
+      }
+    }
+
+    function handleDragStart(event) {
+      if (isProtectedMediaTarget(event.target)) {
+        event.preventDefault()
+      }
+    }
+
+    function handleSelectStart(event) {
+      if (isProtectedMediaTarget(event.target)) {
+        event.preventDefault()
+      }
+    }
+
+    applyDragProtection()
+    observer.observe(document.body, { childList: true, subtree: true })
+    document.addEventListener("contextmenu", handleContextMenu, true)
+    document.addEventListener("dragstart", handleDragStart, true)
+    document.addEventListener("selectstart", handleSelectStart, true)
+
+    return () => {
+      observer.disconnect()
+      document.removeEventListener("contextmenu", handleContextMenu, true)
+      document.removeEventListener("dragstart", handleDragStart, true)
+      document.removeEventListener("selectstart", handleSelectStart, true)
+    }
+  }, [])
+
+  return null
+}
+
 export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <MediaProtection />
         <Navbar />
         <Routes>
           <Route path="/" element={<Home />} />
@@ -37,6 +104,10 @@ export default function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/courses" element={<Courses />} />
+          <Route path="/workshops" element={<Workshops />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:slug" element={<BlogPost />} />
+          <Route path="/team-plans" element={<TeamPlans />} />
           <Route path="/courses/:id" element={<CourseDetail />} />
           <Route path="/learn/:courseId/:lessonId" element={<CoursePlayer />} />
           <Route path="/dashboard" element={<Dashboard />} />

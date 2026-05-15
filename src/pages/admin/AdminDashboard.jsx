@@ -3,29 +3,86 @@ import { supabase } from "../../lib/supabaseClient"
 import { useAuth } from "../../context/AuthContext"
 import {
   BookOpen, Home, LogOut, Plus, Edit2, Trash2, Eye, EyeOff,
-  Save, GripVertical, AlertCircle, RefreshCw, FlaskConical, Users, Award
+  Save, GripVertical, AlertCircle, RefreshCw, FlaskConical, Users, Award, ExternalLink, Video, Building2, Tags
 } from "lucide-react"
 import Pagination from "../../components/Pagination"
 import "./AdminDashboard.css"
 import { DEFAULT_CERTIFICATE_SETTINGS, normalizeCertificateSettings } from "../../lib/certificateSettings"
+import {
+  createEmptyBlogSection,
+  getPopulatedBlogSections,
+  hasPopulatedBlogSections,
+  normalizeBlogCategory,
+  normalizeBlogSections,
+  slugifyBlogCategory,
+} from "../../lib/blogHelpers"
 
 const ADMIN_USERS_PAGE_SIZE = 12
 const ADMIN_COURSES_PAGE_SIZE = 10
 const ADMIN_SIMULATIONS_PAGE_SIZE = 8
 const ADMIN_PEARLS_PAGE_SIZE = 8
+const TEAM_PLAN_TIER_ORDER = ["starter", "growth", "enterprise"]
+
+async function uploadImageToMedia(file, folder = "images") {
+  if (!file) throw new Error("No file selected.")
+  if (!file.type.startsWith("image/")) {
+    throw new Error("Please select an image file (jpg, png, webp, etc.)")
+  }
+
+  const safeName = `${folder}/${Date.now()}-${file.name.replace(/[^a-z0-9.]/gi, "_")}`
+  const { error } = await supabase.storage
+    .from("media")
+    .upload(safeName, file, { cacheControl: "3600", upsert: false })
+
+  if (error) throw error
+
+  const { data: urlData } = supabase.storage
+    .from("media")
+    .getPublicUrl(safeName)
+
+  return urlData.publicUrl
+}
+
+async function ensureBlogCategoryRecord(categoryName) {
+  const normalizedName = normalizeBlogCategory(categoryName)
+  if (!normalizedName) return
+
+  const payload = {
+    name: normalizedName,
+    slug: slugifyBlogCategory(normalizedName),
+    is_active: true,
+  }
+
+  const { error } = await supabase
+    .from("blog_categories")
+    .upsert(payload, { onConflict: "slug" })
+
+  if (error) {
+    throw error
+  }
+}
 
 export default function AdminDashboard() {
-  const { user, profile } = useAuth()
+  const { user, profile, loading: authLoading, isAdmin, isSuperAdmin } = useAuth()
   const [activeTab, setActiveTab] = useState("courses")
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (profile?.role !== "admin") {
+    if (authLoading) return
+
+    if (!user || !isAdmin) {
       window.location.href = "/dashboard"
       return
     }
-    setLoading(false)
-  }, [profile])
+
+    if (profile) setLoading(false)
+  }, [authLoading, user, profile, isAdmin])
+
+  useEffect(() => {
+    if (!isSuperAdmin && (activeTab === "admins" || activeTab === "certificate" || activeTab === "team-plans")) {
+      setActiveTab("courses")
+    }
+  }, [activeTab, isSuperAdmin])
 
   async function logout() {
     await supabase.auth.signOut()
@@ -40,6 +97,13 @@ export default function AdminDashboard() {
         <div className="admin-header">
           <h2>RemedaCare Admin</h2>
           <p className="admin-user">{profile?.full_name}</p>
+          {isAdmin && (
+            <span
+              className={`admin-role-badge${isSuperAdmin ? " super" : " content"}`}
+            >
+              {isSuperAdmin ? "Super Admin" : "Content Admin"}
+            </span>
+          )}
         </div>
 
         <nav className="admin-menu">
@@ -50,6 +114,57 @@ export default function AdminDashboard() {
             <BookOpen size={20} />
             <span>Courses</span>
           </button>
+          <button
+            className={`menu-item ${activeTab === "instructors" ? "active" : ""}`}
+            onClick={() => setActiveTab("instructors")}
+          >
+            <Users size={20} />
+            <span>Instructors</span>
+          </button>
+          <button
+            className={`menu-item ${activeTab === "workshops" ? "active" : ""}`}
+            onClick={() => setActiveTab("workshops")}
+          >
+            <Video size={20} />
+            <span>Workshops</span>
+          </button>
+          <button
+            className={`menu-item ${activeTab === "blog" ? "active" : ""}`}
+            onClick={() => setActiveTab("blog")}
+          >
+            <Edit2 size={20} />
+            <span>Blog</span>
+          </button>
+          <button
+            className={`menu-item ${activeTab === "blog-categories" ? "active" : ""}`}
+            onClick={() => setActiveTab("blog-categories")}
+          >
+            <Tags size={20} />
+            <span>Blog Categories</span>
+          </button>
+          <button
+            className={`menu-item ${activeTab === "testimonials" ? "active" : ""}`}
+            onClick={() => setActiveTab("testimonials")}
+          >
+            <Award size={20} />
+            <span>Testimonials</span>
+          </button>
+          <button
+            className={`menu-item ${activeTab === "leaderboard" ? "active" : ""}`}
+            onClick={() => setActiveTab("leaderboard")}
+          >
+            <RefreshCw size={20} />
+            <span>Leaderboard</span>
+          </button>
+          {isSuperAdmin && (
+            <button
+              className={`menu-item ${activeTab === "team-plans" ? "active" : ""}`}
+              onClick={() => setActiveTab("team-plans")}
+            >
+              <Building2 size={20} />
+              <span>Team Plans</span>
+            </button>
+          )}
           <button
             className={`menu-item ${activeTab === "homepage" ? "active" : ""}`}
             onClick={() => setActiveTab("homepage")}
@@ -71,20 +186,24 @@ export default function AdminDashboard() {
             <FlaskConical size={20} />
             <span>Simulations</span>
           </button>
-          <button
-            className={`menu-item ${activeTab === "admins" ? "active" : ""}`}
-            onClick={() => setActiveTab("admins")}
-          >
-            <Users size={20} />
-            <span>Admins</span>
-          </button>
-          <button
-            className={`menu-item ${activeTab === "certificate" ? "active" : ""}`}
-            onClick={() => setActiveTab("certificate")}
-          >
-            <Award size={20} />
-            <span>Certificate</span>
-          </button>
+          {isSuperAdmin && (
+            <button
+              className={`menu-item ${activeTab === "admins" ? "active" : ""}`}
+              onClick={() => setActiveTab("admins")}
+            >
+              <Users size={20} />
+              <span>Admins</span>
+            </button>
+          )}
+          {isSuperAdmin && (
+            <button
+              className={`menu-item ${activeTab === "certificate" ? "active" : ""}`}
+              onClick={() => setActiveTab("certificate")}
+            >
+              <Award size={20} />
+              <span>Certificate</span>
+            </button>
+          )}
         </nav>
 
         <button className="logout-btn" onClick={logout}>
@@ -95,11 +214,18 @@ export default function AdminDashboard() {
 
       <div className="admin-content">
         {activeTab === "courses" && <PaginatedCoursesTab />}
+        {activeTab === "instructors" && <InstructorsTab />}
+        {activeTab === "workshops" && <WorkshopsTab />}
+        {activeTab === "blog" && <BlogTab />}
+        {activeTab === "blog-categories" && <BlogCategoriesTab />}
+        {activeTab === "testimonials" && <TestimonialsTab />}
+        {activeTab === "leaderboard" && <LeaderboardTab />}
+        {isSuperAdmin && activeTab === "team-plans" && <TeamPlansTab />}
         {activeTab === "homepage" && <HomepageTab />}
         {activeTab === "quizzes" && <QuizManagementTab />}
         {activeTab === "simulations" && <ScalableSimulationsTab />}
-        {activeTab === "admins" && <ScalableAdminUsersTab />}
-        {activeTab === "certificate" && <CertificateSettingsTab />}
+        {isSuperAdmin && activeTab === "admins" && <ScalableAdminUsersTab />}
+        {isSuperAdmin && activeTab === "certificate" && <CertificateSettingsTab />}
       </div>
     </div>
   )
@@ -224,7 +350,7 @@ function AdminUsersTab() {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by name, email, professional ID, or role"
+          placeholder="Search by name, email, professional ID, role, or admin tier"
           style={{
             width: "100%",
             maxWidth: "420px",
@@ -447,6 +573,7 @@ function ScalableAdminUsersTab() {
   const [search, setSearch] = useState("")
   const [error, setError] = useState("")
   const [message, setMessage] = useState("")
+  const [selectedAdminRoles, setSelectedAdminRoles] = useState({})
 
   useEffect(() => {
     loadProfiles()
@@ -462,7 +589,15 @@ function ScalableAdminUsersTab() {
     if (!normalized) return null
 
     const escaped = normalized.replace(/[%_]/g, "\\$&")
-    return `full_name.ilike.%${escaped}%,email.ilike.%${escaped}%,professional_id.ilike.%${escaped}%,role.ilike.%${escaped}%`
+    return `full_name.ilike.%${escaped}%,email.ilike.%${escaped}%,professional_id.ilike.%${escaped}%,role.ilike.%${escaped}%,admin_role.ilike.%${escaped}%`
+  }
+
+  function getAdminRoleLabel(adminRole) {
+    return adminRole === "super" ? "Super Admin" : "Content Admin"
+  }
+
+  function getSelectedAdminRole(profileId) {
+    return selectedAdminRoles[profileId] || "content"
   }
 
   async function loadProfiles() {
@@ -477,14 +612,14 @@ function ScalableAdminUsersTab() {
 
     let adminQuery = supabase
       .from("user_profiles")
-      .select("id, full_name, email, professional_id, role", { count: "exact" })
+      .select("id, full_name, email, professional_id, role, admin_role", { count: "exact" })
       .eq("role", "admin")
       .order("full_name", { ascending: true })
       .range(adminFrom, adminTo)
 
     let candidateQuery = supabase
       .from("user_profiles")
-      .select("id, full_name, email, professional_id, role", { count: "exact" })
+      .select("id, full_name, email, professional_id, role, admin_role", { count: "exact" })
       .neq("role", "admin")
       .order("full_name", { ascending: true })
       .range(candidateFrom, candidateTo)
@@ -516,7 +651,9 @@ function ScalableAdminUsersTab() {
   }
 
   async function promoteToAdmin(targetProfile) {
-    if (!window.confirm(`Make ${targetProfile.email || targetProfile.full_name || "this user"} an admin?`)) return
+    const nextAdminRole = getSelectedAdminRole(targetProfile.id)
+
+    if (!window.confirm(`Make ${targetProfile.email || targetProfile.full_name || "this user"} a ${getAdminRoleLabel(nextAdminRole)}?`)) return
 
     setSavingId(targetProfile.id)
     setError("")
@@ -524,13 +661,18 @@ function ScalableAdminUsersTab() {
 
     const { error: promoteError } = await supabase
       .from("user_profiles")
-      .update({ role: "admin" })
+      .update({ role: "admin", admin_role: nextAdminRole })
       .eq("id", targetProfile.id)
 
     if (promoteError) {
       setError(`${promoteError.message}. If this is a permissions issue, run the updated admin profile policy in supabase/rls_reset.sql.`)
     } else {
-      setMessage(`${targetProfile.email || targetProfile.full_name || "User"} is now an admin.`)
+      setMessage(`${targetProfile.email || targetProfile.full_name || "User"} is now a ${getAdminRoleLabel(nextAdminRole)}.`)
+      setSelectedAdminRoles((current) => {
+        const nextRoles = { ...current }
+        delete nextRoles[targetProfile.id]
+        return nextRoles
+      })
       await loadProfiles()
     }
 
@@ -556,7 +698,7 @@ function ScalableAdminUsersTab() {
 
     const { error: demoteError } = await supabase
       .from("user_profiles")
-      .update({ role: "student" })
+      .update({ role: "student", admin_role: null })
       .eq("id", targetProfile.id)
 
     if (demoteError) {
@@ -590,7 +732,7 @@ function ScalableAdminUsersTab() {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by name, email, professional ID, or role"
+          placeholder="Search by name, email, professional ID, role, or admin tier"
           style={{
             width: "100%",
             maxWidth: "420px",
@@ -636,15 +778,28 @@ function ScalableAdminUsersTab() {
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "1rem" }}>
                   {admins.map((profile) => (
                     <div key={profile.id} style={{ background: "var(--gray-50)", border: "1px solid var(--gray-300)", borderRadius: "0.9rem", padding: "1.1rem 1.15rem" }}>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem", marginBottom: "0.8rem" }}>
+                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "0.75rem", marginBottom: "0.8rem" }}>
                         <strong style={{ color: "var(--gray-900)", fontSize: "1rem" }}>{profile.full_name || "Unnamed admin"}</strong>
-                        <span style={{ background: "#dcfce7", color: "#166534", borderRadius: "999px", padding: "0.25rem 0.65rem", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase" }}>
-                          Admin
-                        </span>
+                        <div style={{ display: "flex", gap: "0.45rem", flexWrap: "wrap", justifyContent: "flex-end" }}>
+                          <span style={{ background: "#dcfce7", color: "#166534", borderRadius: "999px", padding: "0.25rem 0.65rem", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase" }}>
+                            Admin
+                          </span>
+                          <span style={{
+                            background: profile.admin_role === "super" ? "#ede9fe" : "#e0f2fe",
+                            color: profile.admin_role === "super" ? "#6d28d9" : "#0f766e",
+                            borderRadius: "999px",
+                            padding: "0.25rem 0.65rem",
+                            fontSize: "0.72rem",
+                            fontWeight: 700,
+                            textTransform: "uppercase"
+                          }}>
+                            {getAdminRoleLabel(profile.admin_role)}
+                          </span>
+                        </div>
                       </div>
                       <p style={{ margin: "0 0 0.45rem", color: "var(--gray-600)", fontSize: "0.9rem" }}>{profile.email || "No email"}</p>
                       <p style={{ margin: 0, color: "var(--gray-500)", fontSize: "0.82rem" }}>
-                        {profile.professional_id ? `Professional ID: ${profile.professional_id}` : "No professional ID"}
+                        {profile.professional_id ? `Professional ID: ${profile.professional_id}` : "No professional ID"} | Tier: {getAdminRoleLabel(profile.admin_role)}
                       </p>
                       <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.9rem" }}>
                         <button
@@ -693,8 +848,8 @@ function ScalableAdminUsersTab() {
                       key={profile.id}
                       style={{
                         display: "grid",
-                        gridTemplateColumns: "minmax(0, 1fr) auto",
-                        alignItems: "center",
+                        gridTemplateColumns: "minmax(0, 1fr) auto auto",
+                        alignItems: "end",
                         gap: "1rem",
                         padding: "1rem 1.15rem",
                         background: "var(--gray-50)",
@@ -711,6 +866,25 @@ function ScalableAdminUsersTab() {
                           {profile.professional_id ? `Professional ID: ${profile.professional_id}` : "No professional ID"} | Role: {profile.role || "student"}
                         </p>
                       </div>
+                      <label style={{ display: "grid", gap: "0.35rem", minWidth: "170px" }}>
+                        <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--gray-600)" }}>Admin Tier</span>
+                        <select
+                          value={getSelectedAdminRole(profile.id)}
+                          onChange={(event) => setSelectedAdminRoles((current) => ({ ...current, [profile.id]: event.target.value }))}
+                          disabled={savingId === profile.id}
+                          style={{
+                            padding: "0.72rem 0.85rem",
+                            borderRadius: "0.75rem",
+                            border: "1px solid var(--gray-300)",
+                            background: "#fff",
+                            fontSize: "0.92rem",
+                            color: "var(--gray-900)"
+                          }}
+                        >
+                          <option value="content">Content Admin</option>
+                          <option value="super">Super Admin</option>
+                        </select>
+                      </label>
                       <button
                         className="btn-primary"
                         onClick={() => promoteToAdmin(profile)}
@@ -853,6 +1027,3205 @@ function PaginatedCoursesTab() {
           onSave={() => { setEditingCourse(null); loadCourses(page) }}
         />
       )}
+    </div>
+  )
+}
+
+const EMPTY_INSTRUCTOR_FORM = {
+  id: "",
+  name: "",
+  title: "",
+  bio: "",
+  photo_url: "",
+  linkedin_url: "",
+  years_experience: "",
+  specialization: "",
+}
+
+function getInstructorInitials(name) {
+  const parts = `${name || ""}`.trim().split(/\s+/).filter(Boolean).slice(0, 2)
+  if (parts.length === 0) return "IN"
+  return parts.map((part) => part[0].toUpperCase()).join("")
+}
+
+function InstructorsTab() {
+  const [instructors, setInstructors] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const [deletingId, setDeletingId] = useState(null)
+  const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState(null)
+  const [form, setForm] = useState(EMPTY_INSTRUCTOR_FORM)
+  const [error, setError] = useState("")
+  const [message, setMessage] = useState("")
+  const photoInputRef = useRef(null)
+
+  useEffect(() => {
+    loadInstructors()
+  }, [])
+
+  async function loadInstructors() {
+    setLoading(true)
+    setError("")
+
+    const { data, error: loadError } = await supabase
+      .from("instructors")
+      .select("*")
+      .order("name", { ascending: true })
+
+    if (loadError) {
+      setError(loadError.message)
+      setInstructors([])
+    } else {
+      setInstructors(data || [])
+    }
+
+    setLoading(false)
+  }
+
+  function updateFormField(field) {
+    return (event) => {
+      setForm((current) => ({ ...current, [field]: event.target.value }))
+    }
+  }
+
+  function resetForm() {
+    setForm(EMPTY_INSTRUCTOR_FORM)
+    setShowForm(false)
+    setEditingId(null)
+    setUploadingPhoto(false)
+  }
+
+  function startCreate() {
+    setError("")
+    setMessage("")
+    setEditingId(null)
+    setForm(EMPTY_INSTRUCTOR_FORM)
+    setShowForm(true)
+  }
+
+  function startEdit(instructor) {
+    setError("")
+    setMessage("")
+    setEditingId(instructor.id)
+    setForm({
+      id: instructor.id || "",
+      name: instructor.name || "",
+      title: instructor.title || "",
+      bio: instructor.bio || "",
+      photo_url: instructor.photo_url || "",
+      linkedin_url: instructor.linkedin_url || "",
+      years_experience: instructor.years_experience ?? "",
+      specialization: instructor.specialization || "",
+    })
+    setShowForm(true)
+  }
+
+  async function handlePhotoUpload(event) {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    if (!file.type.startsWith("image/")) {
+      setError("Please select an image file for the instructor photo.")
+      return
+    }
+
+    setUploadingPhoto(true)
+    setError("")
+    setMessage("")
+
+    try {
+      const safeName = `instructors/${Date.now()}-${file.name.replace(/[^a-z0-9.]/gi, "_")}`
+      const { error: uploadError } = await supabase.storage
+        .from("media")
+        .upload(safeName, file, { cacheControl: "3600", upsert: false })
+
+      if (uploadError) throw uploadError
+
+      const { data: urlData } = supabase.storage
+        .from("media")
+        .getPublicUrl(safeName)
+
+      setForm((current) => ({ ...current, photo_url: urlData.publicUrl }))
+    } catch (uploadError) {
+      setError(uploadError.message || "Failed to upload instructor photo.")
+    } finally {
+      setUploadingPhoto(false)
+      event.target.value = ""
+    }
+  }
+
+  async function saveInstructor(event) {
+    event.preventDefault()
+
+    if (!form.name.trim()) {
+      setError("Instructor name is required.")
+      return
+    }
+
+    setSaving(true)
+    setError("")
+    setMessage("")
+
+    const payload = {
+      id: editingId || form.id || crypto.randomUUID(),
+      name: form.name.trim(),
+      title: form.title.trim() || null,
+      bio: form.bio.trim() || null,
+      photo_url: form.photo_url.trim() || null,
+      linkedin_url: form.linkedin_url.trim() || null,
+      years_experience: form.years_experience === "" ? null : Number(form.years_experience),
+      specialization: form.specialization.trim() || null,
+      updated_at: new Date().toISOString(),
+    }
+
+    const { error: saveError } = await supabase
+      .from("instructors")
+      .upsert(payload, { onConflict: "id" })
+
+    if (saveError) {
+      setError(`${saveError.message}. If this is a permissions issue, re-run supabase/instructors_setup.sql in Supabase.`)
+    } else {
+      setMessage(editingId ? "Instructor updated successfully." : "Instructor added successfully.")
+      resetForm()
+      await loadInstructors()
+    }
+
+    setSaving(false)
+  }
+
+  async function deleteInstructor(instructor) {
+    if (!window.confirm(`Delete instructor ${instructor.name || "this record"}?`)) return
+
+    setDeletingId(instructor.id)
+    setError("")
+    setMessage("")
+
+    const { error: deleteError } = await supabase
+      .from("instructors")
+      .delete()
+      .eq("id", instructor.id)
+
+    if (deleteError) {
+      setError(deleteError.message)
+    } else {
+      setMessage("Instructor deleted successfully.")
+      if (editingId === instructor.id) resetForm()
+      await loadInstructors()
+    }
+
+    setDeletingId(null)
+  }
+
+  return (
+    <div className="admin-section">
+      <div className="section-header">
+        <div>
+          <h2>Instructors</h2>
+          <p style={{ color: "var(--gray-500)", marginTop: "0.4rem" }}>
+            Manage instructor bios, experience, and LinkedIn profiles used across course pages.
+          </p>
+        </div>
+        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+          <button className="btn-secondary" onClick={loadInstructors}>
+            <RefreshCw size={16} /> Refresh
+          </button>
+          <button className="btn-primary" onClick={startCreate}>
+            <Plus size={16} /> Add Instructor
+          </button>
+        </div>
+      </div>
+
+      {message && (
+        <div style={{ marginBottom: "1rem", padding: "0.9rem 1rem", borderRadius: "0.75rem", background: "#dcfce7", color: "#166534", fontWeight: 600 }}>
+          {message}
+        </div>
+      )}
+
+      {error && (
+        <div style={{ marginBottom: "1rem", padding: "0.9rem 1rem", borderRadius: "0.75rem", background: "#fee2e2", color: "#991b1b", fontWeight: 600 }}>
+          {error}
+        </div>
+      )}
+
+      {showForm && (
+        <form className="instructor-form-card" onSubmit={saveInstructor}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", marginBottom: "1.25rem", flexWrap: "wrap" }}>
+            <div>
+              <h3 style={{ margin: 0 }}>{editingId ? "Edit Instructor" : "Add Instructor"}</h3>
+              <p style={{ margin: "0.35rem 0 0", color: "var(--gray-500)", fontSize: "0.9rem" }}>
+                Update the instructor profile shown on course detail pages.
+              </p>
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Name</label>
+              <input value={form.name} onChange={updateFormField("name")} placeholder="Dr. Jane Mwangi" required />
+            </div>
+            <div className="form-group">
+              <label>Title</label>
+              <input value={form.title} onChange={updateFormField("title")} placeholder="Clinical Pharmacist" />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Specialization</label>
+              <input value={form.specialization} onChange={updateFormField("specialization")} placeholder="Pharmacy Practice" />
+            </div>
+            <div className="form-group">
+              <label>Years of Experience</label>
+              <input type="number" min="0" value={form.years_experience} onChange={updateFormField("years_experience")} placeholder="8" />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Bio</label>
+            <textarea rows={3} value={form.bio} onChange={updateFormField("bio")} placeholder="Short professional summary for this instructor." />
+          </div>
+
+          <div className="form-group">
+            <label>Instructor Photo</label>
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: "none" }}
+              onChange={handlePhotoUpload}
+            />
+
+            <div className="instructor-photo-editor">
+              <div className="instructor-photo-preview">
+                {form.photo_url ? (
+                  <img src={form.photo_url} alt={form.name || "Instructor preview"} className="instructor-photo-preview-image" />
+                ) : (
+                  <div className="instructor-avatar instructor-avatar-fallback instructor-photo-preview-fallback">
+                    {getInstructorInitials(form.name)}
+                  </div>
+                )}
+              </div>
+
+              <div className="instructor-photo-editor-copy">
+                <p style={{ margin: 0, color: "var(--gray-600)", fontSize: "0.9rem" }}>
+                  Upload a profile photo to show on the admin list and the public course detail page.
+                </p>
+                <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", marginTop: "0.85rem" }}>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => photoInputRef.current?.click()}
+                    disabled={uploadingPhoto}
+                  >
+                    {uploadingPhoto ? "Uploading..." : form.photo_url ? "Change Photo" : "Upload Photo"}
+                  </button>
+                  {form.photo_url ? (
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      onClick={() => setForm((current) => ({ ...current, photo_url: "" }))}
+                    >
+                      Remove Photo
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Photo URL</label>
+              <input value={form.photo_url} onChange={updateFormField("photo_url")} placeholder="https://..." />
+              <small>You can paste a URL here or use the upload button above.</small>
+            </div>
+            <div className="form-group">
+              <label>LinkedIn URL</label>
+              <input value={form.linkedin_url} onChange={updateFormField("linkedin_url")} placeholder="https://linkedin.com/in/..." />
+            </div>
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", flexWrap: "wrap" }}>
+            <button type="button" className="btn-secondary" onClick={resetForm}>Cancel</button>
+            <button type="submit" className="btn-primary" disabled={saving}>
+              <Save size={16} />
+              {saving ? "Saving..." : editingId ? "Save Changes" : "Save Instructor"}
+            </button>
+          </div>
+        </form>
+      )}
+
+      {loading ? (
+        <p style={{ color: "var(--gray-500)" }}>Loading instructors...</p>
+      ) : instructors.length === 0 ? (
+        <div className="empty-state"><p>No instructors found yet. Add your first instructor profile.</p></div>
+      ) : (
+        <>
+          <div className="instructors-table-head">
+            <span>Instructor</span>
+            <span>Title</span>
+            <span>Specialization</span>
+            <span>Experience</span>
+            <span>LinkedIn</span>
+            <span>Actions</span>
+          </div>
+
+          <div className="instructors-list">
+            {instructors.map((instructor) => (
+              <div key={instructor.id} className="instructor-row">
+                <div className="instructor-person">
+                  {instructor.photo_url ? (
+                    <img
+                      src={instructor.photo_url}
+                      alt={instructor.name || "Instructor"}
+                      className="instructor-avatar"
+                    />
+                  ) : (
+                    <div className="instructor-avatar instructor-avatar-fallback">
+                      {getInstructorInitials(instructor.name)}
+                    </div>
+                  )}
+
+                  <div style={{ minWidth: 0 }}>
+                    <strong style={{ display: "block", color: "var(--gray-900)", fontSize: "0.96rem" }}>
+                      {instructor.name || "Unnamed instructor"}
+                    </strong>
+                    {instructor.bio && (
+                      <p className="instructor-bio-preview">{instructor.bio}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="instructor-cell">
+                  {instructor.title || <span style={{ color: "var(--gray-500)" }}>Not set</span>}
+                </div>
+
+                <div className="instructor-cell">
+                  {instructor.specialization || <span style={{ color: "var(--gray-500)" }}>Not set</span>}
+                </div>
+
+                <div className="instructor-cell">
+                  {typeof instructor.years_experience === "number"
+                    ? `${instructor.years_experience} year${instructor.years_experience === 1 ? "" : "s"}`
+                    : <span style={{ color: "var(--gray-500)" }}>Not set</span>}
+                </div>
+
+                <div className="instructor-cell">
+                  {instructor.linkedin_url ? (
+                    <a
+                      href={instructor.linkedin_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="instructor-link"
+                      aria-label={`Open LinkedIn for ${instructor.name || "instructor"}`}
+                    >
+                      <ExternalLink size={16} />
+                    </a>
+                  ) : (
+                    <span style={{ color: "var(--gray-500)" }}>Not set</span>
+                  )}
+                </div>
+
+                <div className="course-actions">
+                  <button className="btn-icon" title="Edit instructor" onClick={() => startEdit(instructor)}>
+                    <Edit2 size={16} />
+                  </button>
+                  <button
+                    className="btn-icon danger"
+                    title="Delete instructor"
+                    onClick={() => deleteInstructor(instructor)}
+                    disabled={deletingId === instructor.id}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+const EMPTY_WORKSHOP_FORM = {
+  id: "",
+  title: "",
+  description: "",
+  date: "",
+  time: "",
+  duration_minutes: "",
+  host_name: "",
+  host_title: "",
+  is_free: true,
+  price: "",
+  whatsapp_link: "",
+  is_upcoming: true,
+  cover_image_url: "",
+  tags: "",
+}
+
+function sortWorkshops(rows) {
+  return [...(rows || [])].sort((a, b) => {
+    if (a.is_upcoming !== b.is_upcoming) {
+      return a.is_upcoming ? -1 : 1
+    }
+
+    const aTime = a.date ? new Date(`${a.date}T${a.time || "00:00"}`).getTime() : 0
+    const bTime = b.date ? new Date(`${b.date}T${b.time || "00:00"}`).getTime() : 0
+
+    if (a.is_upcoming) return aTime - bTime
+    return bTime - aTime
+  })
+}
+
+function formatWorkshopDate(dateValue) {
+  if (!dateValue) return "Date not set"
+  return new Date(`${dateValue}T00:00:00`).toLocaleDateString()
+}
+
+function WorkshopsTab() {
+  const [workshops, setWorkshops] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [deletingId, setDeletingId] = useState(null)
+  const [togglingId, setTogglingId] = useState(null)
+  const [uploadingCover, setUploadingCover] = useState(false)
+  const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState(null)
+  const [form, setForm] = useState(EMPTY_WORKSHOP_FORM)
+  const [error, setError] = useState("")
+  const [message, setMessage] = useState("")
+  const coverInputRef = useRef(null)
+
+  useEffect(() => {
+    loadWorkshops()
+  }, [])
+
+  async function loadWorkshops() {
+    setLoading(true)
+    setError("")
+
+    const { data, error: loadError } = await supabase
+      .from("workshops")
+      .select("*")
+
+    if (loadError) {
+      setError(loadError.message)
+      setWorkshops([])
+    } else {
+      setWorkshops(sortWorkshops(data || []))
+    }
+
+    setLoading(false)
+  }
+
+  function resetForm() {
+    setForm(EMPTY_WORKSHOP_FORM)
+    setEditingId(null)
+    setShowForm(false)
+  }
+
+  function updateField(field, value) {
+    setForm((current) => ({ ...current, [field]: value }))
+  }
+
+  function startCreate() {
+    setError("")
+    setMessage("")
+    setEditingId(null)
+    setForm(EMPTY_WORKSHOP_FORM)
+    setShowForm(true)
+  }
+
+  function startEdit(workshop) {
+    setError("")
+    setMessage("")
+    setEditingId(workshop.id)
+    setForm({
+      id: workshop.id || "",
+      title: workshop.title || "",
+      description: workshop.description || "",
+      date: workshop.date || "",
+      time: workshop.time ? `${workshop.time}`.slice(0, 5) : "",
+      duration_minutes: workshop.duration_minutes ?? "",
+      host_name: workshop.host_name || "",
+      host_title: workshop.host_title || "",
+      is_free: workshop.is_free ?? true,
+      price: workshop.is_free ? "" : workshop.price ?? "",
+      whatsapp_link: workshop.whatsapp_link || "",
+      is_upcoming: workshop.is_upcoming ?? true,
+      cover_image_url: workshop.cover_image_url || "",
+      tags: Array.isArray(workshop.tags) ? workshop.tags.join(", ") : "",
+    })
+    setShowForm(true)
+  }
+
+  async function handleCoverUpload(event) {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setUploadingCover(true)
+    setError("")
+    setMessage("")
+
+    try {
+      const publicUrl = await uploadImageToMedia(file, "workshops")
+      updateField("cover_image_url", publicUrl)
+      setMessage("Workshop cover uploaded. Save the workshop to keep it.")
+    } catch (uploadError) {
+      setError(uploadError.message || "Unable to upload workshop cover.")
+    } finally {
+      setUploadingCover(false)
+      event.target.value = ""
+    }
+  }
+
+  async function saveWorkshop(event) {
+    event.preventDefault()
+
+    if (!form.title.trim()) {
+      setError("Workshop title is required.")
+      return
+    }
+
+    setSaving(true)
+    setError("")
+    setMessage("")
+
+    const tagList = form.tags
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean)
+
+    const payload = {
+      id: editingId || form.id || crypto.randomUUID(),
+      title: form.title.trim(),
+      description: form.description.trim() || null,
+      date: form.date || null,
+      time: form.time || null,
+      duration_minutes: form.duration_minutes === "" ? null : Number(form.duration_minutes),
+      host_name: form.host_name.trim() || null,
+      host_title: form.host_title.trim() || null,
+      is_free: !!form.is_free,
+      price: form.is_free ? 0 : (form.price === "" ? 0 : Number(form.price)),
+      whatsapp_link: form.whatsapp_link.trim() || null,
+      is_upcoming: !!form.is_upcoming,
+      cover_image_url: form.cover_image_url.trim() || null,
+      tags: tagList,
+      updated_at: new Date().toISOString(),
+    }
+
+    const { error: saveError } = await supabase
+      .from("workshops")
+      .upsert(payload, { onConflict: "id" })
+
+    if (saveError) {
+      setError(`${saveError.message}. If this is a permissions issue, re-run supabase/workshops_setup.sql in Supabase.`)
+    } else {
+      setMessage(editingId ? "Workshop updated successfully." : "Workshop added successfully.")
+      resetForm()
+      await loadWorkshops()
+    }
+
+    setSaving(false)
+  }
+
+  async function toggleUpcoming(workshop) {
+    setTogglingId(workshop.id)
+    setError("")
+    setMessage("")
+
+    const { error: toggleError } = await supabase
+      .from("workshops")
+      .update({ is_upcoming: !workshop.is_upcoming, updated_at: new Date().toISOString() })
+      .eq("id", workshop.id)
+
+    if (toggleError) {
+      setError(toggleError.message)
+    } else {
+      setMessage(`Workshop moved to ${workshop.is_upcoming ? "past sessions" : "upcoming"}.`)
+      await loadWorkshops()
+    }
+
+    setTogglingId(null)
+  }
+
+  async function deleteWorkshop(workshop) {
+    if (!window.confirm(`Delete workshop ${workshop.title || "this record"}?`)) return
+
+    setDeletingId(workshop.id)
+    setError("")
+    setMessage("")
+
+    const { error: deleteError } = await supabase
+      .from("workshops")
+      .delete()
+      .eq("id", workshop.id)
+
+    if (deleteError) {
+      setError(deleteError.message)
+    } else {
+      setMessage("Workshop deleted successfully.")
+      if (editingId === workshop.id) resetForm()
+      await loadWorkshops()
+    }
+
+    setDeletingId(null)
+  }
+
+  return (
+    <div className="admin-section">
+      <div className="section-header">
+        <div>
+          <h2>Workshops</h2>
+          <p style={{ color: "var(--gray-500)", marginTop: "0.4rem" }}>
+            Manage upcoming live workshops and past sessions shown on the public workshops page.
+          </p>
+        </div>
+        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+          <button className="btn-secondary" onClick={loadWorkshops}>
+            <RefreshCw size={16} /> Refresh
+          </button>
+          <button className="btn-primary" onClick={startCreate}>
+            <Plus size={16} /> Add Workshop
+          </button>
+        </div>
+      </div>
+
+      {message && (
+        <div style={{ marginBottom: "1rem", padding: "0.9rem 1rem", borderRadius: "0.75rem", background: "#dcfce7", color: "#166534", fontWeight: 600 }}>
+          {message}
+        </div>
+      )}
+
+      {error && (
+        <div style={{ marginBottom: "1rem", padding: "0.9rem 1rem", borderRadius: "0.75rem", background: "#fee2e2", color: "#991b1b", fontWeight: 600 }}>
+          {error}
+        </div>
+      )}
+
+      {showForm && (
+        <form className="instructor-form-card" onSubmit={saveWorkshop}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", marginBottom: "1.25rem", flexWrap: "wrap" }}>
+            <div>
+              <h3 style={{ margin: 0 }}>{editingId ? "Edit Workshop" : "Add Workshop"}</h3>
+              <p style={{ margin: "0.35rem 0 0", color: "var(--gray-500)", fontSize: "0.9rem" }}>
+                Update workshop details, registration links, and public listing badges.
+              </p>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Title</label>
+            <input value={form.title} onChange={(event) => updateField("title", event.target.value)} placeholder="Live Clinical Pearls Webinar" required />
+          </div>
+
+          <div className="form-group">
+            <label>Description</label>
+            <textarea rows={3} value={form.description} onChange={(event) => updateField("description", event.target.value)} placeholder="Short workshop summary." />
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Date</label>
+              <input type="date" value={form.date} onChange={(event) => updateField("date", event.target.value)} />
+            </div>
+            <div className="form-group">
+              <label>Time</label>
+              <input type="time" value={form.time} onChange={(event) => updateField("time", event.target.value)} />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Duration (minutes)</label>
+              <input type="number" min="0" value={form.duration_minutes} onChange={(event) => updateField("duration_minutes", event.target.value)} placeholder="60" />
+            </div>
+            <div className="form-group">
+              <label>Price</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.price}
+                onChange={(event) => updateField("price", event.target.value)}
+                placeholder="0"
+                disabled={form.is_free}
+              />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Host Name</label>
+              <input value={form.host_name} onChange={(event) => updateField("host_name", event.target.value)} placeholder="Dr. Jane Mwangi" />
+            </div>
+            <div className="form-group">
+              <label>Host Title</label>
+              <input value={form.host_title} onChange={(event) => updateField("host_title", event.target.value)} placeholder="Senior Clinical Pharmacist" />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>WhatsApp Link</label>
+            <input value={form.whatsapp_link} onChange={(event) => updateField("whatsapp_link", event.target.value)} placeholder="https://wa.me/..." />
+          </div>
+
+          <div className="form-group">
+            <label>Cover Image</label>
+            <input
+              ref={coverInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: "none" }}
+              onChange={handleCoverUpload}
+            />
+            <div className="instructor-photo-editor">
+              <div className="admin-image-upload-preview">
+                {form.cover_image_url ? (
+                  <img
+                    src={form.cover_image_url}
+                    alt={form.title || "Workshop cover preview"}
+                    className="admin-image-upload-preview-image"
+                  />
+                ) : (
+                  <div className="admin-image-upload-placeholder">
+                    <span>No cover image</span>
+                  </div>
+                )}
+              </div>
+              <div className="instructor-photo-editor-copy">
+                <p className="admin-image-upload-copy">
+                  Upload a workshop cover image or paste an external URL below.
+                </p>
+                <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", marginTop: "0.85rem" }}>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => coverInputRef.current?.click()}
+                    disabled={uploadingCover}
+                  >
+                    {uploadingCover ? "Uploading..." : form.cover_image_url ? "Change Image" : "Upload Image"}
+                  </button>
+                  {form.cover_image_url ? (
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      onClick={() => updateField("cover_image_url", "")}
+                    >
+                      Remove Image
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Cover Image URL</label>
+            <input value={form.cover_image_url} onChange={(event) => updateField("cover_image_url", event.target.value)} placeholder="https://..." />
+            <small>You can keep using a direct image URL if you prefer.</small>
+          </div>
+
+          <div className="form-group">
+            <label>Tags</label>
+            <input value={form.tags} onChange={(event) => updateField("tags", event.target.value)} placeholder="CPD, Webinar, Recording Available" />
+            <small>Separate tags with commas. They will be saved as an array.</small>
+          </div>
+
+          <div className="form-row">
+            <label className="workshop-checkbox">
+              <input
+                type="checkbox"
+                checked={form.is_free}
+                onChange={(event) => {
+                  const checked = event.target.checked
+                  setForm((current) => ({ ...current, is_free: checked, price: checked ? "" : current.price }))
+                }}
+              />
+              <span>Free workshop</span>
+            </label>
+            <label className="workshop-checkbox">
+              <input
+                type="checkbox"
+                checked={form.is_upcoming}
+                onChange={(event) => updateField("is_upcoming", event.target.checked)}
+              />
+              <span>Show as upcoming</span>
+            </label>
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", flexWrap: "wrap" }}>
+            <button type="button" className="btn-secondary" onClick={resetForm}>Cancel</button>
+            <button type="submit" className="btn-primary" disabled={saving}>
+              <Save size={16} />
+              {saving ? "Saving..." : editingId ? "Save Changes" : "Save Workshop"}
+            </button>
+          </div>
+        </form>
+      )}
+
+      {loading ? (
+        <p style={{ color: "var(--gray-500)" }}>Loading workshops...</p>
+      ) : workshops.length === 0 ? (
+        <div className="empty-state"><p>No workshops found yet. Add your first workshop.</p></div>
+      ) : (
+        <div className="workshops-list">
+          {workshops.map((workshop) => (
+            <div key={workshop.id} className="workshop-row">
+              <div style={{ minWidth: 0 }}>
+                <strong style={{ display: "block", color: "var(--gray-900)", fontSize: "1rem", marginBottom: "0.35rem" }}>
+                  {workshop.title || "Untitled workshop"}
+                </strong>
+                <div style={{ display: "flex", gap: "0.55rem", flexWrap: "wrap", alignItems: "center", marginBottom: "0.45rem" }}>
+                  <span className={`status ${workshop.is_free ? "published" : "draft"}`}>
+                    {workshop.is_free ? "Free" : `KES ${Number(workshop.price || 0).toLocaleString()}`}
+                  </span>
+                  <span
+                    className="status"
+                    style={{
+                      background: workshop.is_upcoming ? "#dcfce7" : "#e5e7eb",
+                      color: workshop.is_upcoming ? "#166534" : "#4b5563"
+                    }}
+                  >
+                    {workshop.is_upcoming ? "Upcoming" : "Past"}
+                  </span>
+                </div>
+                <p style={{ margin: 0, color: "var(--gray-600)", fontSize: "0.9rem", lineHeight: 1.45 }}>
+                  {formatWorkshopDate(workshop.date)} | {workshop.host_name || "Host not set"}
+                </p>
+              </div>
+
+              <div className="workshop-meta">
+                <span>{workshop.time || "Time not set"}</span>
+                <span>{workshop.duration_minutes ? `${workshop.duration_minutes} min` : "Duration not set"}</span>
+              </div>
+
+              <div className="workshop-actions">
+                <button
+                  className="btn-secondary"
+                  type="button"
+                  onClick={() => toggleUpcoming(workshop)}
+                  disabled={togglingId === workshop.id}
+                  style={{ minWidth: "128px", justifyContent: "center" }}
+                >
+                  {togglingId === workshop.id ? "Updating..." : workshop.is_upcoming ? "Mark Past" : "Mark Upcoming"}
+                </button>
+                <button className="btn-icon" title="Edit workshop" onClick={() => startEdit(workshop)}>
+                  <Edit2 size={16} />
+                </button>
+                <button
+                  className="btn-icon danger"
+                  title="Delete workshop"
+                  onClick={() => deleteWorkshop(workshop)}
+                  disabled={deletingId === workshop.id}
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+const EMPTY_BLOG_FORM = {
+  id: "",
+  title: "",
+  slug: "",
+  excerpt: "",
+  content: "",
+  content_sections: [],
+  cover_image_url: "",
+  author_name: "",
+  author_title: "",
+  category: "General",
+  tags: "",
+  is_published: false,
+  published_at: null,
+}
+
+function slugifyPostTitle(value) {
+  return `${value || ""}`
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+}
+
+function formatBlogDate(dateValue) {
+  if (!dateValue) return "Draft"
+  return new Date(dateValue).toLocaleDateString()
+}
+
+function getBlogSectionLabel(index, totalCount) {
+  if (totalCount <= 1) return "Subsection"
+  return `Subsection ${index + 1}`
+}
+
+function BlogRichTextEditor({ value, onChange }) {
+  const ref = useRef(null)
+
+  useEffect(() => {
+    if (ref.current && ref.current.innerHTML !== value) {
+      ref.current.innerHTML = value || ""
+    }
+  }, [value])
+
+  function exec(command, commandValue = null) {
+    ref.current?.focus()
+    document.execCommand(command, false, commandValue)
+    onChange(ref.current?.innerHTML || "")
+  }
+
+  return (
+    <div className="blog-editor">
+      <div className="blog-editor-toolbar">
+        {[["bold", "B"], ["italic", "I"], ["underline", "U"]].map(([command, label]) => (
+          <button
+            key={command}
+            type="button"
+            className="blog-editor-btn"
+            onMouseDown={(event) => {
+              event.preventDefault()
+              exec(command)
+            }}
+          >
+            <span style={command === "bold" ? { fontWeight: 700 } : command === "italic" ? { fontStyle: "italic" } : { textDecoration: "underline" }}>
+              {label}
+            </span>
+          </button>
+        ))}
+        <div className="blog-editor-sep" />
+        <button type="button" className="blog-editor-btn" onMouseDown={(event) => { event.preventDefault(); exec("formatBlock", "h3") }}>
+          H3
+        </button>
+        <button type="button" className="blog-editor-btn" onMouseDown={(event) => { event.preventDefault(); exec("formatBlock", "p") }}>
+          P
+        </button>
+        <div className="blog-editor-sep" />
+        <button type="button" className="blog-editor-btn" onMouseDown={(event) => { event.preventDefault(); exec("insertUnorderedList") }}>
+          List
+        </button>
+        <button type="button" className="blog-editor-btn" onMouseDown={(event) => { event.preventDefault(); exec("insertOrderedList") }}>
+          1. List
+        </button>
+        <div className="blog-editor-sep" />
+        <button type="button" className="blog-editor-btn blog-editor-btn-danger" onMouseDown={(event) => { event.preventDefault(); exec("removeFormat") }}>
+          Clear
+        </button>
+      </div>
+      <div
+        ref={ref}
+        contentEditable
+        suppressContentEditableWarning
+        className="blog-editor-area"
+        data-placeholder="Write the full blog article here..."
+        onInput={() => onChange(ref.current?.innerHTML || "")}
+      />
+    </div>
+  )
+}
+
+function BlogTab() {
+  const [posts, setPosts] = useState([])
+  const [categories, setCategories] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [togglingId, setTogglingId] = useState(null)
+  const [deletingId, setDeletingId] = useState(null)
+  const [uploadingCover, setUploadingCover] = useState(false)
+  const [uploadingSectionIndex, setUploadingSectionIndex] = useState(null)
+  const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState(null)
+  const [slugTouched, setSlugTouched] = useState(false)
+  const [form, setForm] = useState(EMPTY_BLOG_FORM)
+  const [error, setError] = useState("")
+  const [message, setMessage] = useState("")
+  const coverInputRef = useRef(null)
+  const sectionImageInputRefs = useRef({})
+
+  const categorySuggestions = Array.from(
+    new Set(
+      categories
+        .concat(
+          posts
+            .map((post) => `${post.category || ""}`.trim())
+            .filter(Boolean)
+        )
+        .concat(`${form.category || ""}`.trim() ? [`${form.category || ""}`.trim()] : [])
+        .map((category) => normalizeBlogCategory(category))
+        .filter(Boolean)
+    )
+  ).sort((first, second) => first.localeCompare(second))
+
+  useEffect(() => {
+    loadPosts()
+    loadCategories()
+  }, [])
+
+  async function loadPosts() {
+    setLoading(true)
+    setError("")
+
+    const { data, error: loadError } = await supabase
+      .from("blog_posts")
+      .select("*")
+      .order("created_at", { ascending: false })
+
+    if (loadError) {
+      setError(loadError.message)
+      setPosts([])
+    } else {
+      setPosts(data || [])
+    }
+
+    setLoading(false)
+  }
+
+  async function loadCategories() {
+    const { data, error: loadError } = await supabase
+      .from("blog_categories")
+      .select("name")
+      .order("name", { ascending: true })
+
+    if (!loadError) {
+      setCategories((data || []).map((category) => normalizeBlogCategory(category.name)).filter(Boolean))
+    }
+  }
+
+  function resetForm() {
+    setForm(EMPTY_BLOG_FORM)
+    setEditingId(null)
+    setSlugTouched(false)
+    setShowForm(false)
+  }
+
+  function startCreate() {
+    setError("")
+    setMessage("")
+    setEditingId(null)
+    setSlugTouched(false)
+    setForm(EMPTY_BLOG_FORM)
+    setShowForm(true)
+  }
+
+  function startEdit(post) {
+    setError("")
+    setMessage("")
+    setEditingId(post.id)
+    setSlugTouched(true)
+    setForm({
+      id: post.id || "",
+      title: post.title || "",
+      slug: post.slug || "",
+      excerpt: post.excerpt || "",
+      content: post.content || "",
+      content_sections: normalizeBlogSections(post.content_sections),
+      cover_image_url: post.cover_image_url || "",
+      author_name: post.author_name || "",
+      author_title: post.author_title || "",
+      category: post.category || "General",
+      tags: Array.isArray(post.tags) ? post.tags.join(", ") : "",
+      is_published: !!post.is_published,
+      published_at: post.published_at || null,
+    })
+    setShowForm(true)
+  }
+
+  function updateTitle(nextTitle) {
+    setForm((current) => ({
+      ...current,
+      title: nextTitle,
+      slug: slugTouched ? current.slug : slugifyPostTitle(nextTitle),
+    }))
+  }
+
+  function updateSlug(nextSlug) {
+    setSlugTouched(true)
+    setForm((current) => ({ ...current, slug: slugifyPostTitle(nextSlug) }))
+  }
+
+  function updateCategory(nextCategory) {
+    setForm((current) => ({ ...current, category: nextCategory }))
+  }
+
+  function normalizeCategoryField() {
+    setForm((current) => ({
+      ...current,
+      category: normalizeBlogCategory(current.category),
+    }))
+  }
+
+  function addContentSection() {
+    setForm((current) => ({
+      ...current,
+      content_sections: [...normalizeBlogSections(current.content_sections), createEmptyBlogSection()],
+    }))
+  }
+
+  function updateContentSection(index, field, value) {
+    setForm((current) => ({
+      ...current,
+      content_sections: normalizeBlogSections(current.content_sections).map((section, sectionIndex) =>
+        sectionIndex === index ? { ...section, [field]: value } : section
+      ),
+    }))
+  }
+
+  function removeContentSection(index) {
+    setForm((current) => ({
+      ...current,
+      content_sections: normalizeBlogSections(current.content_sections).filter((_, sectionIndex) => sectionIndex !== index),
+    }))
+  }
+
+  function addSectionImageUrl(index, value) {
+    const normalizedValue = `${value || ""}`.trim()
+    if (!normalizedValue) return
+
+    setForm((current) => ({
+      ...current,
+      content_sections: normalizeBlogSections(current.content_sections).map((section, sectionIndex) => {
+        if (sectionIndex !== index) return section
+        return {
+          ...section,
+          images: [...section.images, normalizedValue],
+        }
+      }),
+    }))
+  }
+
+  function removeSectionImage(index, imageIndex) {
+    setForm((current) => ({
+      ...current,
+      content_sections: normalizeBlogSections(current.content_sections).map((section, sectionIndex) => {
+        if (sectionIndex !== index) return section
+        return {
+          ...section,
+          images: section.images.filter((_, currentImageIndex) => currentImageIndex !== imageIndex),
+        }
+      }),
+    }))
+  }
+
+  async function handleCoverUpload(event) {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setUploadingCover(true)
+    setError("")
+    setMessage("")
+
+    try {
+      const publicUrl = await uploadImageToMedia(file, "blog")
+      setForm((current) => ({ ...current, cover_image_url: publicUrl }))
+      setMessage("Blog cover uploaded. Save the post to keep it.")
+    } catch (uploadError) {
+      setError(uploadError.message || "Unable to upload blog cover.")
+    } finally {
+      setUploadingCover(false)
+      event.target.value = ""
+    }
+  }
+
+  async function handleSectionImageUpload(index, event) {
+    const files = Array.from(event.target.files || [])
+    if (files.length === 0) return
+
+    setUploadingSectionIndex(index)
+    setError("")
+    setMessage("")
+
+    try {
+      const uploadedUrls = []
+      for (const file of files) {
+        const publicUrl = await uploadImageToMedia(file, "blog/sections")
+        uploadedUrls.push(publicUrl)
+      }
+
+      setForm((current) => ({
+        ...current,
+        content_sections: normalizeBlogSections(current.content_sections).map((section, sectionIndex) => {
+          if (sectionIndex !== index) return section
+          return {
+            ...section,
+            images: [...section.images, ...uploadedUrls],
+          }
+        }),
+      }))
+      setMessage(`${uploadedUrls.length} section image${uploadedUrls.length === 1 ? "" : "s"} uploaded. Save the post to keep ${uploadedUrls.length === 1 ? "it" : "them"}.`)
+    } catch (uploadError) {
+      setError(uploadError.message || "Unable to upload subsection images.")
+    } finally {
+      setUploadingSectionIndex(null)
+      event.target.value = ""
+    }
+  }
+
+  async function savePost(event) {
+    event.preventDefault()
+
+    const finalSlug = slugifyPostTitle(form.slug || form.title)
+
+    if (!form.title.trim()) {
+      setError("Post title is required.")
+      return
+    }
+
+    if (!finalSlug) {
+      setError("Post slug is required.")
+      return
+    }
+
+    if (!`${form.content || ""}`.trim() && !hasPopulatedBlogSections(form.content_sections)) {
+      setError("Add intro content or at least one subsection before saving.")
+      return
+    }
+
+    setSaving(true)
+    setError("")
+    setMessage("")
+
+    const tagList = form.tags
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean)
+    const contentSections = getPopulatedBlogSections(form.content_sections).map((section) => ({
+      title: section.title,
+      body: section.body,
+      images: section.images,
+    }))
+    const normalizedCategory = normalizeBlogCategory(form.category) || "General"
+
+    const shouldSetPublishedAt = form.is_published && !form.published_at
+    const payload = {
+      id: editingId || form.id || crypto.randomUUID(),
+      slug: finalSlug,
+      title: form.title.trim(),
+      excerpt: form.excerpt.trim() || null,
+      content: form.content,
+      content_sections: contentSections,
+      cover_image_url: form.cover_image_url.trim() || null,
+      author_name: form.author_name.trim() || null,
+      author_title: form.author_title.trim() || null,
+      category: normalizedCategory,
+      tags: tagList,
+      is_published: !!form.is_published,
+      published_at: shouldSetPublishedAt ? new Date().toISOString() : form.published_at,
+    }
+
+    const { error: saveError } = await supabase
+      .from("blog_posts")
+      .upsert(payload, { onConflict: "id" })
+
+    if (saveError) {
+      setError(`${saveError.message}. If this is a permissions issue, re-run supabase/blog_posts_setup.sql in Supabase.`)
+    } else {
+      try {
+        await ensureBlogCategoryRecord(normalizedCategory)
+      } catch (categoryError) {
+        console.error("Failed to sync blog category:", categoryError)
+      }
+
+      setMessage(editingId ? "Blog post updated successfully." : "Blog post created successfully.")
+      resetForm()
+      await loadPosts()
+      await loadCategories()
+    }
+
+    setSaving(false)
+  }
+
+  async function togglePublished(post) {
+    setTogglingId(post.id)
+    setError("")
+    setMessage("")
+
+    const nextPublished = !post.is_published
+    const payload = {
+      is_published: nextPublished,
+      published_at: nextPublished && !post.published_at ? new Date().toISOString() : post.published_at,
+    }
+
+    const { error: toggleError } = await supabase
+      .from("blog_posts")
+      .update(payload)
+      .eq("id", post.id)
+
+    if (toggleError) {
+      setError(toggleError.message)
+    } else {
+      setMessage(`Post ${nextPublished ? "published" : "moved to draft"} successfully.`)
+      await loadPosts()
+    }
+
+    setTogglingId(null)
+  }
+
+  async function deletePost(post) {
+    if (!window.confirm(`Delete blog post ${post.title || "this record"}?`)) return
+
+    setDeletingId(post.id)
+    setError("")
+    setMessage("")
+
+    const { error: deleteError } = await supabase
+      .from("blog_posts")
+      .delete()
+      .eq("id", post.id)
+
+    if (deleteError) {
+      setError(deleteError.message)
+    } else {
+      setMessage("Blog post deleted successfully.")
+      if (editingId === post.id) resetForm()
+      await loadPosts()
+    }
+
+    setDeletingId(null)
+  }
+
+  return (
+    <div className="admin-section">
+      <div className="section-header">
+        <div>
+          <h2>Blog</h2>
+          <p style={{ color: "var(--gray-500)", marginTop: "0.4rem" }}>
+            Manage editorial posts, publishing status, authors, and article content from one place.
+          </p>
+        </div>
+        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+          <button className="btn-secondary" onClick={loadPosts}>
+            <RefreshCw size={16} /> Refresh
+          </button>
+          <button className="btn-primary" onClick={startCreate}>
+            <Plus size={16} /> New Post
+          </button>
+        </div>
+      </div>
+
+      {message && (
+        <div style={{ marginBottom: "1rem", padding: "0.9rem 1rem", borderRadius: "0.75rem", background: "#dcfce7", color: "#166534", fontWeight: 600 }}>
+          {message}
+        </div>
+      )}
+
+      {error && (
+        <div style={{ marginBottom: "1rem", padding: "0.9rem 1rem", borderRadius: "0.75rem", background: "#fee2e2", color: "#991b1b", fontWeight: 600 }}>
+          {error}
+        </div>
+      )}
+
+      {showForm && (
+        <form className="instructor-form-card" onSubmit={savePost}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", marginBottom: "1.25rem", flexWrap: "wrap" }}>
+            <div>
+              <h3 style={{ margin: 0 }}>{editingId ? "Edit Blog Post" : "New Blog Post"}</h3>
+              <p style={{ margin: "0.35rem 0 0", color: "var(--gray-500)", fontSize: "0.9rem" }}>
+                Draft or publish articles for the public blog section.
+              </p>
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Title</label>
+              <input value={form.title} onChange={(event) => updateTitle(event.target.value)} placeholder="How to Prepare for Pharmacy Board Exams" required />
+            </div>
+            <div className="form-group">
+              <label>Slug</label>
+              <input value={form.slug} onChange={(event) => updateSlug(event.target.value)} placeholder="how-to-prepare-for-pharmacy-board-exams" required />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Category</label>
+            <input
+              list="blog-category-suggestions"
+              value={form.category}
+              onChange={(event) => updateCategory(event.target.value)}
+              onBlur={normalizeCategoryField}
+              placeholder="Clinical, AI, Business, Finance, Sports..."
+            />
+            <datalist id="blog-category-suggestions">
+              {categorySuggestions.map((category) => (
+                <option key={category} value={category} />
+              ))}
+            </datalist>
+            <small>Type any category you want. Existing categories will appear as suggestions.</small>
+          </div>
+
+          <div className="form-group">
+            <label>Cover Image</label>
+            <input
+              ref={coverInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: "none" }}
+              onChange={handleCoverUpload}
+            />
+            <div className="instructor-photo-editor">
+              <div className="admin-image-upload-preview">
+                {form.cover_image_url ? (
+                  <img
+                    src={form.cover_image_url}
+                    alt={form.title || "Blog cover preview"}
+                    className="admin-image-upload-preview-image"
+                  />
+                ) : (
+                  <div className="admin-image-upload-placeholder">
+                    <span>No cover image</span>
+                  </div>
+                )}
+              </div>
+              <div className="instructor-photo-editor-copy">
+                <p className="admin-image-upload-copy">
+                  Upload a blog cover image or paste an external URL below.
+                </p>
+                <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", marginTop: "0.85rem" }}>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => coverInputRef.current?.click()}
+                    disabled={uploadingCover}
+                  >
+                    {uploadingCover ? "Uploading..." : form.cover_image_url ? "Change Image" : "Upload Image"}
+                  </button>
+                  {form.cover_image_url ? (
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      onClick={() => setForm((current) => ({ ...current, cover_image_url: "" }))}
+                    >
+                      Remove Image
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Cover Image URL</label>
+            <input value={form.cover_image_url} onChange={(event) => setForm((current) => ({ ...current, cover_image_url: event.target.value }))} placeholder="https://..." />
+            <small>You can keep using a direct image URL if you prefer.</small>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Author Name</label>
+              <input value={form.author_name} onChange={(event) => setForm((current) => ({ ...current, author_name: event.target.value }))} placeholder="Julius Wanjau" />
+            </div>
+            <div className="form-group">
+              <label>Author Title</label>
+              <input value={form.author_title} onChange={(event) => setForm((current) => ({ ...current, author_title: event.target.value }))} placeholder="Pharmacy Educator" />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Excerpt</label>
+            <textarea rows={2} value={form.excerpt} onChange={(event) => setForm((current) => ({ ...current, excerpt: event.target.value }))} placeholder="Short article summary shown on cards and previews." />
+          </div>
+
+          <div className="form-group">
+            <label>Content</label>
+            <BlogRichTextEditor value={form.content} onChange={(nextValue) => setForm((current) => ({ ...current, content: nextValue }))} />
+          </div>
+
+          <div className="blog-sections-builder">
+            <div className="blog-sections-header">
+              <div>
+                <h4>Subsections</h4>
+                <p>
+                  Add smaller sections under the main article. Each section can have its own heading, body, and image.
+                </p>
+              </div>
+              <button type="button" className="btn-secondary" onClick={addContentSection}>
+                <Plus size={16} /> Add Subsection
+              </button>
+            </div>
+
+            {normalizeBlogSections(form.content_sections).length === 0 ? (
+              <div className="blog-section-empty">
+                <p>No subsections added yet. Use this when you want image-backed blocks inside the article.</p>
+              </div>
+            ) : (
+              <div className="blog-sections-list">
+                {normalizeBlogSections(form.content_sections).map((section, index, sections) => (
+                  <div key={`blog-section-${index}`} className="blog-section-card">
+                    <div className="blog-section-card-head">
+                      <div>
+                        <span className="blog-section-kicker">{getBlogSectionLabel(index, sections.length)}</span>
+                        <h5>{section.title?.trim() || `Section ${index + 1}`}</h5>
+                      </div>
+                      <button
+                        type="button"
+                        className="btn-icon danger"
+                        title="Remove subsection"
+                        onClick={() => removeContentSection(index)}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+
+                    <div className="form-group">
+                      <label>Section Title</label>
+                      <input
+                        value={section.title}
+                        onChange={(event) => updateContentSection(index, "title", event.target.value)}
+                        placeholder="Key regulation updates for retail pharmacies"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Section Image</label>
+                      <input
+                        ref={(node) => {
+                          if (node) {
+                            sectionImageInputRefs.current[index] = node
+                          } else {
+                            delete sectionImageInputRefs.current[index]
+                          }
+                        }}
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        style={{ display: "none" }}
+                        onChange={(event) => handleSectionImageUpload(index, event)}
+                      />
+                      <div className="instructor-photo-editor">
+                        <div className="blog-section-gallery-preview">
+                          {section.images.length > 0 ? (
+                            section.images.map((imageUrl, imageIndex) => (
+                              <div key={`${index}-${imageIndex}`} className="blog-section-gallery-thumb">
+                                <img
+                                  src={imageUrl}
+                                  alt={section.title || `Blog subsection ${index + 1}`}
+                                  className="blog-section-gallery-thumb-image"
+                                />
+                                <button
+                                  type="button"
+                                  className="blog-section-gallery-remove"
+                                  onClick={() => removeSectionImage(index, imageIndex)}
+                                  aria-label={`Remove section image ${imageIndex + 1}`}
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="admin-image-upload-preview">
+                              <div className="admin-image-upload-placeholder">
+                                <span>No section images</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <div className="instructor-photo-editor-copy">
+                          <p className="admin-image-upload-copy">
+                            Upload one or many inline images for this subsection. They will render as a small animated gallery on the live blog post.
+                          </p>
+                          <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", marginTop: "0.85rem" }}>
+                            <button
+                              type="button"
+                              className="btn-secondary"
+                              onClick={() => sectionImageInputRefs.current[index]?.click()}
+                              disabled={uploadingSectionIndex === index}
+                            >
+                              {uploadingSectionIndex === index ? "Uploading..." : section.images.length > 0 ? "Add More Images" : "Upload Images"}
+                            </button>
+                            {section.images.length > 0 ? (
+                              <button
+                                type="button"
+                                className="btn-secondary"
+                                onClick={() => updateContentSection(index, "images", [])}
+                              >
+                                Clear Images
+                              </button>
+                            ) : null}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="form-group">
+                      <label>Add External Image URL</label>
+                      <div className="blog-section-url-row">
+                        <input
+                          value={section.pending_image_url || ""}
+                          onChange={(event) => updateContentSection(index, "pending_image_url", event.target.value)}
+                          placeholder="https://..."
+                        />
+                        <button
+                          type="button"
+                          className="btn-secondary"
+                          onClick={() => {
+                            addSectionImageUrl(index, section.pending_image_url)
+                            updateContentSection(index, "pending_image_url", "")
+                          }}
+                        >
+                          Add Image
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="form-group">
+                      <label>Section Body</label>
+                      <textarea
+                        rows={6}
+                        value={section.body}
+                        onChange={(event) => updateContentSection(index, "body", event.target.value)}
+                        placeholder="Write the section body here. You can use paragraphs, lists, and simple markdown."
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="form-group">
+            <label>Tags</label>
+            <input value={form.tags} onChange={(event) => setForm((current) => ({ ...current, tags: event.target.value }))} placeholder="CPD, Career, Clinical Practice" />
+            <small>Separate tags with commas. They will be saved as an array.</small>
+          </div>
+
+          <label className="workshop-checkbox" style={{ marginBottom: "1.5rem" }}>
+            <input
+              type="checkbox"
+              checked={form.is_published}
+              onChange={(event) => setForm((current) => ({ ...current, is_published: event.target.checked }))}
+            />
+            <span>Publish this post</span>
+          </label>
+
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", flexWrap: "wrap" }}>
+            <button type="button" className="btn-secondary" onClick={resetForm}>Cancel</button>
+            <button type="submit" className="btn-primary" disabled={saving}>
+              <Save size={16} />
+              {saving ? "Saving..." : editingId ? "Save Changes" : "Save Post"}
+            </button>
+          </div>
+        </form>
+      )}
+
+      {loading ? (
+        <p style={{ color: "var(--gray-500)" }}>Loading blog posts...</p>
+      ) : posts.length === 0 ? (
+        <div className="empty-state"><p>No blog posts found yet. Create your first article.</p></div>
+      ) : (
+        <>
+          <div className="blog-posts-table-head">
+            <span>Title</span>
+            <span>Category</span>
+            <span>Author</span>
+            <span>Published</span>
+            <span>Status</span>
+            <span>Actions</span>
+          </div>
+
+          <div className="blog-posts-list">
+            {posts.map((post) => (
+              <div key={post.id} className="blog-post-row">
+                <div style={{ minWidth: 0 }}>
+                  <strong style={{ display: "block", color: "var(--gray-900)", fontSize: "0.96rem", marginBottom: "0.3rem" }}>
+                    {post.title || "Untitled post"}
+                  </strong>
+                  <p style={{ margin: 0, color: "var(--gray-500)", fontSize: "0.82rem", lineHeight: 1.45 }}>
+                    /{post.slug || "no-slug"}
+                  </p>
+                </div>
+
+                <div className="instructor-cell">
+                  {post.category || <span style={{ color: "var(--gray-500)" }}>Not set</span>}
+                </div>
+
+                <div className="instructor-cell">
+                  {post.author_name || <span style={{ color: "var(--gray-500)" }}>Not set</span>}
+                </div>
+
+                <div className="instructor-cell">
+                  {formatBlogDate(post.published_at)}
+                </div>
+
+                <div>
+                  <button
+                    type="button"
+                    className={`btn-secondary${post.is_published ? "" : ""}`}
+                    onClick={() => togglePublished(post)}
+                    disabled={togglingId === post.id}
+                    style={{
+                      minWidth: "110px",
+                      justifyContent: "center",
+                      background: post.is_published ? "#dcfce7" : "#fff",
+                      color: post.is_published ? "#166534" : "var(--primary)",
+                      borderColor: post.is_published ? "#bbf7d0" : "var(--gray-300)",
+                    }}
+                  >
+                    {togglingId === post.id ? "Updating..." : post.is_published ? "Published" : "Draft"}
+                  </button>
+                </div>
+
+                <div className="course-actions">
+                  <button className="btn-icon" title="Edit post" onClick={() => startEdit(post)}>
+                    <Edit2 size={16} />
+                  </button>
+                  <button
+                    className="btn-icon danger"
+                    title="Delete post"
+                    onClick={() => deletePost(post)}
+                    disabled={deletingId === post.id}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+function BlogCategoriesTab() {
+  const [categories, setCategories] = useState([])
+  const [postCounts, setPostCounts] = useState({})
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [syncing, setSyncing] = useState(false)
+  const [editingId, setEditingId] = useState(null)
+  const [form, setForm] = useState({ id: "", name: "", is_active: true })
+  const [error, setError] = useState("")
+  const [message, setMessage] = useState("")
+
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  async function loadData() {
+    setLoading(true)
+    setError("")
+
+    const [categoriesResponse, postsResponse] = await Promise.all([
+      supabase.from("blog_categories").select("*").order("name", { ascending: true }),
+      supabase.from("blog_posts").select("category"),
+    ])
+
+    if (categoriesResponse.error) {
+      setError(`${categoriesResponse.error.message}. Run supabase/blog_categories_setup.sql in Supabase to enable managed blog categories.`)
+      setCategories([])
+    } else {
+      setCategories(categoriesResponse.data || [])
+    }
+
+    if (!postsResponse.error) {
+      const counts = (postsResponse.data || []).reduce((accumulator, post) => {
+        const key = normalizeBlogCategory(post.category)
+        if (!key) return accumulator
+        accumulator[key] = (accumulator[key] || 0) + 1
+        return accumulator
+      }, {})
+      setPostCounts(counts)
+    }
+
+    setLoading(false)
+  }
+
+  function resetForm() {
+    setForm({ id: "", name: "", is_active: true })
+    setEditingId(null)
+  }
+
+  function startEdit(category) {
+    setEditingId(category.id)
+    setForm({
+      id: category.id,
+      name: normalizeBlogCategory(category.name),
+      is_active: category.is_active ?? true,
+    })
+    setError("")
+    setMessage("")
+  }
+
+  async function saveCategory(event) {
+    event.preventDefault()
+
+    const normalizedName = normalizeBlogCategory(form.name)
+    if (!normalizedName) {
+      setError("Category name is required.")
+      return
+    }
+
+    setSaving(true)
+    setError("")
+    setMessage("")
+
+    const existingCategory = categories.find((category) => category.id === editingId)
+    const oldName = normalizeBlogCategory(existingCategory?.name)
+    const payload = {
+      id: editingId || form.id || crypto.randomUUID(),
+      name: normalizedName,
+      slug: slugifyBlogCategory(normalizedName),
+      is_active: !!form.is_active,
+    }
+
+    const { error: saveError } = await supabase
+      .from("blog_categories")
+      .upsert(payload, { onConflict: "id" })
+
+    if (saveError) {
+      setError(saveError.message)
+      setSaving(false)
+      return
+    }
+
+    if (editingId && oldName && oldName !== normalizedName) {
+      const { error: postsUpdateError } = await supabase
+        .from("blog_posts")
+        .update({ category: normalizedName })
+        .eq("category", oldName)
+
+      if (postsUpdateError) {
+        setError(`Category saved, but related post categories could not be renamed automatically: ${postsUpdateError.message}`)
+      }
+    }
+
+    setMessage(editingId ? "Blog category updated successfully." : "Blog category added successfully.")
+    resetForm()
+    await loadData()
+    setSaving(false)
+  }
+
+  async function toggleCategory(category) {
+    setError("")
+    setMessage("")
+
+    const { error: toggleError } = await supabase
+      .from("blog_categories")
+      .update({ is_active: !category.is_active })
+      .eq("id", category.id)
+
+    if (toggleError) {
+      setError(toggleError.message)
+    } else {
+      setMessage(`Category ${category.is_active ? "hidden from" : "shown on"} public blog filters.`)
+      await loadData()
+    }
+  }
+
+  async function deleteCategory(category) {
+    if (!window.confirm(`Delete blog category ${category.name}? This will not delete existing blog posts.`)) return
+
+    setError("")
+    setMessage("")
+
+    const { error: deleteError } = await supabase
+      .from("blog_categories")
+      .delete()
+      .eq("id", category.id)
+
+    if (deleteError) {
+      setError(deleteError.message)
+    } else {
+      if (editingId === category.id) resetForm()
+      setMessage("Blog category deleted successfully.")
+      await loadData()
+    }
+  }
+
+  async function syncUsedCategories() {
+    setSyncing(true)
+    setError("")
+    setMessage("")
+
+    const usedCategories = Object.keys(postCounts)
+    if (usedCategories.length === 0) {
+      setMessage("No blog post categories found to sync yet.")
+      setSyncing(false)
+      return
+    }
+
+    const payload = usedCategories.map((name) => ({
+      name,
+      slug: slugifyBlogCategory(name),
+      is_active: true,
+    }))
+
+    const { error: syncError } = await supabase
+      .from("blog_categories")
+      .upsert(payload, { onConflict: "slug" })
+
+    if (syncError) {
+      setError(syncError.message)
+    } else {
+      setMessage("Existing post categories synced into the blog category manager.")
+      await loadData()
+    }
+
+    setSyncing(false)
+  }
+
+  return (
+    <div className="admin-section">
+      <div className="section-header">
+        <div>
+          <h2>Blog Categories</h2>
+          <p style={{ color: "var(--gray-500)", marginTop: "0.4rem" }}>
+            Manage reusable blog categories, normalize naming, and control which ones appear in the public blog filters.
+          </p>
+        </div>
+        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+          <button className="btn-secondary" onClick={syncUsedCategories} disabled={syncing}>
+            <RefreshCw size={16} /> {syncing ? "Syncing..." : "Sync Used Categories"}
+          </button>
+          <button className="btn-secondary" onClick={loadData}>
+            <RefreshCw size={16} /> Refresh
+          </button>
+        </div>
+      </div>
+
+      {message && (
+        <div style={{ marginBottom: "1rem", padding: "0.9rem 1rem", borderRadius: "0.75rem", background: "#dcfce7", color: "#166534", fontWeight: 600 }}>
+          {message}
+        </div>
+      )}
+
+      {error && (
+        <div style={{ marginBottom: "1rem", padding: "0.9rem 1rem", borderRadius: "0.75rem", background: "#fee2e2", color: "#991b1b", fontWeight: 600 }}>
+          {error}
+        </div>
+      )}
+
+      <form className="instructor-form-card" onSubmit={saveCategory}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", marginBottom: "1.25rem", flexWrap: "wrap" }}>
+          <div>
+            <h3 style={{ margin: 0 }}>{editingId ? "Edit Blog Category" : "Add Blog Category"}</h3>
+            <p style={{ margin: "0.35rem 0 0", color: "var(--gray-500)", fontSize: "0.9rem" }}>
+              Categories are auto-normalized, so entries like "clinical ai" become "Clinical AI".
+            </p>
+          </div>
+        </div>
+
+        <div className="form-row">
+          <div className="form-group">
+            <label>Category Name</label>
+            <input
+              value={form.name}
+              onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+              onBlur={() => setForm((current) => ({ ...current, name: normalizeBlogCategory(current.name) }))}
+              placeholder="Clinical AI"
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>Slug</label>
+            <input value={slugifyBlogCategory(form.name)} readOnly />
+          </div>
+        </div>
+
+        <label className="workshop-checkbox" style={{ marginBottom: "1.5rem" }}>
+          <input
+            type="checkbox"
+            checked={form.is_active}
+            onChange={(event) => setForm((current) => ({ ...current, is_active: event.target.checked }))}
+          />
+          <span>Show this category in public blog filters</span>
+        </label>
+
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", flexWrap: "wrap" }}>
+          <button type="button" className="btn-secondary" onClick={resetForm}>Cancel</button>
+          <button type="submit" className="btn-primary" disabled={saving}>
+            <Save size={16} />
+            {saving ? "Saving..." : editingId ? "Save Changes" : "Save Category"}
+          </button>
+        </div>
+      </form>
+
+      {loading ? (
+        <p style={{ color: "var(--gray-500)" }}>Loading categories...</p>
+      ) : categories.length === 0 ? (
+        <div className="empty-state"><p>No blog categories found yet. Add one or sync existing post categories.</p></div>
+      ) : (
+        <>
+          <div className="blog-categories-table-head">
+            <span>Name</span>
+            <span>Slug</span>
+            <span>Posts</span>
+            <span>Status</span>
+            <span>Actions</span>
+          </div>
+
+          <div className="blog-categories-list">
+            {categories.map((category) => {
+              const normalizedName = normalizeBlogCategory(category.name)
+              return (
+                <div key={category.id} className="blog-category-row">
+                  <div style={{ minWidth: 0 }}>
+                    <strong style={{ display: "block", color: "var(--gray-900)", fontSize: "0.96rem", marginBottom: "0.25rem" }}>
+                      {normalizedName}
+                    </strong>
+                  </div>
+
+                  <div className="instructor-cell">/{category.slug || slugifyBlogCategory(normalizedName)}</div>
+                  <div className="instructor-cell">{postCounts[normalizedName] || 0}</div>
+                  <div>
+                    <span
+                      className="status"
+                      style={{
+                        background: category.is_active ? "#dcfce7" : "#e5e7eb",
+                        color: category.is_active ? "#166534" : "#4b5563",
+                      }}
+                    >
+                      {category.is_active ? "Active" : "Hidden"}
+                    </span>
+                  </div>
+
+                  <div className="course-actions">
+                    <button className="btn-secondary" type="button" onClick={() => toggleCategory(category)}>
+                      {category.is_active ? "Hide" : "Show"}
+                    </button>
+                    <button className="btn-icon" title="Edit category" onClick={() => startEdit(category)}>
+                      <Edit2 size={16} />
+                    </button>
+                    <button className="btn-icon danger" title="Delete category" onClick={() => deleteCategory(category)}>
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+const EMPTY_TESTIMONIAL_FORM = {
+  id: "",
+  author_name: "",
+  author_title: "",
+  author_photo_url: "",
+  rating: 5,
+  review_text: "",
+  is_published: false,
+}
+
+function sortTestimonials(rows) {
+  return [...(rows || [])].sort((a, b) => {
+    if (a.is_published !== b.is_published) {
+      return a.is_published ? -1 : 1
+    }
+
+    const aCreated = a.created_at ? new Date(a.created_at).getTime() : 0
+    const bCreated = b.created_at ? new Date(b.created_at).getTime() : 0
+    return bCreated - aCreated
+  })
+}
+
+function truncateTestimonial(text, max = 100) {
+  const value = `${text || ""}`.trim()
+  if (value.length <= max) return value
+  return `${value.slice(0, max).trimEnd()}...`
+}
+
+function renderStars(rating) {
+  return "★".repeat(Math.max(1, Math.min(5, Number(rating) || 0)))
+}
+
+function TestimonialsTab() {
+  const [testimonials, setTestimonials] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [togglingId, setTogglingId] = useState(null)
+  const [deletingId, setDeletingId] = useState(null)
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState(null)
+  const [form, setForm] = useState(EMPTY_TESTIMONIAL_FORM)
+  const [error, setError] = useState("")
+  const [message, setMessage] = useState("")
+  const authorPhotoInputRef = useRef(null)
+
+  useEffect(() => {
+    loadTestimonials()
+  }, [])
+
+  async function loadTestimonials() {
+    setLoading(true)
+    setError("")
+
+    const { data, error: loadError } = await supabase
+      .from("testimonials")
+      .select("*")
+
+    if (loadError) {
+      setError(loadError.message)
+      setTestimonials([])
+    } else {
+      setTestimonials(sortTestimonials(data || []))
+    }
+
+    setLoading(false)
+  }
+
+  function resetForm() {
+    setForm(EMPTY_TESTIMONIAL_FORM)
+    setEditingId(null)
+    setShowForm(false)
+  }
+
+  function startCreate() {
+    setError("")
+    setMessage("")
+    setEditingId(null)
+    setForm(EMPTY_TESTIMONIAL_FORM)
+    setShowForm(true)
+  }
+
+  function startEdit(testimonial) {
+    setError("")
+    setMessage("")
+    setEditingId(testimonial.id)
+    setForm({
+      id: testimonial.id || "",
+      author_name: testimonial.author_name || "",
+      author_title: testimonial.author_title || "",
+      author_photo_url: testimonial.author_photo_url || "",
+      rating: testimonial.rating || 5,
+      review_text: testimonial.review_text || "",
+      is_published: !!testimonial.is_published,
+    })
+    setShowForm(true)
+  }
+
+  async function handleAuthorPhotoUpload(event) {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setUploadingPhoto(true)
+    setError("")
+    setMessage("")
+
+    try {
+      const publicUrl = await uploadImageToMedia(file, "testimonials")
+      setForm((current) => ({ ...current, author_photo_url: publicUrl }))
+      setMessage("Author photo uploaded. Save the testimonial to keep it.")
+    } catch (uploadError) {
+      setError(uploadError.message || "Unable to upload author photo.")
+    } finally {
+      setUploadingPhoto(false)
+      event.target.value = ""
+    }
+  }
+
+  async function saveTestimonial(event) {
+    event.preventDefault()
+
+    if (!form.author_name.trim()) {
+      setError("Author name is required.")
+      return
+    }
+
+    if (!form.review_text.trim()) {
+      setError("Review text is required.")
+      return
+    }
+
+    setSaving(true)
+    setError("")
+    setMessage("")
+
+    const payload = {
+      id: editingId || form.id || crypto.randomUUID(),
+      author_name: form.author_name.trim(),
+      author_title: form.author_title.trim() || null,
+      author_photo_url: form.author_photo_url.trim() || null,
+      rating: Number(form.rating) || 5,
+      review_text: form.review_text.trim(),
+      is_published: !!form.is_published,
+    }
+
+    const { error: saveError } = await supabase
+      .from("testimonials")
+      .upsert(payload, { onConflict: "id" })
+
+    if (saveError) {
+      setError(`${saveError.message}. If this is a permissions issue, re-run supabase/testimonials_setup.sql in Supabase.`)
+    } else {
+      setMessage(editingId ? "Testimonial updated successfully." : "Testimonial added successfully.")
+      resetForm()
+      await loadTestimonials()
+    }
+
+    setSaving(false)
+  }
+
+  async function togglePublished(testimonial) {
+    setTogglingId(testimonial.id)
+    setError("")
+    setMessage("")
+
+    const { error: toggleError } = await supabase
+      .from("testimonials")
+      .update({ is_published: !testimonial.is_published })
+      .eq("id", testimonial.id)
+
+    if (toggleError) {
+      setError(toggleError.message)
+    } else {
+      setMessage(`Testimonial ${testimonial.is_published ? "hidden from the site" : "published to the site"}.`)
+      await loadTestimonials()
+    }
+
+    setTogglingId(null)
+  }
+
+  async function deleteTestimonial(testimonial) {
+    if (!window.confirm(`Delete testimonial from ${testimonial.author_name || "this author"}?`)) return
+
+    setDeletingId(testimonial.id)
+    setError("")
+    setMessage("")
+
+    const { error: deleteError } = await supabase
+      .from("testimonials")
+      .delete()
+      .eq("id", testimonial.id)
+
+    if (deleteError) {
+      setError(deleteError.message)
+    } else {
+      setMessage("Testimonial deleted successfully.")
+      if (editingId === testimonial.id) resetForm()
+      await loadTestimonials()
+    }
+
+    setDeletingId(null)
+  }
+
+  return (
+    <div className="admin-section">
+      <div className="section-header">
+        <div>
+          <h2>Testimonials</h2>
+          <p style={{ color: "var(--gray-500)", marginTop: "0.4rem" }}>
+            Manage learner reviews shown on the homepage and control which ones are published.
+          </p>
+        </div>
+        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+          <button className="btn-secondary" onClick={loadTestimonials}>
+            <RefreshCw size={16} /> Refresh
+          </button>
+          <button className="btn-primary" onClick={startCreate}>
+            <Plus size={16} /> Add Testimonial
+          </button>
+        </div>
+      </div>
+
+      {message && (
+        <div style={{ marginBottom: "1rem", padding: "0.9rem 1rem", borderRadius: "0.75rem", background: "#dcfce7", color: "#166534", fontWeight: 600 }}>
+          {message}
+        </div>
+      )}
+
+      {error && (
+        <div style={{ marginBottom: "1rem", padding: "0.9rem 1rem", borderRadius: "0.75rem", background: "#fee2e2", color: "#991b1b", fontWeight: 600 }}>
+          {error}
+        </div>
+      )}
+
+      {showForm && (
+        <form className="instructor-form-card" onSubmit={saveTestimonial}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", marginBottom: "1.25rem", flexWrap: "wrap" }}>
+            <div>
+              <h3 style={{ margin: 0 }}>{editingId ? "Edit Testimonial" : "Add Testimonial"}</h3>
+              <p style={{ margin: "0.35rem 0 0", color: "var(--gray-500)", fontSize: "0.9rem" }}>
+                Update testimonial content, rating, and publish state for the homepage.
+              </p>
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Author Name</label>
+              <input value={form.author_name} onChange={(event) => setForm((current) => ({ ...current, author_name: event.target.value }))} placeholder="Grace Wanjiku" required />
+            </div>
+            <div className="form-group">
+              <label>Author Title</label>
+              <input value={form.author_title} onChange={(event) => setForm((current) => ({ ...current, author_title: event.target.value }))} placeholder="Pharmacist in Charge" />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Author Photo</label>
+            <input
+              ref={authorPhotoInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: "none" }}
+              onChange={handleAuthorPhotoUpload}
+            />
+            <div className="instructor-photo-editor">
+              <div className="instructor-photo-preview">
+                {form.author_photo_url ? (
+                  <img
+                    src={form.author_photo_url}
+                    alt={form.author_name || "Author photo preview"}
+                    className="instructor-photo-preview-image"
+                  />
+                ) : (
+                  <div className="instructor-avatar instructor-avatar-fallback instructor-photo-preview-fallback">
+                    {getInstructorInitials(form.author_name)}
+                  </div>
+                )}
+              </div>
+              <div className="instructor-photo-editor-copy">
+                <p className="admin-image-upload-copy">
+                  Upload an author photo or paste an external URL below.
+                </p>
+                <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", marginTop: "0.85rem" }}>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => authorPhotoInputRef.current?.click()}
+                    disabled={uploadingPhoto}
+                  >
+                    {uploadingPhoto ? "Uploading..." : form.author_photo_url ? "Change Photo" : "Upload Photo"}
+                  </button>
+                  {form.author_photo_url ? (
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      onClick={() => setForm((current) => ({ ...current, author_photo_url: "" }))}
+                    >
+                      Remove Photo
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Author Photo URL</label>
+              <input value={form.author_photo_url} onChange={(event) => setForm((current) => ({ ...current, author_photo_url: event.target.value }))} placeholder="https://..." />
+              <small>You can keep using a direct image URL if you prefer.</small>
+            </div>
+            <div className="form-group">
+              <label>Rating</label>
+              <select value={form.rating} onChange={(event) => setForm((current) => ({ ...current, rating: Number(event.target.value) }))}>
+                {[1, 2, 3, 4, 5].map((value) => (
+                  <option key={value} value={value}>{value}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Review Text</label>
+            <textarea rows={4} value={form.review_text} onChange={(event) => setForm((current) => ({ ...current, review_text: event.target.value }))} placeholder="Share the learner's feedback here." required />
+          </div>
+
+          <label className="workshop-checkbox" style={{ marginBottom: "1.5rem" }}>
+            <input
+              type="checkbox"
+              checked={form.is_published}
+              onChange={(event) => setForm((current) => ({ ...current, is_published: event.target.checked }))}
+            />
+            <span>Publish this testimonial</span>
+          </label>
+
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", flexWrap: "wrap" }}>
+            <button type="button" className="btn-secondary" onClick={resetForm}>Cancel</button>
+            <button type="submit" className="btn-primary" disabled={saving}>
+              <Save size={16} />
+              {saving ? "Saving..." : editingId ? "Save Changes" : "Save Testimonial"}
+            </button>
+          </div>
+        </form>
+      )}
+
+      {loading ? (
+        <p style={{ color: "var(--gray-500)" }}>Loading testimonials...</p>
+      ) : testimonials.length === 0 ? (
+        <div className="empty-state"><p>No testimonials found yet. Add your first testimonial.</p></div>
+      ) : (
+        <div className="testimonials-admin-grid">
+          {testimonials.map((testimonial) => (
+            <article key={testimonial.id} className="testimonial-admin-card">
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "0.75rem", marginBottom: "0.9rem" }}>
+                <div>
+                  <div className="testimonial-admin-stars">{renderStars(testimonial.rating)}</div>
+                  <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginTop: "0.5rem" }}>
+                    <span
+                      className="status"
+                      style={{
+                        background: testimonial.is_published ? "#dcfce7" : "#e5e7eb",
+                        color: testimonial.is_published ? "#166534" : "#4b5563"
+                      }}
+                    >
+                      {testimonial.is_published ? "Published" : "Unpublished"}
+                    </span>
+                  </div>
+                </div>
+                <div className="course-actions">
+                  <button
+                    className="btn-secondary"
+                    type="button"
+                    onClick={() => togglePublished(testimonial)}
+                    disabled={togglingId === testimonial.id}
+                    style={{ minWidth: "108px", justifyContent: "center" }}
+                  >
+                    {togglingId === testimonial.id ? "Updating..." : testimonial.is_published ? "Hide" : "Publish"}
+                  </button>
+                  <button className="btn-icon" title="Edit testimonial" onClick={() => startEdit(testimonial)}>
+                    <Edit2 size={16} />
+                  </button>
+                  <button
+                    className="btn-icon danger"
+                    title="Delete testimonial"
+                    onClick={() => deleteTestimonial(testimonial)}
+                    disabled={deletingId === testimonial.id}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+
+              <p className="testimonial-admin-review">
+                {truncateTestimonial(testimonial.review_text, 100)}
+              </p>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "0.85rem", marginTop: "1rem" }}>
+                {testimonial.author_photo_url ? (
+                  <img
+                    src={testimonial.author_photo_url}
+                    alt={testimonial.author_name || "Testimonial author"}
+                    className="instructor-avatar"
+                  />
+                ) : (
+                  <div className="instructor-avatar instructor-avatar-fallback">
+                    {getInstructorInitials(testimonial.author_name)}
+                  </div>
+                )}
+
+                <div style={{ minWidth: 0 }}>
+                  <strong style={{ display: "block", color: "var(--gray-900)", fontSize: "0.95rem" }}>
+                    {testimonial.author_name || "Unnamed author"}
+                  </strong>
+                  <p style={{ margin: "0.25rem 0 0", color: "var(--gray-500)", fontSize: "0.82rem" }}>
+                    {testimonial.author_title || "Title not set"}
+                  </p>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function getLeaderboardRankBadge(rank) {
+  if (rank === 1) return { label: "★ Gold", bg: "#fff7d6", color: "#b7791f" }
+  if (rank === 2) return { label: "✦ Silver", bg: "#f3f4f6", color: "#6b7280" }
+  if (rank === 3) return { label: "• Bronze", bg: "#fce7d6", color: "#c05621" }
+  return null
+}
+
+function LeaderboardTab() {
+  const { isSuperAdmin } = useAuth()
+  const [entries, setEntries] = useState([])
+  const [period, setPeriod] = useState("all_time")
+  const [loading, setLoading] = useState(true)
+  const [resetting, setResetting] = useState(false)
+  const [lastResetAt, setLastResetAt] = useState(null)
+  const [error, setError] = useState("")
+  const [message, setMessage] = useState("")
+
+  useEffect(() => {
+    loadLeaderboard("all_time")
+    loadResetStatus()
+  }, [])
+
+  useEffect(() => {
+    loadLeaderboard(period)
+  }, [period])
+
+  async function loadResetStatus() {
+    const { data, error: resetError } = await supabase
+      .from("leaderboard_reset_state")
+      .select("last_reset_at")
+      .eq("id", 1)
+      .maybeSingle()
+
+    if (!resetError) {
+      setLastResetAt(data?.last_reset_at || null)
+    }
+  }
+
+  async function loadLeaderboard(scope = period) {
+    setLoading(true)
+    setError("")
+
+    const { data, error: loadError } = await supabase.rpc("get_leaderboard", { time_scope: scope })
+
+    if (loadError) {
+      setError(loadError.message)
+      setEntries([])
+    } else {
+      setEntries(data || [])
+    }
+
+    setLoading(false)
+  }
+
+  async function resetMonthlyBoard() {
+    if (!window.confirm("Reset the monthly leaderboard now? This will start this month's board over from the current time.")) return
+
+    setResetting(true)
+    setError("")
+    setMessage("")
+
+    const { data, error: resetError } = await supabase.rpc("reset_monthly_leaderboard")
+
+    if (resetError) {
+      setError(resetError.message)
+    } else {
+      setLastResetAt(data || new Date().toISOString())
+      setMessage("Monthly leaderboard reset successfully.")
+      if (period === "this_month") {
+        await loadLeaderboard("this_month")
+      }
+    }
+
+    setResetting(false)
+  }
+
+  return (
+    <div className="admin-section">
+      <div className="section-header">
+        <div>
+          <h2>Leaderboard</h2>
+          <p style={{ color: "var(--gray-500)", marginTop: "0.4rem" }}>
+            Review top learners by completed courses, CPD hours, and certificates across the platform.
+          </p>
+        </div>
+        <div className="leaderboard-admin-controls">
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={() => setPeriod("all_time")}
+            style={{
+              background: period === "all_time" ? "var(--primary-light)" : "#fff",
+              borderColor: period === "all_time" ? "var(--primary)" : "var(--gray-300)",
+            }}
+          >
+            All Time
+          </button>
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={() => setPeriod("this_month")}
+            style={{
+              background: period === "this_month" ? "var(--primary-light)" : "#fff",
+              borderColor: period === "this_month" ? "var(--primary)" : "var(--gray-300)",
+            }}
+          >
+            This Month
+          </button>
+          {isSuperAdmin && (
+            <button type="button" className="btn-primary" onClick={resetMonthlyBoard} disabled={resetting}>
+              <RefreshCw size={16} />
+              {resetting ? "Resetting..." : "Reset Monthly Board"}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {lastResetAt && (
+        <p style={{ margin: "0 0 1rem", color: "var(--gray-500)", fontSize: "0.9rem" }}>
+          Last monthly reset: {new Date(lastResetAt).toLocaleString()}
+        </p>
+      )}
+
+      {message && (
+        <div style={{ marginBottom: "1rem", padding: "0.9rem 1rem", borderRadius: "0.75rem", background: "#dcfce7", color: "#166534", fontWeight: 600 }}>
+          {message}
+        </div>
+      )}
+
+      {error && (
+        <div style={{ marginBottom: "1rem", padding: "0.9rem 1rem", borderRadius: "0.75rem", background: "#fee2e2", color: "#991b1b", fontWeight: 600 }}>
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <p style={{ color: "var(--gray-500)" }}>Loading leaderboard...</p>
+      ) : entries.length === 0 ? (
+        <div className="empty-state"><p>No leaderboard data found for this period.</p></div>
+      ) : (
+        <>
+          <div className="leaderboard-table-head">
+            <span>Rank</span>
+            <span>Name</span>
+            <span>Completed Courses</span>
+            <span>CPD Hours</span>
+            <span>Certificates</span>
+          </div>
+
+          <div className="leaderboard-admin-list">
+            {entries.slice(0, 20).map((entry, index) => {
+              const rank = index + 1
+              const badge = getLeaderboardRankBadge(rank)
+
+              return (
+                <div key={`${entry.user_id}-${rank}`} className="leaderboard-admin-row">
+                  <div>
+                    <strong style={{ display: "block", color: "var(--gray-900)", fontSize: "0.95rem" }}>
+                      #{rank}
+                    </strong>
+                    {badge && (
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          marginTop: "0.35rem",
+                          padding: "0.18rem 0.55rem",
+                          borderRadius: "999px",
+                          background: badge.bg,
+                          color: badge.color,
+                          fontSize: "0.74rem",
+                          fontWeight: 700,
+                        }}
+                      >
+                        {badge.label}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="instructor-cell">
+                    {entry.display_name || "PharmaCourse Learner"}
+                  </div>
+
+                  <div className="instructor-cell">
+                    {entry.completed_courses || 0}
+                  </div>
+
+                  <div className="instructor-cell">
+                    {Number(entry.total_cpd_hours || 0)}
+                  </div>
+
+                  <div className="instructor-cell">
+                    {entry.certificates_issued || 0}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+const EMPTY_TEAM_ENQUIRY_FORM = {
+  name: "",
+  organisation: "",
+  email: "",
+  phone: "",
+  seats_needed: "",
+  plan_tier: "starter",
+  notes: "",
+  status: "new",
+}
+
+function getTeamPlanTierLabel(tier) {
+  if (tier === "starter") return "Starter"
+  if (tier === "growth") return "Growth"
+  if (tier === "enterprise") return "Enterprise"
+  return tier || "Unknown"
+}
+
+function getTeamPlanStatusStyle(status) {
+  if (status === "converted") return { bg: "#dcfce7", color: "#166534" }
+  if (status === "contacted") return { bg: "#dbeafe", color: "#1d4ed8" }
+  if (status === "closed") return { bg: "#e5e7eb", color: "#4b5563" }
+  return { bg: "#fef3c7", color: "#92400e" }
+}
+
+function sortTeamPlanPricing(rows) {
+  return [...(rows || [])].sort((a, b) => TEAM_PLAN_TIER_ORDER.indexOf(a.tier) - TEAM_PLAN_TIER_ORDER.indexOf(b.tier))
+}
+
+function TeamPlansTab() {
+  const [enquiries, setEnquiries] = useState([])
+  const [pricingRows, setPricingRows] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [savingEnquiry, setSavingEnquiry] = useState(false)
+  const [savingPricingTier, setSavingPricingTier] = useState(null)
+  const [editingPriceTier, setEditingPriceTier] = useState(null)
+  const [priceDraft, setPriceDraft] = useState("")
+  const [updatingEnquiryId, setUpdatingEnquiryId] = useState(null)
+  const [deletingEnquiryId, setDeletingEnquiryId] = useState(null)
+  const [showEnquiryForm, setShowEnquiryForm] = useState(false)
+  const [enquiryForm, setEnquiryForm] = useState(EMPTY_TEAM_ENQUIRY_FORM)
+  const [error, setError] = useState("")
+  const [message, setMessage] = useState("")
+
+  useEffect(() => {
+    loadTeamPlansData()
+  }, [])
+
+  async function loadTeamPlansData() {
+    setLoading(true)
+    setError("")
+
+    const [
+      { data: enquiryData, error: enquiryError },
+      { data: pricingData, error: pricingError },
+    ] = await Promise.all([
+      supabase.from("team_plan_enquiries").select("*").order("created_at", { ascending: false }),
+      supabase.from("team_plan_pricing").select("*"),
+    ])
+
+    if (enquiryError || pricingError) {
+      setError(enquiryError?.message || pricingError?.message || "Failed to load team plans data.")
+      setEnquiries([])
+      setPricingRows([])
+    } else {
+      setEnquiries(enquiryData || [])
+      setPricingRows(sortTeamPlanPricing(pricingData || []))
+    }
+
+    setLoading(false)
+  }
+
+  function updatePricingField(tier, field, value) {
+    setPricingRows((current) =>
+      current.map((row) => row.tier === tier ? { ...row, [field]: value } : row)
+    )
+  }
+
+  async function savePricingRow(row) {
+    setSavingPricingTier(row.tier)
+    setError("")
+    setMessage("")
+
+    const payload = {
+      id: row.id,
+      tier: row.tier,
+      seats: row.seats === "" || row.seats === null ? null : Number(row.seats),
+      price_kes: row.price_kes === "" || row.price_kes === null ? null : Number(row.price_kes),
+      description: row.description?.trim() || null,
+      features: Array.isArray(row.features)
+        ? row.features.map((feature) => `${feature}`.trim()).filter(Boolean)
+        : `${row.features || ""}`.split(",").map((feature) => feature.trim()).filter(Boolean),
+      is_visible: !!row.is_visible,
+    }
+
+    const { error: saveError } = await supabase
+      .from("team_plan_pricing")
+      .upsert(payload, { onConflict: "tier" })
+
+    if (saveError) {
+      setError(saveError.message)
+    } else {
+      setMessage(`${getTeamPlanTierLabel(row.tier)} pricing updated.`)
+      await loadTeamPlansData()
+    }
+
+    setSavingPricingTier(null)
+  }
+
+  function startPriceEdit(row) {
+    setEditingPriceTier(row.tier)
+    setPriceDraft(row.price_kes ?? "")
+  }
+
+  async function commitPriceEdit(row) {
+    if (editingPriceTier !== row.tier) return
+
+    setEditingPriceTier(null)
+    const nextValue = priceDraft === "" ? null : Number(priceDraft)
+    updatePricingField(row.tier, "price_kes", nextValue)
+    await savePricingRow({ ...row, price_kes: nextValue })
+  }
+
+  async function updateEnquiryStatus(enquiryId, status) {
+    setUpdatingEnquiryId(enquiryId)
+    setError("")
+    setMessage("")
+
+    const { error: updateError } = await supabase
+      .from("team_plan_enquiries")
+      .update({ status })
+      .eq("id", enquiryId)
+
+    if (updateError) {
+      setError(updateError.message)
+    } else {
+      setMessage("Enquiry status updated.")
+      await loadTeamPlansData()
+    }
+
+    setUpdatingEnquiryId(null)
+  }
+
+  async function saveEnquiry(event) {
+    event.preventDefault()
+
+    if (!enquiryForm.name.trim() || !enquiryForm.organisation.trim()) {
+      setError("Name and organisation are required.")
+      return
+    }
+
+    setSavingEnquiry(true)
+    setError("")
+    setMessage("")
+
+    const payload = {
+      name: enquiryForm.name.trim(),
+      organisation: enquiryForm.organisation.trim(),
+      email: enquiryForm.email.trim() || null,
+      phone: enquiryForm.phone.trim() || null,
+      seats_needed: enquiryForm.seats_needed === "" ? null : Number(enquiryForm.seats_needed),
+      plan_tier: enquiryForm.plan_tier,
+      notes: enquiryForm.notes.trim() || null,
+      status: enquiryForm.status,
+    }
+
+    const { error: saveError } = await supabase
+      .from("team_plan_enquiries")
+      .insert(payload)
+
+    if (saveError) {
+      setError(saveError.message)
+    } else {
+      setMessage("Enquiry logged successfully.")
+      setEnquiryForm(EMPTY_TEAM_ENQUIRY_FORM)
+      setShowEnquiryForm(false)
+      await loadTeamPlansData()
+    }
+
+    setSavingEnquiry(false)
+  }
+
+  async function deleteEnquiry(enquiry) {
+    if (!window.confirm(`Delete enquiry from ${enquiry.name || "this contact"}?`)) return
+
+    setDeletingEnquiryId(enquiry.id)
+    setError("")
+    setMessage("")
+
+    const { error: deleteError } = await supabase
+      .from("team_plan_enquiries")
+      .delete()
+      .eq("id", enquiry.id)
+
+    if (deleteError) {
+      setError(deleteError.message)
+    } else {
+      setMessage("Enquiry deleted.")
+      await loadTeamPlansData()
+    }
+
+    setDeletingEnquiryId(null)
+  }
+
+  return (
+    <div className="admin-section">
+      <div className="section-header">
+        <div>
+          <h2>Team Plans</h2>
+          <p style={{ color: "var(--gray-500)", marginTop: "0.4rem" }}>
+            Track inbound team plan leads and update the pricing shown on the public team plans page.
+          </p>
+        </div>
+        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+          <button className="btn-secondary" onClick={loadTeamPlansData}>
+            <RefreshCw size={16} /> Refresh
+          </button>
+          <button className="btn-primary" onClick={() => setShowEnquiryForm((current) => !current)}>
+            <Plus size={16} /> {showEnquiryForm ? "Close Form" : "Add Enquiry"}
+          </button>
+        </div>
+      </div>
+
+      {message && (
+        <div style={{ marginBottom: "1rem", padding: "0.9rem 1rem", borderRadius: "0.75rem", background: "#dcfce7", color: "#166534", fontWeight: 600 }}>
+          {message}
+        </div>
+      )}
+
+      {error && (
+        <div style={{ marginBottom: "1rem", padding: "0.9rem 1rem", borderRadius: "0.75rem", background: "#fee2e2", color: "#991b1b", fontWeight: 600 }}>
+          {error}
+        </div>
+      )}
+
+      {showEnquiryForm && (
+        <form className="instructor-form-card" onSubmit={saveEnquiry}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", marginBottom: "1.25rem", flexWrap: "wrap" }}>
+            <div>
+              <h3 style={{ margin: 0 }}>Log Team Plan Enquiry</h3>
+              <p style={{ margin: "0.35rem 0 0", color: "var(--gray-500)", fontSize: "0.9rem" }}>
+                Capture WhatsApp leads and keep follow-up status visible to the admin team.
+              </p>
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Name</label>
+              <input value={enquiryForm.name} onChange={(event) => setEnquiryForm((current) => ({ ...current, name: event.target.value }))} placeholder="Jane Mwangi" required />
+            </div>
+            <div className="form-group">
+              <label>Organisation</label>
+              <input value={enquiryForm.organisation} onChange={(event) => setEnquiryForm((current) => ({ ...current, organisation: event.target.value }))} placeholder="CityCare Pharmacy" required />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Email</label>
+              <input value={enquiryForm.email} onChange={(event) => setEnquiryForm((current) => ({ ...current, email: event.target.value }))} placeholder="jane@citycare.co.ke" />
+            </div>
+            <div className="form-group">
+              <label>Phone</label>
+              <input value={enquiryForm.phone} onChange={(event) => setEnquiryForm((current) => ({ ...current, phone: event.target.value }))} placeholder="+254..." />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Seats Needed</label>
+              <input type="number" min="1" value={enquiryForm.seats_needed} onChange={(event) => setEnquiryForm((current) => ({ ...current, seats_needed: event.target.value }))} placeholder="20" />
+            </div>
+            <div className="form-group">
+              <label>Plan Tier</label>
+              <select value={enquiryForm.plan_tier} onChange={(event) => setEnquiryForm((current) => ({ ...current, plan_tier: event.target.value }))}>
+                {TEAM_PLAN_TIER_ORDER.map((tier) => (
+                  <option key={tier} value={tier}>{getTeamPlanTierLabel(tier)}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Status</label>
+              <select value={enquiryForm.status} onChange={(event) => setEnquiryForm((current) => ({ ...current, status: event.target.value }))}>
+                {["new", "contacted", "converted", "closed"].map((status) => (
+                  <option key={status} value={status}>{status}</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Notes</label>
+              <textarea rows={3} value={enquiryForm.notes} onChange={(event) => setEnquiryForm((current) => ({ ...current, notes: event.target.value }))} placeholder="Conversation notes, pricing context, or next step." />
+            </div>
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", flexWrap: "wrap" }}>
+            <button type="button" className="btn-secondary" onClick={() => { setShowEnquiryForm(false); setEnquiryForm(EMPTY_TEAM_ENQUIRY_FORM) }}>Cancel</button>
+            <button type="submit" className="btn-primary" disabled={savingEnquiry}>
+              <Save size={16} />
+              {savingEnquiry ? "Saving..." : "Save Enquiry"}
+            </button>
+          </div>
+        </form>
+      )}
+
+      <div className="team-plans-admin-grid">
+        <section className="team-plans-admin-panel">
+          <div className="team-plans-admin-heading">
+            <h3>Enquiries</h3>
+            <p>Follow up bulk training leads and update their status inline.</p>
+          </div>
+
+          {loading ? (
+            <p style={{ color: "var(--gray-500)" }}>Loading enquiries...</p>
+          ) : enquiries.length === 0 ? (
+            <div className="empty-state"><p>No team plan enquiries logged yet.</p></div>
+          ) : (
+            <div className="team-enquiries-list">
+              {enquiries.map((enquiry) => {
+                const statusStyle = getTeamPlanStatusStyle(enquiry.status)
+                return (
+                  <article key={enquiry.id} className="team-enquiry-card">
+                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "0.75rem", marginBottom: "0.75rem" }}>
+                      <div>
+                        <strong style={{ display: "block", color: "var(--gray-900)", fontSize: "0.98rem" }}>{enquiry.name}</strong>
+                        <p style={{ margin: "0.25rem 0 0", color: "var(--gray-500)", fontSize: "0.84rem" }}>{enquiry.organisation}</p>
+                      </div>
+                      <span style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        padding: "0.22rem 0.65rem",
+                        borderRadius: "999px",
+                        background: statusStyle.bg,
+                        color: statusStyle.color,
+                        fontSize: "0.75rem",
+                        fontWeight: 700,
+                        textTransform: "uppercase"
+                      }}>
+                        {enquiry.status}
+                      </span>
+                    </div>
+
+                    <div className="team-enquiry-meta">
+                      <span>{enquiry.email || "No email"}</span>
+                      <span>{enquiry.phone || "No phone"}</span>
+                      <span>{enquiry.seats_needed ? `${enquiry.seats_needed} seats` : "Seats not set"}</span>
+                      <span>{getTeamPlanTierLabel(enquiry.plan_tier)}</span>
+                    </div>
+
+                    {enquiry.notes && (
+                      <p className="team-enquiry-notes">{enquiry.notes}</p>
+                    )}
+
+                    <div className="team-enquiry-actions">
+                      <select
+                        value={enquiry.status}
+                        onChange={(event) => updateEnquiryStatus(enquiry.id, event.target.value)}
+                        disabled={updatingEnquiryId === enquiry.id}
+                        className="team-status-select"
+                      >
+                        {["new", "contacted", "converted", "closed"].map((status) => (
+                          <option key={status} value={status}>{status}</option>
+                        ))}
+                      </select>
+                      <button
+                        className="btn-icon danger"
+                        title="Delete enquiry"
+                        onClick={() => deleteEnquiry(enquiry)}
+                        disabled={deletingEnquiryId === enquiry.id}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
+          )}
+        </section>
+
+        <section className="team-plans-admin-panel">
+          <div className="team-plans-admin-heading">
+            <h3>Pricing Editor</h3>
+            <p>Update seat counts, public pricing, descriptions, and feature lists for each tier.</p>
+          </div>
+
+          {loading ? (
+            <p style={{ color: "var(--gray-500)" }}>Loading pricing...</p>
+          ) : (
+            <div className="team-pricing-table">
+              <div className="team-pricing-table-head">
+                <span>Tier</span>
+                <span>Seats</span>
+                <span>Price (KES)</span>
+                <span>Description</span>
+                <span>Features</span>
+                <span>Visible</span>
+                <span>Actions</span>
+              </div>
+
+              {pricingRows.map((row) => (
+                <div key={row.tier} className="team-pricing-row">
+                  <div className="team-pricing-cell">
+                    <strong>{getTeamPlanTierLabel(row.tier)}</strong>
+                  </div>
+                  <div className="team-pricing-cell">
+                    <input
+                      type="number"
+                      min="0"
+                      value={row.seats ?? ""}
+                      onChange={(event) => updatePricingField(row.tier, "seats", event.target.value)}
+                      className="team-pricing-input"
+                    />
+                  </div>
+                  <div className="team-pricing-cell">
+                    {editingPriceTier === row.tier ? (
+                      <input
+                        autoFocus
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={priceDraft}
+                        onChange={(event) => setPriceDraft(event.target.value)}
+                        onBlur={() => commitPriceEdit(row)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") {
+                            event.preventDefault()
+                            commitPriceEdit(row)
+                          }
+                          if (event.key === "Escape") {
+                            setEditingPriceTier(null)
+                          }
+                        }}
+                        className="team-pricing-input"
+                      />
+                    ) : (
+                      <button type="button" className="team-price-display" onClick={() => startPriceEdit(row)}>
+                        {row.price_kes === null || row.price_kes === "" ? "Custom pricing" : `KES ${Number(row.price_kes).toLocaleString()}`}
+                      </button>
+                    )}
+                  </div>
+                  <div className="team-pricing-cell">
+                    <textarea
+                      rows={3}
+                      value={row.description || ""}
+                      onChange={(event) => updatePricingField(row.tier, "description", event.target.value)}
+                      className="team-pricing-textarea"
+                    />
+                  </div>
+                  <div className="team-pricing-cell">
+                    <textarea
+                      rows={3}
+                      value={Array.isArray(row.features) ? row.features.join(", ") : ""}
+                      onChange={(event) => updatePricingField(row.tier, "features", event.target.value.split(",").map((feature) => feature.trim()))}
+                      className="team-pricing-textarea"
+                    />
+                  </div>
+                  <div className="team-pricing-cell">
+                    <label className="team-visible-toggle">
+                      <input
+                        type="checkbox"
+                        checked={!!row.is_visible}
+                        onChange={(event) => updatePricingField(row.tier, "is_visible", event.target.checked)}
+                      />
+                      <span>{row.is_visible ? "Visible" : "Hidden"}</span>
+                    </label>
+                  </div>
+                  <div className="team-pricing-cell">
+                    <button
+                      className="btn-primary"
+                      onClick={() => savePricingRow(row)}
+                      disabled={savingPricingTier === row.tier}
+                    >
+                      {savingPricingTier === row.tier ? "Saving..." : "Save"}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   )
 }

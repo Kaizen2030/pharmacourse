@@ -17,6 +17,29 @@ const TAG_COLORS = {
   "General":    { bg: "#f8fafc", color: "#475569" },
 }
 
+function getInitials(name) {
+  const parts = `${name || ""}`.trim().split(/\s+/).filter(Boolean).slice(0, 2)
+  if (parts.length === 0) return "PC"
+  return parts.map((part) => part[0].toUpperCase()).join("")
+}
+
+function getRankLabel(rank) {
+  const remainderTen = rank % 10
+  const remainderHundred = rank % 100
+
+  if (remainderTen === 1 && remainderHundred !== 11) return `${rank}st`
+  if (remainderTen === 2 && remainderHundred !== 12) return `${rank}nd`
+  if (remainderTen === 3 && remainderHundred !== 13) return `${rank}rd`
+  return `${rank}th`
+}
+
+function getRankBadge(rank) {
+  if (rank === 1) return { label: "Gold", bg: "#fff7d6", color: "#b7791f" }
+  if (rank === 2) return { label: "Silver", bg: "#f3f4f6", color: "#6b7280" }
+  if (rank === 3) return { label: "Bronze", bg: "#fce7d6", color: "#c05621" }
+  return null
+}
+
 export default function Community() {
   const { user } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -39,12 +62,19 @@ export default function Community() {
   const [tag, setTag] = useState("General")
   const [saving, setSaving] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [leaderboardEntries, setLeaderboardEntries] = useState([])
+  const [leaderboardPeriod, setLeaderboardPeriod] = useState("month")
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false)
 
   const prefillCourseId = searchParams.get("course_id")
   const prefillModuleId = searchParams.get("module_id")
   const prefillModuleTitle = searchParams.get("module_title")
 
   useEffect(() => { loadEnrolledCourses() }, [user])
+  useEffect(() => {
+    if (!user) return
+    loadLeaderboard(leaderboardPeriod)
+  }, [user, leaderboardPeriod])
 
   useEffect(() => {
     if (!prefillCourseId || enrolledCourses.length === 0) return
@@ -74,6 +104,20 @@ export default function Community() {
       setSelectedCourse(courses[0])
     }
     setCoursesLoading(false)
+  }
+
+  async function loadLeaderboard(period = leaderboardPeriod) {
+    setLeaderboardLoading(true)
+    const { data, error } = await supabase.rpc("get_leaderboard", { time_scope: period })
+
+    if (error) {
+      console.error("Failed to load leaderboard:", error)
+      setLeaderboardEntries([])
+    } else {
+      setLeaderboardEntries(data || [])
+    }
+
+    setLeaderboardLoading(false)
   }
 
   useEffect(() => {
@@ -300,6 +344,147 @@ export default function Community() {
 
         {/* MAIN */}
         <main style={{ padding: "1.75rem 1rem", minWidth: 0, width: "100%", boxSizing: "border-box", overflow: "hidden" }}>
+          <section style={{
+            background: "#fff",
+            border: "1px solid var(--border)",
+            borderRadius: "18px",
+            boxShadow: "var(--shadow-sm)",
+            padding: "1.25rem",
+            marginBottom: "1.25rem"
+          }}>
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap", marginBottom: "1rem" }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: "1.05rem", color: "#0a2e1f" }}>Leaderboard</h3>
+                <p style={{ margin: ".25rem 0 0", color: "var(--text-500)", fontSize: ".88rem" }}>
+                  Top learners by completed courses, CPD hours, and certificates.
+                </p>
+              </div>
+
+              <div style={{ display: "flex", gap: ".5rem", flexWrap: "wrap" }}>
+                {[
+                  { key: "month", label: "This Month" },
+                  { key: "all", label: "All Time" },
+                ].map((option) => (
+                  <button
+                    key={option.key}
+                    type="button"
+                    onClick={() => setLeaderboardPeriod(option.key)}
+                    className="btn"
+                    style={{
+                      minHeight: 40,
+                      width: "auto",
+                      padding: ".6rem 1rem",
+                      background: leaderboardPeriod === option.key ? "linear-gradient(135deg, #0F6E56, #129474)" : "#fff",
+                      color: leaderboardPeriod === option.key ? "#fff" : "#0F6E56",
+                      border: leaderboardPeriod === option.key ? "1px solid transparent" : "1px solid rgba(15, 110, 86, 0.18)",
+                      boxShadow: "none"
+                    }}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {leaderboardLoading ? (
+              <p style={{ color: "var(--text-500)", margin: 0 }}>Loading leaderboard...</p>
+            ) : leaderboardEntries.length === 0 ? (
+              <div style={{
+                background: "var(--bg-secondary)",
+                border: "1px solid var(--border)",
+                borderRadius: "14px",
+                padding: "1rem",
+                color: "var(--text-500)"
+              }}>
+                No leaderboard data yet for this period.
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: ".75rem" }}>
+                {leaderboardEntries.slice(0, 10).map((entry, index) => {
+                  const rank = index + 1
+                  const badge = getRankBadge(rank)
+
+                  return (
+                    <div
+                      key={`${entry.user_id}-${rank}`}
+                      className="leaderboard-entry"
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "72px 56px minmax(0, 1fr) auto",
+                        gap: ".85rem",
+                        alignItems: "center",
+                        padding: ".9rem 1rem",
+                        background: "linear-gradient(180deg, #ffffff, #f8fbfa)",
+                        border: "1px solid var(--border)",
+                        borderRadius: "14px"
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontSize: ".88rem", fontWeight: 800, color: "#0a2e1f" }}>{getRankLabel(rank)}</div>
+                        {badge ? (
+                          <span style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            marginTop: ".25rem",
+                            padding: ".18rem .5rem",
+                            borderRadius: "999px",
+                            background: badge.bg,
+                            color: badge.color,
+                            fontSize: ".7rem",
+                            fontWeight: 800,
+                            letterSpacing: ".04em",
+                            textTransform: "uppercase"
+                          }}>
+                            {badge.label}
+                          </span>
+                        ) : null}
+                      </div>
+
+                      <div style={{
+                        width: 52,
+                        height: 52,
+                        borderRadius: "999px",
+                        display: "grid",
+                        placeItems: "center",
+                        background: "linear-gradient(135deg, rgba(15,110,86,0.16), rgba(26,107,181,0.18))",
+                        color: "#0F6E56",
+                        fontSize: ".92rem",
+                        fontWeight: 800,
+                        border: "1px solid rgba(15,110,86,0.14)"
+                      }}>
+                        {getInitials(entry.display_name)}
+                      </div>
+
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: ".96rem", fontWeight: 700, color: "#0a2e1f", marginBottom: ".2rem" }}>
+                          {entry.display_name}
+                        </div>
+                        <p style={{ margin: 0, color: "var(--text-500)", fontSize: ".84rem", lineHeight: 1.55 }}>
+                          {entry.completed_courses} completed course{entry.completed_courses === 1 ? "" : "s"} • {entry.certificates_issued} certificate{entry.certificates_issued === 1 ? "" : "s"}
+                        </p>
+                      </div>
+
+                      <span style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: ".45rem .8rem",
+                        borderRadius: "999px",
+                        background: "rgba(15, 110, 86, 0.08)",
+                        color: "#0F6E56",
+                        fontSize: ".78rem",
+                        fontWeight: 800,
+                        whiteSpace: "nowrap"
+                      }}>
+                        {Number(entry.total_cpd_hours || 0)} CPD hrs
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </section>
+
           {!selectedCourse ? (
             <div style={{ textAlign: "center", padding: "4rem 1rem", color: "var(--text-500)" }}>
               <MessageCircle size={40} style={{ marginBottom: "1rem", opacity: 0.4 }} />
@@ -485,6 +670,9 @@ export default function Community() {
       {/* ── RESPONSIVE STYLES ── */}
       <style>{`
         @media (max-width: 768px) {
+          .leaderboard-entry {
+            grid-template-columns: 1fr !important;
+          }
           .community-layout {
             display: block !important;
             width: 100%;

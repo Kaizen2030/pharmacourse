@@ -6,6 +6,8 @@ import ProgressBar from "../components/ProgressBar"
 import SEO from "../components/SEO"
 import { BookOpen, Award, Clock, User, ChevronRight, ArrowRight, FlaskConical } from "lucide-react"
 
+const WHATSAPP_TIPS_LINK = "https://wa.me/254790059584?text=Hi%20Julius%2C%20subscribe%20me%20to%20daily%20pharmacy%20tips."
+
 export default function Dashboard() {
   const { user, profile, loading: authLoading, updateProfile } = useAuth()
   const [enrollments, setEnrollments] = useState([])
@@ -20,6 +22,13 @@ export default function Dashboard() {
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileMessage, setProfileMessage] = useState("")
   const [profileError, setProfileError] = useState("")
+  const [showWhatsAppOptIn, setShowWhatsAppOptIn] = useState(() => {
+    try {
+      return localStorage.getItem("whatsapp_optin_dismissed") !== "true"
+    } catch {
+      return true
+    }
+  })
 
   useEffect(() => {
     if (authLoading) return
@@ -147,6 +156,16 @@ export default function Dashboard() {
     }
   }
 
+  function dismissWhatsAppOptIn() {
+    try {
+      localStorage.setItem("whatsapp_optin_dismissed", "true")
+    } catch {
+      // Ignore storage failures and just hide it for now.
+    }
+
+    setShowWhatsAppOptIn(false)
+  }
+
   if (loading) return (
     <div className="page" style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh" }}>
       <div style={{ textAlign: "center", color: "var(--text-500)" }}>
@@ -170,6 +189,16 @@ export default function Dashboard() {
 
   const firstName = profile?.full_name?.split(" ")[0] || "Pharmacist"
   const inProgress = enrollments.filter(e => !e.completed_at).length
+  const completedEnrollments = enrollments.filter(e => e.status === "completed")
+  const completedCoursesCount = completedEnrollments.length
+  const totalCpdHoursEarned = completedEnrollments.reduce((sum, enrollment) => {
+    return sum + Number(enrollment.courses?.cpd_hours || 2)
+  }, 0)
+  const annualCpdGoal = 20
+  const annualGoalProgress = annualCpdGoal > 0
+    ? Math.min((totalCpdHoursEarned / annualCpdGoal) * 100, 100)
+    : 0
+  const annualGoalProgressLabel = `${Math.round(annualGoalProgress)}%`
   const profileInputStyle = {
     width: "100%",
     padding: ".8rem .95rem",
@@ -297,6 +326,130 @@ export default function Dashboard() {
         {/* ── My Courses Tab ── */}
         {activeTab === "courses" && (
           <div>
+            {showWhatsAppOptIn ? (
+              <div className="whatsapp-optin-card" style={{ marginBottom: "1.5rem" }}>
+                <button
+                  type="button"
+                  className="whatsapp-optin-close"
+                  onClick={dismissWhatsAppOptIn}
+                  aria-label="Dismiss WhatsApp tips card"
+                >
+                  ×
+                </button>
+                <div className="whatsapp-optin-copy">
+                  <p className="whatsapp-optin-title">Get daily pharmacy tips on WhatsApp</p>
+                  <p className="whatsapp-optin-text">
+                    Free CPD micro-lessons, drug updates, and exam prep sent straight to your phone.
+                  </p>
+                </div>
+                <a
+                  href={WHATSAPP_TIPS_LINK}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn btn-primary whatsapp-optin-button"
+                  style={{ background: "linear-gradient(135deg, #128C7E, #25D366)", boxShadow: "0 10px 24px rgba(37, 211, 102, 0.2)" }}
+                >
+                  Join WhatsApp Tips
+                </a>
+              </div>
+            ) : null}
+
+            <div className="cpd-summary-grid" style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+              gap: "1rem",
+              marginBottom: "1.5rem"
+            }}>
+              <div className="cpd-summary-card" style={{
+                background: "#fff",
+                border: "1px solid var(--border)",
+                borderRadius: 16,
+                padding: "1.25rem",
+                boxShadow: "var(--shadow-sm)"
+              }}>
+                <p style={{
+                  fontSize: ".76rem",
+                  fontWeight: 800,
+                  letterSpacing: ".08em",
+                  textTransform: "uppercase",
+                  color: "var(--text-500)",
+                  margin: "0 0 .55rem"
+                }}>
+                  CPD Hours Earned
+                </p>
+                <p style={{ fontSize: "2rem", fontWeight: 800, color: "var(--text-900)", margin: "0 0 .35rem", lineHeight: 1 }}>
+                  {totalCpdHoursEarned}
+                </p>
+                <p style={{ fontSize: ".86rem", color: "var(--text-500)", margin: 0 }}>
+                  Hours from completed courses
+                </p>
+              </div>
+
+              <div className="cpd-summary-card" style={{
+                background: "#fff",
+                border: "1px solid var(--border)",
+                borderRadius: 16,
+                padding: "1.25rem",
+                boxShadow: "var(--shadow-sm)"
+              }}>
+                <p style={{
+                  fontSize: ".76rem",
+                  fontWeight: 800,
+                  letterSpacing: ".08em",
+                  textTransform: "uppercase",
+                  color: "var(--text-500)",
+                  margin: "0 0 .55rem"
+                }}>
+                  Courses Completed
+                </p>
+                <p style={{ fontSize: "2rem", fontWeight: 800, color: "var(--text-900)", margin: "0 0 .35rem", lineHeight: 1 }}>
+                  {completedCoursesCount}
+                </p>
+                <p style={{ fontSize: ".86rem", color: "var(--text-500)", margin: 0 }}>
+                  Enrollments marked completed
+                </p>
+              </div>
+
+              <div className="cpd-summary-card" style={{
+                background: "#fff",
+                border: "1px solid var(--border)",
+                borderRadius: 16,
+                padding: "1.25rem",
+                boxShadow: "var(--shadow-sm)"
+              }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".75rem", marginBottom: ".7rem" }}>
+                  <p style={{
+                    fontSize: ".76rem",
+                    fontWeight: 800,
+                    letterSpacing: ".08em",
+                    textTransform: "uppercase",
+                    color: "var(--text-500)",
+                    margin: 0
+                  }}>
+                    Annual Goal
+                  </p>
+                  <span style={{ fontSize: ".84rem", fontWeight: 700, color: "var(--green)" }}>
+                    {annualGoalProgressLabel}
+                  </span>
+                </div>
+                <p style={{ fontSize: "1.15rem", fontWeight: 800, color: "var(--text-900)", margin: "0 0 .7rem", lineHeight: 1.2 }}>
+                  {totalCpdHoursEarned} / {annualCpdGoal} hrs
+                </p>
+                <div style={{ height: 10, background: "var(--gray-100)", borderRadius: 999, overflow: "hidden", marginBottom: ".6rem" }}>
+                  <div style={{
+                    height: "100%",
+                    width: `${annualGoalProgress}%`,
+                    borderRadius: 999,
+                    background: "linear-gradient(90deg, #0F6E56, #1a9e7a)",
+                    transition: "width 0.35s ease"
+                  }} />
+                </div>
+                <p style={{ fontSize: ".86rem", color: "var(--text-500)", margin: 0 }}>
+                  Progress toward your 20-hour annual CPD target
+                </p>
+              </div>
+            </div>
+
             {enrollments.length === 0 ? (
               <div style={{
                 background: "#fff", border: "1px solid #eee", borderRadius: 16,
@@ -738,6 +891,8 @@ export default function Dashboard() {
         .dashboard-tab-button.active { background: rgba(15,110,86,0.08); color: #0F6E56; border-color: rgba(15,110,86,0.15); }
         .dashboard-header-action { transition: transform 0.2s ease; }
         .dashboard-header-action:hover { transform: translateY(-1px); }
+        .cpd-summary-card { transition: transform 0.18s ease, box-shadow 0.18s ease; }
+        .cpd-summary-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
         .dash-courses-grid {
           grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
         }
@@ -759,6 +914,9 @@ export default function Dashboard() {
             padding: .85rem 1rem !important;
           }
           .dashboard-stats {
+            grid-template-columns: repeat(2, minmax(0,1fr)) !important;
+          }
+          .cpd-summary-grid {
             grid-template-columns: repeat(2, minmax(0,1fr)) !important;
           }
           .dashboard-tabs {
@@ -815,6 +973,7 @@ export default function Dashboard() {
         @media (max-width: 640px) {
           .dashboard-header { padding: 1.5rem 1rem !important; }
           .dashboard-stats { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+          .cpd-summary-grid { grid-template-columns: 1fr !important; }
           .dashboard-tabs { flex-wrap: wrap !important; gap: 0.5rem !important; }
           .dashboard-tab-button { width: calc(50% - 0.25rem) !important; }
           .dash-courses-grid {

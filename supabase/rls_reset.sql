@@ -135,6 +135,11 @@ alter table public.certificates enable row level security;
 alter table public.simulation_responses enable row level security;
 alter table public.certificate_settings enable row level security;
 
+grant usage on schema public to anon, authenticated;
+
+grant select, insert, update on public.user_profiles to authenticated;
+grant select on public.user_profiles to anon;
+
 do $$
 declare pol record;
 begin

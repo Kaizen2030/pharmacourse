@@ -17,6 +17,9 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  const isAdmin = profile?.role === "admin"
+  const isSuperAdmin = isAdmin && profile?.admin_role === "super"
+  const isContentAdmin = isAdmin && profile?.admin_role === "content"
 
   useEffect(() => {
     let isActive = true
@@ -131,7 +134,13 @@ export function AuthProvider({ children }) {
       "Timed out while saving your profile."
     )
 
-    if (profileError) throw profileError
+    if (profileError) {
+      if (profileError.message?.toLowerCase().includes("permission denied")) {
+        throw new Error("Supabase denied profile updates. Re-run supabase/rls_reset.sql in the Supabase SQL Editor, then try again.")
+      }
+
+      throw profileError
+    }
 
     const metadataUpdates = {
       full_name: profileUpdates.full_name,
@@ -151,7 +160,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, isAdmin: profile?.role === "admin", updateProfile }}>
+    <AuthContext.Provider value={{ user, profile, loading, isAdmin, isSuperAdmin, isContentAdmin, updateProfile }}>
       {children}
     </AuthContext.Provider>
   )

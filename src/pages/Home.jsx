@@ -3,7 +3,9 @@ import { Link } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
 import { motion, useInView } from "framer-motion"
 import SEO from "../components/SEO"
+import BlogEngagementStats from "../components/BlogEngagementStats"
 import { SITE_URL } from "../lib/siteConfig"
+import { formatBlogDate, getBlogCategoryLabel, getBlogCoverFallback, getBlogExcerpt } from "../lib/blogHelpers"
 import pharmacyosDashboard from "../assets/pharmacyos-dashboard.svg"
 import pharmacourseHeroVisual from "../assets/pharmacourse-hero-visual.svg"
 import remedacareDashboard from "../assets/remedacare-dashboard.svg"
@@ -108,6 +110,37 @@ const DEFAULT_SECTIONS = {
     secondary_btn_text: "Book a Demo",
     secondary_btn_url: WHATSAPP,
   },
+}
+
+const FALLBACK_TESTIMONIALS = [
+  {
+    id: "fallback-1",
+    author_name: "Dr. Amina",
+    author_title: "Clinical Pharmacist",
+    author_photo_url: "",
+    rating: 5,
+    review_text: "This course helped me understand antimicrobial stewardship with confidence. The lessons were clear and practical.",
+  },
+  {
+    id: "fallback-2",
+    author_name: "Hospital pharmacy professional",
+    author_title: "Pharmacy Professional",
+    author_photo_url: "",
+    rating: 5,
+    review_text: "Great structure and practical examples. I can now recommend the right therapies with more confidence.",
+  },
+]
+
+function getTestimonialInitials(name) {
+  const parts = `${name || ""}`.trim().split(/\s+/).filter(Boolean).slice(0, 2)
+  if (parts.length === 0) return "PC"
+  return parts.map((part) => part[0].toUpperCase()).join("")
+}
+
+function getTruncatedReview(text) {
+  const normalized = `${text || ""}`.trim()
+  if (normalized.length <= 160) return normalized
+  return `${normalized.slice(0, 160)}...`
 }
 
 const AnimatedSection = ({ children, delay = 0 }) => {
@@ -249,6 +282,8 @@ const ProductMockup = ({ type }) => {
 
 export default function Home() {
   const [courses, setCourses] = useState([])
+  const [testimonials, setTestimonials] = useState([])
+  const [latestPosts, setLatestPosts] = useState([])
   const [activeSection, setActiveSection] = useState("hero")
   const [sections, setSections] = useState(DEFAULT_SECTIONS)
   const [loading, setLoading] = useState(true)
@@ -292,6 +327,24 @@ export default function Home() {
           .limit(3)
 
         if (courseData) setCourses(courseData)
+
+        const { data: blogData } = await supabase
+          .from("blog_posts")
+          .select("*")
+          .eq("is_published", true)
+          .order("published_at", { ascending: false })
+          .limit(3)
+
+        if (blogData) setLatestPosts(blogData)
+
+        const { data: testimonialData } = await supabase
+          .from("testimonials")
+          .select("id, author_name, author_title, author_photo_url, rating, review_text")
+          .eq("is_published", true)
+          .order("created_at", { ascending: false })
+          .limit(6)
+
+        if (testimonialData) setTestimonials(testimonialData)
       } catch (err) {
         console.error("Error loading data:", err)
       } finally {
@@ -591,53 +644,114 @@ export default function Home() {
           case "courses":
             return (
               <AnimatedSection key={key} delay={0.5}>
-                <section id="courses" className="courses-section">
-                  <div className="container">
-                    <div className="section-header">
-                      {config.badge_text && <span className="section-badge">{config.badge_text}</span>}
-                      <h2>{config.heading || "Courses built for real-world practice"}</h2>
-                    </div>
+                <>
+                  <section id="courses" className="courses-section">
+                    <div className="container">
+                      <div className="section-header">
+                        {config.badge_text && <span className="section-badge">{config.badge_text}</span>}
+                        <h2>{config.heading || "Courses built for real-world practice"}</h2>
+                      </div>
 
-                    <div className="courses-grid">
-                      {courses.length > 0 ? (
-                        courses.map((course) => (
-                          <Link key={course.id} to={`/courses/${course.slug || course.id}`} className="course-card">
-                            <div className="course-thumb">
-                              {course.image_url ? (
-                                <img src={course.image_url} alt={course.title} className="course-thumb-img" />
-                              ) : (
-                                <BookOpen size={32} />
-                              )}
-                            </div>
-
-                            <div className="course-body">
-                              {course.category && <span className="course-category-badge">{course.category.toUpperCase()}</span>}
-                              <h3>{course.title}</h3>
-                              <p>
-                                {(course.short_desc || course.description || "").length > 100
-                                  ? `${(course.short_desc || course.description).substring(0, 100)}...`
-                                  : (course.short_desc || course.description)}
-                              </p>
-                              <div className="course-meta">
-                                <span className="price">{course.is_free ? "Free" : `KES ${course.price}`}</span>
+                      <div className="courses-grid">
+                        {courses.length > 0 ? (
+                          courses.map((course) => (
+                            <Link key={course.id} to={`/courses/${course.slug || course.id}`} className="course-card">
+                              <div className="course-thumb">
+                                {course.image_url ? (
+                                  <img src={course.image_url} alt={course.title} className="course-thumb-img" />
+                                ) : (
+                                  <BookOpen size={32} />
+                                )}
                               </div>
-                            </div>
-                          </Link>
-                        ))
-                      ) : (
-                        <div className="empty-state">
-                          <p>Courses launching soon. <Link to="/register">Register now</Link> to be notified.</p>
-                        </div>
-                      )}
-                    </div>
 
-                    <div style={{ textAlign: "center", marginTop: "2rem" }}>
-                      <Link to={config.primary_btn_url || "/courses"} className="btn-secondary">
-                        {config.primary_btn_text || "View all courses"}
-                      </Link>
+                              <div className="course-body">
+                                {course.category && <span className="course-category-badge">{course.category.toUpperCase()}</span>}
+                                <h3>{course.title}</h3>
+                                <p>
+                                  {(course.short_desc || course.description || "").length > 100
+                                    ? `${(course.short_desc || course.description).substring(0, 100)}...`
+                                    : (course.short_desc || course.description)}
+                                </p>
+                                <div className="course-meta">
+                                  <span className="price">{course.is_free ? "Free" : `KES ${course.price}`}</span>
+                                </div>
+                              </div>
+                            </Link>
+                          ))
+                        ) : (
+                          <div className="empty-state">
+                            <p>Courses launching soon. <Link to="/register">Register now</Link> to be notified.</p>
+                          </div>
+                        )}
+                      </div>
+
+                      <div style={{ textAlign: "center", marginTop: "2rem" }}>
+                        <Link to={config.primary_btn_url || "/courses"} className="btn-secondary">
+                          {config.primary_btn_text || "View all courses"}
+                        </Link>
+                      </div>
                     </div>
-                  </div>
-                </section>
+                  </section>
+
+                  <section className="blog-preview-section">
+                    <div className="container">
+                      <div className="section-header">
+                        <span className="section-badge">Latest from the Blog</span>
+                        <h2>Fresh ideas for pharmacy practice and operations</h2>
+                        <p>Read quick, practical articles from the PharmaCourse team and contributors.</p>
+                      </div>
+
+                      <div className="blog-preview-grid">
+                        {latestPosts.length > 0 ? (
+                          latestPosts.map((post) => {
+                            const categoryLabel = getBlogCategoryLabel(post.category)
+
+                            return (
+                              <Link key={post.id} to={`/blog/${post.slug}`} className="blog-preview-card">
+                                {post.cover_image_url ? (
+                                  <img src={post.cover_image_url} alt={post.title} className="blog-preview-image" />
+                                ) : (
+                                  <div
+                                    className="blog-preview-image blog-preview-image-fallback"
+                                    style={{ background: getBlogCoverFallback(post.category) }}
+                                  >
+                                    <span>{categoryLabel}</span>
+                                  </div>
+                                )}
+
+                                <div className="blog-preview-body">
+                                  <div className="blog-preview-meta">
+                                    <span className="blog-preview-badge">{categoryLabel}</span>
+                                    <span>{formatBlogDate(post.published_at || post.created_at)}</span>
+                                  </div>
+                                  <h3>{post.title}</h3>
+                                  <p>{getBlogExcerpt(post)}</p>
+                                  <BlogEngagementStats
+                                    className="blog-preview-stats"
+                                    viewCount={post.view_count}
+                                    likeCount={post.like_count}
+                                  />
+                                  <div className="blog-preview-footer">
+                                    <span>{post.author_name || "PharmaCourse Team"}</span>
+                                    <span>Read more</span>
+                                  </div>
+                                </div>
+                              </Link>
+                            )
+                          })
+                        ) : (
+                          <div className="empty-state">
+                            <p>Blog posts are on the way. Check back soon for fresh articles.</p>
+                          </div>
+                        )}
+                      </div>
+
+                      <div style={{ textAlign: "center", marginTop: "2rem" }}>
+                        <Link to="/blog" className="btn-secondary">View all articles</Link>
+                      </div>
+                    </div>
+                  </section>
+                </>
               </AnimatedSection>
             )
 
@@ -652,17 +766,31 @@ export default function Home() {
                     </div>
 
                     <div className="testimonials-grid">
-                      <div className="testimonial-card">
-                        <div className="testimonial-rating">Top rated</div>
-                        <p>"This course helped me understand antimicrobial stewardship with confidence. The lessons were clear and practical."</p>
-                        <small>Dr. Amina, Clinical Pharmacist</small>
-                      </div>
-
-                      <div className="testimonial-card">
-                        <div className="testimonial-rating">Top rated</div>
-                        <p>"Great structure and practical examples. I can now recommend the right therapies with more confidence."</p>
-                        <small>Hospital pharmacy professional</small>
-                      </div>
+                      {(testimonials.length > 0 ? testimonials : FALLBACK_TESTIMONIALS).map((testimonial) => (
+                        <div key={testimonial.id} className="testimonial-card">
+                          <div className="testimonial-rating" aria-label={`${testimonial.rating || 5} star rating`}>
+                            {"★".repeat(Math.max(1, Math.min(5, testimonial.rating || 5)))}
+                          </div>
+                          <p>"{getTruncatedReview(testimonial.review_text)}"</p>
+                          <div className="testimonial-author">
+                            {testimonial.author_photo_url ? (
+                              <img
+                                src={testimonial.author_photo_url}
+                                alt={testimonial.author_name}
+                                className="testimonial-avatar"
+                              />
+                            ) : (
+                              <div className="testimonial-avatar testimonial-avatar-fallback">
+                                {getTestimonialInitials(testimonial.author_name)}
+                              </div>
+                            )}
+                            <div>
+                              <strong>{testimonial.author_name}</strong>
+                              <small>{testimonial.author_title}</small>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </section>

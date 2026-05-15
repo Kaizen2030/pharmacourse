@@ -5,12 +5,20 @@ import SEO from "../components/SEO"
 import Pagination from "../components/Pagination"
 
 const PAGE_SIZE = 12
+const CATEGORY_TABS = ["All", "Clinical", "Management", "Compliance", "Pharmacy Law"]
+
+function normalizeValue(value) {
+  return (value || "").trim().toLowerCase()
+}
 
 export default function Courses() {
   const [courses, setCourses] = useState([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [totalCourses, setTotalCourses] = useState(0)
+  const [activeCategory, setActiveCategory] = useState("All")
+  const [priceFilter, setPriceFilter] = useState("all")
+  const [searchQuery, setSearchQuery] = useState("")
 
   useEffect(() => {
     loadCourses(page)
@@ -42,6 +50,29 @@ export default function Courses() {
   }
 
   const totalPages = Math.max(1, Math.ceil(totalCourses / PAGE_SIZE))
+  const normalizedSearchQuery = searchQuery.trim().toLowerCase()
+
+  const filteredCourses = courses.filter((course) => {
+    const matchesCategory =
+      activeCategory === "All" ||
+      normalizeValue(course.category) === normalizeValue(activeCategory)
+
+    const matchesPrice =
+      priceFilter === "all" ||
+      (priceFilter === "free" && course.is_free) ||
+      (priceFilter === "paid" && !course.is_free)
+
+    const matchesSearch = (course.title || "").toLowerCase().includes(normalizedSearchQuery)
+
+    return matchesCategory && matchesPrice && matchesSearch
+  })
+
+  const hasActiveFilters =
+    activeCategory !== "All" || priceFilter !== "all" || normalizedSearchQuery.length > 0
+
+  function togglePriceFilter(nextFilter) {
+    setPriceFilter((currentFilter) => (currentFilter === nextFilter ? "all" : nextFilter))
+  }
 
   return (
     <div className="page">
@@ -68,11 +99,90 @@ export default function Courses() {
           </div>
         ) : (
           <>
-            <div className="courses-full-grid">
-              {courses.map((course) => (
-                <CourseCard key={course.id} course={course} compact />
-              ))}
+            <div className="card courses-filter-bar">
+              <div className="courses-filter-row">
+                <div className="courses-filter-group">
+                  <span className="courses-filter-label">Category</span>
+                  <div className="courses-filter-tabs" role="tablist" aria-label="Course categories">
+                    {CATEGORY_TABS.map((category) => {
+                      const isActive = activeCategory === category
+
+                      return (
+                        <button
+                          key={category}
+                          type="button"
+                          role="tab"
+                          aria-selected={isActive}
+                          className={`btn ${isActive ? "btn-primary" : "btn-outline"}`}
+                          onClick={() => setActiveCategory(category)}
+                        >
+                          {category}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                <div className="courses-filter-search">
+                  <label className="courses-filter-label" htmlFor="course-search">
+                    Search courses
+                  </label>
+                  <input
+                    id="course-search"
+                    type="search"
+                    className="courses-search-input"
+                    placeholder="Search by course title"
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="courses-filter-row courses-filter-row-bottom">
+                <div className="courses-filter-group">
+                  <span className="courses-filter-label">Pricing</span>
+                  <div className="courses-price-toggle" aria-label="Filter by pricing">
+                    <button
+                      type="button"
+                      className={`btn ${priceFilter === "free" ? "btn-primary" : "btn-outline"}`}
+                      aria-pressed={priceFilter === "free"}
+                      onClick={() => togglePriceFilter("free")}
+                    >
+                      Free
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn ${priceFilter === "paid" ? "btn-primary" : "btn-outline"}`}
+                      aria-pressed={priceFilter === "paid"}
+                      onClick={() => togglePriceFilter("paid")}
+                    >
+                      Paid
+                    </button>
+                  </div>
+                </div>
+
+                <p className="courses-filter-summary">
+                  Showing {filteredCourses.length} of {courses.length} courses on this page
+                </p>
+              </div>
             </div>
+
+            {filteredCourses.length === 0 ? (
+              <div className="card" style={{ padding: "2.5rem", textAlign: "center" }}>
+                <p style={{ color: "var(--text-500)" }}>
+                  {hasActiveFilters
+                    ? "No courses match the filters on this page."
+                    : "No courses available on this page."}
+                </p>
+              </div>
+            ) : (
+              <div className="courses-full-grid">
+                {filteredCourses.map((course) => (
+                  <CourseCard key={course.id} course={course} compact />
+                ))}
+              </div>
+            )}
+
             <Pagination
               currentPage={page}
               totalPages={totalPages}

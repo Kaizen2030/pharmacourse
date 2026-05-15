@@ -1,8 +1,20 @@
 import { Link } from "react-router-dom"
 import "./CourseCard.css"
 
+const CATEGORY_GRADIENTS = {
+  clinical: ["#0F6E56", "#1D9E75"],
+  management: ["#185FA5", "#378ADD"],
+  compliance: ["#854F0B", "#BA7517"],
+}
+
+function getCategoryGradient(category) {
+  return CATEGORY_GRADIENTS[(category || "").trim().toLowerCase()] || ["#533AB7", "#7F77DD"]
+}
+
 export default function CourseCard({ course, compact = false }) {
   const price = course.is_free ? "Free" : `KES ${course.price || 0}`
+  const categoryLabel = course.category || "Pharmacy"
+  const [gradientStart, gradientEnd] = getCategoryGradient(course.category)
 
   return (
     <Link to={`/courses/${course.slug || course.id}`} style={{ textDecoration: "none" }}>
@@ -11,7 +23,12 @@ export default function CourseCard({ course, compact = false }) {
           {course.image_url ? (
             <img src={course.image_url} alt={course.title} />
           ) : (
-            <div className="course-image-placeholder">PC</div>
+            <div
+              className="course-image-placeholder"
+              style={{ background: `linear-gradient(135deg, ${gradientStart} 0%, ${gradientEnd} 100%)` }}
+            >
+              <span>{categoryLabel}</span>
+            </div>
           )}
           <div className="course-card-overlay">
             <button className="btn-view">View Course</button>
@@ -19,7 +36,7 @@ export default function CourseCard({ course, compact = false }) {
         </div>
 
         <div className="course-card-content">
-          <div className="course-card-category">{course.category || "Pharmacy"}</div>
+          <div className="course-card-category">{categoryLabel}</div>
 
           <h3 className="course-card-title">{course.title}</h3>
 

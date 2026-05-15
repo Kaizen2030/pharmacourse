@@ -1,0 +1,29 @@
+.blog-engagement-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  align-items: center;
+}
+
+.blog-engagement-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  padding: 0.38rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(15, 110, 86, 0.08);
+  color: var(--text-700);
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.blog-engagement-pill svg {
+  width: 14px;
+  height: 14px;
+}
+
+.blog-engagement-pill.liked {
+  background: rgba(180, 35, 90, 0.1);
+  color: #b4235a;
+}
