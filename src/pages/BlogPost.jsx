@@ -38,17 +38,17 @@ const COURSE_FALLBACK_GRADIENTS = {
 const SITE_RECOMMENDATIONS = [
   {
     path: "/workshops",
-    badge: "Live Learning",
-    title: "Join a practical workshop",
-    description: "Move from reading into action with upcoming sessions, recorded learning, and focused pharmacy discussions.",
+    badge: "Workshop",
+    title: "Upcoming pharmacy workshops",
+    description: "Join focused live sessions and practical learning experiences designed for pharmacy professionals.",
     cta: "View workshops",
     image: pharmacourseHeroVisual,
   },
   {
     path: "/pharmacyos",
-    badge: "Operations",
-    title: "See PharmacyOS in action",
-    description: "Explore the platform built for stock control, sales, claims, compliance, and day-to-day pharmacy operations.",
+    badge: "Platform",
+    title: "Explore PharmacyOS",
+    description: "See how PharmacyOS supports pharmacy operations, inventory control, claims, and compliance workflows.",
     cta: "Explore PharmacyOS",
     image: pharmacyosDashboard,
   },
@@ -74,6 +74,23 @@ function formatCoursePrice(course) {
 
 function getCourseFallbackBackground(category) {
   return COURSE_FALLBACK_GRADIENTS[`${category || ""}`.trim().toLowerCase()] || "linear-gradient(135deg, #0f6e56, #1a6bb5)"
+}
+
+function getPrimarySiteRecommendation(post) {
+  const recommendationText = [
+    post?.title,
+    post?.excerpt,
+    post?.content,
+    post?.category,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase()
+
+  const operationsSignals = ["operations", "inventory", "claims", "compliance", "management", "business", "workflow"]
+  const shouldShowPlatform = operationsSignals.some((signal) => recommendationText.includes(signal))
+
+  return shouldShowPlatform ? SITE_RECOMMENDATIONS[1] : SITE_RECOMMENDATIONS[0]
 }
 
 function RelatedPostCard({ post }) {
@@ -352,7 +369,42 @@ export default function BlogPost() {
   const authorName = post.author_name || "PharmaCourse Team"
   const authorTitle = post.author_title || "Editorial Team"
   const contentSections = getPopulatedBlogSections(post.content_sections)
-  const nextReadPosts = relatedPosts.slice(0, 2)
+  const primarySiteRecommendation = getPrimarySiteRecommendation(post)
+  const recommendationItems = [
+    ...relatedPosts.slice(0, 1).map((relatedPost) => ({
+      key: `post-${relatedPost.id}`,
+      to: `/blog/${relatedPost.slug}`,
+      image: relatedPost.cover_image_url || null,
+      fallbackLabel: getBlogCategoryLabel(relatedPost.category),
+      fallbackStyle: { background: getBlogCoverFallback(relatedPost.category) },
+      badge: "Article",
+      meta: formatBlogDate(relatedPost.published_at || relatedPost.created_at),
+      title: relatedPost.title,
+      description: truncateRecommendationCopy(getBlogExcerpt(relatedPost)),
+      cta: "Read article",
+    })),
+    ...recommendedCourses.slice(0, 2).map((course) => ({
+      key: `course-${course.id}`,
+      to: `/courses/${course.slug || course.id}`,
+      image: course.image_url || null,
+      fallbackLabel: course.category || "Course",
+      fallbackStyle: { background: getCourseFallbackBackground(course.category) },
+      badge: "Course",
+      meta: formatCoursePrice(course),
+      title: course.title,
+      description: truncateRecommendationCopy(course.short_desc || course.description, 125),
+      cta: "View course",
+    })),
+    {
+      key: primarySiteRecommendation.path,
+      to: primarySiteRecommendation.path,
+      image: primarySiteRecommendation.image,
+      badge: primarySiteRecommendation.badge,
+      title: primarySiteRecommendation.title,
+      description: primarySiteRecommendation.description,
+      cta: primarySiteRecommendation.cta,
+    },
+  ]
 
   return (
     <div className="page blog-page">
@@ -467,79 +519,27 @@ export default function BlogPost() {
       <div className="container-wide">
         <section className="blog-recommendations-section">
           <div className="blog-recommendations-header">
-            <span className="blog-filter-label">Recommended Next</span>
-            <h2>Keep the momentum going after this article</h2>
-            <p>Readers usually want one of three things next: another useful read, a deeper course, or a practical page to explore.</p>
+            <span className="blog-filter-label">Continue Exploring</span>
+            <h2>Further reading and practical resources</h2>
+            <p>Selected resources related to this topic from PharmaCourse.</p>
           </div>
 
-          {nextReadPosts.length > 0 ? (
-            <div className="blog-recommendation-group">
-              <div className="blog-recommendation-group-head">
-                <h3>Read next</h3>
-                <p>Stay in the same topic flow with another article.</p>
-              </div>
-              <div className="blog-recommendation-grid">
-                {nextReadPosts.map((relatedPost) => (
-                  <RecommendationTile
-                    key={`next-read-${relatedPost.id}`}
-                    to={`/blog/${relatedPost.slug}`}
-                    image={relatedPost.cover_image_url || null}
-                    fallbackLabel={getBlogCategoryLabel(relatedPost.category)}
-                    fallbackStyle={{ background: getBlogCoverFallback(relatedPost.category) }}
-                    badge={getBlogCategoryLabel(relatedPost.category)}
-                    meta={formatBlogDate(relatedPost.published_at || relatedPost.created_at)}
-                    title={relatedPost.title}
-                    description={truncateRecommendationCopy(getBlogExcerpt(relatedPost))}
-                    cta="Read article"
-                  />
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          {recommendedCourses.length > 0 ? (
-            <div className="blog-recommendation-group">
-              <div className="blog-recommendation-group-head">
-                <h3>Go deeper with a course</h3>
-                <p>Turn the topic into practical learning with a focused PharmaCourse module.</p>
-              </div>
-              <div className="blog-recommendation-grid">
-                {recommendedCourses.map((course) => (
-                  <RecommendationTile
-                    key={`course-${course.id}`}
-                    to={`/courses/${course.slug || course.id}`}
-                    image={course.image_url || null}
-                    fallbackLabel={course.category || "Course"}
-                    fallbackStyle={{ background: getCourseFallbackBackground(course.category) }}
-                    badge={course.category || "Course"}
-                    meta={formatCoursePrice(course)}
-                    title={course.title}
-                    description={truncateRecommendationCopy(course.short_desc || course.description, 125)}
-                    cta="View course"
-                  />
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          <div className="blog-recommendation-group">
-            <div className="blog-recommendation-group-head">
-              <h3>Explore more from PharmaCourse</h3>
-              <p>Jump into live learning or see the operations tools behind the wider ecosystem.</p>
-            </div>
-            <div className="blog-recommendation-grid">
-              {SITE_RECOMMENDATIONS.map((item) => (
+          <div className="blog-recommendation-strip" role="list" aria-label="Recommended resources">
+            {recommendationItems.map((item) => (
+              <div key={item.key} role="listitem" className="blog-recommendation-strip-item">
                 <RecommendationTile
-                  key={item.path}
-                  to={item.path}
+                  to={item.to}
                   image={item.image}
+                  fallbackLabel={item.fallbackLabel}
+                  fallbackStyle={item.fallbackStyle}
                   badge={item.badge}
+                  meta={item.meta}
                   title={item.title}
                   description={item.description}
                   cta={item.cta}
                 />
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </section>
       </div>
