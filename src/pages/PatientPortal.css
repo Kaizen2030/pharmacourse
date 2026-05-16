@@ -216,6 +216,40 @@
   gap: 0.9rem;
 }
 
+.patient-portal-branch-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.patient-portal-branch-group + .patient-portal-branch-group {
+  margin-top: 0.4rem;
+}
+
+.patient-portal-branch-group-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.patient-portal-branch-group-head h4 {
+  color: var(--text-900);
+  font-size: 0.98rem;
+}
+
+.patient-portal-branch-group-head span {
+  min-width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: rgba(26, 107, 181, 0.08);
+  color: var(--blue);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+}
+
 .patient-portal-directory-head {
   display: flex;
   justify-content: space-between;

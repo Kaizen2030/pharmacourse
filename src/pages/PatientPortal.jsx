@@ -302,10 +302,20 @@ export default function PatientPortal() {
   ), [pharmacyOptions])
 
   const branchPharmacies = useMemo(() => {
-    const rows = visiblePharmacyOptions.filter((option) => option.isBranch)
-    if (!selectedDirectoryMainId) return rows
-    return rows.filter((option) => option.parent_pharmacy_id === selectedDirectoryMainId)
-  }, [selectedDirectoryMainId, visiblePharmacyOptions])
+    const query = branchSearch.trim().toLowerCase()
+    const rows = pharmacyOptions.filter((option) => option.isBranch)
+    const scopedRows = selectedDirectoryMainId
+      ? rows.filter((option) => option.parent_pharmacy_id === selectedDirectoryMainId)
+      : rows
+
+    if (!query) return scopedRows
+
+    return scopedRows.filter((option) => (
+      `${option.name} ${option.parentName} ${option.locationLabel} ${option.county} ${option.town} ${option.area}`
+        .toLowerCase()
+        .includes(query)
+    ))
+  }, [branchSearch, pharmacyOptions, selectedDirectoryMainId])
 
   const visibleMainPharmacies = useMemo(
     () => mainPharmacies.slice(0, visibleMainCount),
@@ -316,6 +326,48 @@ export default function PatientPortal() {
     () => branchPharmacies.slice(0, visibleBranchCount),
     [branchPharmacies, visibleBranchCount]
   )
+
+  const groupedVisibleBranches = useMemo(() => {
+    const nearest = []
+    const sameCounty = []
+    const others = []
+
+    visibleBranchPharmacies.forEach((option) => {
+      const matchesTown = townFilter && (option.town === townFilter || option.area === townFilter)
+      const matchesCounty = countyFilter && option.county === countyFilter
+      const matchesMainCounty = !countyFilter && !townFilter && selectedDirectoryMain?.county && option.county === selectedDirectoryMain.county
+
+      if (matchesTown) {
+        nearest.push(option)
+        return
+      }
+
+      if (matchesCounty || matchesMainCounty) {
+        sameCounty.push(option)
+        return
+      }
+
+      others.push(option)
+    })
+
+    return { nearest, sameCounty, others }
+  }, [countyFilter, selectedDirectoryMain?.county, townFilter, visibleBranchPharmacies])
+
+  const branchGroupLabels = useMemo(() => ({
+    nearest: townFilter
+      ? `Nearest branches in ${townFilter}`
+      : countyFilter
+        ? `Best matches in ${countyFilter}`
+        : selectedDirectoryMain?.county
+          ? `Branches in ${selectedDirectoryMain.county}`
+          : "Best local matches",
+    sameCounty: countyFilter
+      ? `Other branches outside ${countyFilter}`
+      : selectedDirectoryMain?.county
+        ? `Other branches outside ${selectedDirectoryMain.county}`
+        : "Other branches",
+    others: "Other branches in this pharmacy",
+  }), [countyFilter, selectedDirectoryMain?.county, townFilter])
 
   const countyOptions = useMemo(() => (
     [...new Set(
@@ -994,23 +1046,81 @@ export default function PatientPortal() {
                                 </div>
                                 <span>{branchPharmacies.length}</span>
                               </div>
-                              <div className="patient-portal-card-rail">
-                                {visibleBranchPharmacies.map((option) => (
-                                  <button key={option.id} type="button" className="patient-portal-choice-card branch" onClick={() => handleSelectPharmacy(option)}>
-                                    <div className="patient-portal-choice-top">
-                                      <span className="patient-portal-choice-badge branch">Branch</span>
-                                    </div>
-                                    <div className="patient-portal-choice-title">{option.name}</div>
-                                    <div className="patient-portal-choice-parent">{option.parentName}</div>
-                                    <div className="patient-portal-choice-location-row">
-                                      {option.county && <span className="patient-portal-choice-chip">{option.county}</span>}
-                                      {option.town && <span className="patient-portal-choice-chip">{option.town}</span>}
-                                    </div>
-                                    <div className="patient-portal-choice-meta">{option.locationLabel}</div>
-                                    <div className="patient-portal-choice-action">Choose this branch</div>
-                                  </button>
-                                ))}
-                              </div>
+                              {groupedVisibleBranches.nearest.length > 0 && (
+                                <div className="patient-portal-branch-group">
+                                  <div className="patient-portal-branch-group-head">
+                                    <h4>{branchGroupLabels.nearest}</h4>
+                                    <span>{groupedVisibleBranches.nearest.length}</span>
+                                  </div>
+                                  <div className="patient-portal-card-rail">
+                                    {groupedVisibleBranches.nearest.map((option) => (
+                                      <button key={option.id} type="button" className="patient-portal-choice-card branch" onClick={() => handleSelectPharmacy(option)}>
+                                        <div className="patient-portal-choice-top">
+                                          <span className="patient-portal-choice-badge branch">Branch</span>
+                                        </div>
+                                        <div className="patient-portal-choice-title">{option.name}</div>
+                                        <div className="patient-portal-choice-parent">{option.parentName}</div>
+                                        <div className="patient-portal-choice-location-row">
+                                          {option.county && <span className="patient-portal-choice-chip">{option.county}</span>}
+                                          {option.town && <span className="patient-portal-choice-chip">{option.town}</span>}
+                                        </div>
+                                        <div className="patient-portal-choice-meta">{option.locationLabel}</div>
+                                        <div className="patient-portal-choice-action">Choose this branch</div>
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              {groupedVisibleBranches.sameCounty.length > 0 && (
+                                <div className="patient-portal-branch-group">
+                                  <div className="patient-portal-branch-group-head">
+                                    <h4>{groupedVisibleBranches.nearest.length > 0 ? branchGroupLabels.sameCounty : branchGroupLabels.nearest}</h4>
+                                    <span>{groupedVisibleBranches.sameCounty.length}</span>
+                                  </div>
+                                  <div className="patient-portal-card-rail">
+                                    {groupedVisibleBranches.sameCounty.map((option) => (
+                                      <button key={option.id} type="button" className="patient-portal-choice-card branch" onClick={() => handleSelectPharmacy(option)}>
+                                        <div className="patient-portal-choice-top">
+                                          <span className="patient-portal-choice-badge branch">Branch</span>
+                                        </div>
+                                        <div className="patient-portal-choice-title">{option.name}</div>
+                                        <div className="patient-portal-choice-parent">{option.parentName}</div>
+                                        <div className="patient-portal-choice-location-row">
+                                          {option.county && <span className="patient-portal-choice-chip">{option.county}</span>}
+                                          {option.town && <span className="patient-portal-choice-chip">{option.town}</span>}
+                                        </div>
+                                        <div className="patient-portal-choice-meta">{option.locationLabel}</div>
+                                        <div className="patient-portal-choice-action">Choose this branch</div>
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              {groupedVisibleBranches.others.length > 0 && (
+                                <div className="patient-portal-branch-group">
+                                  <div className="patient-portal-branch-group-head">
+                                    <h4>{branchGroupLabels.others}</h4>
+                                    <span>{groupedVisibleBranches.others.length}</span>
+                                  </div>
+                                  <div className="patient-portal-card-rail">
+                                    {groupedVisibleBranches.others.map((option) => (
+                                      <button key={option.id} type="button" className="patient-portal-choice-card branch" onClick={() => handleSelectPharmacy(option)}>
+                                        <div className="patient-portal-choice-top">
+                                          <span className="patient-portal-choice-badge branch">Branch</span>
+                                        </div>
+                                        <div className="patient-portal-choice-title">{option.name}</div>
+                                        <div className="patient-portal-choice-parent">{option.parentName}</div>
+                                        <div className="patient-portal-choice-location-row">
+                                          {option.county && <span className="patient-portal-choice-chip">{option.county}</span>}
+                                          {option.town && <span className="patient-portal-choice-chip">{option.town}</span>}
+                                        </div>
+                                        <div className="patient-portal-choice-meta">{option.locationLabel}</div>
+                                        <div className="patient-portal-choice-action">Choose this branch</div>
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
                               {branchPharmacies.length > visibleBranchPharmacies.length && (
                                 <button
                                   type="button"
