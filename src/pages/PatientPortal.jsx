@@ -198,6 +198,7 @@ export default function PatientPortal() {
   const [branchSearch, setBranchSearch] = useState("")
   const [countyFilter, setCountyFilter] = useState("")
   const [townFilter, setTownFilter] = useState("")
+  const [selectedDirectoryMainId, setSelectedDirectoryMainId] = useState("")
   const [visibleMainCount, setVisibleMainCount] = useState(DIRECTORY_BATCH_SIZES.mains)
   const [visibleBranchCount, setVisibleBranchCount] = useState(DIRECTORY_BATCH_SIZES.branches)
   const [prescriptionForm, setPrescriptionForm] = useState(createEmptyPrescription)
@@ -287,10 +288,24 @@ export default function PatientPortal() {
     [visiblePharmacyOptions]
   )
 
-  const branchPharmacies = useMemo(
-    () => visiblePharmacyOptions.filter((option) => option.isBranch),
-    [visiblePharmacyOptions]
+  const selectedDirectoryMain = useMemo(
+    () => mainPharmacies.find((option) => option.id === selectedDirectoryMainId) || null,
+    [mainPharmacies, selectedDirectoryMainId]
   )
+
+  const branchCountsByParent = useMemo(() => (
+    pharmacyOptions.reduce((map, option) => {
+      if (!option.isBranch || !option.parent_pharmacy_id) return map
+      map.set(option.parent_pharmacy_id, (map.get(option.parent_pharmacy_id) || 0) + 1)
+      return map
+    }, new Map())
+  ), [pharmacyOptions])
+
+  const branchPharmacies = useMemo(() => {
+    const rows = visiblePharmacyOptions.filter((option) => option.isBranch)
+    if (!selectedDirectoryMainId) return rows
+    return rows.filter((option) => option.parent_pharmacy_id === selectedDirectoryMainId)
+  }, [selectedDirectoryMainId, visiblePharmacyOptions])
 
   const visibleMainPharmacies = useMemo(
     () => mainPharmacies.slice(0, visibleMainCount),
@@ -313,11 +328,17 @@ export default function PatientPortal() {
   const townOptions = useMemo(() => (
     [...new Set(
       pharmacyOptions
-        .filter((option) => !countyFilter || option.county === countyFilter)
+        .filter((option) => {
+          if (!countyFilter || option.county === countyFilter) {
+            if (!selectedDirectoryMainId) return true
+            return !option.isBranch || option.parent_pharmacy_id === selectedDirectoryMainId || option.id === selectedDirectoryMainId
+          }
+          return false
+        })
         .flatMap((option) => [option.town, option.area])
         .filter(Boolean)
     )].sort((first, second) => first.localeCompare(second))
-  ), [countyFilter, pharmacyOptions])
+  ), [countyFilter, pharmacyOptions, selectedDirectoryMainId])
 
   const hasActivePharmacy = Boolean(pharmacyId && pharmacy)
 
@@ -325,6 +346,17 @@ export default function PatientPortal() {
     setVisibleMainCount(DIRECTORY_BATCH_SIZES.mains)
     setVisibleBranchCount(DIRECTORY_BATCH_SIZES.branches)
   }, [branchSearch, countyFilter, townFilter])
+
+  useEffect(() => {
+    if (selectedDirectoryMainId && !mainPharmacies.some((option) => option.id === selectedDirectoryMainId)) {
+      setSelectedDirectoryMainId(mainPharmacies[0]?.id || "")
+      return
+    }
+
+    if (!selectedDirectoryMainId && mainPharmacies.length === 1) {
+      setSelectedDirectoryMainId(mainPharmacies[0].id)
+    }
+  }, [mainPharmacies, selectedDirectoryMainId])
 
   function updatePrescription(field, value) {
     setPrescriptionForm((prev) => ({ ...prev, [field]: value }))
@@ -379,6 +411,9 @@ export default function PatientPortal() {
     setTrackingFeed([])
     setTrackingMessage("")
     setBranchSearch("")
+    setCountyFilter("")
+    setTownFilter("")
+    setSelectedDirectoryMainId("")
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
@@ -386,6 +421,11 @@ export default function PatientPortal() {
     setBranchSearch("")
     setCountyFilter("")
     setTownFilter("")
+  }
+
+  function browseMainPharmacy(option) {
+    setSelectedDirectoryMainId(option.id)
+    window.scrollTo({ top: 260, behavior: "smooth" })
   }
 
   async function uploadPrescriptionImage() {
@@ -877,7 +917,7 @@ export default function PatientPortal() {
                       <div className="patient-portal-panel-head">
                         <div>
                           <h2>Select Your Pharmacy or Branch</h2>
-                          <p>Patients should use one public page, then choose the right branch from this directory.</p>
+                          <p>Patients should first choose the main pharmacy, then pick the exact branch nearest to them.</p>
                         </div>
                       </div>
 
@@ -895,14 +935,20 @@ export default function PatientPortal() {
                           {mainPharmacies.length > 0 && (
                             <div className="patient-portal-directory-section">
                               <div className="patient-portal-directory-head">
-                                <h3>Main Pharmacies</h3>
+                                <h3>1. Choose Main Pharmacy</h3>
                                 <span>{mainPharmacies.length}</span>
                               </div>
                               <div className="patient-portal-card-rail">
                                 {visibleMainPharmacies.map((option) => (
-                                  <button key={option.id} type="button" className="patient-portal-choice-card" onClick={() => handleSelectPharmacy(option)}>
+                                  <div
+                                    key={option.id}
+                                    className={`patient-portal-choice-card directory-main-card ${selectedDirectoryMainId === option.id ? "selected" : ""}`}
+                                  >
                                     <div className="patient-portal-choice-top">
                                       <span className="patient-portal-choice-badge">Main</span>
+                                      <span className="patient-portal-choice-count">
+                                        {branchCountsByParent.get(option.id) || 0} branches
+                                      </span>
                                     </div>
                                     <div className="patient-portal-choice-title">{option.name}</div>
                                     <div className="patient-portal-choice-location-row">
@@ -910,8 +956,15 @@ export default function PatientPortal() {
                                       {option.town && <span className="patient-portal-choice-chip">{option.town}</span>}
                                     </div>
                                     <div className="patient-portal-choice-meta">{option.locationLabel}</div>
-                                    <div className="patient-portal-choice-action">Open patient services</div>
-                                  </button>
+                                    <div className="patient-portal-choice-actions">
+                                      <button type="button" className="btn btn-primary" onClick={() => browseMainPharmacy(option)}>
+                                        {selectedDirectoryMainId === option.id ? "Browsing branches" : "Browse branches"}
+                                      </button>
+                                      <button type="button" className="btn btn-outline" onClick={() => handleSelectPharmacy(option)}>
+                                        Use main pharmacy
+                                      </button>
+                                    </div>
+                                  </div>
                                 ))}
                               </div>
                               {mainPharmacies.length > visibleMainPharmacies.length && (
@@ -929,7 +982,16 @@ export default function PatientPortal() {
                           {branchPharmacies.length > 0 && (
                             <div className="patient-portal-directory-section">
                               <div className="patient-portal-directory-head">
-                                <h3>Branches</h3>
+                                <div>
+                                  <h3>2. Choose Branch</h3>
+                                  {selectedDirectoryMain ? (
+                                    <p>
+                                      Showing branches for <strong>{selectedDirectoryMain.name}</strong>.
+                                    </p>
+                                  ) : (
+                                    <p>Pick a main pharmacy above to narrow branches faster.</p>
+                                  )}
+                                </div>
                                 <span>{branchPharmacies.length}</span>
                               </div>
                               <div className="patient-portal-card-rail">
@@ -958,6 +1020,12 @@ export default function PatientPortal() {
                                   Show {Math.min(DIRECTORY_BATCH_SIZES.branches, branchPharmacies.length - visibleBranchPharmacies.length)} more branches
                                 </button>
                               )}
+                            </div>
+                          )}
+
+                          {selectedDirectoryMain && branchPharmacies.length === 0 && (
+                            <div className="patient-portal-empty">
+                              No matching branches were found for <strong>{selectedDirectoryMain.name}</strong> with the current filters.
                             </div>
                           )}
                         </div>
