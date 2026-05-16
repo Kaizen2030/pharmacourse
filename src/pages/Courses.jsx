@@ -3,16 +3,29 @@ import { supabase } from "../lib/supabaseClient"
 import CourseCard from "../components/CourseCard"
 import SEO from "../components/SEO"
 import Pagination from "../components/Pagination"
+import { getCourseCategoryLabel } from "../lib/courseCategoryHelpers"
 
 const PAGE_SIZE = 12
-const CATEGORY_TABS = ["All", "Clinical", "Management", "Compliance", "Pharmacy Law"]
 
 function normalizeValue(value) {
   return (value || "").trim().toLowerCase()
 }
 
+function buildCategoryList(values) {
+  const uniqueCategories = Array.from(
+    new Set(
+      (values || [])
+        .map((value) => getCourseCategoryLabel(value))
+        .filter(Boolean)
+    )
+  )
+
+  return uniqueCategories.sort((a, b) => a.localeCompare(b))
+}
+
 export default function Courses() {
   const [courses, setCourses] = useState([])
+  const [categoryTabs, setCategoryTabs] = useState(["All"])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [totalCourses, setTotalCourses] = useState(0)
@@ -23,6 +36,10 @@ export default function Courses() {
   useEffect(() => {
     loadCourses(page)
   }, [page])
+
+  useEffect(() => {
+    loadCategories()
+  }, [])
 
   async function loadCourses(targetPage) {
     setLoading(true)
@@ -49,6 +66,37 @@ export default function Courses() {
     setLoading(false)
   }
 
+  async function loadCategories() {
+    const [managedResponse, usedResponse] = await Promise.all([
+      supabase
+        .from("course_categories")
+        .select("name")
+        .eq("is_active", true)
+        .order("name", { ascending: true }),
+      supabase
+        .from("courses")
+        .select("category")
+        .eq("is_published", true),
+    ])
+
+    const managedCategories = managedResponse.error
+      ? []
+      : buildCategoryList((managedResponse.data || []).map((row) => row.name))
+
+    const usedCategories = usedResponse.error
+      ? []
+      : buildCategoryList((usedResponse.data || []).map((row) => row.category))
+
+    if (managedResponse.error && usedResponse.error) {
+      console.error("Failed to load course categories:", managedResponse.error, usedResponse.error)
+      setCategoryTabs(["All"])
+      return
+    }
+
+    const nextCategories = managedCategories.length > 0 ? managedCategories : usedCategories
+    setCategoryTabs(["All", ...nextCategories])
+  }
+
   const totalPages = Math.max(1, Math.ceil(totalCourses / PAGE_SIZE))
   const normalizedSearchQuery = searchQuery.trim().toLowerCase()
 
@@ -69,6 +117,12 @@ export default function Courses() {
 
   const hasActiveFilters =
     activeCategory !== "All" || priceFilter !== "all" || normalizedSearchQuery.length > 0
+
+  useEffect(() => {
+    if (activeCategory !== "All" && !categoryTabs.includes(activeCategory)) {
+      setActiveCategory("All")
+    }
+  }, [activeCategory, categoryTabs])
 
   function togglePriceFilter(nextFilter) {
     setPriceFilter((currentFilter) => (currentFilter === nextFilter ? "all" : nextFilter))
@@ -104,7 +158,7 @@ export default function Courses() {
                 <div className="courses-filter-group">
                   <span className="courses-filter-label">Category</span>
                   <div className="courses-filter-tabs" role="tablist" aria-label="Course categories">
-                    {CATEGORY_TABS.map((category) => {
+                    {categoryTabs.map((category) => {
                       const isActive = activeCategory === category
 
                       return (

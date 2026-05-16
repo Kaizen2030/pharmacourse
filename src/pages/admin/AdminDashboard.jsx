@@ -18,6 +18,7 @@ import {
   normalizeBlogSections,
   slugifyBlogCategory,
 } from "../../lib/blogHelpers"
+import { getCourseCategoryLabel, normalizeCourseCategory, slugifyCourseCategory } from "../../lib/courseCategoryHelpers"
 
 const ADMIN_USERS_PAGE_SIZE = 12
 const ADMIN_COURSES_PAGE_SIZE = 10
@@ -62,6 +63,39 @@ async function ensureBlogCategoryRecord(categoryName) {
   if (error) {
     throw error
   }
+}
+
+async function ensureCourseCategoryRecord(categoryName) {
+  const normalizedName = normalizeCourseCategory(categoryName)
+  if (!normalizedName) return
+
+  const payload = {
+    name: normalizedName,
+    slug: slugifyCourseCategory(normalizedName),
+    is_active: true,
+  }
+
+  const { error } = await supabase
+    .from("course_categories")
+    .upsert(payload, { onConflict: "slug" })
+
+  if (error) {
+    throw error
+  }
+}
+
+function buildCourseCategoryNames(managedRows = [], usedRows = [], extraValues = []) {
+  return Array.from(
+    new Set(
+      [
+        ...managedRows.map((row) => row?.name),
+        ...usedRows.map((row) => row?.category),
+        ...extraValues,
+      ]
+        .map((value) => getCourseCategoryLabel(value))
+        .filter(Boolean)
+    )
+  ).sort((first, second) => first.localeCompare(second))
 }
 
 export default function AdminDashboard() {
@@ -145,6 +179,13 @@ export default function AdminDashboard() {
             <span>Blog Categories</span>
           </button>
           <button
+            className={`menu-item ${activeTab === "course-categories" ? "active" : ""}`}
+            onClick={() => setActiveTab("course-categories")}
+          >
+            <Tags size={20} />
+            <span>Course Categories</span>
+          </button>
+          <button
             className={`menu-item ${activeTab === "testimonials" ? "active" : ""}`}
             onClick={() => setActiveTab("testimonials")}
           >
@@ -216,6 +257,7 @@ export default function AdminDashboard() {
 
       <div className="admin-content">
         {activeTab === "courses" && <PaginatedCoursesTab />}
+        {activeTab === "course-categories" && <CourseCategoriesTab />}
         {activeTab === "instructors" && <InstructorsTab />}
         {activeTab === "workshops" && <WorkshopsTab />}
         {activeTab === "blog" && <BlogTab />}
@@ -3211,6 +3253,320 @@ function BlogCategoriesTab() {
   )
 }
 
+function CourseCategoriesTab() {
+  const [categories, setCategories] = useState([])
+  const [courseCounts, setCourseCounts] = useState({})
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [syncing, setSyncing] = useState(false)
+  const [editingId, setEditingId] = useState(null)
+  const [form, setForm] = useState({ id: "", name: "", is_active: true })
+  const [error, setError] = useState("")
+  const [message, setMessage] = useState("")
+
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  async function loadData() {
+    setLoading(true)
+    setError("")
+
+    const [categoriesResponse, coursesResponse] = await Promise.all([
+      supabase.from("course_categories").select("*").order("name", { ascending: true }),
+      supabase.from("courses").select("category"),
+    ])
+
+    if (categoriesResponse.error) {
+      setError(`${categoriesResponse.error.message}. Run supabase/course_categories_setup.sql in Supabase to enable managed course categories.`)
+      setCategories([])
+    } else {
+      setCategories(categoriesResponse.data || [])
+    }
+
+    if (!coursesResponse.error) {
+      const counts = (coursesResponse.data || []).reduce((accumulator, course) => {
+        const key = normalizeCourseCategory(course.category)
+        if (!key) return accumulator
+        accumulator[key] = (accumulator[key] || 0) + 1
+        return accumulator
+      }, {})
+      setCourseCounts(counts)
+    }
+
+    setLoading(false)
+  }
+
+  function resetForm() {
+    setForm({ id: "", name: "", is_active: true })
+    setEditingId(null)
+  }
+
+  function startEdit(category) {
+    setEditingId(category.id)
+    setForm({
+      id: category.id,
+      name: normalizeCourseCategory(category.name),
+      is_active: category.is_active ?? true,
+    })
+    setError("")
+    setMessage("")
+  }
+
+  async function saveCategory(event) {
+    event.preventDefault()
+
+    const normalizedName = normalizeCourseCategory(form.name)
+    if (!normalizedName) {
+      setError("Category name is required.")
+      return
+    }
+
+    setSaving(true)
+    setError("")
+    setMessage("")
+
+    const existingCategory = categories.find((category) => category.id === editingId)
+    const oldName = normalizeCourseCategory(existingCategory?.name)
+    const payload = {
+      id: editingId || form.id || crypto.randomUUID(),
+      name: normalizedName,
+      slug: slugifyCourseCategory(normalizedName),
+      is_active: !!form.is_active,
+    }
+
+    const { error: saveError } = await supabase
+      .from("course_categories")
+      .upsert(payload, { onConflict: "id" })
+
+    if (saveError) {
+      setError(saveError.message)
+      setSaving(false)
+      return
+    }
+
+    if (editingId && oldName && oldName !== normalizedName) {
+      const { error: coursesUpdateError } = await supabase
+        .from("courses")
+        .update({ category: normalizedName })
+        .eq("category", oldName)
+
+      if (coursesUpdateError) {
+        setError(`Category saved, but related course categories could not be renamed automatically: ${coursesUpdateError.message}`)
+      }
+    }
+
+    setMessage(editingId ? "Course category updated successfully." : "Course category added successfully.")
+    resetForm()
+    await loadData()
+    setSaving(false)
+  }
+
+  async function toggleCategory(category) {
+    setError("")
+    setMessage("")
+
+    const { error: toggleError } = await supabase
+      .from("course_categories")
+      .update({ is_active: !category.is_active })
+      .eq("id", category.id)
+
+    if (toggleError) {
+      setError(toggleError.message)
+    } else {
+      setMessage(`Category ${category.is_active ? "hidden from" : "shown on"} public course filters.`)
+      await loadData()
+    }
+  }
+
+  async function deleteCategory(category) {
+    if (!window.confirm(`Delete course category ${category.name}? This will not delete existing courses.`)) return
+
+    setError("")
+    setMessage("")
+
+    const { error: deleteError } = await supabase
+      .from("course_categories")
+      .delete()
+      .eq("id", category.id)
+
+    if (deleteError) {
+      setError(deleteError.message)
+    } else {
+      if (editingId === category.id) resetForm()
+      setMessage("Course category deleted successfully.")
+      await loadData()
+    }
+  }
+
+  async function syncUsedCategories() {
+    setSyncing(true)
+    setError("")
+    setMessage("")
+
+    const usedCategories = Object.keys(courseCounts)
+    if (usedCategories.length === 0) {
+      setMessage("No course categories found to sync yet.")
+      setSyncing(false)
+      return
+    }
+
+    const payload = usedCategories.map((name) => ({
+      name,
+      slug: slugifyCourseCategory(name),
+      is_active: true,
+    }))
+
+    const { error: syncError } = await supabase
+      .from("course_categories")
+      .upsert(payload, { onConflict: "slug" })
+
+    if (syncError) {
+      setError(syncError.message)
+    } else {
+      setMessage("Existing course categories synced into the course category manager.")
+      await loadData()
+    }
+
+    setSyncing(false)
+  }
+
+  return (
+    <div className="admin-section">
+      <div className="section-header">
+        <div>
+          <h2>Course Categories</h2>
+          <p style={{ color: "var(--gray-500)", marginTop: "0.4rem" }}>
+            Manage reusable course categories, normalize naming, and control which ones appear in the public course filters.
+          </p>
+        </div>
+        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+          <button className="btn-secondary" onClick={syncUsedCategories} disabled={syncing}>
+            <RefreshCw size={16} /> {syncing ? "Syncing..." : "Sync Used Categories"}
+          </button>
+          <button className="btn-secondary" onClick={loadData}>
+            <RefreshCw size={16} /> Refresh
+          </button>
+        </div>
+      </div>
+
+      {message && (
+        <div style={{ marginBottom: "1rem", padding: "0.9rem 1rem", borderRadius: "0.75rem", background: "#dcfce7", color: "#166534", fontWeight: 600 }}>
+          {message}
+        </div>
+      )}
+
+      {error && (
+        <div style={{ marginBottom: "1rem", padding: "0.9rem 1rem", borderRadius: "0.75rem", background: "#fee2e2", color: "#991b1b", fontWeight: 600 }}>
+          {error}
+        </div>
+      )}
+
+      <form className="instructor-form-card" onSubmit={saveCategory}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", marginBottom: "1.25rem", flexWrap: "wrap" }}>
+          <div>
+            <h3 style={{ margin: 0 }}>{editingId ? "Edit Course Category" : "Add Course Category"}</h3>
+            <p style={{ margin: "0.35rem 0 0", color: "var(--gray-500)", fontSize: "0.9rem" }}>
+              Categories are auto-normalized, so entries like "clinical ai" become "Clinical AI".
+            </p>
+          </div>
+        </div>
+
+        <div className="form-row">
+          <div className="form-group">
+            <label>Category Name</label>
+            <input
+              value={form.name}
+              onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+              onBlur={() => setForm((current) => ({ ...current, name: normalizeCourseCategory(current.name) }))}
+              placeholder="Clinical AI"
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>Slug</label>
+            <input value={slugifyCourseCategory(form.name)} readOnly />
+          </div>
+        </div>
+
+        <label className="workshop-checkbox" style={{ marginBottom: "1.5rem" }}>
+          <input
+            type="checkbox"
+            checked={form.is_active}
+            onChange={(event) => setForm((current) => ({ ...current, is_active: event.target.checked }))}
+          />
+          <span>Show this category in public course filters</span>
+        </label>
+
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", flexWrap: "wrap" }}>
+          <button type="button" className="btn-secondary" onClick={resetForm}>Cancel</button>
+          <button type="submit" className="btn-primary" disabled={saving}>
+            <Save size={16} />
+            {saving ? "Saving..." : editingId ? "Save Changes" : "Save Category"}
+          </button>
+        </div>
+      </form>
+
+      {loading ? (
+        <p style={{ color: "var(--gray-500)" }}>Loading categories...</p>
+      ) : categories.length === 0 ? (
+        <div className="empty-state"><p>No course categories found yet. Add one or sync existing course categories.</p></div>
+      ) : (
+        <>
+          <div className="blog-categories-table-head">
+            <span>Name</span>
+            <span>Slug</span>
+            <span>Courses</span>
+            <span>Status</span>
+            <span>Actions</span>
+          </div>
+
+          <div className="blog-categories-list">
+            {categories.map((category) => {
+              const normalizedName = normalizeCourseCategory(category.name)
+              return (
+                <div key={category.id} className="blog-category-row">
+                  <div style={{ minWidth: 0 }}>
+                    <strong style={{ display: "block", color: "var(--gray-900)", fontSize: "0.96rem", marginBottom: "0.25rem" }}>
+                      {normalizedName}
+                    </strong>
+                  </div>
+
+                  <div className="instructor-cell">/{category.slug || slugifyCourseCategory(normalizedName)}</div>
+                  <div className="instructor-cell">{courseCounts[normalizedName] || 0}</div>
+                  <div>
+                    <span
+                      className="status"
+                      style={{
+                        background: category.is_active ? "#dcfce7" : "#e5e7eb",
+                        color: category.is_active ? "#166534" : "#4b5563",
+                      }}
+                    >
+                      {category.is_active ? "Active" : "Hidden"}
+                    </span>
+                  </div>
+
+                  <div className="course-actions">
+                    <button className="btn-secondary" type="button" onClick={() => toggleCategory(category)}>
+                      {category.is_active ? "Hide" : "Show"}
+                    </button>
+                    <button className="btn-icon" title="Edit category" onClick={() => startEdit(category)}>
+                      <Edit2 size={16} />
+                    </button>
+                    <button className="btn-icon danger" title="Delete category" onClick={() => deleteCategory(category)}>
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
 const EMPTY_TESTIMONIAL_FORM = {
   id: "",
   author_name: "",
@@ -4339,6 +4695,7 @@ function CourseEditorModal({ course, onClose, onSave }) {
       : course
   )
   const [modules, setModules] = useState([])
+  const [categoryOptions, setCategoryOptions] = useState([])
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const imageInputRef = useRef(null)
@@ -4346,6 +4703,10 @@ function CourseEditorModal({ course, onClose, onSave }) {
   useEffect(() => {
     if (course.id !== "new") loadModules()
   }, [course])
+
+  useEffect(() => {
+    loadCategoryOptions()
+  }, [course.id])
 
   async function loadModules() {
     const { data } = await supabase
@@ -4356,22 +4717,56 @@ function CourseEditorModal({ course, onClose, onSave }) {
     setModules(data || [])
   }
 
+  async function loadCategoryOptions() {
+    const [managedResponse, usedResponse] = await Promise.all([
+      supabase.from("course_categories").select("name").order("name", { ascending: true }),
+      supabase.from("courses").select("category"),
+    ])
+
+    if (managedResponse.error && usedResponse.error) {
+      console.error("Failed to load course category options:", managedResponse.error, usedResponse.error)
+      return
+    }
+
+    setCategoryOptions(buildCourseCategoryNames(
+      managedResponse.data || [],
+      usedResponse.data || [],
+      [formData.category]
+    ))
+  }
+
   async function saveCourse() {
     setSaving(true)
-    if (!formData.slug && formData.title) {
-      formData.slug = formData.title.toLowerCase().replace(/ /g, "-")
+    const normalizedCategory = normalizeCourseCategory(formData.category)
+    const payload = {
+      ...formData,
+      category: normalizedCategory,
     }
+
+    if (!payload.slug && payload.title) {
+      payload.slug = payload.title.toLowerCase().replace(/ /g, "-")
+    }
+
     let error
     if (course.id === "new") {
       const result = await supabase.from("courses").insert([{
-        ...formData,
+        ...payload,
         instructor_id: user.id  // ← FIXED: include instructor_id so RLS policy passes
       }]).select()
       error = result.error
     } else {
-      const result = await supabase.from("courses").update(formData).eq("id", course.id)
+      const result = await supabase.from("courses").update(payload).eq("id", course.id)
       error = result.error
     }
+
+    if (!error) {
+      try {
+        await ensureCourseCategoryRecord(normalizedCategory)
+      } catch (categoryError) {
+        console.error("Failed to sync course category:", categoryError)
+      }
+    }
+
     setSaving(false)
     if (!error) onSave()
     else alert("Error saving course: " + error.message)
@@ -4460,14 +4855,17 @@ function CourseEditorModal({ course, onClose, onSave }) {
               </div>
               <div className="form-group">
                 <label>Category</label>
-                <select value={formData.category || ""}
-                  onChange={e => setFormData({ ...formData, category: e.target.value })}>
-                  <option value="">Select Category</option>
-                  <option value="Clinical Pharmacy">Clinical Pharmacy</option>
-                  <option value="Pharmacy Management">Pharmacy Management</option>
-                  <option value="Regulatory">Regulatory</option>
-                  <option value="Hospital Practice">Hospital Practice</option>
-                </select>
+                <input
+                  list="admin-course-category-suggestions"
+                  value={formData.category || ""}
+                  onChange={e => setFormData({ ...formData, category: e.target.value })}
+                  placeholder="Type or choose a category"
+                />
+                <datalist id="admin-course-category-suggestions">
+                  {categoryOptions.map((category) => (
+                    <option key={category} value={category} />
+                  ))}
+                </datalist>
               </div>
             </div>
             <div className="form-group">

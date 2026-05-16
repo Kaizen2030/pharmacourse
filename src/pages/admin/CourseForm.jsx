@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { supabase } from "../../lib/supabaseClient"
 import { useAuth } from "../../context/AuthContext"
+import { getCourseCategoryLabel, normalizeCourseCategory, slugifyCourseCategory } from "../../lib/courseCategoryHelpers"
 
 /* ─── tiny rich-text toolbar (no external deps) ─────────────────────────── */
 function RichTextEditor({ value, onChange }) {
@@ -206,7 +207,43 @@ function ModuleCard({ mod, modIdx, onRenameModule, onRemoveModule, onAddLesson, 
 }
 
 /* ─── main form ──────────────────────────────────────────────────────────── */
-const CATEGORIES = ["Microbiology","Clinical","Stewardship","Pharmacovigilance","General"]
+const DEFAULT_CATEGORIES = ["Microbiology", "Clinical", "Stewardship", "Pharmacovigilance", "General"]
+
+function buildCategoryOptions(managedRows = [], usedRows = [], extraValues = []) {
+  const categories = Array.from(
+    new Set(
+      [
+        ...DEFAULT_CATEGORIES,
+        ...managedRows.map((row) => row?.name),
+        ...usedRows.map((row) => row?.category),
+        ...extraValues,
+      ]
+        .map((value) => getCourseCategoryLabel(value))
+        .filter(Boolean)
+    )
+  )
+
+  return categories.sort((a, b) => a.localeCompare(b))
+}
+
+async function ensureCourseCategoryRecord(categoryName) {
+  const normalizedName = normalizeCourseCategory(categoryName)
+  if (!normalizedName) return
+
+  const payload = {
+    name: normalizedName,
+    slug: slugifyCourseCategory(normalizedName),
+    is_active: true,
+  }
+
+  const { error } = await supabase
+    .from("course_categories")
+    .upsert(payload, { onConflict: "slug" })
+
+  if (error) {
+    throw error
+  }
+}
 
 export default function CourseForm() {
   const { id } = useParams()
@@ -224,6 +261,7 @@ export default function CourseForm() {
   const [error, setError] = useState("")
   const [courseId, setCourseId] = useState(id || null)
   const [saved, setSaved] = useState(false)
+  const [categoryOptions, setCategoryOptions] = useState(DEFAULT_CATEGORIES)
   const modDragOver = useRef(null)
 
   /* load existing course */
@@ -242,6 +280,28 @@ export default function CourseForm() {
     }
     load()
   }, [id, isEdit])
+
+  useEffect(() => {
+    async function loadCategoryOptions() {
+      const [managedResponse, usedResponse] = await Promise.all([
+        supabase.from("course_categories").select("name").order("name", { ascending: true }),
+        supabase.from("courses").select("category"),
+      ])
+
+      if (managedResponse.error && usedResponse.error) {
+        console.error("Failed to load course category options:", managedResponse.error, usedResponse.error)
+        return
+      }
+
+      setCategoryOptions(buildCategoryOptions(
+        managedResponse.data || [],
+        usedResponse.data || [],
+        [form.category]
+      ))
+    }
+
+    loadCategoryOptions()
+  }, [])
 
   function setF(k) { return e => setForm(f => ({ ...f, [k]: e.target.value })) }
   function autoSlug(t) { return t.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"") }
@@ -264,19 +324,37 @@ export default function CourseForm() {
   async function saveCourse(e) {
     e.preventDefault()
     setError(""); setSaving(true)
-    const payload = { ...form, price: parseFloat(form.price)||0 }
+    const payload = {
+      ...form,
+      category: normalizeCourseCategory(form.category),
+      price: parseFloat(form.price)||0,
+    }
     if (!payload.slug) payload.slug = autoSlug(payload.title)
 
     if (isEdit) {
       const { error: err } = await supabase.from("courses").update(payload).eq("id", id)
       if (err) { setError(err.message); setSaving(false); return }
+
+      try {
+        await ensureCourseCategoryRecord(payload.category)
+      } catch (categoryError) {
+        console.error("Failed to sync course category:", categoryError)
+      }
     } else {
       payload.created_by = user.id
       const { data, error: err } = await supabase.from("courses").insert(payload).select().single()
       if (err) { setError(err.message); setSaving(false); return }
+
+      try {
+        await ensureCourseCategoryRecord(payload.category)
+      } catch (categoryError) {
+        console.error("Failed to sync course category:", categoryError)
+      }
+
       setCourseId(data.id)
       navigate(`/admin/courses/${data.id}/edit`, { replace:true })
     }
+
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
@@ -472,10 +550,17 @@ export default function CourseForm() {
                 <label className="label" style={{ fontSize:".85rem", fontWeight:600, marginBottom:".6rem", display:"block", color:"var(--text-900)" }}>
                   Course Category
                 </label>
-                <select value={form.category} onChange={setF("category")} style={{ width:"100%", fontSize:".95rem" }}>
-                  {CATEGORIES.map(c => <option key={c}>{c}</option>)}
-                </select>
-                <p style={{ fontSize:".75rem", color:"var(--text-500)", marginTop:".4rem" }}>Choose the main subject area for this course</p>
+                <input
+                  list="course-category-options"
+                  value={form.category}
+                  onChange={setF("category")}
+                  placeholder="Type or choose a category"
+                  style={{ width:"100%", fontSize:".95rem" }}
+                />
+                <datalist id="course-category-options">
+                  {categoryOptions.map((category) => <option key={category} value={category} />)}
+                </datalist>
+                <p style={{ fontSize:".75rem", color:"var(--text-500)", marginTop:".4rem" }}>Choose an existing category or type a new one. Managed course categories are available in Admin Dashboard.</p>
               </div>
             </div>
           </div>
