@@ -194,7 +194,7 @@ export default function BlogPost() {
   const { slug } = useParams()
   const [post, setPost] = useState(null)
   const [relatedPosts, setRelatedPosts] = useState([])
-  const [hasMoreRelatedPosts, setHasMoreRelatedPosts] = useState(false)
+  const [relatedMoreLink, setRelatedMoreLink] = useState(null)
   const [recommendedCourses, setRecommendedCourses] = useState([])
   const [comments, setComments] = useState([])
   const [commentsLoading, setCommentsLoading] = useState(true)
@@ -285,7 +285,7 @@ export default function BlogPost() {
       console.error("Failed to load blog post:", error)
       setPost(null)
       setRelatedPosts([])
-      setHasMoreRelatedPosts(false)
+      setRelatedMoreLink(null)
       setRecommendedCourses([])
       setNotFound(true)
       setLoading(false)
@@ -329,12 +329,24 @@ export default function BlogPost() {
 
     if ((relatedData || []).length === 0 && data.category) {
       const { data: fallbackRelated } = await buildRelatedQuery()
-      setRelatedPosts((fallbackRelated || []).slice(0, 3))
-      setHasMoreRelatedPosts(false)
+      const nextFallbackPosts = fallbackRelated || []
+      setRelatedPosts(nextFallbackPosts.slice(0, 3))
+      setRelatedMoreLink(
+        nextFallbackPosts.length > 3
+          ? { href: "/blog", label: "More articles" }
+          : null
+      )
     } else {
       const nextRelatedPosts = relatedData || []
       setRelatedPosts(nextRelatedPosts.slice(0, 3))
-      setHasMoreRelatedPosts(nextRelatedPosts.length > 3)
+      setRelatedMoreLink(
+        nextRelatedPosts.length > 3
+          ? {
+              href: data.category ? `/blog?category=${encodeURIComponent(getBlogCategoryLabel(data.category))}` : "/blog",
+              label: data.category ? `More in ${getBlogCategoryLabel(data.category)}` : "More articles",
+            }
+          : null
+      )
     }
 
     setRecommendedCourses(courseData)
@@ -460,7 +472,6 @@ export default function BlogPost() {
   const categoryLabel = getBlogCategoryLabel(post.category)
   const authorName = post.author_name || "PharmaCourse Team"
   const authorTitle = post.author_title || "Editorial Team"
-  const relatedCategoryHref = post.category ? `/blog?category=${encodeURIComponent(categoryLabel)}` : "/blog"
   const contentSections = getPopulatedBlogSections(post.content_sections)
   const primarySiteRecommendation = getPrimarySiteRecommendation(post)
   const recommendationItems = [
@@ -669,9 +680,9 @@ export default function BlogPost() {
                   ))}
                 </div>
 
-                {hasMoreRelatedPosts ? (
-                  <Link to={relatedCategoryHref} className="related-posts-more-link">
-                    More in {categoryLabel}
+                {relatedMoreLink ? (
+                  <Link to={relatedMoreLink.href} className="related-posts-more-link">
+                    {relatedMoreLink.label}
                   </Link>
                 ) : null}
               </>
