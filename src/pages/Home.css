@@ -626,12 +626,17 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 0.8rem;
   padding-top: 1rem;
   border-top: 1px solid var(--border);
   color: var(--text-700);
   font-size: 0.9rem;
   font-weight: 700;
+}
+
+.home .blog-preview-footer span {
+  min-width: 0;
 }
 
 .home .course-category-badge {
@@ -934,10 +939,19 @@
 
   .home .hero-services-grid,
   .home .platform-grid,
-  .home .courses-grid,
   .home .blog-preview-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.55rem;
+  }
+
+  .home .courses-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  .home .blog-preview-grid {
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
   }
 
   .home .features-grid,
@@ -964,10 +978,13 @@
   .home .feature-card,
   .home .testimonial-card,
   .home .faq-card,
-  .home .stat-card,
+  .home .stat-card {
+    padding: 0.75rem;
+  }
+
   .home .course-card,
   .home .blog-preview-card {
-    padding: 0.75rem;
+    padding: 0;
   }
 
   .home .service-icon,
@@ -1075,17 +1092,26 @@
   }
 
   .home .course-thumb {
-    aspect-ratio: 1 / 1;
+    aspect-ratio: 4 / 3;
   }
 
   .home .course-body,
   .home .blog-preview-body {
-    padding: 0.55rem;
+    padding: 0.85rem;
   }
 
-  .home .course-body p,
+  .home .course-body p {
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
   .home .blog-preview-body p {
-    display: none;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   .home .course-meta,
@@ -1120,9 +1146,16 @@
   .home .hero-services-grid,
   .home .platform-grid,
   .home .features-grid,
-  .home .courses-grid,
   .home .blog-preview-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .home .courses-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .home .blog-preview-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -1158,6 +1191,15 @@
 
   .home .price {
     font-size: 0.64rem;
+  }
+
+  .home .courses-grid,
+  .home .blog-preview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .home .course-thumb {
+    aspect-ratio: 16 / 10;
   }
 
   .home .course-card .price,
