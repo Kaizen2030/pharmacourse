@@ -137,7 +137,9 @@ button {
 
 .courses-full-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(260px, 320px));
+  justify-content: start;
+  align-items: stretch;
   gap: 1rem;
 }
 
@@ -169,6 +171,11 @@ button {
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
+  min-width: 0;
+}
+
+.category-filter-group {
+  flex: 1 1 520px;
 }
 
 .courses-filter-search {
@@ -184,12 +191,69 @@ button {
   color: var(--text-500);
 }
 
+.courses-filter-scroller {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.courses-filter-scroller.has-overflow .courses-filter-tabs {
+  mask-image: linear-gradient(to right, transparent 0, black 14px, black calc(100% - 14px), transparent 100%);
+}
+
+.courses-filter-scroll-btn {
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(15, 110, 86, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--green);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  line-height: 1;
+  box-shadow: 0 8px 20px rgba(15, 42, 32, 0.08);
+  cursor: pointer;
+  flex: 0 0 auto;
+  transition: transform 0.18s ease, border-color 0.18s ease, opacity 0.18s ease;
+}
+
+.courses-filter-scroll-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(15, 110, 86, 0.32);
+}
+
+.courses-filter-scroll-btn:disabled {
+  opacity: 0.38;
+  cursor: default;
+  box-shadow: none;
+}
+
 .courses-filter-tabs,
 .courses-price-toggle {
   display: flex;
   gap: 0.75rem;
-  flex-wrap: wrap;
+  min-width: 0;
   position: relative;
+}
+
+.courses-filter-tabs {
+  flex: 1 1 auto;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.courses-filter-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.courses-price-toggle {
+  flex-wrap: wrap;
 }
 
 .courses-filter-tabs .btn,
@@ -1215,7 +1279,16 @@ code {
     padding: 1rem;
   }
 
-  .courses-filter-tabs,
+  .courses-filter-scroller {
+    gap: 0.45rem;
+  }
+
+  .courses-filter-scroll-btn {
+    width: 34px;
+    height: 34px;
+    font-size: 1.1rem;
+  }
+
   .courses-price-toggle {
     flex-wrap: nowrap;
     gap: 0.6rem;
@@ -1224,10 +1297,8 @@ code {
     scrollbar-width: none;
     -ms-overflow-style: none;
     padding-bottom: 0.2rem;
-    mask-image: linear-gradient(to right, transparent 0, black 12px, black calc(100% - 18px), transparent 100%);
   }
 
-  .courses-filter-tabs::-webkit-scrollbar,
   .courses-price-toggle::-webkit-scrollbar {
     display: none;
   }

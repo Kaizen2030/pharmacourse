@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { supabase } from "../lib/supabaseClient"
 import CourseCard from "../components/CourseCard"
 import SEO from "../components/SEO"
@@ -32,6 +32,12 @@ export default function Courses() {
   const [activeCategory, setActiveCategory] = useState("All")
   const [priceFilter, setPriceFilter] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
+  const categoryTabsRef = useRef(null)
+  const [categoryScrollState, setCategoryScrollState] = useState({
+    hasOverflow: false,
+    canScrollLeft: false,
+    canScrollRight: false,
+  })
 
   useEffect(() => {
     loadCourses(page)
@@ -127,8 +133,42 @@ export default function Courses() {
     }
   }, [activeCategory, categoryTabs])
 
+  useEffect(() => {
+    const rail = categoryTabsRef.current
+    if (!rail) return
+
+    function updateCategoryScrollState() {
+      const maxScrollLeft = rail.scrollWidth - rail.clientWidth
+      const hasOverflow = maxScrollLeft > 8
+
+      setCategoryScrollState({
+        hasOverflow,
+        canScrollLeft: hasOverflow && rail.scrollLeft > 8,
+        canScrollRight: hasOverflow && rail.scrollLeft < maxScrollLeft - 8,
+      })
+    }
+
+    updateCategoryScrollState()
+
+    rail.addEventListener("scroll", updateCategoryScrollState, { passive: true })
+    window.addEventListener("resize", updateCategoryScrollState)
+
+    return () => {
+      rail.removeEventListener("scroll", updateCategoryScrollState)
+      window.removeEventListener("resize", updateCategoryScrollState)
+    }
+  }, [categoryTabs])
+
   function togglePriceFilter(nextFilter) {
     setPriceFilter((currentFilter) => (currentFilter === nextFilter ? "all" : nextFilter))
+  }
+
+  function scrollCategoryTabs(direction) {
+    const rail = categoryTabsRef.current
+    if (!rail) return
+
+    const scrollAmount = Math.max(rail.clientWidth * 0.72, 180) * direction
+    rail.scrollBy({ left: scrollAmount, behavior: "smooth" })
   }
 
   return (
@@ -158,28 +198,55 @@ export default function Courses() {
           <>
             <div className="card courses-filter-bar">
               <div className="courses-filter-row">
-                <div className="courses-filter-group">
+                <div className="courses-filter-group category-filter-group">
                   <span className="courses-filter-label">Category</span>
-                  <div className="courses-filter-tabs" role="tablist" aria-label="Course categories">
-                    {categoryTabs.map((category) => {
-                      const isActive = activeCategory === category
+                  <div className={`courses-filter-scroller${categoryScrollState.hasOverflow ? " has-overflow" : ""}`}>
+                    <button
+                      type="button"
+                      className="courses-filter-scroll-btn"
+                      aria-label="Scroll categories left"
+                      onClick={() => scrollCategoryTabs(-1)}
+                      disabled={!categoryScrollState.canScrollLeft}
+                    >
+                      <span aria-hidden="true">‹</span>
+                    </button>
 
-                      return (
-                        <button
-                          key={category}
-                          type="button"
-                          role="tab"
-                          aria-selected={isActive}
-                          className={`btn ${isActive ? "btn-primary" : "btn-outline"}`}
-                          onClick={() => setActiveCategory(category)}
-                        >
-                          {category}
-                        </button>
-                      )
-                    })}
+                    <div
+                      ref={categoryTabsRef}
+                      className="courses-filter-tabs"
+                      role="tablist"
+                      aria-label="Course categories"
+                    >
+                      {categoryTabs.map((category) => {
+                        const isActive = activeCategory === category
+
+                        return (
+                          <button
+                            key={category}
+                            type="button"
+                            role="tab"
+                            aria-selected={isActive}
+                            className={`btn ${isActive ? "btn-primary" : "btn-outline"}`}
+                            onClick={() => setActiveCategory(category)}
+                          >
+                            {category}
+                          </button>
+                        )
+                      })}
+                    </div>
+
+                    <button
+                      type="button"
+                      className="courses-filter-scroll-btn"
+                      aria-label="Scroll categories right"
+                      onClick={() => scrollCategoryTabs(1)}
+                      disabled={!categoryScrollState.canScrollRight}
+                    >
+                      <span aria-hidden="true">›</span>
+                    </button>
                   </div>
-                  {categoryTabs.length > 3 ? (
-                    <p className="courses-filter-scroll-hint">Swipe left to see more categories</p>
+                  {categoryScrollState.hasOverflow ? (
+                    <p className="courses-filter-scroll-hint">Swipe or use the arrows to see more categories</p>
                   ) : null}
                 </div>
 
