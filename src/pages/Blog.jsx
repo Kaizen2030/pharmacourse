@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { Link } from "react-router-dom"
+import { Link, useSearchParams } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
 import SEO from "../components/SEO"
 import Pagination from "../components/Pagination"
@@ -47,11 +47,12 @@ function BlogCard({ post }) {
 }
 
 export default function Blog() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [posts, setPosts] = useState([])
   const [categoryOptions, setCategoryOptions] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
-  const [activeCategory, setActiveCategory] = useState("All")
+  const [activeCategory, setActiveCategory] = useState(() => getBlogCategoryLabel(searchParams.get("category")) || "All")
   const [currentPage, setCurrentPage] = useState(1)
   const [errorMessage, setErrorMessage] = useState("")
 
@@ -115,6 +116,15 @@ export default function Blog() {
   }, [activeCategory, categories])
 
   useEffect(() => {
+    const nextCategory = getBlogCategoryLabel(searchParams.get("category")) || "All"
+
+    if (nextCategory === activeCategory) return
+    if (nextCategory !== "All" && !categories.includes(nextCategory)) return
+
+    setActiveCategory(nextCategory)
+  }, [activeCategory, categories, searchParams])
+
+  useEffect(() => {
     setCurrentPage(1)
   }, [activeCategory, searchQuery])
 
@@ -147,6 +157,21 @@ export default function Blog() {
     return filteredPosts.slice(startIndex, startIndex + BLOG_PAGE_SIZE)
   }, [currentPage, filteredPosts])
 
+  function handleCategorySelect(category) {
+    setActiveCategory(category)
+    setSearchParams((currentParams) => {
+      const nextParams = new URLSearchParams(currentParams)
+
+      if (category === "All") {
+        nextParams.delete("category")
+      } else {
+        nextParams.set("category", category)
+      }
+
+      return nextParams
+    })
+  }
+
   return (
     <div className="page blog-page">
       <SEO
@@ -178,7 +203,7 @@ export default function Blog() {
                       role="tab"
                       aria-selected={isActive}
                       className={`btn ${isActive ? "btn-primary" : "btn-outline"}`}
-                      onClick={() => setActiveCategory(category)}
+                      onClick={() => handleCategorySelect(category)}
                     >
                       {category}
                     </button>

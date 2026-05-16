@@ -194,6 +194,7 @@ export default function BlogPost() {
   const { slug } = useParams()
   const [post, setPost] = useState(null)
   const [relatedPosts, setRelatedPosts] = useState([])
+  const [hasMoreRelatedPosts, setHasMoreRelatedPosts] = useState(false)
   const [recommendedCourses, setRecommendedCourses] = useState([])
   const [comments, setComments] = useState([])
   const [commentsLoading, setCommentsLoading] = useState(true)
@@ -284,6 +285,7 @@ export default function BlogPost() {
       console.error("Failed to load blog post:", error)
       setPost(null)
       setRelatedPosts([])
+      setHasMoreRelatedPosts(false)
       setRecommendedCourses([])
       setNotFound(true)
       setLoading(false)
@@ -304,7 +306,7 @@ export default function BlogPost() {
       .eq("is_published", true)
       .neq("slug", slug)
       .order("published_at", { ascending: false })
-      .limit(3)
+      .limit(4)
 
     let relatedQuery = buildRelatedQuery()
 
@@ -327,9 +329,12 @@ export default function BlogPost() {
 
     if ((relatedData || []).length === 0 && data.category) {
       const { data: fallbackRelated } = await buildRelatedQuery()
-      setRelatedPosts(fallbackRelated || [])
+      setRelatedPosts((fallbackRelated || []).slice(0, 3))
+      setHasMoreRelatedPosts(false)
     } else {
-      setRelatedPosts(relatedData || [])
+      const nextRelatedPosts = relatedData || []
+      setRelatedPosts(nextRelatedPosts.slice(0, 3))
+      setHasMoreRelatedPosts(nextRelatedPosts.length > 3)
     }
 
     setRecommendedCourses(courseData)
@@ -455,6 +460,7 @@ export default function BlogPost() {
   const categoryLabel = getBlogCategoryLabel(post.category)
   const authorName = post.author_name || "PharmaCourse Team"
   const authorTitle = post.author_title || "Editorial Team"
+  const relatedCategoryHref = post.category ? `/blog?category=${encodeURIComponent(categoryLabel)}` : "/blog"
   const contentSections = getPopulatedBlogSections(post.content_sections)
   const primarySiteRecommendation = getPrimarySiteRecommendation(post)
   const recommendationItems = [
@@ -656,11 +662,19 @@ export default function BlogPost() {
             {relatedPosts.length === 0 ? (
               <p className="blog-toolbar-summary">No related posts available yet.</p>
             ) : (
-              <div className="related-post-list">
-                {relatedPosts.map((relatedPost) => (
-                  <RelatedPostCard key={relatedPost.id} post={relatedPost} />
-                ))}
-              </div>
+              <>
+                <div className="related-post-list">
+                  {relatedPosts.map((relatedPost) => (
+                    <RelatedPostCard key={relatedPost.id} post={relatedPost} />
+                  ))}
+                </div>
+
+                {hasMoreRelatedPosts ? (
+                  <Link to={relatedCategoryHref} className="related-posts-more-link">
+                    More in {categoryLabel}
+                  </Link>
+                ) : null}
+              </>
             )}
           </div>
         </aside>
