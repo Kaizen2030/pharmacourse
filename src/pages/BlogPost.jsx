@@ -349,7 +349,6 @@ export default function BlogPost() {
     if (error) {
       console.error("Failed to load blog comments:", error)
       setComments([])
-      setCommentError("We could not load comments right now.")
     } else {
       setComments(data || [])
     }
