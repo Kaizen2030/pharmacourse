@@ -22,6 +22,7 @@ import {
   BarChart3,
   Users,
   Link2,
+  ChevronLeft,
   ChevronRight,
 } from "lucide-react"
 import "./Home.css"
@@ -141,6 +142,37 @@ function getTruncatedReview(text) {
   const normalized = `${text || ""}`.trim()
   if (normalized.length <= 160) return normalized
   return `${normalized.slice(0, 160)}...`
+}
+
+function getSnapIndex(container) {
+  if (!container || container.children.length === 0) return 0
+
+  const items = Array.from(container.children)
+  const currentOffset = container.scrollLeft
+
+  let closestIndex = 0
+  let closestDistance = Infinity
+
+  items.forEach((item, index) => {
+    const distance = Math.abs(item.offsetLeft - currentOffset)
+    if (distance < closestDistance) {
+      closestDistance = distance
+      closestIndex = index
+    }
+  })
+
+  return closestIndex
+}
+
+function scrollToSnapItem(trackRef, index) {
+  const track = trackRef.current
+  const target = track?.children?.[index]
+  if (!track || !target) return
+
+  track.scrollTo({
+    left: target.offsetLeft,
+    behavior: "smooth",
+  })
 }
 
 const AnimatedSection = ({ children, delay = 0 }) => {
@@ -285,8 +317,12 @@ export default function Home() {
   const [testimonials, setTestimonials] = useState([])
   const [latestPosts, setLatestPosts] = useState([])
   const [activeSection, setActiveSection] = useState("hero")
+  const [activeCourseIndex, setActiveCourseIndex] = useState(0)
+  const [activePostIndex, setActivePostIndex] = useState(0)
   const [sections, setSections] = useState(DEFAULT_SECTIONS)
   const [loading, setLoading] = useState(true)
+  const courseTrackRef = useRef(null)
+  const blogTrackRef = useRef(null)
 
   useEffect(() => {
     async function loadData() {
@@ -324,7 +360,7 @@ export default function Home() {
           .from("courses")
           .select("id, slug, title, short_desc, description, category, is_free, price, image_url")
           .eq("is_published", true)
-          .limit(3)
+          .limit(5)
 
         if (courseData) setCourses(courseData)
 
@@ -333,7 +369,7 @@ export default function Home() {
           .select("*")
           .eq("is_published", true)
           .order("published_at", { ascending: false })
-          .limit(3)
+          .limit(5)
 
         if (blogData) setLatestPosts(blogData)
 
@@ -385,6 +421,26 @@ export default function Home() {
     nodes.forEach((node) => observer.observe(node))
     return () => observer.disconnect()
   }, [sortedSections])
+
+  useEffect(() => {
+    setActiveCourseIndex(0)
+    if (courseTrackRef.current) courseTrackRef.current.scrollLeft = 0
+  }, [courses.length])
+
+  useEffect(() => {
+    setActivePostIndex(0)
+    if (blogTrackRef.current) blogTrackRef.current.scrollLeft = 0
+  }, [latestPosts.length])
+
+  function goToCourse(index) {
+    setActiveCourseIndex(index)
+    scrollToSnapItem(courseTrackRef, index)
+  }
+
+  function goToPost(index) {
+    setActivePostIndex(index)
+    scrollToSnapItem(blogTrackRef, index)
+  }
 
   if (loading) return <div className="home-loading">Loading...</div>
 
@@ -652,35 +708,81 @@ export default function Home() {
                         <h2>{config.heading || "Courses built for real-world practice"}</h2>
                       </div>
 
-                      <div className="courses-grid">
-                        {courses.length > 0 ? (
-                          courses.map((course) => (
-                            <Link key={course.id} to={`/courses/${course.slug || course.id}`} className="course-card">
-                              <div className="course-thumb">
-                                {course.image_url ? (
-                                  <img src={course.image_url} alt={course.title} className="course-thumb-img" />
-                                ) : (
-                                  <BookOpen size={32} />
-                                )}
-                              </div>
-
-                              <div className="course-body">
-                                {course.category && <span className="course-category-badge">{course.category.toUpperCase()}</span>}
-                                <h3>{course.title}</h3>
-                                <p>
-                                  {(course.short_desc || course.description || "").length > 100
-                                    ? `${(course.short_desc || course.description).substring(0, 100)}...`
-                                    : (course.short_desc || course.description)}
-                                </p>
-                                <div className="course-meta">
-                                  <span className="price">{course.is_free ? "Free" : `KES ${course.price}`}</span>
+                      <div className="mobile-carousel-shell">
+                        <div
+                          ref={courseTrackRef}
+                          className="courses-grid mobile-carousel-track"
+                          onScroll={(event) => {
+                            const nextIndex = getSnapIndex(event.currentTarget)
+                            setActiveCourseIndex((current) => (current === nextIndex ? current : nextIndex))
+                          }}
+                        >
+                          {courses.length > 0 ? (
+                            courses.map((course) => (
+                              <Link key={course.id} to={`/courses/${course.slug || course.id}`} className="course-card">
+                                <div className="course-thumb">
+                                  {course.image_url ? (
+                                    <img src={course.image_url} alt={course.title} className="course-thumb-img" />
+                                  ) : (
+                                    <BookOpen size={32} />
+                                  )}
                                 </div>
-                              </div>
-                            </Link>
-                          ))
-                        ) : (
-                          <div className="empty-state">
-                            <p>Courses launching soon. <Link to="/register">Register now</Link> to be notified.</p>
+
+                                <div className="course-body">
+                                  {course.category && <span className="course-category-badge">{course.category.toUpperCase()}</span>}
+                                  <h3>{course.title}</h3>
+                                  <p>
+                                    {(course.short_desc || course.description || "").length > 100
+                                      ? `${(course.short_desc || course.description).substring(0, 100)}...`
+                                      : (course.short_desc || course.description)}
+                                  </p>
+                                  <div className="course-meta">
+                                    <span className="price">{course.is_free ? "Free" : `KES ${course.price}`}</span>
+                                  </div>
+                                </div>
+                              </Link>
+                            ))
+                          ) : (
+                            <div className="empty-state">
+                              <p>Courses launching soon. <Link to="/register">Register now</Link> to be notified.</p>
+                            </div>
+                          )}
+                        </div>
+
+                        {courses.length > 1 && (
+                          <div className="mobile-carousel-nav" aria-label="Course navigation">
+                            <button
+                              type="button"
+                              className="mobile-carousel-button"
+                              aria-label="Previous course"
+                              onClick={() => goToCourse(Math.max(0, activeCourseIndex - 1))}
+                              disabled={activeCourseIndex === 0}
+                            >
+                              <ChevronLeft size={18} />
+                            </button>
+
+                            <div className="mobile-carousel-dots">
+                              {courses.map((course, index) => (
+                                <button
+                                  key={course.id}
+                                  type="button"
+                                  className={`mobile-carousel-dot${activeCourseIndex === index ? " active" : ""}`}
+                                  aria-label={`Go to course ${index + 1}`}
+                                  aria-pressed={activeCourseIndex === index}
+                                  onClick={() => goToCourse(index)}
+                                />
+                              ))}
+                            </div>
+
+                            <button
+                              type="button"
+                              className="mobile-carousel-button"
+                              aria-label="Next course"
+                              onClick={() => goToCourse(Math.min(courses.length - 1, activeCourseIndex + 1))}
+                              disabled={activeCourseIndex === courses.length - 1}
+                            >
+                              <ChevronRight size={18} />
+                            </button>
                           </div>
                         )}
                       </div>
@@ -701,47 +803,93 @@ export default function Home() {
                         <p>Read quick, practical articles from the PharmaCourse team and contributors.</p>
                       </div>
 
-                      <div className="blog-preview-grid">
-                        {latestPosts.length > 0 ? (
-                          latestPosts.map((post) => {
-                            const categoryLabel = getBlogCategoryLabel(post.category)
+                      <div className="mobile-carousel-shell">
+                        <div
+                          ref={blogTrackRef}
+                          className="blog-preview-grid mobile-carousel-track"
+                          onScroll={(event) => {
+                            const nextIndex = getSnapIndex(event.currentTarget)
+                            setActivePostIndex((current) => (current === nextIndex ? current : nextIndex))
+                          }}
+                        >
+                          {latestPosts.length > 0 ? (
+                            latestPosts.map((post) => {
+                              const categoryLabel = getBlogCategoryLabel(post.category)
 
-                            return (
-                              <Link key={post.id} to={`/blog/${post.slug}`} className="blog-preview-card">
-                                {post.cover_image_url ? (
-                                  <img src={post.cover_image_url} alt={post.title} className="blog-preview-image" />
-                                ) : (
-                                  <div
-                                    className="blog-preview-image blog-preview-image-fallback"
-                                    style={{ background: getBlogCoverFallback(post.category) }}
-                                  >
-                                    <span>{categoryLabel}</span>
-                                  </div>
-                                )}
+                              return (
+                                <Link key={post.id} to={`/blog/${post.slug}`} className="blog-preview-card">
+                                  {post.cover_image_url ? (
+                                    <img src={post.cover_image_url} alt={post.title} className="blog-preview-image" />
+                                  ) : (
+                                    <div
+                                      className="blog-preview-image blog-preview-image-fallback"
+                                      style={{ background: getBlogCoverFallback(post.category) }}
+                                    >
+                                      <span>{categoryLabel}</span>
+                                    </div>
+                                  )}
 
-                                <div className="blog-preview-body">
-                                  <div className="blog-preview-meta">
-                                    <span className="blog-preview-badge">{categoryLabel}</span>
-                                    <span>{formatBlogDate(post.published_at || post.created_at)}</span>
+                                  <div className="blog-preview-body">
+                                    <div className="blog-preview-meta">
+                                      <span className="blog-preview-badge">{categoryLabel}</span>
+                                      <span>{formatBlogDate(post.published_at || post.created_at)}</span>
+                                    </div>
+                                    <h3>{post.title}</h3>
+                                    <p>{getBlogExcerpt(post)}</p>
+                                    <BlogEngagementStats
+                                      className="blog-preview-stats"
+                                      viewCount={post.view_count}
+                                      likeCount={post.like_count}
+                                    />
+                                    <div className="blog-preview-footer">
+                                      <span>{post.author_name || "PharmaCourse Team"}</span>
+                                      <span>Read more</span>
+                                    </div>
                                   </div>
-                                  <h3>{post.title}</h3>
-                                  <p>{getBlogExcerpt(post)}</p>
-                                  <BlogEngagementStats
-                                    className="blog-preview-stats"
-                                    viewCount={post.view_count}
-                                    likeCount={post.like_count}
-                                  />
-                                  <div className="blog-preview-footer">
-                                    <span>{post.author_name || "PharmaCourse Team"}</span>
-                                    <span>Read more</span>
-                                  </div>
-                                </div>
-                              </Link>
-                            )
-                          })
-                        ) : (
-                          <div className="empty-state">
-                            <p>Blog posts are on the way. Check back soon for fresh articles.</p>
+                                </Link>
+                              )
+                            })
+                          ) : (
+                            <div className="empty-state">
+                              <p>Blog posts are on the way. Check back soon for fresh articles.</p>
+                            </div>
+                          )}
+                        </div>
+
+                        {latestPosts.length > 1 && (
+                          <div className="mobile-carousel-nav" aria-label="Article navigation">
+                            <button
+                              type="button"
+                              className="mobile-carousel-button"
+                              aria-label="Previous article"
+                              onClick={() => goToPost(Math.max(0, activePostIndex - 1))}
+                              disabled={activePostIndex === 0}
+                            >
+                              <ChevronLeft size={18} />
+                            </button>
+
+                            <div className="mobile-carousel-dots">
+                              {latestPosts.map((post, index) => (
+                                <button
+                                  key={post.id}
+                                  type="button"
+                                  className={`mobile-carousel-dot${activePostIndex === index ? " active" : ""}`}
+                                  aria-label={`Go to article ${index + 1}`}
+                                  aria-pressed={activePostIndex === index}
+                                  onClick={() => goToPost(index)}
+                                />
+                              ))}
+                            </div>
+
+                            <button
+                              type="button"
+                              className="mobile-carousel-button"
+                              aria-label="Next article"
+                              onClick={() => goToPost(Math.min(latestPosts.length - 1, activePostIndex + 1))}
+                              disabled={activePostIndex === latestPosts.length - 1}
+                            >
+                              <ChevronRight size={18} />
+                            </button>
                           </div>
                         )}
                       </div>

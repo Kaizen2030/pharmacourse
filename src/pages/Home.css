@@ -524,6 +524,56 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
+.home .mobile-carousel-shell {
+  position: relative;
+}
+
+.home .mobile-carousel-nav {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem;
+  margin-top: 0.95rem;
+}
+
+.home .mobile-carousel-button {
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(15, 110, 86, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--green);
+  display: grid;
+  place-items: center;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease, opacity 0.2s ease, border-color 0.2s ease;
+}
+
+.home .mobile-carousel-button:disabled {
+  opacity: 0.42;
+}
+
+.home .mobile-carousel-dots {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.home .mobile-carousel-dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border: 0;
+  border-radius: 999px;
+  padding: 0;
+  background: rgba(15, 110, 86, 0.18);
+  transition: width 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
+}
+
+.home .mobile-carousel-dot.active {
+  width: 1.45rem;
+  background: var(--green);
+}
+
 .home .blog-preview-card {
   display: block;
   overflow: hidden;
@@ -944,14 +994,29 @@
     gap: 0.55rem;
   }
 
-  .home .courses-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.75rem;
+  .home .courses-grid.mobile-carousel-track,
+  .home .blog-preview-grid.mobile-carousel-track {
+    display: flex;
+    gap: 0.85rem;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding-bottom: 0.35rem;
   }
 
-  .home .blog-preview-grid {
-    grid-template-columns: 1fr;
-    gap: 0.85rem;
+  .home .courses-grid.mobile-carousel-track::-webkit-scrollbar,
+  .home .blog-preview-grid.mobile-carousel-track::-webkit-scrollbar {
+    display: none;
+  }
+
+  .home .courses-grid.mobile-carousel-track .course-card,
+  .home .blog-preview-grid.mobile-carousel-track .blog-preview-card {
+    flex: 0 0 100%;
+    min-width: 100%;
+    scroll-snap-align: start;
   }
 
   .home .features-grid,
@@ -987,6 +1052,10 @@
     padding: 0;
   }
 
+  .home .mobile-carousel-nav {
+    display: flex;
+  }
+
   .home .service-icon,
   .home .platform-card svg,
   .home .feature-card svg {
@@ -998,12 +1067,17 @@
   .home .service-showcase h3,
   .home .platform-card h3,
   .home .feature-card h3,
-  .home .faq-card h3,
-  .home .course-body h3,
-  .home .blog-preview-body h3 {
+  .home .faq-card h3 {
     font-size: 0.76rem;
     margin-bottom: 0.35rem;
     line-height: 1.25;
+  }
+
+  .home .course-body h3,
+  .home .blog-preview-body h3 {
+    font-size: 0.98rem;
+    margin-bottom: 0.45rem;
+    line-height: 1.32;
   }
 
   .home .service-showcase p,
@@ -1011,11 +1085,17 @@
   .home .feature-card p,
   .home .faq-card p,
   .home .testimonial-card p,
-  .home .course-body p,
-  .home .blog-preview-body p,
   .home .stat-card p {
     font-size: 0.66rem;
     line-height: 1.35;
+  }
+
+  .home .course-body p,
+  .home .blog-preview-body p,
+  .home .blog-preview-meta,
+  .home .blog-preview-footer {
+    font-size: 0.78rem;
+    line-height: 1.45;
   }
 
   .home .service-showcase p,
@@ -1041,6 +1121,11 @@
     font-size: 0.5rem;
     padding: 0.18rem 0.42rem;
     margin-bottom: 0.4rem;
+  }
+
+  .home .course-category-badge,
+  .home .blog-preview-badge {
+    font-size: 0.58rem;
   }
 
   .home .hero-benefits li {
@@ -1092,7 +1177,7 @@
   }
 
   .home .course-thumb {
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 16 / 10;
   }
 
   .home .course-body,
@@ -1162,9 +1247,7 @@
 @media (max-width: 420px) {
   .home .service-showcase,
   .home .platform-card,
-  .home .feature-card,
-  .home .course-card,
-  .home .blog-preview-card {
+  .home .feature-card {
     padding: 0.62rem;
   }
 
@@ -1191,11 +1274,6 @@
 
   .home .price {
     font-size: 0.64rem;
-  }
-
-  .home .courses-grid,
-  .home .blog-preview-grid {
-    grid-template-columns: 1fr;
   }
 
   .home .course-thumb {
