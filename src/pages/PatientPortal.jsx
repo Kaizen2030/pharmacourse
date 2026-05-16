@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { useSearchParams } from "react-router-dom"
-import { supabase } from "../lib/supabaseClient"
+import { pharmacyPortalSupabase as supabase } from "../lib/pharmacyPortalSupabase"
 import SEO from "../components/SEO"
 import "./PatientPortal.css"
 
