@@ -93,7 +93,10 @@ export default function Courses() {
       return
     }
 
-    const nextCategories = managedCategories.length > 0 ? managedCategories : usedCategories
+    const nextCategories = Array.from(
+      new Set([...managedCategories, ...usedCategories])
+    ).sort((first, second) => first.localeCompare(second))
+
     setCategoryTabs(["All", ...nextCategories])
   }
 
