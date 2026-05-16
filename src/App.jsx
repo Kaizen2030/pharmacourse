@@ -1,5 +1,5 @@
 import { useEffect } from "react"
-import { BrowserRouter, Routes, Route } from "react-router-dom"
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom"
 import { AuthProvider } from "./context/AuthContext"
 import Navbar from "./components/Navbar"
 import Footer from "./components/Footer"
@@ -28,6 +28,7 @@ import PharmacyOS from "./pages/Pharmacyos"
 import RemedacareOS from "./pages/Remedacareos"
 import Community from "./pages/Community"
 import ResetRedirect from "./pages/ResetRedirect"
+import PatientPortal from "./pages/PatientPortal"
 
 function MediaProtection() {
   useEffect(() => {
@@ -95,39 +96,52 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <MediaProtection />
-        <Navbar />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/complete-profile" element={<CompleteProfile />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/courses" element={<Courses />} />
-          <Route path="/workshops" element={<Workshops />} />
-          <Route path="/blog" element={<Blog />} />
-          <Route path="/blog/:slug" element={<BlogPost />} />
-          <Route path="/team-plans" element={<TeamPlans />} />
-          <Route path="/courses/:id" element={<CourseDetail />} />
-          <Route path="/learn/:courseId/:lessonId" element={<CoursePlayer />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/certificate/:courseId" element={<Certificate />} />
-          <Route path="/verify/:certificateId" element={<VerifyCertificate />} />
-          <Route path="/simulation/:simulationId" element={<CaseSimulation />} />
-          <Route path="/pharmacyos" element={<PharmacyOS />} />
-          <Route path="/remedacareos" element={<RemedacareOS />} />
-          <Route path="/community" element={<Community />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin/courses/new" element={<CourseForm />} />
-          <Route path="/admin/courses/:id/edit" element={<CourseForm />} />
-          <Route path="/admin/simulations" element={<SimulationAdmin />} />
-
-          {/* Deep link redirect routes for Electron apps */}
-          <Route path="/reset/remedacare" element={<ResetRedirect app="remedacare" />} />
-          <Route path="/reset/pharmacyos" element={<ResetRedirect app="pharmacyos" />} />
-        </Routes>
-        <Footer />
+        <AppShell />
       </BrowserRouter>
     </AuthProvider>
+  )
+}
+
+function AppShell() {
+  const location = useLocation()
+  const hideChrome = location.pathname === "/patient" || location.pathname === "/patient-portal"
+
+  return (
+    <>
+      {!hideChrome && <Navbar />}
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/complete-profile" element={<CompleteProfile />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/courses" element={<Courses />} />
+        <Route path="/workshops" element={<Workshops />} />
+        <Route path="/blog" element={<Blog />} />
+        <Route path="/blog/:slug" element={<BlogPost />} />
+        <Route path="/team-plans" element={<TeamPlans />} />
+        <Route path="/courses/:id" element={<CourseDetail />} />
+        <Route path="/learn/:courseId/:lessonId" element={<CoursePlayer />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/certificate/:courseId" element={<Certificate />} />
+        <Route path="/verify/:certificateId" element={<VerifyCertificate />} />
+        <Route path="/simulation/:simulationId" element={<CaseSimulation />} />
+        <Route path="/pharmacyos" element={<PharmacyOS />} />
+        <Route path="/remedacareos" element={<RemedacareOS />} />
+        <Route path="/community" element={<Community />} />
+        <Route path="/patient" element={<PatientPortal />} />
+        <Route path="/patient-portal" element={<PatientPortal />} />
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/courses/new" element={<CourseForm />} />
+        <Route path="/admin/courses/:id/edit" element={<CourseForm />} />
+        <Route path="/admin/simulations" element={<SimulationAdmin />} />
+
+        {/* Deep link redirect routes for Electron apps */}
+        <Route path="/reset/remedacare" element={<ResetRedirect app="remedacare" />} />
+        <Route path="/reset/pharmacyos" element={<ResetRedirect app="pharmacyos" />} />
+      </Routes>
+      {!hideChrome && <Footer />}
+    </>
   )
 }
