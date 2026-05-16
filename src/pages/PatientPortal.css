@@ -122,6 +122,17 @@
   margin-top: 1rem;
 }
 
+.patient-portal-filter-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.9rem;
+}
+
+.patient-portal-filter-clear {
+  width: 100%;
+}
+
 .patient-portal-sidebar-note {
   margin-top: 1rem;
   padding: 0.9rem 1rem;
@@ -194,6 +205,11 @@
   gap: 1.5rem;
 }
 
+.patient-portal-directory-summary {
+  color: var(--text-500);
+  font-size: 0.95rem;
+}
+
 .patient-portal-directory-section {
   display: flex;
   flex-direction: column;
@@ -223,10 +239,24 @@
   font-weight: 800;
 }
 
-.patient-portal-card-grid {
+.patient-portal-card-rail {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(250px, 300px);
   gap: 1rem;
+  overflow-x: auto;
+  padding-bottom: 0.35rem;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+}
+
+.patient-portal-card-rail::-webkit-scrollbar {
+  height: 10px;
+}
+
+.patient-portal-card-rail::-webkit-scrollbar-thumb {
+  background: rgba(15, 110, 86, 0.18);
+  border-radius: 999px;
 }
 
 .patient-portal-choice-card {
@@ -239,6 +269,7 @@
   cursor: pointer;
   transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
   box-shadow: 0 12px 30px rgba(15, 42, 32, 0.05);
+  scroll-snap-align: start;
 }
 
 .patient-portal-choice-card:hover {
@@ -292,6 +323,25 @@
   margin-bottom: 0.35rem;
 }
 
+.patient-portal-choice-location-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 0.55rem;
+}
+
+.patient-portal-choice-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3rem 0.62rem;
+  border-radius: 999px;
+  background: rgba(15, 110, 86, 0.08);
+  color: var(--green);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
 .patient-portal-choice-meta {
   color: var(--text-500);
   font-size: 0.92rem;
@@ -302,6 +352,10 @@
   color: var(--green);
   font-size: 0.86rem;
   font-weight: 800;
+}
+
+.patient-portal-load-more {
+  width: fit-content;
 }
 
 .patient-portal-form {
@@ -501,7 +555,12 @@
   }
 
   .patient-portal-submit,
-  .patient-portal-track-bar .btn {
+  .patient-portal-track-bar .btn,
+  .patient-portal-load-more {
     width: 100%;
+  }
+
+  .patient-portal-card-rail {
+    grid-auto-columns: minmax(240px, 86vw);
   }
 }

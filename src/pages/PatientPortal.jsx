@@ -17,6 +17,11 @@ const APPOINTMENT_OPTIONS = [
   { value: "pickup", label: "In-person pickup" },
 ]
 
+const DIRECTORY_BATCH_SIZES = {
+  mains: 12,
+  branches: 18,
+}
+
 function createEmptyPrescription() {
   return {
     patientName: "",
@@ -150,11 +155,26 @@ function normalizeTrackingPayload(payload) {
   }
 }
 
+function parseLocationMeta(value) {
+  const parts = String(value || "")
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .filter((part) => part.toLowerCase() !== "kenya")
+
+  return {
+    county: parts[0] || "",
+    town: parts[1] || "",
+    area: parts.slice(2).join(", "),
+  }
+}
+
 function buildPharmacyOptions(rows = []) {
   const map = new Map(rows.map((row) => [row.id, row]))
 
   return rows
     .map((row) => ({
+      ...parseLocationMeta(row.location || ""),
       ...row,
       isBranch: Boolean(row.parent_pharmacy_id),
       parentName: row.parent_pharmacy_id ? map.get(row.parent_pharmacy_id)?.name || "Main pharmacy" : "",
@@ -176,6 +196,10 @@ export default function PatientPortal() {
   const [portalError, setPortalError] = useState("")
   const [directoryError, setDirectoryError] = useState("")
   const [branchSearch, setBranchSearch] = useState("")
+  const [countyFilter, setCountyFilter] = useState("")
+  const [townFilter, setTownFilter] = useState("")
+  const [visibleMainCount, setVisibleMainCount] = useState(DIRECTORY_BATCH_SIZES.mains)
+  const [visibleBranchCount, setVisibleBranchCount] = useState(DIRECTORY_BATCH_SIZES.branches)
   const [prescriptionForm, setPrescriptionForm] = useState(createEmptyPrescription)
   const [prescriptionFile, setPrescriptionFile] = useState(null)
   const [appointmentForm, setAppointmentForm] = useState(createEmptyAppointment)
@@ -244,12 +268,19 @@ export default function PatientPortal() {
 
   const visiblePharmacyOptions = useMemo(() => {
     const query = branchSearch.trim().toLowerCase()
-    if (!query) return pharmacyOptions
+    return pharmacyOptions.filter((option) => {
+      const matchesQuery = !query || (
+        `${option.name} ${option.parentName} ${option.locationLabel} ${option.county} ${option.town} ${option.area}`
+          .toLowerCase()
+          .includes(query)
+      )
 
-    return pharmacyOptions.filter((option) => (
-      `${option.name} ${option.parentName} ${option.locationLabel}`.toLowerCase().includes(query)
-    ))
-  }, [branchSearch, pharmacyOptions])
+      const matchesCounty = !countyFilter || option.county === countyFilter
+      const matchesTown = !townFilter || option.town === townFilter || option.area === townFilter
+
+      return matchesQuery && matchesCounty && matchesTown
+    })
+  }, [branchSearch, countyFilter, townFilter, pharmacyOptions])
 
   const mainPharmacies = useMemo(
     () => visiblePharmacyOptions.filter((option) => !option.isBranch),
@@ -261,7 +292,39 @@ export default function PatientPortal() {
     [visiblePharmacyOptions]
   )
 
+  const visibleMainPharmacies = useMemo(
+    () => mainPharmacies.slice(0, visibleMainCount),
+    [mainPharmacies, visibleMainCount]
+  )
+
+  const visibleBranchPharmacies = useMemo(
+    () => branchPharmacies.slice(0, visibleBranchCount),
+    [branchPharmacies, visibleBranchCount]
+  )
+
+  const countyOptions = useMemo(() => (
+    [...new Set(
+      pharmacyOptions
+        .map((option) => option.county)
+        .filter(Boolean)
+    )].sort((first, second) => first.localeCompare(second))
+  ), [pharmacyOptions])
+
+  const townOptions = useMemo(() => (
+    [...new Set(
+      pharmacyOptions
+        .filter((option) => !countyFilter || option.county === countyFilter)
+        .flatMap((option) => [option.town, option.area])
+        .filter(Boolean)
+    )].sort((first, second) => first.localeCompare(second))
+  ), [countyFilter, pharmacyOptions])
+
   const hasActivePharmacy = Boolean(pharmacyId && pharmacy)
+
+  useEffect(() => {
+    setVisibleMainCount(DIRECTORY_BATCH_SIZES.mains)
+    setVisibleBranchCount(DIRECTORY_BATCH_SIZES.branches)
+  }, [branchSearch, countyFilter, townFilter])
 
   function updatePrescription(field, value) {
     setPrescriptionForm((prev) => ({ ...prev, [field]: value }))
@@ -317,6 +380,12 @@ export default function PatientPortal() {
     setTrackingMessage("")
     setBranchSearch("")
     window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
+  function clearDirectoryFilters() {
+    setBranchSearch("")
+    setCountyFilter("")
+    setTownFilter("")
   }
 
   async function uploadPrescriptionImage() {
@@ -763,6 +832,28 @@ export default function PatientPortal() {
                         onChange={(event) => setBranchSearch(event.target.value)}
                         placeholder="Search pharmacy, branch, county, or area"
                       />
+                      <div className="patient-portal-filter-stack">
+                        <select value={countyFilter} onChange={(event) => {
+                          setCountyFilter(event.target.value)
+                          setTownFilter("")
+                        }}>
+                          <option value="">All counties</option>
+                          {countyOptions.map((option) => (
+                            <option key={option} value={option}>{option}</option>
+                          ))}
+                        </select>
+                        <select value={townFilter} onChange={(event) => setTownFilter(event.target.value)}>
+                          <option value="">All towns / areas</option>
+                          {townOptions.map((option) => (
+                            <option key={option} value={option}>{option}</option>
+                          ))}
+                        </select>
+                        {(branchSearch || countyFilter || townFilter) && (
+                          <button type="button" className="btn btn-outline patient-portal-filter-clear" onClick={clearDirectoryFilters}>
+                            Clear filters
+                          </button>
+                        )}
+                      </div>
                       <div className="patient-portal-sidebar-note">
                         Share this one link with patients:
                         <strong> pharmacourse.co.ke/patient</strong>
@@ -796,24 +887,42 @@ export default function PatientPortal() {
                         </div>
                       ) : (
                         <div className="patient-portal-directory">
+                          <div className="patient-portal-directory-summary">
+                            Showing {visiblePharmacyOptions.length.toLocaleString()} matching locations
+                            {countyFilter ? ` in ${countyFilter}` : ""}
+                            {townFilter ? ` · ${townFilter}` : ""}
+                          </div>
                           {mainPharmacies.length > 0 && (
                             <div className="patient-portal-directory-section">
                               <div className="patient-portal-directory-head">
                                 <h3>Main Pharmacies</h3>
                                 <span>{mainPharmacies.length}</span>
                               </div>
-                              <div className="patient-portal-card-grid">
-                                {mainPharmacies.map((option) => (
+                              <div className="patient-portal-card-rail">
+                                {visibleMainPharmacies.map((option) => (
                                   <button key={option.id} type="button" className="patient-portal-choice-card" onClick={() => handleSelectPharmacy(option)}>
                                     <div className="patient-portal-choice-top">
                                       <span className="patient-portal-choice-badge">Main</span>
                                     </div>
                                     <div className="patient-portal-choice-title">{option.name}</div>
+                                    <div className="patient-portal-choice-location-row">
+                                      {option.county && <span className="patient-portal-choice-chip">{option.county}</span>}
+                                      {option.town && <span className="patient-portal-choice-chip">{option.town}</span>}
+                                    </div>
                                     <div className="patient-portal-choice-meta">{option.locationLabel}</div>
                                     <div className="patient-portal-choice-action">Open patient services</div>
                                   </button>
                                 ))}
                               </div>
+                              {mainPharmacies.length > visibleMainPharmacies.length && (
+                                <button
+                                  type="button"
+                                  className="btn btn-outline patient-portal-load-more"
+                                  onClick={() => setVisibleMainCount((count) => count + DIRECTORY_BATCH_SIZES.mains)}
+                                >
+                                  Show {Math.min(DIRECTORY_BATCH_SIZES.mains, mainPharmacies.length - visibleMainPharmacies.length)} more main pharmacies
+                                </button>
+                              )}
                             </div>
                           )}
 
@@ -823,19 +932,32 @@ export default function PatientPortal() {
                                 <h3>Branches</h3>
                                 <span>{branchPharmacies.length}</span>
                               </div>
-                              <div className="patient-portal-card-grid">
-                                {branchPharmacies.map((option) => (
+                              <div className="patient-portal-card-rail">
+                                {visibleBranchPharmacies.map((option) => (
                                   <button key={option.id} type="button" className="patient-portal-choice-card branch" onClick={() => handleSelectPharmacy(option)}>
                                     <div className="patient-portal-choice-top">
                                       <span className="patient-portal-choice-badge branch">Branch</span>
                                     </div>
                                     <div className="patient-portal-choice-title">{option.name}</div>
                                     <div className="patient-portal-choice-parent">{option.parentName}</div>
+                                    <div className="patient-portal-choice-location-row">
+                                      {option.county && <span className="patient-portal-choice-chip">{option.county}</span>}
+                                      {option.town && <span className="patient-portal-choice-chip">{option.town}</span>}
+                                    </div>
                                     <div className="patient-portal-choice-meta">{option.locationLabel}</div>
                                     <div className="patient-portal-choice-action">Choose this branch</div>
                                   </button>
                                 ))}
                               </div>
+                              {branchPharmacies.length > visibleBranchPharmacies.length && (
+                                <button
+                                  type="button"
+                                  className="btn btn-outline patient-portal-load-more"
+                                  onClick={() => setVisibleBranchCount((count) => count + DIRECTORY_BATCH_SIZES.branches)}
+                                >
+                                  Show {Math.min(DIRECTORY_BATCH_SIZES.branches, branchPharmacies.length - visibleBranchPharmacies.length)} more branches
+                                </button>
+                              )}
                             </div>
                           )}
                         </div>
