@@ -4,13 +4,14 @@ import { supabase } from "../lib/supabaseClient"
 import SEO from "../components/SEO"
 import Pagination from "../components/Pagination"
 import BlogEngagementStats from "../components/BlogEngagementStats"
-import { formatBlogDate, getBlogCategoryLabel, getBlogCoverFallback, getBlogExcerpt, stripHtmlContent } from "../lib/blogHelpers"
+import { formatBlogDate, getBlogCategoryLabel, getBlogCoverFallback, getBlogExcerpt, stripHtmlContent, trimExcerptToWordCount } from "../lib/blogHelpers"
 import "./Blog.css"
 
 const BLOG_PAGE_SIZE = 6
 
 function BlogCard({ post }) {
   const categoryLabel = getBlogCategoryLabel(post.category)
+  const cardExcerpt = trimExcerptToWordCount(getBlogExcerpt(post), 67)
 
   return (
     <Link to={`/blog/${post.slug}`} className="card blog-card">
@@ -29,7 +30,7 @@ function BlogCard({ post }) {
         </div>
 
         <h2>{post.title}</h2>
-        <p>{getBlogExcerpt(post)}</p>
+        <p className="blog-card-excerpt">{cardExcerpt}</p>
 
         <BlogEngagementStats
           className="blog-card-stats"

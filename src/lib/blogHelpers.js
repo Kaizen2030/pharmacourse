@@ -116,6 +116,16 @@ export function getBlogExcerpt(post) {
   return firstSectionBody.length > 160 ? `${firstSectionBody.slice(0, 160)}...` : firstSectionBody
 }
 
+export function trimExcerptToWordCount(value, maxWords = 67) {
+  const normalizedValue = `${value || ""}`.replace(/\s+/g, " ").trim()
+  if (!normalizedValue) return ""
+
+  const words = normalizedValue.split(" ").filter(Boolean)
+  if (words.length <= maxWords) return normalizedValue
+
+  return `${words.slice(0, maxWords).join(" ")}...`
+}
+
 export function createEmptyBlogSection() {
   return {
     title: "",
