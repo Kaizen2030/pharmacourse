@@ -1209,12 +1209,25 @@ code {
 
   .courses-filter-tabs,
   .courses-price-toggle {
+    flex-wrap: nowrap;
     gap: 0.6rem;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding-bottom: 0.2rem;
+  }
+
+  .courses-filter-tabs::-webkit-scrollbar,
+  .courses-price-toggle::-webkit-scrollbar {
+    display: none;
   }
 
   .courses-filter-tabs .btn,
   .courses-price-toggle .btn {
-    flex: 1 1 140px;
+    flex: 0 0 auto;
+    min-width: max-content;
+    white-space: nowrap;
   }
 
   .whatsapp-optin-card,
