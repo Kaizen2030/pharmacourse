@@ -4,6 +4,7 @@ import { ChevronLeft, Heart } from "lucide-react"
 import { supabase } from "../lib/supabaseClient"
 import SEO from "../components/SEO"
 import BlogEngagementStats from "../components/BlogEngagementStats"
+import BlogContentRenderer from "../components/BlogContentRenderer"
 import MarkdownContent from "../components/MarkdownContent"
 import pharmacourseHeroVisual from "../assets/pharmacourse-hero-visual.svg"
 import pharmacyosDashboard from "../assets/pharmacyos-dashboard.svg"
@@ -461,9 +462,7 @@ export default function BlogPost() {
             )}
           </div>
 
-          {`${post.content || ""}`.trim() ? (
-            <MarkdownContent content={post.content} />
-          ) : null}
+          <BlogContentRenderer content={post.content} />
 
           {contentSections.length > 0 ? (
             <div className="blog-sections-render">

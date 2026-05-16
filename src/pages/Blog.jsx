@@ -4,7 +4,7 @@ import { supabase } from "../lib/supabaseClient"
 import SEO from "../components/SEO"
 import Pagination from "../components/Pagination"
 import BlogEngagementStats from "../components/BlogEngagementStats"
-import { formatBlogDate, getBlogCategoryLabel, getBlogCoverFallback, getBlogExcerpt } from "../lib/blogHelpers"
+import { formatBlogDate, getBlogCategoryLabel, getBlogCoverFallback, getBlogExcerpt, stripHtmlContent } from "../lib/blogHelpers"
 import "./Blog.css"
 
 const BLOG_PAGE_SIZE = 6
@@ -124,7 +124,7 @@ export default function Blog() {
     return posts.filter((post) => {
       const categoryLabel = getBlogCategoryLabel(post.category)
       const matchesCategory = activeCategory === "All" || categoryLabel === activeCategory
-      const haystack = [post.title, post.excerpt, post.content, post.author_name, categoryLabel]
+      const haystack = [post.title, post.excerpt, stripHtmlContent(post.content), post.author_name, categoryLabel]
         .filter(Boolean)
         .join(" ")
         .toLowerCase()

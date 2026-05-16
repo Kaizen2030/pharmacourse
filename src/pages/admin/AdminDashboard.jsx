@@ -6,6 +6,7 @@ import {
   Save, GripVertical, AlertCircle, RefreshCw, FlaskConical, Users, Award, ExternalLink, Video, Building2, Tags
 } from "lucide-react"
 import Pagination from "../../components/Pagination"
+import BlogContentRenderer from "../../components/BlogContentRenderer"
 import MarkdownContent from "../../components/MarkdownContent"
 import "./AdminDashboard.css"
 import { DEFAULT_CERTIFICATE_SETTINGS, normalizeCertificateSettings } from "../../lib/certificateSettings"
@@ -2040,7 +2041,6 @@ function BlogDraftPreview({ form }) {
   const authorName = `${form.author_name || ""}`.trim() || "PharmaCourse Team"
   const authorTitle = `${form.author_title || ""}`.trim() || "Editorial Team"
   const contentSections = getPopulatedBlogSections(form.content_sections)
-  const hasRichContent = /<[^>]+>/.test(`${form.content || ""}`)
   const previewDate = form.is_published && form.published_at ? formatBlogDate(form.published_at) : "Draft preview"
   const previewExcerpt = `${form.excerpt || ""}`.trim()
   const previewTitle = `${form.title || ""}`.trim() || "Untitled blog post"
@@ -2078,14 +2078,7 @@ function BlogDraftPreview({ form }) {
         </div>
 
         {`${form.content || ""}`.trim() ? (
-          hasRichContent ? (
-            <div
-              className="blog-draft-preview-html"
-              dangerouslySetInnerHTML={{ __html: form.content }}
-            />
-          ) : (
-            <MarkdownContent content={form.content} className="markdown-content blog-draft-preview-markdown" />
-          )
+          <BlogContentRenderer content={form.content} className="markdown-content blog-draft-preview-markdown" />
         ) : (
           <div className="blog-draft-preview-empty">Main article content will appear here.</div>
         )}

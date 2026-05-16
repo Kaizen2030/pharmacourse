@@ -84,9 +84,26 @@ export function getBlogCoverFallback(category) {
   return "linear-gradient(135deg, #533AB7, #7F77DD)"
 }
 
+export function stripHtmlContent(value) {
+  const normalizedValue = `${value || ""}`
+  if (!normalizedValue.trim()) return ""
+
+  if (typeof window !== "undefined" && typeof window.DOMParser !== "undefined") {
+    const parsed = new window.DOMParser().parseFromString(normalizedValue, "text/html")
+    return `${parsed.body.textContent || ""}`.replace(/\s+/g, " ").trim()
+  }
+
+  return normalizedValue
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+}
+
 export function getBlogExcerpt(post) {
   if (post.excerpt) return post.excerpt
-  const content = `${post.content || ""}`.replace(/\s+/g, " ").trim()
+  const content = stripHtmlContent(post.content)
   if (content) {
     return content.length > 160 ? `${content.slice(0, 160)}...` : content
   }
