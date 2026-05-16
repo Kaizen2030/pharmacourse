@@ -141,6 +141,15 @@ function buildTrackingFeed({ requests = [], appointments = [], deliveries = [], 
   ].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
 }
 
+function normalizeTrackingPayload(payload) {
+  return {
+    requests: Array.isArray(payload?.requests) ? payload.requests : [],
+    appointments: Array.isArray(payload?.appointments) ? payload.appointments : [],
+    deliveries: Array.isArray(payload?.deliveries) ? payload.deliveries : [],
+    notifications: Array.isArray(payload?.notifications) ? payload.notifications : [],
+  }
+}
+
 function buildPharmacyOptions(rows = []) {
   const map = new Map(rows.map((row) => [row.id, row]))
 
@@ -476,48 +485,15 @@ export default function PatientPortal() {
     setTrackingMessage("")
 
     try {
-      const [requestsResult, appointmentsResult, deliveriesResult, notificationsResult] = await Promise.all([
-        supabase
-          .from("prescription_requests")
-          .select("id, drug_requested, condition_notes, status, created_at")
-          .eq("pharmacy_id", pharmacyId)
-          .eq("patient_phone", phone)
-          .order("created_at", { ascending: false })
-          .limit(10),
-        supabase
-          .from("appointments")
-          .select("id, appointment_type, slot_datetime, condition_summary, patient_notes, status, created_at")
-          .eq("pharmacy_id", pharmacyId)
-          .eq("patient_phone", phone)
-          .order("created_at", { ascending: false })
-          .limit(10),
-        supabase
-          .from("deliveries")
-          .select("id, patient_address, items, status, created_at")
-          .eq("pharmacy_id", pharmacyId)
-          .eq("patient_phone", phone)
-          .order("created_at", { ascending: false })
-          .limit(10),
-        supabase
-          .from("patient_notifications")
-          .select("id, type, message, read, created_at")
-          .eq("pharmacy_id", pharmacyId)
-          .eq("patient_phone", phone)
-          .order("created_at", { ascending: false })
-          .limit(12),
-      ])
-
-      if (requestsResult.error) throw requestsResult.error
-      if (appointmentsResult.error) throw appointmentsResult.error
-      if (deliveriesResult.error) throw deliveriesResult.error
-      if (notificationsResult.error) throw notificationsResult.error
-
-      const feed = buildTrackingFeed({
-        requests: requestsResult.data || [],
-        appointments: appointmentsResult.data || [],
-        deliveries: deliveriesResult.data || [],
-        notifications: notificationsResult.data || [],
+      const { data, error } = await supabase.rpc("public_patient_portal_updates", {
+        target_pharmacy_id: pharmacyId,
+        target_phone: phone,
       })
+
+      if (error) throw error
+
+      const normalized = normalizeTrackingPayload(data)
+      const feed = buildTrackingFeed(normalized)
 
       setTrackingFeed(feed)
       if (!feed.length) {
