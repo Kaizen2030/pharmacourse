@@ -6,6 +6,7 @@ import SEO from "../components/SEO"
 import BlogEngagementStats from "../components/BlogEngagementStats"
 import BlogContentRenderer from "../components/BlogContentRenderer"
 import MarkdownContent from "../components/MarkdownContent"
+import { useAuth } from "../context/AuthContext"
 import pharmacourseHeroVisual from "../assets/pharmacourse-hero-visual.svg"
 import pharmacyosDashboard from "../assets/pharmacyos-dashboard.svg"
 import {
@@ -182,11 +183,23 @@ function BlogSectionImagePlayer({ images, postTitle, sectionTitle }) {
   )
 }
 
+function getCommentInitials(name) {
+  const parts = `${name || ""}`.trim().split(/\s+/).filter(Boolean).slice(0, 2)
+  if (parts.length === 0) return "PC"
+  return parts.map((part) => part[0].toUpperCase()).join("")
+}
+
 export default function BlogPost() {
+  const { user, profile, loading: authLoading } = useAuth()
   const { slug } = useParams()
   const [post, setPost] = useState(null)
   const [relatedPosts, setRelatedPosts] = useState([])
   const [recommendedCourses, setRecommendedCourses] = useState([])
+  const [comments, setComments] = useState([])
+  const [commentsLoading, setCommentsLoading] = useState(true)
+  const [commentContent, setCommentContent] = useState("")
+  const [commentSaving, setCommentSaving] = useState(false)
+  const [commentError, setCommentError] = useState("")
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
   const [engagement, setEngagement] = useState(DEFAULT_ENGAGEMENT_STATE)
@@ -244,6 +257,16 @@ export default function BlogPost() {
       isActive = false
     }
   }, [post?.slug, post?.like_count, post?.view_count])
+
+  useEffect(() => {
+    if (!post?.id) {
+      setComments([])
+      setCommentsLoading(false)
+      return
+    }
+
+    void loadComments(post.id)
+  }, [post?.id])
 
   async function loadPost() {
     setLoading(true)
@@ -311,6 +334,70 @@ export default function BlogPost() {
 
     setRecommendedCourses(courseData)
     setLoading(false)
+  }
+
+  async function loadComments(postId) {
+    setCommentsLoading(true)
+    setCommentError("")
+
+    const { data, error } = await supabase
+      .from("blog_comments")
+      .select("id, commenter_name, content, created_at")
+      .eq("post_id", postId)
+      .order("created_at", { ascending: true })
+
+    if (error) {
+      console.error("Failed to load blog comments:", error)
+      setComments([])
+      setCommentError("We could not load comments right now.")
+    } else {
+      setComments(data || [])
+    }
+
+    setCommentsLoading(false)
+  }
+
+  async function handleCommentSubmit(event) {
+    event.preventDefault()
+
+    if (!user || !post?.id || commentSaving) return
+
+    const nextContent = commentContent.trim()
+    if (!nextContent) {
+      setCommentError("Write a comment before posting.")
+      return
+    }
+
+    const displayName =
+      `${profile?.full_name || ""}`.trim() ||
+      `${user.user_metadata?.full_name || ""}`.trim() ||
+      `${user.email || ""}`.split("@")[0] ||
+      "PharmaCourse Member"
+
+    setCommentSaving(true)
+    setCommentError("")
+
+    const { data, error } = await supabase
+      .from("blog_comments")
+      .insert({
+        post_id: post.id,
+        user_id: user.id,
+        commenter_name: displayName,
+        content: nextContent,
+      })
+      .select("id, commenter_name, content, created_at")
+      .single()
+
+    setCommentSaving(false)
+
+    if (error) {
+      console.error("Failed to post blog comment:", error)
+      setCommentError(error.message || "We could not post your comment right now.")
+      return
+    }
+
+    setComments((current) => [...current, data])
+    setCommentContent("")
   }
 
   async function handleLikeToggle() {
@@ -495,6 +582,71 @@ export default function BlogPost() {
                 {authorName} shares practical pharmacy and healthcare operations insights for professionals building
                 stronger clinical and business systems.
               </p>
+            </div>
+          </section>
+
+          <section className="blog-comments-card">
+            <div className="blog-comments-head">
+              <div>
+                <h2>Comments</h2>
+                <p>
+                  Join the conversation on this article.
+                </p>
+              </div>
+              <span className="blog-comments-count">
+                {comments.length} {comments.length === 1 ? "comment" : "comments"}
+              </span>
+            </div>
+
+            {user ? (
+              <form className="blog-comment-form" onSubmit={handleCommentSubmit}>
+                <textarea
+                  value={commentContent}
+                  onChange={(event) => setCommentContent(event.target.value)}
+                  placeholder="Share your thoughts on this article..."
+                  rows={5}
+                  disabled={commentSaving}
+                />
+                <div className="blog-comment-form-row">
+                  <p className="blog-comment-form-note">
+                    Commenting as <strong>{profile?.full_name || user.email}</strong>
+                  </p>
+                  <button type="submit" className="btn btn-primary" disabled={commentSaving || authLoading}>
+                    {commentSaving ? "Posting..." : "Post comment"}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="blog-comment-login-prompt">
+                <p>Sign in to leave a comment and join the discussion.</p>
+                <div className="blog-comment-login-actions">
+                  <Link to="/login" className="btn btn-primary">Sign in</Link>
+                  <Link to="/register" className="btn btn-secondary">Create account</Link>
+                </div>
+              </div>
+            )}
+
+            {commentError ? <p className="blog-comment-error">{commentError}</p> : null}
+
+            <div className="blog-comment-list">
+              {commentsLoading ? (
+                <p className="blog-comment-empty">Loading comments...</p>
+              ) : comments.length === 0 ? (
+                <p className="blog-comment-empty">No comments yet. Be the first to respond.</p>
+              ) : (
+                comments.map((comment) => (
+                  <article key={comment.id} className="blog-comment-item">
+                    <div className="blog-comment-avatar">{getCommentInitials(comment.commenter_name)}</div>
+                    <div className="blog-comment-body">
+                      <div className="blog-comment-meta">
+                        <strong>{comment.commenter_name}</strong>
+                        <span>{formatBlogDate(comment.created_at)}</span>
+                      </div>
+                      <p>{comment.content}</p>
+                    </div>
+                  </article>
+                ))
+              )}
             </div>
           </section>
         </article>
