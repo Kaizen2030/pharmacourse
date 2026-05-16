@@ -6,6 +6,7 @@ import {
   Save, GripVertical, AlertCircle, RefreshCw, FlaskConical, Users, Award, ExternalLink, Video, Building2, Tags
 } from "lucide-react"
 import Pagination from "../../components/Pagination"
+import MarkdownContent from "../../components/MarkdownContent"
 import "./AdminDashboard.css"
 import { DEFAULT_CERTIFICATE_SETTINGS, normalizeCertificateSettings } from "../../lib/certificateSettings"
 import {
@@ -2034,6 +2035,103 @@ function BlogRichTextEditor({ value, onChange }) {
   )
 }
 
+function BlogDraftPreview({ form }) {
+  const normalizedCategory = normalizeBlogCategory(form.category) || "General"
+  const authorName = `${form.author_name || ""}`.trim() || "PharmaCourse Team"
+  const authorTitle = `${form.author_title || ""}`.trim() || "Editorial Team"
+  const contentSections = getPopulatedBlogSections(form.content_sections)
+  const hasRichContent = /<[^>]+>/.test(`${form.content || ""}`)
+  const previewDate = form.is_published && form.published_at ? formatBlogDate(form.published_at) : "Draft preview"
+  const previewExcerpt = `${form.excerpt || ""}`.trim()
+  const previewTitle = `${form.title || ""}`.trim() || "Untitled blog post"
+
+  return (
+    <div className="blog-draft-preview-wrap">
+      <div className="blog-draft-preview-head">
+        <div>
+          <h4>Live Preview</h4>
+          <p>Review how this article will look before you publish it.</p>
+        </div>
+        <span className={`blog-draft-preview-status${form.is_published ? " published" : ""}`}>
+          {form.is_published ? "Marked for publish" : "Draft"}
+        </span>
+      </div>
+
+      <article className="blog-draft-preview-card">
+        <div className="blog-draft-preview-meta">
+          <span className="blog-draft-preview-badge">{normalizedCategory}</span>
+          <span>{previewDate}</span>
+          <span>{authorName}</span>
+        </div>
+
+        <h1>{previewTitle}</h1>
+        {previewExcerpt ? <p className="blog-draft-preview-subtitle">{previewExcerpt}</p> : null}
+
+        <div className="blog-draft-preview-cover-frame">
+          {form.cover_image_url ? (
+            <img src={form.cover_image_url} alt={previewTitle} className="blog-draft-preview-cover" />
+          ) : (
+            <div className="blog-draft-preview-cover-fallback">
+              <span>{normalizedCategory}</span>
+            </div>
+          )}
+        </div>
+
+        {`${form.content || ""}`.trim() ? (
+          hasRichContent ? (
+            <div
+              className="blog-draft-preview-html"
+              dangerouslySetInnerHTML={{ __html: form.content }}
+            />
+          ) : (
+            <MarkdownContent content={form.content} className="markdown-content blog-draft-preview-markdown" />
+          )
+        ) : (
+          <div className="blog-draft-preview-empty">Main article content will appear here.</div>
+        )}
+
+        {contentSections.length > 0 ? (
+          <div className="blog-draft-preview-sections">
+            {contentSections.map((section, index) => (
+              <section key={`preview-section-${index}`} className="blog-draft-preview-section">
+                <div className="blog-draft-preview-section-copy">
+                  {section.title ? <h2>{section.title}</h2> : null}
+                  {section.body ? (
+                    <MarkdownContent
+                      content={section.body}
+                      className="markdown-content blog-draft-preview-markdown"
+                    />
+                  ) : (
+                    <p className="blog-draft-preview-empty">Section copy will appear here.</p>
+                  )}
+                </div>
+
+                {section.images.length > 0 ? (
+                  <div className="blog-draft-preview-gallery">
+                    {section.images.map((imageUrl, imageIndex) => (
+                      <div key={`${imageUrl}-${imageIndex}`} className="blog-draft-preview-gallery-item">
+                        <img src={imageUrl} alt={section.title || `Section image ${imageIndex + 1}`} />
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+              </section>
+            ))}
+          </div>
+        ) : null}
+
+        <section className="blog-draft-preview-author">
+          <div className="blog-draft-preview-author-avatar">{authorName.slice(0, 2).toUpperCase()}</div>
+          <div>
+            <h3>{authorName}</h3>
+            <p>{authorTitle}</p>
+          </div>
+        </section>
+      </article>
+    </div>
+  )
+}
+
 function BlogTab() {
   const [posts, setPosts] = useState([])
   const [categories, setCategories] = useState([])
@@ -2044,6 +2142,7 @@ function BlogTab() {
   const [uploadingCover, setUploadingCover] = useState(false)
   const [uploadingSectionIndex, setUploadingSectionIndex] = useState(null)
   const [showForm, setShowForm] = useState(false)
+  const [showPreview, setShowPreview] = useState(true)
   const [editingId, setEditingId] = useState(null)
   const [slugTouched, setSlugTouched] = useState(false)
   const [form, setForm] = useState(EMPTY_BLOG_FORM)
@@ -2106,6 +2205,7 @@ function BlogTab() {
     setEditingId(null)
     setSlugTouched(false)
     setShowForm(false)
+    setShowPreview(true)
   }
 
   function startCreate() {
@@ -2115,6 +2215,7 @@ function BlogTab() {
     setSlugTouched(false)
     setForm(EMPTY_BLOG_FORM)
     setShowForm(true)
+    setShowPreview(true)
   }
 
   function startEdit(post) {
@@ -2138,6 +2239,7 @@ function BlogTab() {
       published_at: post.published_at || null,
     })
     setShowForm(true)
+    setShowPreview(true)
   }
 
   function updateTitle(nextTitle) {
@@ -2433,6 +2535,10 @@ function BlogTab() {
                 Draft or publish articles for the public blog section.
               </p>
             </div>
+            <button type="button" className="btn-secondary" onClick={() => setShowPreview((current) => !current)}>
+              <Eye size={16} />
+              {showPreview ? "Hide Preview" : "Show Preview"}
+            </button>
           </div>
 
           <div className="form-row">
@@ -2714,6 +2820,8 @@ function BlogTab() {
               {saving ? "Saving..." : editingId ? "Save Changes" : "Save Post"}
             </button>
           </div>
+
+          {showPreview ? <BlogDraftPreview form={form} /> : null}
         </form>
       )}
 
