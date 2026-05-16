@@ -3,7 +3,11 @@ returns table (
   id uuid,
   name text,
   location text,
-  parent_pharmacy_id uuid
+  parent_pharmacy_id uuid,
+  county text,
+  subcounty text,
+  town text,
+  area text
 )
 language sql
 security definer
@@ -13,7 +17,11 @@ as $$
     pharmacies.id,
     pharmacies.name,
     pharmacies.location,
-    pharmacies.parent_pharmacy_id
+    pharmacies.parent_pharmacy_id,
+    pharmacies.county,
+    pharmacies.subcounty,
+    pharmacies.town,
+    pharmacies.area
   from public.pharmacies as pharmacies
   order by
     case when pharmacies.parent_pharmacy_id is null then 0 else 1 end,

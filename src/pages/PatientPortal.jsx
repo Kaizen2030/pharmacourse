@@ -173,13 +173,24 @@ function buildPharmacyOptions(rows = []) {
   const map = new Map(rows.map((row) => [row.id, row]))
 
   return rows
-    .map((row) => ({
-      ...parseLocationMeta(row.location || ""),
-      ...row,
-      isBranch: Boolean(row.parent_pharmacy_id),
-      parentName: row.parent_pharmacy_id ? map.get(row.parent_pharmacy_id)?.name || "Main pharmacy" : "",
-      locationLabel: row.location || "Location not provided",
-    }))
+    .map((row) => {
+      const parsedLocation = parseLocationMeta(row.location || "")
+      const county = row.county || parsedLocation.county || ""
+      const subcounty = row.subcounty || ""
+      const town = row.town || parsedLocation.town || ""
+      const area = row.area || parsedLocation.area || ""
+
+      return {
+        ...row,
+        county,
+        subcounty,
+        town,
+        area,
+        isBranch: Boolean(row.parent_pharmacy_id),
+        parentName: row.parent_pharmacy_id ? map.get(row.parent_pharmacy_id)?.name || "Main pharmacy" : "",
+        locationLabel: [area, town, subcounty, county].filter(Boolean).join(", ") || row.location || "Location not provided",
+      }
+    })
     .sort((first, second) => {
       if (first.isBranch !== second.isBranch) return first.isBranch ? 1 : -1
       return `${first.parentName} ${first.name}`.localeCompare(`${second.parentName} ${second.name}`)
@@ -197,6 +208,7 @@ export default function PatientPortal() {
   const [directoryError, setDirectoryError] = useState("")
   const [branchSearch, setBranchSearch] = useState("")
   const [countyFilter, setCountyFilter] = useState("")
+  const [subcountyFilter, setSubcountyFilter] = useState("")
   const [townFilter, setTownFilter] = useState("")
   const [selectedDirectoryMainId, setSelectedDirectoryMainId] = useState("")
   const [visibleMainCount, setVisibleMainCount] = useState(DIRECTORY_BATCH_SIZES.mains)
@@ -271,17 +283,18 @@ export default function PatientPortal() {
     const query = branchSearch.trim().toLowerCase()
     return pharmacyOptions.filter((option) => {
       const matchesQuery = !query || (
-        `${option.name} ${option.parentName} ${option.locationLabel} ${option.county} ${option.town} ${option.area}`
+        `${option.name} ${option.parentName} ${option.locationLabel} ${option.county} ${option.subcounty || ""} ${option.town} ${option.area}`
           .toLowerCase()
           .includes(query)
       )
 
       const matchesCounty = !countyFilter || option.county === countyFilter
+      const matchesSubcounty = !subcountyFilter || option.subcounty === subcountyFilter
       const matchesTown = !townFilter || option.town === townFilter || option.area === townFilter
 
-      return matchesQuery && matchesCounty && matchesTown
+      return matchesQuery && matchesCounty && matchesSubcounty && matchesTown
     })
-  }, [branchSearch, countyFilter, townFilter, pharmacyOptions])
+  }, [branchSearch, countyFilter, subcountyFilter, townFilter, pharmacyOptions])
 
   const mainPharmacies = useMemo(
     () => visiblePharmacyOptions.filter((option) => !option.isBranch),
@@ -311,7 +324,7 @@ export default function PatientPortal() {
     if (!query) return scopedRows
 
     return scopedRows.filter((option) => (
-      `${option.name} ${option.parentName} ${option.locationLabel} ${option.county} ${option.town} ${option.area}`
+      `${option.name} ${option.parentName} ${option.locationLabel} ${option.county} ${option.subcounty || ""} ${option.town} ${option.area}`
         .toLowerCase()
         .includes(query)
     ))
@@ -334,11 +347,17 @@ export default function PatientPortal() {
 
     visibleBranchPharmacies.forEach((option) => {
       const matchesTown = townFilter && (option.town === townFilter || option.area === townFilter)
+      const matchesSubcounty = subcountyFilter && option.subcounty === subcountyFilter
       const matchesCounty = countyFilter && option.county === countyFilter
       const matchesMainCounty = !countyFilter && !townFilter && selectedDirectoryMain?.county && option.county === selectedDirectoryMain.county
 
       if (matchesTown) {
         nearest.push(option)
+        return
+      }
+
+      if (matchesSubcounty) {
+        sameCounty.push(option)
         return
       }
 
@@ -351,11 +370,13 @@ export default function PatientPortal() {
     })
 
     return { nearest, sameCounty, others }
-  }, [countyFilter, selectedDirectoryMain?.county, townFilter, visibleBranchPharmacies])
+  }, [countyFilter, selectedDirectoryMain?.county, subcountyFilter, townFilter, visibleBranchPharmacies])
 
   const branchGroupLabels = useMemo(() => ({
     nearest: townFilter
       ? `Nearest branches in ${townFilter}`
+      : subcountyFilter
+        ? `Branches in ${subcountyFilter}`
       : countyFilter
         ? `Best matches in ${countyFilter}`
         : selectedDirectoryMain?.county
@@ -363,11 +384,13 @@ export default function PatientPortal() {
           : "Best local matches",
     sameCounty: countyFilter
       ? `Other branches outside ${countyFilter}`
+      : subcountyFilter
+        ? `Other branches outside ${subcountyFilter}`
       : selectedDirectoryMain?.county
         ? `Other branches outside ${selectedDirectoryMain.county}`
         : "Other branches",
     others: "Other branches in this pharmacy",
-  }), [countyFilter, selectedDirectoryMain?.county, townFilter])
+  }), [countyFilter, selectedDirectoryMain?.county, subcountyFilter, townFilter])
 
   const countyOptions = useMemo(() => (
     [...new Set(
@@ -377,7 +400,7 @@ export default function PatientPortal() {
     )].sort((first, second) => first.localeCompare(second))
   ), [pharmacyOptions])
 
-  const townOptions = useMemo(() => (
+  const subcountyOptions = useMemo(() => (
     [...new Set(
       pharmacyOptions
         .filter((option) => {
@@ -387,17 +410,32 @@ export default function PatientPortal() {
           }
           return false
         })
-        .flatMap((option) => [option.town, option.area])
+        .map((option) => option.subcounty)
         .filter(Boolean)
     )].sort((first, second) => first.localeCompare(second))
   ), [countyFilter, pharmacyOptions, selectedDirectoryMainId])
+
+  const townOptions = useMemo(() => (
+    [...new Set(
+      pharmacyOptions
+        .filter((option) => {
+          if ((!countyFilter || option.county === countyFilter) && (!subcountyFilter || option.subcounty === subcountyFilter)) {
+            if (!selectedDirectoryMainId) return true
+            return !option.isBranch || option.parent_pharmacy_id === selectedDirectoryMainId || option.id === selectedDirectoryMainId
+          }
+          return false
+        })
+        .flatMap((option) => [option.town, option.area])
+        .filter(Boolean)
+    )].sort((first, second) => first.localeCompare(second))
+  ), [countyFilter, subcountyFilter, pharmacyOptions, selectedDirectoryMainId])
 
   const hasActivePharmacy = Boolean(pharmacyId && pharmacy)
 
   useEffect(() => {
     setVisibleMainCount(DIRECTORY_BATCH_SIZES.mains)
     setVisibleBranchCount(DIRECTORY_BATCH_SIZES.branches)
-  }, [branchSearch, countyFilter, townFilter])
+  }, [branchSearch, countyFilter, subcountyFilter, townFilter])
 
   useEffect(() => {
     if (selectedDirectoryMainId && !mainPharmacies.some((option) => option.id === selectedDirectoryMainId)) {
@@ -464,6 +502,7 @@ export default function PatientPortal() {
     setTrackingMessage("")
     setBranchSearch("")
     setCountyFilter("")
+    setSubcountyFilter("")
     setTownFilter("")
     setSelectedDirectoryMainId("")
     window.scrollTo({ top: 0, behavior: "smooth" })
@@ -472,6 +511,7 @@ export default function PatientPortal() {
   function clearDirectoryFilters() {
     setBranchSearch("")
     setCountyFilter("")
+    setSubcountyFilter("")
     setTownFilter("")
   }
 
@@ -927,10 +967,20 @@ export default function PatientPortal() {
                       <div className="patient-portal-filter-stack">
                         <select value={countyFilter} onChange={(event) => {
                           setCountyFilter(event.target.value)
+                          setSubcountyFilter("")
                           setTownFilter("")
                         }}>
                           <option value="">All counties</option>
                           {countyOptions.map((option) => (
+                            <option key={option} value={option}>{option}</option>
+                          ))}
+                        </select>
+                        <select value={subcountyFilter} onChange={(event) => {
+                          setSubcountyFilter(event.target.value)
+                          setTownFilter("")
+                        }}>
+                          <option value="">All subcounties</option>
+                          {subcountyOptions.map((option) => (
                             <option key={option} value={option}>{option}</option>
                           ))}
                         </select>
@@ -940,7 +990,7 @@ export default function PatientPortal() {
                             <option key={option} value={option}>{option}</option>
                           ))}
                         </select>
-                        {(branchSearch || countyFilter || townFilter) && (
+                        {(branchSearch || countyFilter || subcountyFilter || townFilter) && (
                           <button type="button" className="btn btn-outline patient-portal-filter-clear" onClick={clearDirectoryFilters}>
                             Clear filters
                           </button>
@@ -982,6 +1032,7 @@ export default function PatientPortal() {
                           <div className="patient-portal-directory-summary">
                             Showing {visiblePharmacyOptions.length.toLocaleString()} matching locations
                             {countyFilter ? ` in ${countyFilter}` : ""}
+                            {subcountyFilter ? ` · ${subcountyFilter}` : ""}
                             {townFilter ? ` · ${townFilter}` : ""}
                           </div>
                           {mainPharmacies.length > 0 && (
@@ -1005,6 +1056,7 @@ export default function PatientPortal() {
                                     <div className="patient-portal-choice-title">{option.name}</div>
                                     <div className="patient-portal-choice-location-row">
                                       {option.county && <span className="patient-portal-choice-chip">{option.county}</span>}
+                                      {option.subcounty && <span className="patient-portal-choice-chip">{option.subcounty}</span>}
                                       {option.town && <span className="patient-portal-choice-chip">{option.town}</span>}
                                     </div>
                                     <div className="patient-portal-choice-meta">{option.locationLabel}</div>
@@ -1062,6 +1114,7 @@ export default function PatientPortal() {
                                         <div className="patient-portal-choice-parent">{option.parentName}</div>
                                         <div className="patient-portal-choice-location-row">
                                           {option.county && <span className="patient-portal-choice-chip">{option.county}</span>}
+                                          {option.subcounty && <span className="patient-portal-choice-chip">{option.subcounty}</span>}
                                           {option.town && <span className="patient-portal-choice-chip">{option.town}</span>}
                                         </div>
                                         <div className="patient-portal-choice-meta">{option.locationLabel}</div>
@@ -1087,6 +1140,7 @@ export default function PatientPortal() {
                                         <div className="patient-portal-choice-parent">{option.parentName}</div>
                                         <div className="patient-portal-choice-location-row">
                                           {option.county && <span className="patient-portal-choice-chip">{option.county}</span>}
+                                          {option.subcounty && <span className="patient-portal-choice-chip">{option.subcounty}</span>}
                                           {option.town && <span className="patient-portal-choice-chip">{option.town}</span>}
                                         </div>
                                         <div className="patient-portal-choice-meta">{option.locationLabel}</div>
@@ -1112,6 +1166,7 @@ export default function PatientPortal() {
                                         <div className="patient-portal-choice-parent">{option.parentName}</div>
                                         <div className="patient-portal-choice-location-row">
                                           {option.county && <span className="patient-portal-choice-chip">{option.county}</span>}
+                                          {option.subcounty && <span className="patient-portal-choice-chip">{option.subcounty}</span>}
                                           {option.town && <span className="patient-portal-choice-chip">{option.town}</span>}
                                         </div>
                                         <div className="patient-portal-choice-meta">{option.locationLabel}</div>
