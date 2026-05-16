@@ -189,6 +189,7 @@ button {
   display: flex;
   gap: 0.75rem;
   flex-wrap: wrap;
+  position: relative;
 }
 
 .courses-filter-tabs .btn,
@@ -225,6 +226,13 @@ button {
   margin-left: auto;
   color: var(--text-500);
   font-size: 0.92rem;
+}
+
+.courses-filter-scroll-hint {
+  display: none;
+  margin: 0;
+  font-size: 0.74rem;
+  color: var(--text-500);
 }
 
 .btn {
@@ -1216,6 +1224,7 @@ code {
     scrollbar-width: none;
     -ms-overflow-style: none;
     padding-bottom: 0.2rem;
+    mask-image: linear-gradient(to right, transparent 0, black 12px, black calc(100% - 18px), transparent 100%);
   }
 
   .courses-filter-tabs::-webkit-scrollbar,
@@ -1228,6 +1237,10 @@ code {
     flex: 0 0 auto;
     min-width: max-content;
     white-space: nowrap;
+  }
+
+  .courses-filter-scroll-hint {
+    display: block;
   }
 
   .whatsapp-optin-card,

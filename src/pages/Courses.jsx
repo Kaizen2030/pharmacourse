@@ -178,6 +178,9 @@ export default function Courses() {
                       )
                     })}
                   </div>
+                  {categoryTabs.length > 3 ? (
+                    <p className="courses-filter-scroll-hint">Swipe left to see more categories</p>
+                  ) : null}
                 </div>
 
                 <div className="courses-filter-search">
@@ -216,6 +219,7 @@ export default function Courses() {
                       Paid
                     </button>
                   </div>
+                  <p className="courses-filter-scroll-hint">Swipe left or right to view filter options</p>
                 </div>
 
                 <p className="courses-filter-summary">
