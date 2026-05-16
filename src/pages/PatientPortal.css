@@ -205,6 +205,37 @@
   gap: 1.5rem;
 }
 
+.patient-portal-global-updates,
+.patient-portal-global-group {
+  padding: 1.1rem 1.2rem;
+  border-radius: 22px;
+  background: rgba(248, 252, 250, 0.96);
+  border: 1px solid rgba(15, 110, 86, 0.12);
+}
+
+.patient-portal-global-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.patient-portal-global-group-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 0.9rem;
+}
+
+.patient-portal-global-group-head h3 {
+  color: var(--text-900);
+}
+
+.patient-portal-global-group-head p {
+  color: var(--text-500);
+  margin-top: 0.25rem;
+}
+
 .patient-portal-directory-summary {
   color: var(--text-500);
   font-size: 0.95rem;
@@ -618,8 +649,13 @@
   .patient-portal-submit,
   .patient-portal-track-bar .btn,
   .patient-portal-load-more,
+  .patient-portal-global-group-head .btn,
   .patient-portal-choice-actions .btn {
     width: 100%;
+  }
+
+  .patient-portal-global-group-head {
+    flex-direction: column;
   }
 
   .patient-portal-card-rail {

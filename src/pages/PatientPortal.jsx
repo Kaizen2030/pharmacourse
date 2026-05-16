@@ -146,6 +146,28 @@ function buildTrackingFeed({ requests = [], appointments = [], deliveries = [], 
   ].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
 }
 
+function buildGlobalTrackingMatches(matches = []) {
+  return matches
+    .map((match) => {
+      const feed = buildTrackingFeed({
+        requests: Array.isArray(match?.requests) ? match.requests : [],
+        appointments: Array.isArray(match?.appointments) ? match.appointments : [],
+        deliveries: Array.isArray(match?.deliveries) ? match.deliveries : [],
+        notifications: Array.isArray(match?.notifications) ? match.notifications : [],
+      })
+
+      return {
+        pharmacyId: match?.pharmacy_id || "",
+        pharmacyName: match?.pharmacy_name || "Pharmacy",
+        pharmacyLocation: match?.pharmacy_location || "Location not provided",
+        lastActivityAt: match?.last_activity_at || feed[0]?.createdAt || "",
+        feed,
+      }
+    })
+    .filter((match) => match.pharmacyId && match.feed.length > 0)
+    .sort((first, second) => new Date(second.lastActivityAt || 0) - new Date(first.lastActivityAt || 0))
+}
+
 function normalizeTrackingPayload(payload) {
   return {
     requests: Array.isArray(payload?.requests) ? payload.requests : [],
@@ -219,6 +241,7 @@ export default function PatientPortal() {
   const [deliveryForm, setDeliveryForm] = useState(createEmptyDelivery)
   const [trackerPhone, setTrackerPhone] = useState("")
   const [trackingFeed, setTrackingFeed] = useState([])
+  const [trackingMatches, setTrackingMatches] = useState([])
   const [trackingLoading, setTrackingLoading] = useState(false)
   const [trackingMessage, setTrackingMessage] = useState("")
   const [submitting, setSubmitting] = useState("")
@@ -679,35 +702,66 @@ export default function PatientPortal() {
     if (!phone) {
       setTrackingMessage("Enter the same phone number you used when submitting the request.")
       setTrackingFeed([])
+      setTrackingMatches([])
       return
     }
 
     setTrackingLoading(true)
     setTrackingMessage("")
+    setTrackingFeed([])
+    setTrackingMatches([])
 
     try {
-      const { data, error } = await supabase.rpc("public_patient_portal_updates", {
-        target_pharmacy_id: pharmacyId,
-        target_phone: phone,
-      })
+      if (pharmacyId) {
+        const { data, error } = await supabase.rpc("public_patient_portal_updates", {
+          target_pharmacy_id: pharmacyId,
+          target_phone: phone,
+        })
 
-      if (error) throw error
+        if (error) throw error
 
-      const normalized = normalizeTrackingPayload(data)
-      const feed = buildTrackingFeed(normalized)
+        const normalized = normalizeTrackingPayload(data)
+        const feed = buildTrackingFeed(normalized)
 
-      setTrackingFeed(feed)
-      if (!feed.length) {
-        setTrackingMessage(options.showEmptySuccess
-          ? "Your request was submitted. Updates will appear here once the pharmacy reviews it."
-          : "No records were found for that phone number at this pharmacy yet.")
+        setTrackingFeed(feed)
+        if (!feed.length) {
+          setTrackingMessage(options.showEmptySuccess
+            ? "Your request was submitted. Updates will appear here once the pharmacy reviews it."
+            : "No records were found for that phone number at this pharmacy yet.")
+        }
+      } else {
+        const { data, error } = await supabase.rpc("public_patient_portal_updates_by_phone", {
+          target_phone: phone,
+        })
+
+        if (error) throw error
+
+        const matches = buildGlobalTrackingMatches(Array.isArray(data?.matches) ? data.matches : [])
+        setTrackingMatches(matches)
+
+        if (!matches.length) {
+          setTrackingMessage("No records were found for that phone number yet.")
+        } else if (matches.length === 1) {
+          setTrackingMessage("We found your latest update. Open the pharmacy below if you want to continue there.")
+        } else {
+          setTrackingMessage(`We found updates in ${matches.length} pharmacy locations. Choose the right one below.`)
+        }
       }
     } catch (error) {
       setTrackingFeed([])
+      setTrackingMatches([])
       setTrackingMessage(error?.message || "Unable to load updates right now.")
     } finally {
       setTrackingLoading(false)
     }
+  }
+
+  function openTrackedPharmacy(match) {
+    if (!match?.pharmacyId) return
+    setSearchParams({ pharmacy: match.pharmacyId })
+    setActiveTab("updates")
+    setTrackingMessage("")
+    window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
   function renderFeedback() {
@@ -886,6 +940,65 @@ export default function PatientPortal() {
     )
   }
 
+  function renderGlobalUpdatesFinder() {
+    return (
+      <div className="patient-portal-global-updates">
+        <div className="patient-portal-panel-head">
+          <div>
+            <h2>Already Submitted a Request?</h2>
+            <p>Use your phone number to find updates even if you forgot the branch you selected earlier.</p>
+          </div>
+        </div>
+
+        <div className="patient-portal-track-bar">
+          <input
+            className="form-input"
+            value={trackerPhone}
+            onChange={(event) => setTrackerPhone(event.target.value)}
+            placeholder="Enter your phone number"
+          />
+          <button type="button" className="btn btn-primary" onClick={() => fetchTrackingFeed()} disabled={trackingLoading}>
+            {trackingLoading ? "Checking..." : "Find My Updates"}
+          </button>
+        </div>
+
+        {trackingMessage && <div className="patient-portal-track-message">{trackingMessage}</div>}
+
+        {trackingMatches.length > 0 && (
+          <div className="patient-portal-global-groups">
+            {trackingMatches.map((match) => (
+              <div key={match.pharmacyId} className="patient-portal-global-group">
+                <div className="patient-portal-global-group-head">
+                  <div>
+                    <h3>{match.pharmacyName}</h3>
+                    <p>{match.pharmacyLocation}</p>
+                  </div>
+                  <button type="button" className="btn btn-outline" onClick={() => openTrackedPharmacy(match)}>
+                    Open this pharmacy
+                  </button>
+                </div>
+
+                <div className="patient-portal-timeline">
+                  {match.feed.map((item) => (
+                    <div key={`${match.pharmacyId}-${item.id}`} className="patient-portal-update-card">
+                      <div className="patient-portal-update-top">
+                        <span className="patient-portal-update-type">{item.type}</span>
+                        <span className={`patient-portal-status ${getStatusTone(item.status)}`}>{item.status}</span>
+                      </div>
+                      <div className="patient-portal-update-title">{item.title}</div>
+                      <div className="patient-portal-update-text">{item.summary}</div>
+                      <div className="patient-portal-update-time">{formatDateTime(item.createdAt)} · {timeAgo(item.createdAt)}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
   if (portalLoading) {
     return <div className="patient-portal-loading">Loading patient portal...</div>
   }
@@ -1029,6 +1142,7 @@ export default function PatientPortal() {
                         </div>
                       ) : (
                         <div className="patient-portal-directory">
+                          {renderGlobalUpdatesFinder()}
                           <div className="patient-portal-directory-summary">
                             Showing {visiblePharmacyOptions.length.toLocaleString()} matching locations
                             {countyFilter ? ` in ${countyFilter}` : ""}
