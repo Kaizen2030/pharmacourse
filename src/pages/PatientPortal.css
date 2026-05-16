@@ -118,6 +118,25 @@
   border-color: rgba(245, 158, 11, 0.24);
 }
 
+.patient-portal-search {
+  margin-top: 1rem;
+}
+
+.patient-portal-sidebar-note {
+  margin-top: 1rem;
+  padding: 0.9rem 1rem;
+  border-radius: 16px;
+  background: rgba(15, 110, 86, 0.08);
+  color: var(--text-700);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.patient-portal-switch-btn {
+  width: 100%;
+  margin-top: 1rem;
+}
+
 .patient-portal-tab-list {
   display: flex;
   flex-direction: column;
@@ -159,6 +178,130 @@
 
 .patient-portal-panel-head {
   margin-bottom: 1rem;
+}
+
+.patient-portal-empty {
+  padding: 1.2rem;
+  border-radius: 20px;
+  background: rgba(248, 252, 250, 0.96);
+  border: 1px dashed rgba(15, 110, 86, 0.2);
+  color: var(--text-500);
+}
+
+.patient-portal-directory {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.patient-portal-directory-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.patient-portal-directory-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.patient-portal-directory-head h3 {
+  color: var(--text-900);
+}
+
+.patient-portal-directory-head span {
+  min-width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: rgba(15, 110, 86, 0.08);
+  color: var(--green);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+}
+
+.patient-portal-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.patient-portal-choice-card {
+  text-align: left;
+  border: 1px solid rgba(15, 110, 86, 0.14);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 251, 247, 0.98));
+  padding: 1rem;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  box-shadow: 0 12px 30px rgba(15, 42, 32, 0.05);
+}
+
+.patient-portal-choice-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(15, 110, 86, 0.3);
+  box-shadow: 0 18px 36px rgba(15, 42, 32, 0.09);
+}
+
+.patient-portal-choice-card.branch {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 250, 255, 0.98));
+}
+
+.patient-portal-choice-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.9rem;
+}
+
+.patient-portal-choice-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.32rem 0.62rem;
+  border-radius: 999px;
+  background: rgba(15, 110, 86, 0.1);
+  color: var(--green);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.patient-portal-choice-badge.branch {
+  background: rgba(26, 107, 181, 0.1);
+  color: var(--blue);
+}
+
+.patient-portal-choice-title {
+  color: var(--text-900);
+  font-size: 1.05rem;
+  font-weight: 800;
+  margin-bottom: 0.3rem;
+}
+
+.patient-portal-choice-parent {
+  color: var(--green);
+  font-size: 0.86rem;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+}
+
+.patient-portal-choice-meta {
+  color: var(--text-500);
+  font-size: 0.92rem;
+}
+
+.patient-portal-choice-action {
+  margin-top: 0.95rem;
+  color: var(--green);
+  font-size: 0.86rem;
+  font-weight: 800;
 }
 
 .patient-portal-form {

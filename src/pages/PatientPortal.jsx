@@ -141,13 +141,32 @@ function buildTrackingFeed({ requests = [], appointments = [], deliveries = [], 
   ].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
 }
 
+function buildPharmacyOptions(rows = []) {
+  const map = new Map(rows.map((row) => [row.id, row]))
+
+  return rows
+    .map((row) => ({
+      ...row,
+      isBranch: Boolean(row.parent_pharmacy_id),
+      parentName: row.parent_pharmacy_id ? map.get(row.parent_pharmacy_id)?.name || "Main pharmacy" : "",
+      locationLabel: row.location || "Location not provided",
+    }))
+    .sort((first, second) => {
+      if (first.isBranch !== second.isBranch) return first.isBranch ? 1 : -1
+      return `${first.parentName} ${first.name}`.localeCompare(`${second.parentName} ${second.name}`)
+    })
+}
+
 export default function PatientPortal() {
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const pharmacyId = searchParams.get("pharmacy") || searchParams.get("branch") || ""
   const [activeTab, setActiveTab] = useState("prescription")
   const [pharmacy, setPharmacy] = useState(null)
+  const [pharmacyOptions, setPharmacyOptions] = useState([])
   const [portalLoading, setPortalLoading] = useState(true)
   const [portalError, setPortalError] = useState("")
+  const [directoryError, setDirectoryError] = useState("")
+  const [branchSearch, setBranchSearch] = useState("")
   const [prescriptionForm, setPrescriptionForm] = useState(createEmptyPrescription)
   const [prescriptionFile, setPrescriptionFile] = useState(null)
   const [appointmentForm, setAppointmentForm] = useState(createEmptyAppointment)
@@ -164,28 +183,36 @@ export default function PatientPortal() {
     let cancelled = false
 
     async function loadPharmacy() {
-      if (!pharmacyId) {
-        setPortalError("This link is missing a pharmacy id. Ask your pharmacy to share the full patient portal link.")
-        setPortalLoading(false)
-        return
-      }
-
       setPortalLoading(true)
       setPortalError("")
+      setDirectoryError("")
 
-      const { data, error } = await supabase
-        .from("pharmacies")
-        .select("id, name, location")
-        .eq("id", pharmacyId)
-        .maybeSingle()
+      const { data, error } = await supabase.rpc("public_patient_portal_pharmacies")
 
       if (cancelled) return
 
       if (error) {
-        console.warn("Pharmacy lookup failed:", error.message)
+        console.warn("Pharmacy directory lookup failed:", error.message)
+        setDirectoryError("We could not load the branch directory right now. Please try again in a moment.")
         setPharmacy(null)
+        setPharmacyOptions([])
+        if (pharmacyId) {
+          setPortalError("We could not verify that pharmacy right now. Please choose a branch again.")
+        }
       } else {
-        setPharmacy(data || null)
+        const rows = Array.isArray(data) ? data : []
+        const options = buildPharmacyOptions(rows)
+        setPharmacyOptions(options)
+
+        if (!pharmacyId) {
+          setPharmacy(null)
+        } else {
+          const matchedPharmacy = options.find((option) => String(option.id) === String(pharmacyId)) || null
+          setPharmacy(matchedPharmacy)
+          if (!matchedPharmacy) {
+            setPortalError("We could not find that pharmacy or branch. Please choose from the directory below.")
+          }
+        }
       }
 
       setPortalLoading(false)
@@ -205,6 +232,27 @@ export default function PatientPortal() {
       return sum + ((qty > 0 ? qty : 0) * (price > 0 ? price : 0))
     }, 0)
   ), [deliveryForm.items])
+
+  const visiblePharmacyOptions = useMemo(() => {
+    const query = branchSearch.trim().toLowerCase()
+    if (!query) return pharmacyOptions
+
+    return pharmacyOptions.filter((option) => (
+      `${option.name} ${option.parentName} ${option.locationLabel}`.toLowerCase().includes(query)
+    ))
+  }, [branchSearch, pharmacyOptions])
+
+  const mainPharmacies = useMemo(
+    () => visiblePharmacyOptions.filter((option) => !option.isBranch),
+    [visiblePharmacyOptions]
+  )
+
+  const branchPharmacies = useMemo(
+    () => visiblePharmacyOptions.filter((option) => option.isBranch),
+    [visiblePharmacyOptions]
+  )
+
+  const hasActivePharmacy = Boolean(pharmacyId && pharmacy)
 
   function updatePrescription(field, value) {
     setPrescriptionForm((prev) => ({ ...prev, [field]: value }))
@@ -239,6 +287,27 @@ export default function PatientPortal() {
       ...prev,
       items: prev.items.filter((_, itemIndex) => itemIndex !== index),
     }))
+  }
+
+  function handleSelectPharmacy(option) {
+    setSearchParams({ pharmacy: option.id })
+    setPortalError("")
+    setSubmitError("")
+    setSubmitMessage("")
+    setTrackingMessage("")
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
+  function clearSelectedPharmacy() {
+    setSearchParams({})
+    setPharmacy(null)
+    setPortalError("")
+    setSubmitError("")
+    setSubmitMessage("")
+    setTrackingFeed([])
+    setTrackingMessage("")
+    setBranchSearch("")
+    window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
   async function uploadPrescriptionImage() {
@@ -647,7 +716,7 @@ export default function PatientPortal() {
   return (
     <>
       <SEO
-        title={pharmacy?.name ? `${pharmacy.name} Patient Portal | PharmaCourse` : "Patient Portal | PharmaCourse"}
+        title={pharmacy?.name ? `${pharmacy.name} Patient Portal | PharmaCourse` : "Find a Pharmacy | PharmaCourse"}
         description="Send prescription requests, book pharmacist appointments, request deliveries, and check updates online."
       />
 
@@ -655,45 +724,75 @@ export default function PatientPortal() {
         <section className="patient-portal-hero">
           <div className="patient-portal-hero-inner">
             <div className="patient-portal-badge">Patient Self-Service</div>
-            <h1>{pharmacy?.name || "Patient Portal"}</h1>
+            <h1>{pharmacy?.name || "Find Your Pharmacy"}</h1>
             <p>
-              Send your request directly to the pharmacy, book a consultation, or request delivery using one secure link.
+              {hasActivePharmacy
+                ? "Send your request directly to the pharmacy, book a consultation, or request delivery using one secure link."
+                : "Choose the pharmacy or branch nearest to you first, then continue with your prescription request, appointment, or delivery."}
             </p>
-            {pharmacy && (
+            {hasActivePharmacy && (
               <div className="patient-portal-branch-card">
                 <div>
                   <strong>{pharmacy.name}</strong>
-                  <span>{pharmacy.location || "Location not provided"}</span>
+                  <span>{pharmacy.locationLabel || pharmacy.location || "Location not provided"}</span>
                 </div>
+                {pharmacy.parentName && (
+                  <div>
+                    <strong>Main Pharmacy</strong>
+                    <span>{pharmacy.parentName}</span>
+                  </div>
+                )}
               </div>
             )}
-            {portalError && <div className="patient-portal-feedback error">{portalError}</div>}
+            {(portalError || directoryError) && <div className="patient-portal-feedback error">{portalError || directoryError}</div>}
           </div>
         </section>
 
-        {!portalError && (
+        {(!hasActivePharmacy || !portalError) && (
           <section className="patient-portal-content">
             <div className="patient-portal-shell">
               <aside className="patient-portal-sidebar">
                 <div className="patient-portal-sidebar-card">
-                  <h2>What do you need?</h2>
-                  <p>Choose one option below. The pharmacy will receive it in PharmacyOS instantly.</p>
-                  <div className="patient-portal-tab-list">
-                    {PORTAL_TABS.map((tab) => (
-                      <button
-                        key={tab.id}
-                        type="button"
-                        className={`patient-portal-tab ${activeTab === tab.id ? "active" : ""}`}
-                        onClick={() => {
-                          setActiveTab(tab.id)
-                          setSubmitMessage("")
-                          setSubmitError("")
-                        }}
-                      >
-                        {tab.label}
+                  {hasActivePharmacy ? (
+                    <>
+                      <h2>What do you need?</h2>
+                      <p>Choose one option below. The pharmacy will receive it in PharmacyOS instantly.</p>
+                      <div className="patient-portal-tab-list">
+                        {PORTAL_TABS.map((tab) => (
+                          <button
+                            key={tab.id}
+                            type="button"
+                            className={`patient-portal-tab ${activeTab === tab.id ? "active" : ""}`}
+                            onClick={() => {
+                              setActiveTab(tab.id)
+                              setSubmitMessage("")
+                              setSubmitError("")
+                            }}
+                          >
+                            {tab.label}
+                          </button>
+                        ))}
+                      </div>
+                      <button type="button" className="btn btn-outline patient-portal-switch-btn" onClick={clearSelectedPharmacy}>
+                        Choose a different pharmacy
                       </button>
-                    ))}
-                  </div>
+                    </>
+                  ) : (
+                    <>
+                      <h2>Choose a pharmacy first</h2>
+                      <p>Search by pharmacy name, branch, county, town, or area to find the right location.</p>
+                      <input
+                        className="form-input patient-portal-search"
+                        value={branchSearch}
+                        onChange={(event) => setBranchSearch(event.target.value)}
+                        placeholder="Search pharmacy, branch, county, or area"
+                      />
+                      <div className="patient-portal-sidebar-note">
+                        Share this one link with patients:
+                        <strong> pharmacourse.co.ke/patient</strong>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <div className="patient-portal-sidebar-card muted">
@@ -706,23 +805,87 @@ export default function PatientPortal() {
 
               <main className="patient-portal-main">
                 <div className="patient-portal-panel">
-                  <div className="patient-portal-panel-head">
-                    <div>
-                      <h2>{PORTAL_TABS.find((tab) => tab.id === activeTab)?.label}</h2>
-                      <p>
-                        {activeTab === "prescription" && "Tell the pharmacist what you are suffering from and upload a prescription if you have one."}
-                        {activeTab === "appointment" && "Book a pharmacist callback, video consultation, or pickup discussion."}
-                        {activeTab === "delivery" && "Request medicine delivery and share the items plus your address."}
-                        {activeTab === "updates" && "Check the current status of your submissions using your phone number."}
-                      </p>
-                    </div>
-                  </div>
+                  {!hasActivePharmacy ? (
+                    <>
+                      <div className="patient-portal-panel-head">
+                        <div>
+                          <h2>Select Your Pharmacy or Branch</h2>
+                          <p>Patients should use one public page, then choose the right branch from this directory.</p>
+                        </div>
+                      </div>
 
-                  {renderFeedback()}
-                  {activeTab === "prescription" && renderPrescriptionForm()}
-                  {activeTab === "appointment" && renderAppointmentForm()}
-                  {activeTab === "delivery" && renderDeliveryForm()}
-                  {activeTab === "updates" && renderUpdatesPanel()}
+                      {visiblePharmacyOptions.length === 0 ? (
+                        <div className="patient-portal-empty">
+                          No pharmacies matched that search yet.
+                        </div>
+                      ) : (
+                        <div className="patient-portal-directory">
+                          {mainPharmacies.length > 0 && (
+                            <div className="patient-portal-directory-section">
+                              <div className="patient-portal-directory-head">
+                                <h3>Main Pharmacies</h3>
+                                <span>{mainPharmacies.length}</span>
+                              </div>
+                              <div className="patient-portal-card-grid">
+                                {mainPharmacies.map((option) => (
+                                  <button key={option.id} type="button" className="patient-portal-choice-card" onClick={() => handleSelectPharmacy(option)}>
+                                    <div className="patient-portal-choice-top">
+                                      <span className="patient-portal-choice-badge">Main</span>
+                                    </div>
+                                    <div className="patient-portal-choice-title">{option.name}</div>
+                                    <div className="patient-portal-choice-meta">{option.locationLabel}</div>
+                                    <div className="patient-portal-choice-action">Open patient services</div>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {branchPharmacies.length > 0 && (
+                            <div className="patient-portal-directory-section">
+                              <div className="patient-portal-directory-head">
+                                <h3>Branches</h3>
+                                <span>{branchPharmacies.length}</span>
+                              </div>
+                              <div className="patient-portal-card-grid">
+                                {branchPharmacies.map((option) => (
+                                  <button key={option.id} type="button" className="patient-portal-choice-card branch" onClick={() => handleSelectPharmacy(option)}>
+                                    <div className="patient-portal-choice-top">
+                                      <span className="patient-portal-choice-badge branch">Branch</span>
+                                    </div>
+                                    <div className="patient-portal-choice-title">{option.name}</div>
+                                    <div className="patient-portal-choice-parent">{option.parentName}</div>
+                                    <div className="patient-portal-choice-meta">{option.locationLabel}</div>
+                                    <div className="patient-portal-choice-action">Choose this branch</div>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <div className="patient-portal-panel-head">
+                        <div>
+                          <h2>{PORTAL_TABS.find((tab) => tab.id === activeTab)?.label}</h2>
+                          <p>
+                            {activeTab === "prescription" && "Tell the pharmacist what you are suffering from and upload a prescription if you have one."}
+                            {activeTab === "appointment" && "Book a pharmacist callback, video consultation, or pickup discussion."}
+                            {activeTab === "delivery" && "Request medicine delivery and share the items plus your address."}
+                            {activeTab === "updates" && "Check the current status of your submissions using your phone number."}
+                          </p>
+                        </div>
+                      </div>
+
+                      {renderFeedback()}
+                      {activeTab === "prescription" && renderPrescriptionForm()}
+                      {activeTab === "appointment" && renderAppointmentForm()}
+                      {activeTab === "delivery" && renderDeliveryForm()}
+                      {activeTab === "updates" && renderUpdatesPanel()}
+                    </>
+                  )}
                 </div>
               </main>
             </div>
