@@ -182,10 +182,25 @@
   .course-card-udemy.compact {
     border-radius: 14px;
     min-width: 0;
+    box-shadow: 0 8px 22px rgba(17, 35, 29, 0.08);
   }
 
   .course-card-udemy.compact .course-card-image {
-    aspect-ratio: 1 / 1;
+    aspect-ratio: 4 / 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.45rem;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(243, 248, 245, 0.98)),
+      linear-gradient(135deg, rgba(15, 110, 86, 0.12), rgba(29, 158, 117, 0.08));
+  }
+
+  .course-card-udemy.compact .course-card-image img {
+    border-radius: 10px;
+    object-fit: contain;
+    object-position: center;
+    background: #fff;
   }
 
   .course-card-udemy.compact .course-card-overlay {
@@ -202,18 +217,19 @@
   }
 
   .course-card-udemy.compact .course-card-content {
-    padding: 0.5rem;
+    padding: 0.7rem;
+    gap: 0.35rem;
   }
 
   .course-card-udemy.compact .course-card-category {
-    font-size: 0.48rem;
-    margin-bottom: 0.2rem;
+    font-size: 0.52rem;
+    margin-bottom: 0;
     line-height: 1.2;
   }
 
   .course-card-udemy.compact .course-card-title {
-    font-size: 0.68rem;
-    margin-bottom: 0.3rem;
+    font-size: 0.8rem;
+    margin-bottom: 0;
     -webkit-line-clamp: 3;
   }
 
@@ -223,15 +239,15 @@
   }
 
   .course-card-udemy.compact .course-card-footer {
-    padding-top: 0.1rem;
+    padding-top: 0.15rem;
     align-items: center;
   }
 
   .course-card-udemy.compact .course-card-price {
-    font-size: 0.72rem;
+    font-size: 0.76rem;
   }
 
   .course-card-udemy.compact .course-card-rating {
-    font-size: 0.62rem;
+    font-size: 0.68rem;
   }
 }
