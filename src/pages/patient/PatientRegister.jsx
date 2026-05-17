@@ -1,6 +1,7 @@
-import { useState } from "react"
+import { useCallback, useState } from "react"
 import { usePatient } from "../../components/PatientLayout"
 import { pharmacyosClient } from "../../lib/pharmacyosClient"
+import TurnstileWidget from "../../components/TurnstileWidget"
 
 const insuranceOptions = ["SHA/NHIF", "AAR", "Jubilee", "Britam", "Madison", "CIC", "None"]
 const chronicConditionOptions = [
@@ -35,6 +36,8 @@ export default function PatientRegister() {
   const [selectedConditions, setSelectedConditions] = useState([])
   const [feedback, setFeedback] = useState({ type: "", message: "" })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [turnstileToken, setTurnstileToken] = useState("")
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0)
 
   function handleInputChange(event) {
     const { name, value } = event.target
@@ -46,6 +49,14 @@ export default function PatientRegister() {
       current.includes(condition) ? current.filter((item) => item !== condition) : [...current, condition],
     )
   }
+
+  const handleTurnstileVerify = useCallback((token) => {
+    setTurnstileToken(token || "")
+  }, [])
+
+  const handleTurnstileExpire = useCallback(() => {
+    setTurnstileToken("")
+  }, [])
 
   async function handleSubmit(event) {
     event.preventDefault()
@@ -63,54 +74,48 @@ export default function PatientRegister() {
       return
     }
 
+    if (!turnstileToken) {
+      setFeedback({ type: "error", message: "Please complete the security check before registering." })
+      return
+    }
+
     setIsSubmitting(true)
     setFeedback({ type: "", message: "" })
 
-    const { data: existingPatient, error: lookupError } = await pharmacyosClient
-      .from("patients")
-      .select("id, phone")
-      .eq("pharmacy_id", pharmacyId)
-      .eq("phone", normalizedPhone)
-      .maybeSingle()
-
-    if (lookupError) {
-      setFeedback({ type: "error", message: lookupError.message || "We could not confirm your registration status." })
-      setIsSubmitting(false)
-      return
-    }
-
-    if (existingPatient) {
-      setFeedback({
-        type: "info",
-        message: `You are already registered. Your reference number is ${normalizedPhone}. Use this number to book and track.`,
-      })
-      setIsSubmitting(false)
-      return
-    }
-
-    const { error: insertError } = await pharmacyosClient.from("patients").insert({
-      pharmacy_id: pharmacyId,
-      full_name: trimmedName,
-      phone: normalizedPhone,
-      dob: formValues.dob || null,
-      gender: formValues.gender || null,
-      sha_member_no: formValues.shaMemberNo.trim() || null,
-      insurer: formValues.insurer || null,
-      insurance_member_no: formValues.insuranceMemberNo.trim() || null,
-      chronic_conditions: selectedConditions.join(", ") || null,
-      allergies: formValues.allergies.trim() || null,
+    const { data, error } = await pharmacyosClient.functions.invoke("patient-portal-submit", {
+      body: {
+        submissionType: "registration",
+        turnstileToken,
+        payload: {
+          pharmacy_id: pharmacyId,
+          full_name: trimmedName,
+          phone: normalizedPhone,
+          dob: formValues.dob || null,
+          gender: formValues.gender || null,
+          sha_member_no: formValues.shaMemberNo.trim() || null,
+          insurer: formValues.insurer || null,
+          insurance_member_no: formValues.insuranceMemberNo.trim() || null,
+          chronic_conditions: selectedConditions,
+          allergies: formValues.allergies.trim() || null,
+        },
+      },
     })
 
-    if (insertError) {
-      setFeedback({ type: "error", message: insertError.message || "We could not save your registration." })
+    if (error || data?.error) {
+      setFeedback({ type: "error", message: error?.message || data?.error || "We could not save your registration." })
       setIsSubmitting(false)
+      setTurnstileResetKey((current) => current + 1)
       return
     }
 
     setFeedback({
-      type: "success",
-      message: `Registration successful at ${branchName}. Your reference number is ${normalizedPhone}.`,
+      type: data?.alreadyRegistered ? "info" : "success",
+      message: data?.alreadyRegistered
+        ? `Your profile is already linked at ${branchName}. Your reference number is ${normalizedPhone}.`
+        : `Registration successful at ${branchName}. Your reference number is ${normalizedPhone}.`,
     })
+    setTurnstileResetKey((current) => current + 1)
+    setTurnstileToken("")
     setIsSubmitting(false)
   }
 
@@ -265,6 +270,16 @@ export default function PatientRegister() {
               {feedback.message}
             </div>
           ) : null}
+
+          <div className="patient-form-group">
+            <label className="patient-label">Security Check</label>
+            <TurnstileWidget
+              formId="patient-register"
+              resetSignal={turnstileResetKey}
+              onVerify={handleTurnstileVerify}
+              onExpire={handleTurnstileExpire}
+            />
+          </div>
 
           <button className="patient-button" type="submit" disabled={isSubmitting}>
             {isSubmitting ? "Saving profile..." : "Create my profile"}
