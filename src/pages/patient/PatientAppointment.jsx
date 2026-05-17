@@ -13,9 +13,9 @@ const slotOptions = [
 ]
 
 const appointmentTypes = [
-  { value: "Phone Call", label: "Phone Call", icon: PhoneCall },
-  { value: "Video Call", label: "Video Call", icon: Video },
-  { value: "In-person Pickup", label: "In-person Pickup", icon: Store },
+  { value: "phone_call", label: "Phone Call", icon: PhoneCall },
+  { value: "video_consultation", label: "Video Call", icon: Video },
+  { value: "pickup", label: "In-person Pickup", icon: Store },
 ]
 
 function isValidPhone(phone) {
@@ -49,7 +49,7 @@ export default function PatientAppointment() {
   const [patient, setPatient] = useState(null)
   const [lookupMessage, setLookupMessage] = useState({ type: "", message: "" })
   const [isLookingUp, setIsLookingUp] = useState(false)
-  const [appointmentType, setAppointmentType] = useState("Phone Call")
+  const [appointmentType, setAppointmentType] = useState("phone_call")
   const [selectedDate, setSelectedDate] = useState("")
   const [selectedSlot, setSelectedSlot] = useState("")
   const [conditionSummary, setConditionSummary] = useState("")
