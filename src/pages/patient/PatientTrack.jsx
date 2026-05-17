@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { ArrowUpRight, BellRing, CalendarClock, ClipboardList, PackageSearch, Video } from "lucide-react"
+import { useSearchParams } from "react-router-dom"
 import { usePatient } from "../../components/PatientLayout"
 import { fetchPatientPortalUpdates } from "../../lib/patientPortalUpdates"
 import { getPatientPortalSession, savePatientPortalSession } from "../../lib/patientPortalSession"
@@ -53,8 +54,10 @@ function formatAppointmentType(value) {
 
 export default function PatientTrack() {
   const { pharmacyId } = usePatient()
+  const [searchParams] = useSearchParams()
+  const phoneParam = searchParams.get("phone")?.trim() || ""
   const rememberedSession = getPatientPortalSession(pharmacyId)
-  const [phoneInput, setPhoneInput] = useState(rememberedSession?.phone || "")
+  const [phoneInput, setPhoneInput] = useState(phoneParam || rememberedSession?.phone || "")
   const [activePhone, setActivePhone] = useState("")
   const [notifications, setNotifications] = useState([])
   const [deliveries, setDeliveries] = useState([])
@@ -65,11 +68,13 @@ export default function PatientTrack() {
   const [lastUpdated, setLastUpdated] = useState("")
 
   useEffect(() => {
-    if (rememberedSession?.phone && isValidPhone(rememberedSession.phone) && !activePhone) {
-      setActivePhone(rememberedSession.phone)
-      loadTrackingData(rememberedSession.phone)
+    const initialPhone = phoneParam || rememberedSession?.phone || ""
+
+    if (initialPhone && isValidPhone(initialPhone) && !activePhone) {
+      setActivePhone(initialPhone)
+      loadTrackingData(initialPhone)
     }
-  }, [])
+  }, [phoneParam, rememberedSession, activePhone])
 
   async function loadTrackingData(phone, { silent = false } = {}) {
     if (!silent) {

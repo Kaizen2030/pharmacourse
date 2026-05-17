@@ -855,6 +855,8 @@ function PatientPortalStyles() {
 export default function PatientLayout() {
   const [searchParams] = useSearchParams()
   const pharmacyId = searchParams.get("pharmacy")?.trim() || ""
+  const branchNameParam = searchParams.get("branch_name")?.trim() || ""
+  const branchLocationParam = searchParams.get("branch_location")?.trim() || ""
   const [pharmacy, setPharmacy] = useState(null)
   const [isLoading, setIsLoading] = useState(Boolean(pharmacyId))
   const [loadError, setLoadError] = useState("")
@@ -927,7 +929,8 @@ export default function PatientLayout() {
     )
   }
 
-  const branchName = pharmacy?.name || "Pharmacy branch"
+  const branchName = pharmacy?.name || branchNameParam || "Pharmacy branch"
+  const branchLocation = pharmacy?.location || branchLocationParam || ""
 
   return (
     <PatientContext.Provider
@@ -948,7 +951,7 @@ export default function PatientLayout() {
               Branch portal
             </span>
             <div className="patient-topbar-name">{branchName}</div>
-            {pharmacy?.location ? <div className="patient-topbar-meta">{pharmacy.location}</div> : null}
+            {branchLocation ? <div className="patient-topbar-meta">{branchLocation}</div> : null}
           </div>
 
           <div className="patient-powered">Powered by PharmaCourse</div>

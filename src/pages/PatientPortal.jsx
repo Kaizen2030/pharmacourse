@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { useSearchParams } from "react-router-dom"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import { pharmacyPortalSupabase as supabase } from "../lib/pharmacyPortalSupabase"
 import SEO from "../components/SEO"
 import "./PatientPortal.css"
@@ -536,6 +536,7 @@ function buildPharmacyOptions(rows = []) {
 }
 
 export default function PatientPortal() {
+  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const pharmacyId = searchParams.get("pharmacy") || searchParams.get("branch") || ""
   const [activeTab, setActiveTab] = useState("prescription")
@@ -864,7 +865,9 @@ export default function PatientPortal() {
   }
 
   function handleSelectPharmacy(option) {
-    setSearchParams({ pharmacy: option.id })
+    navigate(
+      `/patient?pharmacy=${encodeURIComponent(option.id)}&branch_name=${encodeURIComponent(option.name || "")}&branch_location=${encodeURIComponent(option.locationLabel || option.location || "")}`,
+    )
     setPortalError("")
     setSubmitError("")
     setSubmitMessage("")
@@ -1280,8 +1283,9 @@ export default function PatientPortal() {
 
   function openTrackedPharmacy(match) {
     if (!match?.pharmacyId) return
-    setSearchParams({ pharmacy: match.pharmacyId })
-    setActiveTab("updates")
+    navigate(
+      `/patient/track?pharmacy=${encodeURIComponent(match.pharmacyId)}&phone=${encodeURIComponent(trackerPhone.trim())}&branch_name=${encodeURIComponent(match.pharmacyName || "")}&branch_location=${encodeURIComponent(match.pharmacyLocation || "")}`,
+    )
     setTrackingMessage("")
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
