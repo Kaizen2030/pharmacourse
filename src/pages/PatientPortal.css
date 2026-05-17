@@ -732,6 +732,11 @@
   border-top: 1px solid rgba(15, 110, 86, 0.1);
 }
 
+.patient-portal-inline-action {
+  align-self: flex-start;
+  margin-top: 0.45rem;
+}
+
 .patient-portal-response-actions textarea {
   width: 100%;
   min-height: 88px;

@@ -348,6 +348,26 @@ function buildFulfillmentSummary(item) {
   return parts.join(" · ")
 }
 
+function normalizePortalActionLink(value) {
+  const raw = String(value || "").trim()
+  if (!raw) return ""
+
+  if (/^(https?:\/\/|tel:|mailto:)/i.test(raw)) {
+    return raw
+  }
+
+  if (/^\+?[0-9][0-9\s()-]{6,}$/.test(raw)) {
+    const normalized = raw.replace(/[^\d+]/g, "")
+    return normalized ? `tel:${normalized}` : ""
+  }
+
+  if (/^www\./i.test(raw)) {
+    return `https://${raw}`
+  }
+
+  return `https://${raw}`
+}
+
 function buildTrackingFeed({ requests = [], appointments = [], deliveries = [], notifications = [] }) {
   return [
     ...requests.map((item) => ({
@@ -392,8 +412,15 @@ function buildTrackingFeed({ requests = [], appointments = [], deliveries = [], 
       title: formatAppointmentType(item.appointment_type),
       status: item.status || "pending",
       statusLabel: formatTokenLabel(item.status),
-      activityAt: item.created_at,
-      summary: item.condition_summary || item.patient_notes || formatDateTime(item.slot_datetime),
+      activityAt: item.updated_at || item.created_at,
+      pharmacistResponse: item.pharmacist_response || "",
+      videoLink: item.video_link || "",
+      actionLink: normalizePortalActionLink(item.video_link || ""),
+      summary: [
+        item.condition_summary || item.patient_notes || "",
+        item.pharmacist_response ? `Pharmacist note: ${item.pharmacist_response}` : "",
+        item.video_link ? "Join or call link ready" : "",
+      ].filter(Boolean).join(" Â· ") || formatDateTime(item.slot_datetime),
       createdAt: item.created_at,
     })),
     ...deliveries.map((item) => ({
@@ -404,9 +431,21 @@ function buildTrackingFeed({ requests = [], appointments = [], deliveries = [], 
       status: item.status || "pending",
       statusLabel: formatTokenLabel(item.status),
       activityAt: item.created_at,
-      summary: Array.isArray(item.items) && item.items.length
-        ? item.items.map((row) => `${row.drug_name || "Drug"} x${row.qty || 1}`).join(", ")
-        : "Awaiting packing details.",
+      deliveryAddress: item.patient_address || "",
+      deliveryItems: Array.isArray(item.items) ? item.items : [],
+      deliveryPartnerType: item.delivery_partner_type || "",
+      deliveryPartnerName: item.rider_name || "",
+      deliveryPartnerPhone: item.rider_phone || "",
+      deliveryEtaMinutes: item.estimated_delivery_minutes || "",
+      summary: [
+        Array.isArray(item.items) && item.items.length
+          ? item.items.map((row) => `${row.drug_name || "Drug"} x${row.qty || 1}`).join(", ")
+          : "Awaiting packing details.",
+        item.delivery_partner_type || item.rider_name
+          ? `Delivery partner: ${[item.delivery_partner_type, item.rider_name].filter(Boolean).join(" - ")}${item.rider_phone ? ` (${item.rider_phone})` : ""}`
+          : "",
+        item.estimated_delivery_minutes ? `ETA: ${item.estimated_delivery_minutes} min` : "",
+      ].filter(Boolean).join(" · "),
       createdAt: item.created_at,
     })),
     ...notifications.map((item) => ({
@@ -1257,6 +1296,36 @@ export default function PatientPortal() {
     )
   }
 
+  function renderDeliveryDetailsBox(item) {
+    if (item.typeKey !== "delivery") return null
+
+    const detailLines = []
+    if (item.deliveryAddress) detailLines.push(`Address: ${item.deliveryAddress}`)
+    if (item.deliveryItems?.length) {
+      detailLines.push(`Items: ${item.deliveryItems.map((row) => `${row.drug_name || "Drug"} x${row.qty || 1}`).join(", ")}`)
+    }
+
+    const partnerLabel = [item.deliveryPartnerType, item.deliveryPartnerName].filter(Boolean).join(" - ")
+    if (partnerLabel) {
+      detailLines.push(`Delivery partner: ${partnerLabel}${item.deliveryPartnerPhone ? ` (${item.deliveryPartnerPhone})` : ""}`)
+    }
+
+    if (item.deliveryEtaMinutes) {
+      detailLines.push(`Estimated arrival: about ${item.deliveryEtaMinutes} minutes`)
+    }
+
+    if (!detailLines.length) return null
+
+    return (
+      <div className="patient-portal-response-box info">
+        <strong>Delivery details</strong>
+        {detailLines.map((line) => (
+          <span key={line}>{line}</span>
+        ))}
+      </div>
+    )
+  }
+
   function renderPatientResponseBox(item) {
     const responseMeta = getPatientResponseMeta(item.patientResponseAction)
     if (!responseMeta) return null
@@ -1298,6 +1367,30 @@ export default function PatientPortal() {
           <div className="patient-portal-response-time">
             Sent {formatDateTime(item.patientFulfillmentAt)} · {timeAgo(item.patientFulfillmentAt)}
           </div>
+        )}
+      </div>
+    )
+  }
+
+  function renderAppointmentActionBox(item) {
+    if (item.typeKey !== "appointment") return null
+    if (!item.pharmacistResponse && !item.actionLink) return null
+
+    return (
+      <div className="patient-portal-response-box info">
+        <strong>Appointment details</strong>
+        <span>
+          {item.pharmacistResponse || "The pharmacist has shared the next step for your appointment."}
+        </span>
+        {item.actionLink && (
+          <a
+            className="btn btn-outline patient-portal-inline-action"
+            href={item.actionLink}
+            target="_blank"
+            rel="noreferrer"
+          >
+            {item.status === "confirmed" ? "Open appointment link" : "Open call details"}
+          </a>
         )}
       </div>
     )
@@ -1615,6 +1708,8 @@ export default function PatientPortal() {
                 </div>
                 <div className="patient-portal-update-title">{item.title}</div>
                 <div className="patient-portal-update-text">{item.summary}</div>
+                {renderAppointmentActionBox(item)}
+                {renderDeliveryDetailsBox(item)}
                 {renderPatientResponseBox(item)}
                 {renderFulfillmentChoiceBox(item)}
                 {renderRequestResponseActions(item)}
@@ -1675,6 +1770,8 @@ export default function PatientPortal() {
                       </div>
                       <div className="patient-portal-update-title">{item.title}</div>
                       <div className="patient-portal-update-text">{item.summary}</div>
+                      {renderAppointmentActionBox(item)}
+                      {renderDeliveryDetailsBox(item)}
                       {renderPatientResponseBox(item)}
                       {renderFulfillmentChoiceBox(item)}
                       <div className="patient-portal-update-time">{formatDateTime(item.activityAt || item.createdAt)} · {timeAgo(item.activityAt || item.createdAt)}</div>
