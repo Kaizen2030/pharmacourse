@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { BellRing, CalendarClock, ClipboardList, PackageSearch } from "lucide-react"
+import { ArrowUpRight, BellRing, CalendarClock, ClipboardList, PackageSearch, Video } from "lucide-react"
 import { usePatient } from "../../components/PatientLayout"
 import { pharmacyosClient } from "../../lib/pharmacyosClient"
 
@@ -38,6 +38,16 @@ function getCurrentDeliveryStepIndex(status) {
   const normalizedStatus = (status || "").toLowerCase()
   const index = deliverySteps.indexOf(normalizedStatus)
   return index >= 0 ? index : 0
+}
+
+function formatAppointmentType(value) {
+  const normalized = String(value || "").trim()
+
+  if (normalized === "video_consultation") return "Video Consultation"
+  if (normalized === "phone_call") return "Phone Call"
+  if (normalized === "pickup") return "In-person Pickup"
+
+  return normalized || "Appointment"
 }
 
 export default function PatientTrack() {
@@ -326,7 +336,7 @@ export default function PatientTrack() {
                   <article key={appointment.id} className="patient-list-item">
                     <div className="patient-list-header">
                       <div>
-                        <div className="patient-list-title">{appointment.appointment_type}</div>
+                        <div className="patient-list-title">{formatAppointmentType(appointment.appointment_type)}</div>
                         <div className="patient-list-meta">{formatDateTime(appointment.slot_datetime)}</div>
                       </div>
                       <span className={`patient-status-badge ${getStatusClass(appointment.status)}`}>{appointment.status || "Pending"}</span>
@@ -334,12 +344,64 @@ export default function PatientTrack() {
                     {appointment.condition_summary ? <p className="patient-list-text">{appointment.condition_summary}</p> : null}
                     {appointment.pharmacist_response ? <p className="patient-list-text">Pharmacist note: {appointment.pharmacist_response}</p> : null}
                     {appointment.video_link ? (
-                      <p className="patient-list-text">
-                        Join link:{" "}
-                        <a href={appointment.video_link} target="_blank" rel="noreferrer">
+                      <div
+                        style={{
+                          marginTop: "0.8rem",
+                          padding: "0.95rem 1rem",
+                          borderRadius: "18px",
+                          border: "1px solid rgba(15, 110, 86, 0.14)",
+                          background: "linear-gradient(180deg, rgba(232,245,240,0.95), rgba(244,250,247,0.98))",
+                          display: "grid",
+                          gap: "0.6rem",
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.65rem" }}>
+                          <span
+                            style={{
+                              width: 40,
+                              height: 40,
+                              borderRadius: 14,
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              background: "rgba(15, 110, 86, 0.12)",
+                              color: "#0f6e56",
+                              flexShrink: 0,
+                            }}
+                          >
+                            <Video size={18} />
+                          </span>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontWeight: 800, color: "#163329", lineHeight: 1.25 }}>Join your consultation</div>
+                            <div style={{ color: "#4f675e", fontSize: "0.92rem", lineHeight: 1.45 }}>
+                              Tap the button below when it is time for your {formatAppointmentType(appointment.appointment_type).toLowerCase()}.
+                            </div>
+                          </div>
+                        </div>
+
+                        <a
+                          href={appointment.video_link}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "0.55rem",
+                            minHeight: 48,
+                            padding: "0.85rem 1rem",
+                            borderRadius: 999,
+                            background: "#0f6e56",
+                            color: "#ffffff",
+                            fontWeight: 800,
+                            textDecoration: "none",
+                            boxShadow: "0 10px 24px rgba(15, 110, 86, 0.18)",
+                          }}
+                        >
                           Open consultation link
+                          <ArrowUpRight size={16} />
                         </a>
-                      </p>
+                      </div>
                     ) : null}
                   </article>
                 ))}
