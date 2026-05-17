@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useSearchParams } from "react-router-dom"
 import { pharmacyPortalSupabase as supabase } from "../lib/pharmacyPortalSupabase"
 import SEO from "../components/SEO"
@@ -56,6 +56,9 @@ function TurnstileWidget({ formId, resetSignal, onVerify, onExpire }) {
   const [loadError, setLoadError] = useState("")
   const [widgetReady, setWidgetReady] = useState(false)
   const containerId = `turnstile-${formId}`
+  const widgetIdRef = useRef(null)
+  const renderTimeoutRef = useRef(null)
+  const solvedRef = useRef(false)
 
   useEffect(() => {
     let cancelled = false
@@ -68,6 +71,7 @@ function TurnstileWidget({ formId, resetSignal, onVerify, onExpire }) {
 
       setLoadError("")
       setWidgetReady(false)
+      solvedRef.current = false
 
       try {
         await loadTurnstileScript()
@@ -77,23 +81,35 @@ function TurnstileWidget({ formId, resetSignal, onVerify, onExpire }) {
         if (!container) return
 
         container.innerHTML = ""
-        window.turnstile.render(container, {
+        widgetIdRef.current = window.turnstile.render(container, {
           sitekey: TURNSTILE_SITE_KEY,
           theme: "light",
           callback: (token) => {
+            if (renderTimeoutRef.current) {
+              window.clearTimeout(renderTimeoutRef.current)
+            }
+            solvedRef.current = true
             onVerify(token)
             setWidgetReady(true)
           },
           "expired-callback": () => {
+            solvedRef.current = false
             onExpire()
             setWidgetReady(false)
           },
           "error-callback": () => {
+            solvedRef.current = false
             onExpire()
             setLoadError("Security check failed. Please refresh and try again.")
             setWidgetReady(false)
           },
         })
+
+        renderTimeoutRef.current = window.setTimeout(() => {
+          if (!cancelled && !solvedRef.current) {
+            setLoadError("Security check is taking too long. Please refresh it and try again.")
+          }
+        }, 12000)
       } catch (error) {
         setLoadError(error?.message || "Unable to load security check.")
       }
@@ -103,8 +119,25 @@ function TurnstileWidget({ formId, resetSignal, onVerify, onExpire }) {
 
     return () => {
       cancelled = true
+      if (renderTimeoutRef.current) {
+        window.clearTimeout(renderTimeoutRef.current)
+      }
     }
   }, [containerId, onExpire, onVerify, resetSignal])
+
+  function handleResetWidget() {
+    setLoadError("")
+    setWidgetReady(false)
+    solvedRef.current = false
+    onExpire()
+
+    if (window.turnstile && widgetIdRef.current !== null) {
+      window.turnstile.reset(widgetIdRef.current)
+      return
+    }
+
+    setLoadError("Security check refreshed. Please wait a moment and try again.")
+  }
 
   return (
     <div className="patient-portal-turnstile-wrap">
@@ -112,7 +145,14 @@ function TurnstileWidget({ formId, resetSignal, onVerify, onExpire }) {
       {widgetReady && !loadError ? (
         <div className="patient-portal-turnstile-note">Security check complete. You can submit now.</div>
       ) : null}
-      {loadError ? <div className="patient-portal-turnstile-error">{loadError}</div> : null}
+      {loadError ? (
+        <div className="patient-portal-turnstile-error">
+          <span>{loadError}</span>
+          <button type="button" className="patient-portal-turnstile-reset" onClick={handleResetWidget}>
+            Refresh security check
+          </button>
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -708,6 +748,13 @@ export default function PatientPortal() {
     return data
   }
 
+  const handlePrescriptionVerify = useCallback((token) => setTurnstileToken("prescription", token), [])
+  const handlePrescriptionExpire = useCallback(() => setTurnstileToken("prescription", ""), [])
+  const handleAppointmentVerify = useCallback((token) => setTurnstileToken("appointment", token), [])
+  const handleAppointmentExpire = useCallback(() => setTurnstileToken("appointment", ""), [])
+  const handleDeliveryVerify = useCallback((token) => setTurnstileToken("delivery", token), [])
+  const handleDeliveryExpire = useCallback(() => setTurnstileToken("delivery", ""), [])
+
   async function handlePrescriptionSubmit(event) {
     event.preventDefault()
     setSubmitting("prescription")
@@ -949,8 +996,8 @@ export default function PatientPortal() {
         <TurnstileWidget
           formId="prescription"
           resetSignal={turnstileResetKeys.prescription}
-          onVerify={(token) => setTurnstileToken("prescription", token)}
-          onExpire={() => setTurnstileToken("prescription", "")}
+          onVerify={handlePrescriptionVerify}
+          onExpire={handlePrescriptionExpire}
         />
         <button type="submit" className="btn btn-primary patient-portal-submit" disabled={submitting === "prescription"}>
           {submitting === "prescription" ? "Sending request..." : "Send Prescription Request"}
@@ -999,8 +1046,8 @@ export default function PatientPortal() {
         <TurnstileWidget
           formId="appointment"
           resetSignal={turnstileResetKeys.appointment}
-          onVerify={(token) => setTurnstileToken("appointment", token)}
-          onExpire={() => setTurnstileToken("appointment", "")}
+          onVerify={handleAppointmentVerify}
+          onExpire={handleAppointmentExpire}
         />
         <button type="submit" className="btn btn-primary patient-portal-submit" disabled={submitting === "appointment"}>
           {submitting === "appointment" ? "Booking appointment..." : "Book Appointment"}
@@ -1066,8 +1113,8 @@ export default function PatientPortal() {
         <TurnstileWidget
           formId="delivery"
           resetSignal={turnstileResetKeys.delivery}
-          onVerify={(token) => setTurnstileToken("delivery", token)}
-          onExpire={() => setTurnstileToken("delivery", "")}
+          onVerify={handleDeliveryVerify}
+          onExpire={handleDeliveryExpire}
         />
 
         <button type="submit" className="btn btn-primary patient-portal-submit" disabled={submitting === "delivery"}>

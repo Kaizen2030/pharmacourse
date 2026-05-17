@@ -97,6 +97,19 @@
 .patient-portal-turnstile-error {
   color: #b42318;
   font-size: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.patient-portal-turnstile-reset {
+  align-self: flex-start;
+  border: 0;
+  background: transparent;
+  color: var(--green);
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
 }
 
 .patient-portal-content {
