@@ -163,7 +163,7 @@ function createEmptyPrescription() {
     patientPhone: "",
     patientEmail: "",
     conditionNotes: "",
-    drugRequested: "",
+    requestedDrugs: [""],
   }
 }
 
@@ -252,7 +252,10 @@ function buildTrackingFeed({ requests = [], appointments = [], deliveries = [], 
       type: "Prescription request",
       title: item.drug_requested || "Prescription request",
       status: item.status || "pending",
-      summary: item.condition_notes || "Waiting for pharmacist review.",
+      summary: [
+        item.condition_notes,
+        item.pharmacist_notes ? `Pharmacist update: ${item.pharmacist_notes}` : "",
+      ].filter(Boolean).join(" · ") || "Waiting for pharmacist review.",
       createdAt: item.created_at,
     })),
     ...appointments.map((item) => ({
@@ -627,6 +630,29 @@ export default function PatientPortal() {
     setAppointmentForm((prev) => ({ ...prev, [field]: value }))
   }
 
+  function updateRequestedDrug(index, value) {
+    setPrescriptionForm((prev) => ({
+      ...prev,
+      requestedDrugs: prev.requestedDrugs.map((item, itemIndex) => (
+        itemIndex === index ? value : item
+      )),
+    }))
+  }
+
+  function addRequestedDrug() {
+    setPrescriptionForm((prev) => ({
+      ...prev,
+      requestedDrugs: [...prev.requestedDrugs, ""],
+    }))
+  }
+
+  function removeRequestedDrug(index) {
+    setPrescriptionForm((prev) => ({
+      ...prev,
+      requestedDrugs: prev.requestedDrugs.filter((_, itemIndex) => itemIndex !== index),
+    }))
+  }
+
   function updateDelivery(field, value) {
     setDeliveryForm((prev) => ({ ...prev, [field]: value }))
   }
@@ -766,6 +792,10 @@ export default function PatientPortal() {
       const patientPhone = normalizePhone(prescriptionForm.patientPhone)
       const patientEmail = prescriptionForm.patientEmail.trim().toLowerCase()
       const conditionNotes = prescriptionForm.conditionNotes.trim()
+      const requestedDrugs = prescriptionForm.requestedDrugs
+        .map((item) => String(item || "").trim())
+        .filter(Boolean)
+      const drugRequested = requestedDrugs.join(", ")
 
       if (!patientName || !patientPhone || !conditionNotes) {
         throw new Error("Name, phone number, and condition details are required.")
@@ -780,7 +810,7 @@ export default function PatientPortal() {
         patient_phone: patientPhone,
         patient_email: patientEmail || null,
         condition_notes: conditionNotes,
-        drug_requested: prescriptionForm.drugRequested.trim() || null,
+        drug_requested: drugRequested || null,
         prescription_image_url: prescriptionImageUrl || null,
       }, "prescription")
 
@@ -984,9 +1014,34 @@ export default function PatientPortal() {
             <label className="form-label">What are you suffering from?</label>
             <textarea rows="5" value={prescriptionForm.conditionNotes} onChange={(event) => updatePrescription("conditionNotes", event.target.value)} placeholder="Describe your symptoms or condition briefly." />
           </div>
-          <div className="form-group">
-            <label className="form-label">Drug Needed</label>
-            <input className="form-input" value={prescriptionForm.drugRequested} onChange={(event) => updatePrescription("drugRequested", event.target.value)} placeholder="If you know the medicine name, enter it here." />
+          <div className="form-group patient-portal-span-full">
+            <div className="patient-portal-section-head compact">
+              <div>
+                <label className="form-label">Drugs Needed</label>
+                <p>Add one or more medicines if you know their names.</p>
+              </div>
+              <button type="button" className="btn btn-outline" onClick={addRequestedDrug}>Add Drug</button>
+            </div>
+            <div className="patient-portal-items-list compact">
+              {prescriptionForm.requestedDrugs.map((drug, index) => (
+                <div className="patient-portal-item-row compact" key={`rx-drug-${index}`}>
+                  <input
+                    className="form-input"
+                    value={drug}
+                    onChange={(event) => updateRequestedDrug(index, event.target.value)}
+                    placeholder={`Drug ${index + 1}`}
+                  />
+                  <button
+                    type="button"
+                    className="patient-portal-remove"
+                    onClick={() => removeRequestedDrug(index)}
+                    disabled={prescriptionForm.requestedDrugs.length === 1}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
           <div className="form-group">
             <label className="form-label">Upload Prescription Photo</label>

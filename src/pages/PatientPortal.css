@@ -536,10 +536,24 @@
   margin-bottom: 1rem;
 }
 
+.patient-portal-section-head.compact {
+  margin-bottom: 0.8rem;
+}
+
+.patient-portal-section-head.compact p {
+  color: var(--text-500);
+  margin-top: 0.2rem;
+  font-size: 0.9rem;
+}
+
 .patient-portal-items-list {
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
+}
+
+.patient-portal-items-list.compact {
+  gap: 0.65rem;
 }
 
 .patient-portal-item-row {
@@ -547,6 +561,10 @@
   grid-template-columns: minmax(0, 1.5fr) 100px 140px 100px;
   gap: 0.75rem;
   align-items: center;
+}
+
+.patient-portal-item-row.compact {
+  grid-template-columns: minmax(0, 1fr) 100px;
 }
 
 .patient-portal-remove {
