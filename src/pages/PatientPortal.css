@@ -663,6 +663,117 @@
   margin-bottom: 0.3rem;
 }
 
+.patient-portal-response-gate {
+  margin-bottom: 1rem;
+  padding: 1rem 1.05rem;
+  border-radius: 20px;
+  background: rgba(248, 252, 250, 0.96);
+  border: 1px solid rgba(15, 110, 86, 0.12);
+}
+
+.patient-portal-response-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.8rem;
+}
+
+.patient-portal-response-head strong {
+  color: var(--text-900);
+}
+
+.patient-portal-response-head span {
+  color: var(--text-500);
+  font-size: 0.92rem;
+}
+
+.patient-portal-response-box {
+  margin-top: 0.8rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.92rem;
+}
+
+.patient-portal-response-box.success {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #166534;
+}
+
+.patient-portal-response-box.info {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+}
+
+.patient-portal-response-box.warning {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #c2410c;
+}
+
+.patient-portal-response-box.danger {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+}
+
+.patient-portal-response-note,
+.patient-portal-response-time {
+  font-size: 0.88rem;
+}
+
+.patient-portal-response-actions {
+  margin-top: 0.8rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid rgba(15, 110, 86, 0.1);
+}
+
+.patient-portal-response-actions textarea {
+  width: 100%;
+  min-height: 88px;
+  box-sizing: border-box;
+  margin-top: 0.7rem;
+  padding: 0.9rem 1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(208, 213, 221, 0.95);
+  resize: vertical;
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+
+.patient-portal-response-button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin-top: 0.85rem;
+}
+
+.patient-response-btn {
+  flex: 1 1 220px;
+}
+
+.patient-response-btn.info {
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.patient-response-btn.warning {
+  background: linear-gradient(135deg, #fff7ed, #ffedd5);
+  color: #c2410c;
+  border: 1px solid #fed7aa;
+}
+
+.patient-response-btn.danger {
+  background: linear-gradient(135deg, #fff1f2, #ffe4e6);
+  color: #be123c;
+  border: 1px solid #fda4af;
+}
+
 .patient-portal-loading {
   min-height: 100vh;
   display: grid;

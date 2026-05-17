@@ -25,6 +25,39 @@ const DIRECTORY_BATCH_SIZES = {
   branches: 18,
 }
 
+const PATIENT_RESPONSE_ACTIONS = {
+  accept_alternative: {
+    label: "Accept Alternative",
+    shortLabel: "Accepted alternative",
+    helper: "Tell the pharmacist you are okay with the substitute and ready for the next step.",
+    successMessage: "Your acceptance has been sent to the pharmacy.",
+    tone: "success",
+  },
+  request_callback: {
+    label: "Request Pharmacist Call",
+    shortLabel: "Requested pharmacist call",
+    helper: "Ask the pharmacist to call you before you decide on the substitute.",
+    successMessage: "Your callback request has been sent to the pharmacy.",
+    tone: "info",
+  },
+  ask_another_option: {
+    label: "Ask for Another Option",
+    shortLabel: "Asked for another option",
+    helper: "Let the pharmacy know this substitute is not the right fit and you need another option.",
+    requiresNotes: true,
+    successMessage: "Your request for another option has been sent to the pharmacy.",
+    tone: "warning",
+  },
+  cancel_request: {
+    label: "Cancel Request",
+    shortLabel: "Asked to cancel request",
+    helper: "Tell the pharmacy to stop preparing this request.",
+    successMessage: "Your cancellation request has been sent to the pharmacy.",
+    requiresNotes: true,
+    tone: "danger",
+  },
+}
+
 function loadTurnstileScript() {
   if (typeof window === "undefined") return Promise.resolve()
   if (window.turnstile) return Promise.resolve()
@@ -245,32 +278,78 @@ function formatAppointmentType(value) {
     .join(" ")
 }
 
+function formatTokenLabel(value, fallback = "Pending") {
+  if (!value) return fallback
+  return String(value)
+    .split("_")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ")
+}
+
+function getPatientResponseMeta(action) {
+  if (!action) return null
+  const config = PATIENT_RESPONSE_ACTIONS[action]
+  if (!config) {
+    return {
+      label: formatTokenLabel(action, "Patient responded"),
+      shortLabel: formatTokenLabel(action, "Patient responded"),
+      helper: "The pharmacy has received the patient's reply.",
+      tone: "info",
+    }
+  }
+  return config
+}
+
+function buildPatientResponseSummary(item) {
+  const responseMeta = getPatientResponseMeta(item.patient_response_action)
+  if (!responseMeta) return ""
+  const note = item.patient_response_notes ? `: ${item.patient_response_notes}` : ""
+  return `Your response: ${responseMeta.shortLabel || responseMeta.label}${note}`
+}
+
 function buildTrackingFeed({ requests = [], appointments = [], deliveries = [], notifications = [] }) {
   return [
     ...requests.map((item) => ({
       id: `request-${item.id}`,
+      requestId: item.id,
+      typeKey: "request",
       type: "Prescription request",
       title: item.drug_requested || "Prescription request",
       status: item.status || "pending",
+      statusLabel: formatTokenLabel(item.status),
+      activityAt: item.patient_response_at || item.updated_at || item.created_at,
+      pharmacistNotes: item.pharmacist_notes || "",
+      patientResponseAction: item.patient_response_action || "",
+      patientResponseNotes: item.patient_response_notes || "",
+      patientResponseAt: item.patient_response_at || "",
+      canRespond: item.status === "alternative_offered" && !item.patient_response_action,
       summary: [
         item.condition_notes,
         item.pharmacist_notes ? `Pharmacist update: ${item.pharmacist_notes}` : "",
+        buildPatientResponseSummary(item),
       ].filter(Boolean).join(" · ") || "Waiting for pharmacist review.",
       createdAt: item.created_at,
     })),
     ...appointments.map((item) => ({
       id: `appointment-${item.id}`,
+      typeKey: "appointment",
       type: "Appointment",
       title: formatAppointmentType(item.appointment_type),
       status: item.status || "pending",
+      statusLabel: formatTokenLabel(item.status),
+      activityAt: item.created_at,
       summary: item.condition_summary || item.patient_notes || formatDateTime(item.slot_datetime),
       createdAt: item.created_at,
     })),
     ...deliveries.map((item) => ({
       id: `delivery-${item.id}`,
+      typeKey: "delivery",
       type: "Delivery",
       title: item.patient_address || "Delivery request",
       status: item.status || "pending",
+      statusLabel: formatTokenLabel(item.status),
+      activityAt: item.created_at,
       summary: Array.isArray(item.items) && item.items.length
         ? item.items.map((row) => `${row.drug_name || "Drug"} x${row.qty || 1}`).join(", ")
         : "Awaiting packing details.",
@@ -278,13 +357,16 @@ function buildTrackingFeed({ requests = [], appointments = [], deliveries = [], 
     })),
     ...notifications.map((item) => ({
       id: `notification-${item.id}`,
+      typeKey: "notification",
       type: "Update",
-      title: item.type || "Notification",
+      title: formatTokenLabel(item.type, "Notification"),
       status: item.read ? "read" : "new",
+      statusLabel: item.read ? "Read" : "New",
+      activityAt: item.created_at,
       summary: item.message || "Pharmacy update",
       createdAt: item.created_at,
     })),
-  ].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+  ].sort((a, b) => new Date(b.activityAt || b.createdAt || 0) - new Date(a.activityAt || a.createdAt || 0))
 }
 
 function buildGlobalTrackingMatches(matches = []) {
@@ -301,7 +383,7 @@ function buildGlobalTrackingMatches(matches = []) {
         pharmacyId: match?.pharmacy_id || "",
         pharmacyName: match?.pharmacy_name || "Pharmacy",
         pharmacyLocation: match?.pharmacy_location || "Location not provided",
-        lastActivityAt: match?.last_activity_at || feed[0]?.createdAt || "",
+        lastActivityAt: match?.last_activity_at || feed[0]?.activityAt || feed[0]?.createdAt || "",
         feed,
       }
     })
@@ -385,6 +467,10 @@ export default function PatientPortal() {
   const [trackingMatches, setTrackingMatches] = useState([])
   const [trackingLoading, setTrackingLoading] = useState(false)
   const [trackingMessage, setTrackingMessage] = useState("")
+  const [trackingActionMessage, setTrackingActionMessage] = useState("")
+  const [trackingActionError, setTrackingActionError] = useState("")
+  const [trackingResponseNotes, setTrackingResponseNotes] = useState({})
+  const [respondingActionKey, setRespondingActionKey] = useState("")
   const [submitting, setSubmitting] = useState("")
   const [submitMessage, setSubmitMessage] = useState("")
   const [submitError, setSubmitError] = useState("")
@@ -392,11 +478,13 @@ export default function PatientPortal() {
     prescription: "",
     appointment: "",
     delivery: "",
+    response: "",
   })
   const [turnstileResetKeys, setTurnstileResetKeys] = useState({
     prescription: 0,
     appointment: 0,
     delivery: 0,
+    response: 0,
   })
 
   useEffect(() => {
@@ -686,6 +774,8 @@ export default function PatientPortal() {
     setSubmitError("")
     setSubmitMessage("")
     setTrackingMessage("")
+    setTrackingActionMessage("")
+    setTrackingActionError("")
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
@@ -697,6 +787,8 @@ export default function PatientPortal() {
     setSubmitMessage("")
     setTrackingFeed([])
     setTrackingMessage("")
+    setTrackingActionMessage("")
+    setTrackingActionError("")
     setBranchSearch("")
     setCountyFilter("")
     setSubcountyFilter("")
@@ -774,12 +866,49 @@ export default function PatientPortal() {
     return data
   }
 
+  async function submitPortalResponse(requestId, responseAction) {
+    const turnstileToken = turnstileTokens.response
+    const responseMeta = getPatientResponseMeta(responseAction)
+    const responseNotes = String(trackingResponseNotes[requestId] || "").trim()
+
+    if (!TURNSTILE_SITE_KEY) {
+      throw new Error("Security check is not configured right now. Please try again later.")
+    }
+
+    if (!turnstileToken) {
+      throw new Error("Complete the security check before replying to the pharmacist.")
+    }
+
+    if (responseMeta?.requiresNotes && !responseNotes) {
+      throw new Error("Add a short note so the pharmacist understands what you need.")
+    }
+
+    const { data, error } = await supabase.functions.invoke("patient-portal-respond", {
+      body: {
+        requestId,
+        patientPhone: normalizePhone(trackerPhone),
+        responseAction,
+        responseNotes: responseNotes || null,
+        turnstileToken,
+      },
+    })
+
+    if (error) throw error
+    if (data?.error) throw new Error(data.error)
+
+    resetTurnstile("response")
+    setTrackingResponseNotes((prev) => ({ ...prev, [requestId]: "" }))
+    return data
+  }
+
   const handlePrescriptionVerify = useCallback((token) => setTurnstileToken("prescription", token), [])
   const handlePrescriptionExpire = useCallback(() => setTurnstileToken("prescription", ""), [])
   const handleAppointmentVerify = useCallback((token) => setTurnstileToken("appointment", token), [])
   const handleAppointmentExpire = useCallback(() => setTurnstileToken("appointment", ""), [])
   const handleDeliveryVerify = useCallback((token) => setTurnstileToken("delivery", token), [])
   const handleDeliveryExpire = useCallback(() => setTurnstileToken("delivery", ""), [])
+  const handleResponseVerify = useCallback((token) => setTurnstileToken("response", token), [])
+  const handleResponseExpire = useCallback(() => setTurnstileToken("response", ""), [])
 
   async function handlePrescriptionSubmit(event) {
     event.preventDefault()
@@ -916,6 +1045,25 @@ export default function PatientPortal() {
     }
   }
 
+  async function handleAlternativeResponse(item, responseAction) {
+    const responseMeta = getPatientResponseMeta(responseAction)
+    if (!item?.requestId || !responseMeta) return
+
+    setRespondingActionKey(`${item.requestId}-${responseAction}`)
+    setTrackingActionMessage("")
+    setTrackingActionError("")
+
+    try {
+      const data = await submitPortalResponse(item.requestId, responseAction)
+      await fetchTrackingFeed(trackerPhone)
+      setTrackingActionMessage(data?.message || responseMeta.successMessage || "Your response has been sent to the pharmacy.")
+    } catch (error) {
+      setTrackingActionError(error?.message || "Unable to send your response right now.")
+    } finally {
+      setRespondingActionKey("")
+    }
+  }
+
   async function fetchTrackingFeed(phoneOverride, options = {}) {
     const phone = normalizePhone(phoneOverride ?? trackerPhone)
 
@@ -928,6 +1076,8 @@ export default function PatientPortal() {
 
     setTrackingLoading(true)
     setTrackingMessage("")
+    setTrackingActionMessage("")
+    setTrackingActionError("")
     setTrackingFeed([])
     setTrackingMatches([])
 
@@ -990,6 +1140,63 @@ export default function PatientPortal() {
     return (
       <div className={`patient-portal-feedback ${submitError ? "error" : "success"}`}>
         {submitError || submitMessage}
+      </div>
+    )
+  }
+
+  function renderPatientResponseBox(item) {
+    const responseMeta = getPatientResponseMeta(item.patientResponseAction)
+    if (!responseMeta) return null
+
+    return (
+      <div className={`patient-portal-response-box ${responseMeta.tone || "info"}`}>
+        <strong>{responseMeta.shortLabel || responseMeta.label}</strong>
+        <span>{responseMeta.helper}</span>
+        {item.patientResponseNotes && (
+          <div className="patient-portal-response-note">Your note: {item.patientResponseNotes}</div>
+        )}
+        {item.patientResponseAt && (
+          <div className="patient-portal-response-time">
+            Sent {formatDateTime(item.patientResponseAt)} · {timeAgo(item.patientResponseAt)}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  function renderRequestResponseActions(item) {
+    if (!item?.canRespond) return null
+
+    return (
+      <div className="patient-portal-response-actions">
+        <div className="patient-portal-response-head">
+          <strong>Choose your next step</strong>
+          <span>The pharmacist has offered a substitute. Reply here so they know how to continue.</span>
+        </div>
+
+        <textarea
+          rows="3"
+          value={trackingResponseNotes[item.requestId] || ""}
+          onChange={(event) => setTrackingResponseNotes((prev) => ({ ...prev, [item.requestId]: event.target.value }))}
+          placeholder="Add any extra note for the pharmacist (optional unless you need another option or want to cancel)."
+        />
+
+        <div className="patient-portal-response-button-row">
+          {Object.entries(PATIENT_RESPONSE_ACTIONS).map(([action, config]) => {
+            const actionKey = `${item.requestId}-${action}`
+            return (
+              <button
+                key={action}
+                type="button"
+                className={`btn ${action === "cancel_request" ? "btn-outline" : "btn-primary"} patient-response-btn ${config.tone || "info"}`}
+                onClick={() => handleAlternativeResponse(item, action)}
+                disabled={respondingActionKey === actionKey}
+              >
+                {respondingActionKey === actionKey ? "Sending..." : config.label}
+              </button>
+            )
+          })}
+        </div>
       </div>
     )
   }
@@ -1180,6 +1387,8 @@ export default function PatientPortal() {
   }
 
   function renderUpdatesPanel() {
+    const hasActionableRequest = trackingFeed.some((item) => item.canRespond)
+
     return (
       <div className="patient-portal-updates">
         <div className="patient-portal-track-bar">
@@ -1195,6 +1404,23 @@ export default function PatientPortal() {
         </div>
 
         {trackingMessage && <div className="patient-portal-track-message">{trackingMessage}</div>}
+        {trackingActionMessage && <div className="patient-portal-feedback success">{trackingActionMessage}</div>}
+        {trackingActionError && <div className="patient-portal-feedback error">{trackingActionError}</div>}
+
+        {hasActionableRequest && (
+          <div className="patient-portal-response-gate">
+            <div className="patient-portal-response-head">
+              <strong>Reply to the pharmacist</strong>
+              <span>Complete the security check once, then choose how you want the pharmacy to continue.</span>
+            </div>
+            <TurnstileWidget
+              formId="response"
+              resetSignal={turnstileResetKeys.response}
+              onVerify={handleResponseVerify}
+              onExpire={handleResponseExpire}
+            />
+          </div>
+        )}
 
         {trackingFeed.length > 0 && (
           <div className="patient-portal-timeline">
@@ -1202,11 +1428,13 @@ export default function PatientPortal() {
               <div key={item.id} className="patient-portal-update-card">
                 <div className="patient-portal-update-top">
                   <span className="patient-portal-update-type">{item.type}</span>
-                  <span className={`patient-portal-status ${getStatusTone(item.status)}`}>{item.status}</span>
+                  <span className={`patient-portal-status ${getStatusTone(item.status)}`}>{item.statusLabel || formatTokenLabel(item.status)}</span>
                 </div>
                 <div className="patient-portal-update-title">{item.title}</div>
                 <div className="patient-portal-update-text">{item.summary}</div>
-                <div className="patient-portal-update-time">{formatDateTime(item.createdAt)} · {timeAgo(item.createdAt)}</div>
+                {renderPatientResponseBox(item)}
+                {renderRequestResponseActions(item)}
+                <div className="patient-portal-update-time">{formatDateTime(item.activityAt || item.createdAt)} · {timeAgo(item.activityAt || item.createdAt)}</div>
               </div>
             ))}
           </div>
@@ -1258,11 +1486,12 @@ export default function PatientPortal() {
                     <div key={`${match.pharmacyId}-${item.id}`} className="patient-portal-update-card">
                       <div className="patient-portal-update-top">
                         <span className="patient-portal-update-type">{item.type}</span>
-                        <span className={`patient-portal-status ${getStatusTone(item.status)}`}>{item.status}</span>
+                        <span className={`patient-portal-status ${getStatusTone(item.status)}`}>{item.statusLabel || formatTokenLabel(item.status)}</span>
                       </div>
                       <div className="patient-portal-update-title">{item.title}</div>
                       <div className="patient-portal-update-text">{item.summary}</div>
-                      <div className="patient-portal-update-time">{formatDateTime(item.createdAt)} · {timeAgo(item.createdAt)}</div>
+                      {renderPatientResponseBox(item)}
+                      <div className="patient-portal-update-time">{formatDateTime(item.activityAt || item.createdAt)} · {timeAgo(item.activityAt || item.createdAt)}</div>
                     </div>
                   ))}
                 </div>
