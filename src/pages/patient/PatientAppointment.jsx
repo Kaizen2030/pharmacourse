@@ -135,29 +135,29 @@ export default function PatientAppointment() {
     setLookupMessage({ type: "", message: "" })
     setSubmitMessage({ type: "", message: "" })
 
-    const { data, error } = await pharmacyosClient
-      .from("patients")
-      .select("id, full_name, phone")
-      .eq("pharmacy_id", pharmacyId)
-      .eq("phone", normalizedPhone)
-      .maybeSingle()
+    const { data, error } = await pharmacyosClient.functions.invoke("patient-portal-profile", {
+      body: {
+        pharmacy_id: pharmacyId,
+        phone: normalizedPhone,
+      },
+    })
 
-    if (error) {
-      setLookupMessage({ type: "error", message: error.message || "We could not verify this patient right now." })
+    if (error || data?.error) {
+      setLookupMessage({ type: "error", message: error?.message || data?.error || "We could not verify this patient right now." })
       setPatient(null)
       setIsLookingUp(false)
       return
     }
 
-    if (!data) {
+    if (!data?.exists || !data?.patient) {
       setLookupMessage({ type: "info", message: "Please register first before booking an appointment." })
       setPatient(null)
       setIsLookingUp(false)
       return
     }
 
-    setPatient(data)
-    setLookupMessage({ type: "success", message: `Welcome back ${data.full_name}. Choose your appointment details below.` })
+    setPatient(data.patient)
+    setLookupMessage({ type: "success", message: `Welcome back ${data.patient.full_name}. Choose your appointment details below.` })
     setIsLookingUp(false)
   }
 
