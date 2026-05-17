@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { ImagePlus, UserRound } from "lucide-react"
 import { Link } from "react-router-dom"
 import { usePatient } from "../../components/PatientLayout"
 import { pharmacyosClient } from "../../lib/pharmacyosClient"
+import { getPatientPortalSession, savePatientPortalSession } from "../../lib/patientPortalSession"
 
 function isValidPhone(phone) {
   return /^07\d{8}$/.test(phone)
@@ -14,7 +15,8 @@ function sanitizeFileName(fileName) {
 
 export default function PatientPrescription() {
   const { pharmacyId, createPatientPath } = usePatient()
-  const [phone, setPhone] = useState("")
+  const rememberedSession = getPatientPortalSession(pharmacyId)
+  const [phone, setPhone] = useState(rememberedSession?.phone || "")
   const [patient, setPatient] = useState(null)
   const [lookupMessage, setLookupMessage] = useState({ type: "", message: "" })
   const [isLookingUp, setIsLookingUp] = useState(false)
@@ -23,6 +25,7 @@ export default function PatientPrescription() {
   const [prescriptionFile, setPrescriptionFile] = useState(null)
   const [submitMessage, setSubmitMessage] = useState({ type: "", message: "" })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const autoLookupDoneRef = useRef(false)
 
   useEffect(() => {
     if (!patient) {
@@ -40,10 +43,25 @@ export default function PatientPrescription() {
     }
   }, [patient, conditionNotes])
 
-  async function handleLookup(event) {
+  useEffect(() => {
+    if (autoLookupDoneRef.current) {
+      return
+    }
+
+    if (!rememberedSession?.phone || patient || !isValidPhone(rememberedSession.phone)) {
+      return
+    }
+
+    autoLookupDoneRef.current = true
+
+    const fakeEvent = { preventDefault() {} }
+    handleLookup(fakeEvent, rememberedSession.phone)
+  }, [rememberedSession, patient])
+
+  async function handleLookup(event, phoneOverride) {
     event.preventDefault()
 
-    const normalizedPhone = phone.trim()
+    const normalizedPhone = String(phoneOverride ?? phone).trim()
 
     if (!isValidPhone(normalizedPhone)) {
       setLookupMessage({ type: "error", message: "Enter a valid phone number in the format 07XXXXXXXX." })
@@ -77,6 +95,11 @@ export default function PatientPrescription() {
     }
 
     setPatient(data.patient)
+    savePatientPortalSession(pharmacyId, {
+      phone: data.patient.phone || normalizedPhone,
+      fullName: data.patient.full_name,
+      patientId: data.patient.id,
+    })
     setLookupMessage({
       type: "success",
       message: `Welcome back ${data.patient.full_name}. You can submit your prescription request below.`,

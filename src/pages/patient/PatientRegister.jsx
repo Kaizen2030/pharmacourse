@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import { usePatient } from "../../components/PatientLayout"
 import { pharmacyosClient } from "../../lib/pharmacyosClient"
+import { savePatientPortalSession } from "../../lib/patientPortalSession"
 import TurnstileWidget from "../../components/TurnstileWidget"
 
 const insuranceOptions = ["SHA/NHIF", "AAR", "Jubilee", "Britam", "Madison", "CIC", "None"]
@@ -140,6 +141,11 @@ export default function PatientRegister() {
       message: data?.alreadyRegistered
         ? `Your profile is already linked at ${branchName}. Your reference number is ${normalizedPhone}.`
         : `Registration successful at ${branchName}. Your reference number is ${normalizedPhone}.`,
+    })
+    savePatientPortalSession(pharmacyId, {
+      phone: normalizedPhone,
+      fullName: trimmedName,
+      patientId: data?.patient?.id || null,
     })
     setTurnstileResetKey((current) => current + 1)
     setTurnstileToken("")

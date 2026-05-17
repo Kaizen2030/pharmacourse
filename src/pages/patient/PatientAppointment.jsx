@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { CalendarClock, PhoneCall, Store, UserRound, Video } from "lucide-react"
 import { usePatient } from "../../components/PatientLayout"
 import { pharmacyosClient } from "../../lib/pharmacyosClient"
+import { getPatientPortalSession, savePatientPortalSession } from "../../lib/patientPortalSession"
 
 const slotOptions = [
   { label: "9:00 AM", value: "09:00" },
@@ -45,7 +46,8 @@ function formatAppointmentDate(date, time) {
 
 export default function PatientAppointment() {
   const { pharmacyId } = usePatient()
-  const [phone, setPhone] = useState("")
+  const rememberedSession = getPatientPortalSession(pharmacyId)
+  const [phone, setPhone] = useState(rememberedSession?.phone || "")
   const [patient, setPatient] = useState(null)
   const [lookupMessage, setLookupMessage] = useState({ type: "", message: "" })
   const [isLookingUp, setIsLookingUp] = useState(false)
@@ -58,6 +60,7 @@ export default function PatientAppointment() {
   const [isLoadingSlots, setIsLoadingSlots] = useState(false)
   const [submitMessage, setSubmitMessage] = useState({ type: "", message: "" })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const autoLookupDoneRef = useRef(false)
 
   useEffect(() => {
     if (!selectedDate) {
@@ -120,10 +123,25 @@ export default function PatientAppointment() {
     }
   }, [bookedSlots, selectedSlot])
 
-  async function handleLookup(event) {
+  useEffect(() => {
+    if (autoLookupDoneRef.current) {
+      return
+    }
+
+    if (!rememberedSession?.phone || patient || !isValidPhone(rememberedSession.phone)) {
+      return
+    }
+
+    autoLookupDoneRef.current = true
+
+    const fakeEvent = { preventDefault() {} }
+    handleLookup(fakeEvent, rememberedSession.phone)
+  }, [rememberedSession, patient])
+
+  async function handleLookup(event, phoneOverride) {
     event.preventDefault()
 
-    const normalizedPhone = phone.trim()
+    const normalizedPhone = String(phoneOverride ?? phone).trim()
 
     if (!isValidPhone(normalizedPhone)) {
       setLookupMessage({ type: "error", message: "Enter a valid phone number in the format 07XXXXXXXX." })
@@ -157,6 +175,11 @@ export default function PatientAppointment() {
     }
 
     setPatient(data.patient)
+    savePatientPortalSession(pharmacyId, {
+      phone: data.patient.phone || normalizedPhone,
+      fullName: data.patient.full_name,
+      patientId: data.patient.id,
+    })
     setLookupMessage({ type: "success", message: `Welcome back ${data.patient.full_name}. Choose your appointment details below.` })
     setIsLookingUp(false)
   }

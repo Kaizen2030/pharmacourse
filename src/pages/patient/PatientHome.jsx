@@ -1,8 +1,9 @@
-import { useState } from "react"
-import { Bell, CalendarPlus2, ChevronRight, ClipboardPlus, IdCard, PillBottle } from "lucide-react"
+import { useEffect, useState } from "react"
+import { Bell, CalendarPlus2, ChevronRight, ClipboardPlus, IdCard, LogOut, PillBottle, UserRoundCheck } from "lucide-react"
 import { Link } from "react-router-dom"
 import { usePatient } from "../../components/PatientLayout"
 import { fetchPatientPortalUpdates } from "../../lib/patientPortalUpdates"
+import { clearPatientPortalSession, getPatientPortalSession } from "../../lib/patientPortalSession"
 
 function formatDateTime(value) {
   if (!value) {
@@ -27,15 +28,20 @@ function getTypeBadgeClass(type) {
 
 export default function PatientHome() {
   const { branchName, pharmacyId, createPatientPath } = usePatient()
+  const [rememberedPatient, setRememberedPatient] = useState(() => getPatientPortalSession(pharmacyId))
   const [phone, setPhone] = useState("")
   const [notifications, setNotifications] = useState([])
   const [isChecking, setIsChecking] = useState(false)
   const [feedback, setFeedback] = useState({ type: "", message: "" })
 
+  useEffect(() => {
+    setRememberedPatient(getPatientPortalSession(pharmacyId))
+  }, [pharmacyId])
+
   const actions = [
     {
-      title: "Register",
-      description: "New patient? Create your profile",
+      title: rememberedPatient ? "Update profile" : "Register",
+      description: rememberedPatient ? "Need to change details? Open your branch profile form" : "New patient? Create your profile",
       to: createPatientPath("/patient/register"),
       icon: IdCard,
     },
@@ -58,6 +64,14 @@ export default function PatientHome() {
       icon: ClipboardPlus,
     },
   ]
+
+  function handleForgetPatient() {
+    clearPatientPortalSession(pharmacyId)
+    setRememberedPatient(null)
+    setPhone("")
+    setNotifications([])
+    setFeedback({ type: "info", message: "This phone has been cleared on this device. You can register or switch to another number." })
+  }
 
   async function handleCheckNotifications(event) {
     event.preventDefault()
@@ -107,6 +121,65 @@ export default function PatientHome() {
           <strong>{branchName}</strong>.
         </p>
       </section>
+
+      {rememberedPatient ? (
+        <section className="patient-card">
+          <div className="patient-section-header">
+            <div>
+              <h2 className="patient-section-title">Continue as {rememberedPatient.fullName || rememberedPatient.phone}</h2>
+              <p className="patient-form-help">
+                This phone was already used on this device for <strong>{branchName}</strong>. You can continue with the same profile right away.
+              </p>
+            </div>
+            <span className="patient-inline-icon">
+              <UserRoundCheck />
+            </span>
+          </div>
+
+          <div className="patient-list-item" style={{ marginBottom: "0.9rem" }}>
+            <div className="patient-list-header">
+              <div>
+                <div className="patient-list-title">{rememberedPatient.fullName || "Registered patient"}</div>
+                <div className="patient-list-meta">{rememberedPatient.phone}</div>
+              </div>
+              <span className="patient-badge">Saved on this device</span>
+            </div>
+          </div>
+
+          <div className="patient-actions-grid" style={{ marginBottom: "0.85rem" }}>
+            <Link to={createPatientPath("/patient/prescription")} className="patient-action-card">
+              <span className="patient-action-icon">
+                <PillBottle />
+              </span>
+              <div className="patient-action-content">
+                <h2>Continue to prescriptions</h2>
+                <p>Use the saved phone number and load your branch profile automatically.</p>
+              </div>
+              <span className="patient-action-arrow" aria-hidden="true">
+                <ChevronRight />
+              </span>
+            </Link>
+
+            <Link to={createPatientPath("/patient/appointment")} className="patient-action-card">
+              <span className="patient-action-icon">
+                <CalendarPlus2 />
+              </span>
+              <div className="patient-action-content">
+                <h2>Continue to appointments</h2>
+                <p>Book again without re-entering everything from scratch.</p>
+              </div>
+              <span className="patient-action-arrow" aria-hidden="true">
+                <ChevronRight />
+              </span>
+            </Link>
+          </div>
+
+          <button type="button" className="patient-button-secondary" onClick={handleForgetPatient} style={{ display: "inline-flex", alignItems: "center", gap: "0.55rem" }}>
+            <LogOut size={16} />
+            Use another phone number
+          </button>
+        </section>
+      ) : null}
 
       <section className="patient-actions-grid">
         {actions.map(({ title, description, to, icon: Icon }) => (

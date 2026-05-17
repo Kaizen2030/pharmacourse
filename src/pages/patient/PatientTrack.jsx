@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { ArrowUpRight, BellRing, CalendarClock, ClipboardList, PackageSearch, Video } from "lucide-react"
 import { usePatient } from "../../components/PatientLayout"
 import { fetchPatientPortalUpdates } from "../../lib/patientPortalUpdates"
+import { getPatientPortalSession, savePatientPortalSession } from "../../lib/patientPortalSession"
 
 const deliverySteps = ["pending", "packed", "dispatched", "delivered"]
 
@@ -52,7 +53,8 @@ function formatAppointmentType(value) {
 
 export default function PatientTrack() {
   const { pharmacyId } = usePatient()
-  const [phoneInput, setPhoneInput] = useState("")
+  const rememberedSession = getPatientPortalSession(pharmacyId)
+  const [phoneInput, setPhoneInput] = useState(rememberedSession?.phone || "")
   const [activePhone, setActivePhone] = useState("")
   const [notifications, setNotifications] = useState([])
   const [deliveries, setDeliveries] = useState([])
@@ -61,6 +63,13 @@ export default function PatientTrack() {
   const [isLoading, setIsLoading] = useState(false)
   const [feedback, setFeedback] = useState({ type: "", message: "" })
   const [lastUpdated, setLastUpdated] = useState("")
+
+  useEffect(() => {
+    if (rememberedSession?.phone && isValidPhone(rememberedSession.phone) && !activePhone) {
+      setActivePhone(rememberedSession.phone)
+      loadTrackingData(rememberedSession.phone)
+    }
+  }, [])
 
   async function loadTrackingData(phone, { silent = false } = {}) {
     if (!silent) {
@@ -88,6 +97,16 @@ export default function PatientTrack() {
       return new Date(item.slot_datetime).getTime() > Date.now()
     })
 
+    savePatientPortalSession(pharmacyId, {
+      phone,
+      fullName:
+        prescriptionRows[0]?.patient_name ||
+        deliveryRows[0]?.patient_name ||
+        notificationRows[0]?.patient_name ||
+        rememberedSession?.fullName ||
+        "",
+      patientId: rememberedSession?.patientId || null,
+    })
     setNotifications(notificationRows.map((item) => ({ ...item, read: true })))
     setDeliveries(deliveryRows)
     setPrescriptions(prescriptionRows)
