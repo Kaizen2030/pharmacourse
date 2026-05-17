@@ -1,4 +1,5 @@
-import { useCallback, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
+import { Link } from "react-router-dom"
 import { usePatient } from "../../components/PatientLayout"
 import { pharmacyosClient } from "../../lib/pharmacyosClient"
 import TurnstileWidget from "../../components/TurnstileWidget"
@@ -22,7 +23,7 @@ function isValidPhone(phone) {
 }
 
 export default function PatientRegister() {
-  const { pharmacyId, branchName } = usePatient()
+  const { pharmacyId, branchName, createPatientPath } = usePatient()
   const [formValues, setFormValues] = useState({
     fullName: "",
     phone: "",
@@ -57,6 +58,32 @@ export default function PatientRegister() {
   const handleTurnstileExpire = useCallback(() => {
     setTurnstileToken("")
   }, [])
+
+  const nextStepActions = useMemo(
+    () => [
+      {
+        title: "Request Prescription",
+        copy: "Ask the pharmacist to review a medicine request or upload a prescription photo.",
+        to: createPatientPath("/patient/prescription"),
+      },
+      {
+        title: "Book Appointment",
+        copy: "Schedule a phone call, video consultation, or in-person pickup discussion.",
+        to: createPatientPath("/patient/appointment"),
+      },
+      {
+        title: "Request Delivery",
+        copy: "Send a delivery order with items and address details for this same branch.",
+        to: `/patient-portal?pharmacy=${encodeURIComponent(pharmacyId)}`,
+      },
+      {
+        title: "Check My Updates",
+        copy: "Use the same phone number to track prescription, appointment, and delivery progress.",
+        to: createPatientPath("/patient/track"),
+      },
+    ],
+    [createPatientPath],
+  )
 
   async function handleSubmit(event) {
     event.preventDefault()
@@ -286,6 +313,36 @@ export default function PatientRegister() {
           </button>
         </form>
       </section>
+
+      {feedback.type && feedback.type !== "error" ? (
+        <section className="patient-card patient-card-muted">
+          <div className="patient-section-header">
+            <div>
+              <h2 className="patient-section-title">What would you like to do next?</h2>
+              <p className="patient-form-help">
+                Your profile is now linked to {branchName}. Continue with the same phone number <strong>{formValues.phone.trim()}</strong> so the branch sees your full history.
+              </p>
+            </div>
+          </div>
+
+          <div className="patient-actions-grid">
+            {nextStepActions.map((action) => (
+              <Link
+                key={action.title}
+                to={action.to}
+                className="patient-action-card"
+                style={{ textDecoration: "none" }}
+              >
+                <div className="patient-action-content" style={{ display: "grid", gap: "0.24rem" }}>
+                  <h3>{action.title}</h3>
+                  <p style={{ margin: 0, color: "#5f746b", lineHeight: 1.6 }}>{action.copy}</p>
+                </div>
+                <div style={{ color: "#0f6e56", fontWeight: 800, fontSize: "0.9rem" }}>Open</div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   )
 }
