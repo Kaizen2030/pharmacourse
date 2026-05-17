@@ -23,6 +23,7 @@ import PatientPrescription from "./pages/patient/PatientPrescription"
 import PatientRegister from "./pages/patient/PatientRegister"
 import PatientTrack from "./pages/patient/PatientTrack"
 import PatientPortal from "./pages/PatientPortal"
+import PatientPortalFlyer from "./pages/PatientPortalFlyer"
 import PharmacyOS from "./pages/Pharmacyos"
 import Register from "./pages/Register"
 import RemedacareOS from "./pages/Remedacareos"
@@ -93,11 +94,12 @@ function MediaProtection() {
 function AppShell() {
   const location = useLocation()
   const isPatientRoute = location.pathname.startsWith("/patient") || location.pathname === "/patient-portal"
+  const isFlyerRoute = location.pathname === "/patient-flyer"
 
   return (
     <>
       <MediaProtection />
-      {!isPatientRoute ? <Navbar /> : null}
+      {!isPatientRoute && !isFlyerRoute ? <Navbar /> : null}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
@@ -125,6 +127,7 @@ function AppShell() {
         <Route path="/admin/simulations" element={<SimulationAdmin />} />
 
         <Route path="/patient-portal" element={<PatientPortal />} />
+        <Route path="/patient-flyer" element={<PatientPortalFlyer />} />
         <Route path="/patient" element={<PatientLayout />}>
           <Route index element={<PatientHome />} />
           <Route path="register" element={<PatientRegister />} />
@@ -136,7 +139,7 @@ function AppShell() {
         <Route path="/reset/remedacare" element={<ResetRedirect app="remedacare" />} />
         <Route path="/reset/pharmacyos" element={<ResetRedirect app="pharmacyos" />} />
       </Routes>
-      {!isPatientRoute ? <Footer /> : null}
+      {!isPatientRoute && !isFlyerRoute ? <Footer /> : null}
     </>
   )
 }

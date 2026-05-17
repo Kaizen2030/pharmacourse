@@ -2,7 +2,7 @@ import { useState } from "react"
 import { Bell, CalendarPlus2, ChevronRight, ClipboardPlus, IdCard, PillBottle } from "lucide-react"
 import { Link } from "react-router-dom"
 import { usePatient } from "../../components/PatientLayout"
-import { pharmacyosClient } from "../../lib/pharmacyosClient"
+import { fetchPatientPortalUpdates } from "../../lib/patientPortalUpdates"
 
 function formatDateTime(value) {
   if (!value) {
@@ -73,21 +73,19 @@ export default function PatientHome() {
     setIsChecking(true)
     setFeedback({ type: "", message: "" })
 
-    const { data, error } = await pharmacyosClient.functions.invoke("patient-portal-updates", {
-      body: {
-        pharmacy_id: pharmacyId,
-        phone: normalizedPhone,
-      },
+    const { data, error } = await fetchPatientPortalUpdates({
+      pharmacyId,
+      phone: normalizedPhone,
     })
 
-    if (error || data?.error) {
-      setFeedback({ type: "error", message: error?.message || data?.error || "We could not load your notifications right now." })
+    if (error) {
+      setFeedback({ type: "error", message: error.message || "We could not load your notifications right now." })
       setNotifications([])
       setIsChecking(false)
       return
     }
 
-    const notificationRows = (data?.updates?.notifications || []).slice(0, 5)
+    const notificationRows = (data?.notifications || []).slice(0, 5)
     setNotifications(notificationRows.map((item) => ({ ...item, read: true })))
 
     if (notificationRows.length) {

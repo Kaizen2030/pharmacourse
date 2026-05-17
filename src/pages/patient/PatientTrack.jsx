@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { ArrowUpRight, BellRing, CalendarClock, ClipboardList, PackageSearch, Video } from "lucide-react"
 import { usePatient } from "../../components/PatientLayout"
-import { pharmacyosClient } from "../../lib/pharmacyosClient"
+import { fetchPatientPortalUpdates } from "../../lib/patientPortalUpdates"
 
 const deliverySteps = ["pending", "packed", "dispatched", "delivered"]
 
@@ -67,26 +67,23 @@ export default function PatientTrack() {
       setIsLoading(true)
     }
 
-    const { data, error } = await pharmacyosClient.functions.invoke("patient-portal-updates", {
-      body: {
-        pharmacy_id: pharmacyId,
-        phone,
-      },
+    const { data, error } = await fetchPatientPortalUpdates({
+      pharmacyId,
+      phone,
     })
 
-    if (error || data?.error) {
-      setFeedback({ type: "error", message: error?.message || data?.error || "We could not load your tracking updates right now." })
+    if (error) {
+      setFeedback({ type: "error", message: error.message || "We could not load your tracking updates right now." })
       if (!silent) {
         setIsLoading(false)
       }
       return
     }
 
-    const payload = data?.updates || {}
-    const notificationRows = payload.notifications || []
-    const deliveryRows = (payload.deliveries || []).filter((item) => String(item?.status || "").toLowerCase() !== "delivered")
-    const prescriptionRows = payload.requests || []
-    const appointmentRows = (payload.appointments || []).filter((item) => {
+    const notificationRows = data?.notifications || []
+    const deliveryRows = (data?.deliveries || []).filter((item) => String(item?.status || "").toLowerCase() !== "delivered")
+    const prescriptionRows = data?.requests || []
+    const appointmentRows = (data?.appointments || []).filter((item) => {
       if (!item?.slot_datetime) return false
       return new Date(item.slot_datetime).getTime() > Date.now()
     })
