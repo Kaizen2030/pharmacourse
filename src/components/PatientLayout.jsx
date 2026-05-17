@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react"
 import { NavLink, Outlet, useSearchParams } from "react-router-dom"
 import { Building2, CalendarDays, ClipboardList, House, PackageSearch } from "lucide-react"
 import { pharmacyosClient } from "../lib/pharmacyosClient"
+import PatientInstallPrompt from "./PatientInstallPrompt"
 import PatientPortal from "../pages/PatientPortal"
 
 const PatientContext = createContext(null)
@@ -162,6 +163,109 @@ function PatientPortalStyles() {
 
       .patient-branch-lock-copy strong {
         color: #163329;
+      }
+
+      .patient-install-card {
+        display: grid;
+        gap: 0.95rem;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        border-radius: 22px;
+        border: 1px solid rgba(15, 110, 86, 0.14);
+        background:
+          radial-gradient(circle at top right, rgba(15, 110, 86, 0.1), transparent 28%),
+          linear-gradient(180deg, rgba(255,255,255,0.98), rgba(239, 248, 244, 0.96));
+        box-shadow: 0 14px 30px rgba(15, 42, 32, 0.07);
+      }
+
+      .patient-install-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.8rem;
+      }
+
+      .patient-install-icon,
+      .patient-install-close {
+        width: 42px;
+        height: 42px;
+        border-radius: 16px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .patient-install-icon {
+        background: rgba(15, 110, 86, 0.1);
+        color: #0f6e56;
+      }
+
+      .patient-install-icon svg,
+      .patient-install-close svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      .patient-install-close {
+        border: none;
+        background: rgba(255, 255, 255, 0.8);
+        color: #6b7f76;
+        cursor: pointer;
+      }
+
+      .patient-install-copy h2 {
+        margin: 0.2rem 0 0.35rem;
+        font-size: 1.08rem;
+      }
+
+      .patient-install-copy p,
+      .patient-install-ios-row span {
+        color: #5f746b;
+        font-size: 0.92rem;
+        line-height: 1.55;
+      }
+
+      .patient-install-kicker {
+        color: #0f6e56;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .patient-install-actions {
+        display: grid;
+        gap: 0.65rem;
+      }
+
+      .patient-install-actions .patient-button,
+      .patient-install-actions .patient-button-secondary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.55rem;
+      }
+
+      .patient-install-actions .patient-button svg,
+      .patient-install-ios-row svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      .patient-install-ios {
+        display: grid;
+        gap: 0.65rem;
+      }
+
+      .patient-install-ios-row {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        padding: 0.78rem 0.9rem;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.7);
+        border: 1px solid rgba(15, 110, 86, 0.08);
+        color: #0f6e56;
       }
 
       .patient-page {
@@ -863,6 +967,8 @@ export default function PatientLayout() {
               You are connected to <strong>{branchName}</strong>. Registration, prescriptions, appointments, and tracking on these pages all go directly to this branch in PharmacyOS.
             </div>
           </div>
+
+          <PatientInstallPrompt />
 
           <Outlet />
         </main>

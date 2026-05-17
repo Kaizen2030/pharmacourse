@@ -67,20 +67,22 @@ export default function PatientTrack() {
       setIsLoading(true)
     }
 
-    const { data, error } = await pharmacyosClient.rpc("public_patient_portal_updates", {
-      target_pharmacy_id: pharmacyId,
-      target_phone: phone,
+    const { data, error } = await pharmacyosClient.functions.invoke("patient-portal-updates", {
+      body: {
+        pharmacy_id: pharmacyId,
+        phone,
+      },
     })
 
-    if (error) {
-      setFeedback({ type: "error", message: error.message || "We could not load your tracking updates right now." })
+    if (error || data?.error) {
+      setFeedback({ type: "error", message: error?.message || data?.error || "We could not load your tracking updates right now." })
       if (!silent) {
         setIsLoading(false)
       }
       return
     }
 
-    const payload = data || {}
+    const payload = data?.updates || {}
     const notificationRows = payload.notifications || []
     const deliveryRows = (payload.deliveries || []).filter((item) => String(item?.status || "").toLowerCase() !== "delivered")
     const prescriptionRows = payload.requests || []
