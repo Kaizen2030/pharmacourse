@@ -57,63 +57,34 @@ export default function PatientTrack() {
       setIsLoading(true)
     }
 
-    const nowIso = new Date().toISOString()
+    const { data, error } = await pharmacyosClient.rpc("public_patient_portal_updates", {
+      target_pharmacy_id: pharmacyId,
+      target_phone: phone,
+    })
 
-    const [notificationResult, deliveryResult, prescriptionResult, appointmentResult] = await Promise.all([
-      pharmacyosClient
-        .from("patient_notifications")
-        .select("id, type, message, read, created_at")
-        .eq("patient_phone", phone)
-        .eq("pharmacy_id", pharmacyId)
-        .order("created_at", { ascending: false })
-        .limit(20),
-      pharmacyosClient
-        .from("deliveries")
-        .select("id, patient_name, items, total_kes, rider_name, rider_phone, status, created_at, delivered_at")
-        .eq("patient_phone", phone)
-        .eq("pharmacy_id", pharmacyId)
-        .neq("status", "delivered")
-        .order("created_at", { ascending: false }),
-      pharmacyosClient
-        .from("prescription_requests")
-        .select("id, drug_requested, status, condition_notes, created_at")
-        .eq("patient_phone", phone)
-        .eq("pharmacy_id", pharmacyId)
-        .order("created_at", { ascending: false })
-        .limit(5),
-      pharmacyosClient
-        .from("appointments")
-        .select("id, appointment_type, slot_datetime, status, condition_summary")
-        .eq("patient_phone", phone)
-        .eq("pharmacy_id", pharmacyId)
-        .gt("slot_datetime", nowIso)
-        .order("slot_datetime", { ascending: true }),
-    ])
-
-    const firstError =
-      notificationResult.error || deliveryResult.error || prescriptionResult.error || appointmentResult.error
-
-    if (firstError) {
-      setFeedback({ type: "error", message: firstError.message || "We could not load your tracking updates right now." })
+    if (error) {
+      setFeedback({ type: "error", message: error.message || "We could not load your tracking updates right now." })
       if (!silent) {
         setIsLoading(false)
       }
       return
     }
 
-    const notificationRows = notificationResult.data || []
+    const payload = data || {}
+    const notificationRows = payload.notifications || []
+    const deliveryRows = (payload.deliveries || []).filter((item) => String(item?.status || "").toLowerCase() !== "delivered")
+    const prescriptionRows = payload.requests || []
+    const appointmentRows = (payload.appointments || []).filter((item) => {
+      if (!item?.slot_datetime) return false
+      return new Date(item.slot_datetime).getTime() > Date.now()
+    })
+
     setNotifications(notificationRows.map((item) => ({ ...item, read: true })))
-    setDeliveries(deliveryResult.data || [])
-    setPrescriptions(prescriptionResult.data || [])
-    setAppointments(appointmentResult.data || [])
+    setDeliveries(deliveryRows)
+    setPrescriptions(prescriptionRows)
+    setAppointments(appointmentRows)
     setLastUpdated(formatDateTime(new Date().toISOString()))
     setFeedback({ type: notificationRows.length ? "success" : "info", message: notificationRows.length ? "Updates refreshed." : "No notifications yet for this number." })
-
-    const unreadIds = notificationRows.filter((item) => !item.read).map((item) => item.id)
-
-    if (unreadIds.length) {
-      await pharmacyosClient.from("patient_notifications").update({ read: true }).in("id", unreadIds)
-    }
 
     if (!silent) {
       setIsLoading(false)
@@ -263,10 +234,12 @@ export default function PatientTrack() {
                       </div>
 
                       <div className="patient-info-list">
-                        {delivery.items ? <div>Items: {delivery.items}</div> : null}
+                        {delivery.items ? <div>Items: {Array.isArray(delivery.items) ? delivery.items.map((item) => `${item.drug_name || "Item"} x${item.qty || 1}`).join(", ") : delivery.items}</div> : null}
                         {delivery.total_kes != null ? <div>Total: KES {delivery.total_kes}</div> : null}
-                        {delivery.rider_name ? <div>Rider: {delivery.rider_name}</div> : null}
-                        {delivery.rider_phone ? <div>Rider phone: {delivery.rider_phone}</div> : null}
+                        {delivery.delivery_partner_type ? <div>Delivery partner: {delivery.delivery_partner_type}</div> : null}
+                        {delivery.rider_name ? <div>Contact: {delivery.rider_name}</div> : null}
+                        {delivery.rider_phone ? <div>Contact phone: {delivery.rider_phone}</div> : null}
+                        {delivery.estimated_delivery_minutes ? <div>ETA: about {delivery.estimated_delivery_minutes} minutes</div> : null}
                       </div>
 
                       <div className="patient-timeline" aria-label="Delivery status timeline">
@@ -315,12 +288,14 @@ export default function PatientTrack() {
                   <article key={request.id} className="patient-list-item">
                     <div className="patient-list-header">
                       <div>
-                        <div className="patient-list-title">{request.drug_requested || "Prescription request"}</div>
+                        <div className="patient-list-title">{request.fulfillment_drug_name || request.drug_requested || "Prescription request"}</div>
                         <div className="patient-list-meta">Submitted {formatDateTime(request.created_at)}</div>
                       </div>
                       <span className={`patient-status-badge ${getStatusClass(request.status)}`}>{request.status || "Pending"}</span>
                     </div>
                     {request.condition_notes ? <p className="patient-list-text">{request.condition_notes}</p> : null}
+                    {request.pharmacist_notes ? <p className="patient-list-text">Pharmacist note: {request.pharmacist_notes}</p> : null}
+                    {request.patient_fulfillment_choice ? <p className="patient-list-text">Next step: {request.patient_fulfillment_choice}</p> : null}
                   </article>
                 ))}
               </div>
@@ -357,6 +332,15 @@ export default function PatientTrack() {
                       <span className={`patient-status-badge ${getStatusClass(appointment.status)}`}>{appointment.status || "Pending"}</span>
                     </div>
                     {appointment.condition_summary ? <p className="patient-list-text">{appointment.condition_summary}</p> : null}
+                    {appointment.pharmacist_response ? <p className="patient-list-text">Pharmacist note: {appointment.pharmacist_response}</p> : null}
+                    {appointment.video_link ? (
+                      <p className="patient-list-text">
+                        Join link:{" "}
+                        <a href={appointment.video_link} target="_blank" rel="noreferrer">
+                          Open consultation link
+                        </a>
+                      </p>
+                    ) : null}
                   </article>
                 ))}
               </div>

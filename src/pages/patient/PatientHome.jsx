@@ -73,13 +73,10 @@ export default function PatientHome() {
     setIsChecking(true)
     setFeedback({ type: "", message: "" })
 
-    const { data, error } = await pharmacyosClient
-      .from("patient_notifications")
-      .select("id, type, message, read, created_at")
-      .eq("patient_phone", normalizedPhone)
-      .eq("pharmacy_id", pharmacyId)
-      .order("created_at", { ascending: false })
-      .limit(5)
+    const { data, error } = await pharmacyosClient.rpc("public_patient_portal_updates", {
+      target_pharmacy_id: pharmacyId,
+      target_phone: normalizedPhone,
+    })
 
     if (error) {
       setFeedback({ type: "error", message: error.message || "We could not load your notifications right now." })
@@ -88,16 +85,10 @@ export default function PatientHome() {
       return
     }
 
-    const notificationRows = data || []
+    const notificationRows = (data?.notifications || []).slice(0, 5)
     setNotifications(notificationRows.map((item) => ({ ...item, read: true })))
 
     if (notificationRows.length) {
-      const unreadIds = notificationRows.filter((item) => !item.read).map((item) => item.id)
-
-      if (unreadIds.length) {
-        await pharmacyosClient.from("patient_notifications").update({ read: true }).in("id", unreadIds)
-      }
-
       setFeedback({ type: "success", message: `We found ${notificationRows.length} recent update(s) for this number.` })
     } else {
       setFeedback({ type: "info", message: "No notifications yet for that number at this branch." })
