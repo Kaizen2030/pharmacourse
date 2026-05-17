@@ -22,6 +22,7 @@ import PatientHome from "./pages/patient/PatientHome"
 import PatientPrescription from "./pages/patient/PatientPrescription"
 import PatientRegister from "./pages/patient/PatientRegister"
 import PatientTrack from "./pages/patient/PatientTrack"
+import PatientPortal from "./pages/PatientPortal"
 import PharmacyOS from "./pages/Pharmacyos"
 import Register from "./pages/Register"
 import RemedacareOS from "./pages/Remedacareos"
@@ -91,7 +92,7 @@ function MediaProtection() {
 
 function AppShell() {
   const location = useLocation()
-  const isPatientRoute = location.pathname.startsWith("/patient")
+  const isPatientRoute = location.pathname.startsWith("/patient") || location.pathname === "/patient-portal"
 
   return (
     <>
@@ -123,6 +124,7 @@ function AppShell() {
         <Route path="/admin/courses/:id/edit" element={<CourseForm />} />
         <Route path="/admin/simulations" element={<SimulationAdmin />} />
 
+        <Route path="/patient-portal" element={<PatientPortal />} />
         <Route path="/patient" element={<PatientLayout />}>
           <Route index element={<PatientHome />} />
           <Route path="register" element={<PatientRegister />} />

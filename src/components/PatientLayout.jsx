@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react"
 import { NavLink, Outlet, useSearchParams } from "react-router-dom"
 import { Building2, CalendarDays, ClipboardList, House, PackageSearch } from "lucide-react"
 import { pharmacyosClient } from "../lib/pharmacyosClient"
+import PatientPortal from "../pages/PatientPortal"
 
 const PatientContext = createContext(null)
 
@@ -132,6 +133,35 @@ function PatientPortalStyles() {
         width: min(100%, 760px);
         margin: 0 auto;
         padding: 1rem 1rem 6.8rem;
+      }
+
+      .patient-branch-lock {
+        display: grid;
+        gap: 0.28rem;
+        margin-bottom: 1rem;
+        padding: 0.95rem 1rem;
+        border-radius: 20px;
+        border: 1px solid rgba(15, 110, 86, 0.14);
+        background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(241, 250, 246, 0.94));
+        box-shadow: 0 10px 24px rgba(15, 42, 32, 0.05);
+      }
+
+      .patient-branch-lock-title {
+        color: #0f6e56;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .patient-branch-lock-copy {
+        color: #24463a;
+        font-size: 0.92rem;
+        line-height: 1.55;
+      }
+
+      .patient-branch-lock-copy strong {
+        color: #163329;
       }
 
       .patient-page {
@@ -775,18 +805,7 @@ export default function PatientLayout() {
   }
 
   if (!pharmacyId) {
-    return (
-      <div className="patient-shell">
-        <PatientPortalStyles />
-        <div className="patient-missing">
-          <div className="patient-missing-card">
-            <Building2 />
-            <h1>Please use the link your pharmacy sent you</h1>
-            <p>This patient portal only works when a pharmacy branch link includes its secure pharmacy reference.</p>
-          </div>
-        </div>
-      </div>
-    )
+    return <PatientPortal />
   }
 
   if (isLoading) {
@@ -837,6 +856,13 @@ export default function PatientLayout() {
               We loaded the portal, but the branch details could not be refreshed: {loadError}
             </div>
           ) : null}
+
+          <div className="patient-branch-lock">
+            <div className="patient-branch-lock-title">Branch locked for this session</div>
+            <div className="patient-branch-lock-copy">
+              You are connected to <strong>{branchName}</strong>. Registration, prescriptions, appointments, and tracking on these pages all go directly to this branch in PharmacyOS.
+            </div>
+          </div>
 
           <Outlet />
         </main>
