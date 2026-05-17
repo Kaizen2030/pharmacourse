@@ -745,6 +745,10 @@
   font-size: 0.95rem;
 }
 
+.patient-portal-response-actions .form-input {
+  margin-top: 0.7rem;
+}
+
 .patient-portal-response-button-row {
   display: flex;
   flex-wrap: wrap;

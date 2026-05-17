@@ -58,6 +58,24 @@ const PATIENT_RESPONSE_ACTIONS = {
   },
 }
 
+const FULFILLMENT_ACTIONS = {
+  pickup: {
+    label: "I Will Pick Up at Pharmacy",
+    shortLabel: "Pickup selected",
+    helper: "Tell the pharmacy you will collect the medicine at the branch.",
+    successMessage: "Pickup confirmed. The pharmacy will keep your order ready for collection.",
+    tone: "info",
+  },
+  delivery_requested: {
+    label: "Request Delivery",
+    shortLabel: "Delivery requested",
+    helper: "Ask the pharmacy to arrange delivery for this prescription.",
+    successMessage: "Your delivery request has been sent to the pharmacy.",
+    requiresAddress: true,
+    tone: "warning",
+  },
+}
+
 function loadTurnstileScript() {
   if (typeof window === "undefined") return Promise.resolve()
   if (window.turnstile) return Promise.resolve()
@@ -308,6 +326,28 @@ function buildPatientResponseSummary(item) {
   return `Your response: ${responseMeta.shortLabel || responseMeta.label}${note}`
 }
 
+function getFulfillmentMeta(choice) {
+  return FULFILLMENT_ACTIONS[choice] || null
+}
+
+function buildFulfillmentSummary(item) {
+  const fulfillmentMeta = getFulfillmentMeta(item.patient_fulfillment_choice)
+  if (!fulfillmentMeta) return ""
+
+  const parts = [fulfillmentMeta.shortLabel || fulfillmentMeta.label]
+  if (item.patient_fulfillment_address) {
+    parts.push(`Address: ${item.patient_fulfillment_address}`)
+  }
+  if (item.patient_fulfillment_notes) {
+    parts.push(`Note: ${item.patient_fulfillment_notes}`)
+  }
+  if (item.linked_delivery_status) {
+    parts.push(`Delivery: ${formatTokenLabel(item.linked_delivery_status)}`)
+  }
+
+  return parts.join(" · ")
+}
+
 function buildTrackingFeed({ requests = [], appointments = [], deliveries = [], notifications = [] }) {
   return [
     ...requests.map((item) => ({
@@ -318,16 +358,30 @@ function buildTrackingFeed({ requests = [], appointments = [], deliveries = [], 
       title: item.drug_requested || "Prescription request",
       status: item.status || "pending",
       statusLabel: formatTokenLabel(item.status),
-      activityAt: item.patient_response_at || item.updated_at || item.created_at,
+      activityAt: item.patient_fulfillment_at || item.patient_response_at || item.updated_at || item.created_at,
       pharmacistNotes: item.pharmacist_notes || "",
       patientResponseAction: item.patient_response_action || "",
       patientResponseNotes: item.patient_response_notes || "",
       patientResponseAt: item.patient_response_at || "",
+      patientFulfillmentChoice: item.patient_fulfillment_choice || "",
+      patientFulfillmentNotes: item.patient_fulfillment_notes || "",
+      patientFulfillmentAddress: item.patient_fulfillment_address || "",
+      patientFulfillmentAt: item.patient_fulfillment_at || "",
+      linkedDeliveryId: item.linked_delivery_id || "",
+      linkedDeliveryStatus: item.linked_delivery_status || "",
       canRespond: item.status === "alternative_offered" && !item.patient_response_action,
+      canChooseFulfillment: !item.patient_fulfillment_choice
+        && !item.linked_delivery_id
+        && (
+          item.status === "approved"
+          || item.status === "dispensed"
+          || item.patient_response_action === "accept_alternative"
+        ),
       summary: [
         item.condition_notes,
         item.pharmacist_notes ? `Pharmacist update: ${item.pharmacist_notes}` : "",
         buildPatientResponseSummary(item),
+        buildFulfillmentSummary(item),
       ].filter(Boolean).join(" · ") || "Waiting for pharmacist review.",
       createdAt: item.created_at,
     })),
@@ -470,6 +524,8 @@ export default function PatientPortal() {
   const [trackingActionMessage, setTrackingActionMessage] = useState("")
   const [trackingActionError, setTrackingActionError] = useState("")
   const [trackingResponseNotes, setTrackingResponseNotes] = useState({})
+  const [trackingFulfillmentNotes, setTrackingFulfillmentNotes] = useState({})
+  const [trackingDeliveryAddresses, setTrackingDeliveryAddresses] = useState({})
   const [respondingActionKey, setRespondingActionKey] = useState("")
   const [submitting, setSubmitting] = useState("")
   const [submitMessage, setSubmitMessage] = useState("")
@@ -901,6 +957,44 @@ export default function PatientPortal() {
     return data
   }
 
+  async function submitPortalFulfillment(requestId, fulfillmentChoice) {
+    const turnstileToken = turnstileTokens.response
+    const fulfillmentMeta = getFulfillmentMeta(fulfillmentChoice)
+    const fulfillmentNotes = String(trackingFulfillmentNotes[requestId] || "").trim()
+    const fulfillmentAddress = String(trackingDeliveryAddresses[requestId] || "").trim()
+
+    if (!TURNSTILE_SITE_KEY) {
+      throw new Error("Security check is not configured right now. Please try again later.")
+    }
+
+    if (!turnstileToken) {
+      throw new Error("Complete the security check before replying to the pharmacist.")
+    }
+
+    if (fulfillmentMeta?.requiresAddress && !fulfillmentAddress) {
+      throw new Error("Add your delivery address before requesting delivery.")
+    }
+
+    const { data, error } = await supabase.functions.invoke("patient-portal-fulfillment", {
+      body: {
+        requestId,
+        patientPhone: normalizePhone(trackerPhone),
+        fulfillmentChoice,
+        fulfillmentNotes: fulfillmentNotes || null,
+        fulfillmentAddress: fulfillmentChoice === "delivery_requested" ? fulfillmentAddress : null,
+        turnstileToken,
+      },
+    })
+
+    if (error) throw error
+    if (data?.error) throw new Error(data.error)
+
+    resetTurnstile("response")
+    setTrackingFulfillmentNotes((prev) => ({ ...prev, [requestId]: "" }))
+    setTrackingDeliveryAddresses((prev) => ({ ...prev, [requestId]: "" }))
+    return data
+  }
+
   const handlePrescriptionVerify = useCallback((token) => setTurnstileToken("prescription", token), [])
   const handlePrescriptionExpire = useCallback(() => setTurnstileToken("prescription", ""), [])
   const handleAppointmentVerify = useCallback((token) => setTurnstileToken("appointment", token), [])
@@ -1064,6 +1158,25 @@ export default function PatientPortal() {
     }
   }
 
+  async function handleFulfillmentChoice(item, fulfillmentChoice) {
+    const fulfillmentMeta = getFulfillmentMeta(fulfillmentChoice)
+    if (!item?.requestId || !fulfillmentMeta) return
+
+    setRespondingActionKey(`${item.requestId}-${fulfillmentChoice}`)
+    setTrackingActionMessage("")
+    setTrackingActionError("")
+
+    try {
+      const data = await submitPortalFulfillment(item.requestId, fulfillmentChoice)
+      await fetchTrackingFeed(trackerPhone)
+      setTrackingActionMessage(data?.message || fulfillmentMeta.successMessage || "Your preference has been sent to the pharmacy.")
+    } catch (error) {
+      setTrackingActionError(error?.message || "Unable to send your pickup or delivery choice right now.")
+    } finally {
+      setRespondingActionKey("")
+    }
+  }
+
   async function fetchTrackingFeed(phoneOverride, options = {}) {
     const phone = normalizePhone(phoneOverride ?? trackerPhone)
 
@@ -1164,6 +1277,32 @@ export default function PatientPortal() {
     )
   }
 
+  function renderFulfillmentChoiceBox(item) {
+    const fulfillmentMeta = getFulfillmentMeta(item.patientFulfillmentChoice)
+    if (!fulfillmentMeta) return null
+
+    return (
+      <div className={`patient-portal-response-box ${fulfillmentMeta.tone || "info"}`}>
+        <strong>{fulfillmentMeta.shortLabel || fulfillmentMeta.label}</strong>
+        <span>{fulfillmentMeta.helper}</span>
+        {item.patientFulfillmentAddress && (
+          <div className="patient-portal-response-note">Address: {item.patientFulfillmentAddress}</div>
+        )}
+        {item.patientFulfillmentNotes && (
+          <div className="patient-portal-response-note">Your note: {item.patientFulfillmentNotes}</div>
+        )}
+        {item.linkedDeliveryStatus && (
+          <div className="patient-portal-response-note">Delivery status: {formatTokenLabel(item.linkedDeliveryStatus)}</div>
+        )}
+        {item.patientFulfillmentAt && (
+          <div className="patient-portal-response-time">
+            Sent {formatDateTime(item.patientFulfillmentAt)} · {timeAgo(item.patientFulfillmentAt)}
+          </div>
+        )}
+      </div>
+    )
+  }
+
   function renderRequestResponseActions(item) {
     if (!item?.canRespond) return null
 
@@ -1190,6 +1329,50 @@ export default function PatientPortal() {
                 type="button"
                 className={`btn ${action === "cancel_request" ? "btn-outline" : "btn-primary"} patient-response-btn ${config.tone || "info"}`}
                 onClick={() => handleAlternativeResponse(item, action)}
+                disabled={respondingActionKey === actionKey}
+              >
+                {respondingActionKey === actionKey ? "Sending..." : config.label}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
+
+  function renderFulfillmentActions(item) {
+    if (!item?.canChooseFulfillment) return null
+
+    return (
+      <div className="patient-portal-response-actions">
+        <div className="patient-portal-response-head">
+          <strong>How would you like to receive this order?</strong>
+          <span>Choose pickup if you will collect the medicine yourself, or request delivery so the pharmacy can arrange dispatch.</span>
+        </div>
+
+        <input
+          className="form-input"
+          value={trackingDeliveryAddresses[item.requestId] || ""}
+          onChange={(event) => setTrackingDeliveryAddresses((prev) => ({ ...prev, [item.requestId]: event.target.value }))}
+          placeholder="Delivery address for this order (required only for delivery)"
+        />
+
+        <textarea
+          rows="3"
+          value={trackingFulfillmentNotes[item.requestId] || ""}
+          onChange={(event) => setTrackingFulfillmentNotes((prev) => ({ ...prev, [item.requestId]: event.target.value }))}
+          placeholder="Add any note for pickup or delivery (optional)."
+        />
+
+        <div className="patient-portal-response-button-row">
+          {Object.entries(FULFILLMENT_ACTIONS).map(([choice, config]) => {
+            const actionKey = `${item.requestId}-${choice}`
+            return (
+              <button
+                key={choice}
+                type="button"
+                className={`btn ${choice === "pickup" ? "btn-outline" : "btn-primary"} patient-response-btn ${config.tone || "info"}`}
+                onClick={() => handleFulfillmentChoice(item, choice)}
                 disabled={respondingActionKey === actionKey}
               >
                 {respondingActionKey === actionKey ? "Sending..." : config.label}
@@ -1387,7 +1570,7 @@ export default function PatientPortal() {
   }
 
   function renderUpdatesPanel() {
-    const hasActionableRequest = trackingFeed.some((item) => item.canRespond)
+    const hasActionableRequest = trackingFeed.some((item) => item.canRespond || item.canChooseFulfillment)
 
     return (
       <div className="patient-portal-updates">
@@ -1433,7 +1616,9 @@ export default function PatientPortal() {
                 <div className="patient-portal-update-title">{item.title}</div>
                 <div className="patient-portal-update-text">{item.summary}</div>
                 {renderPatientResponseBox(item)}
+                {renderFulfillmentChoiceBox(item)}
                 {renderRequestResponseActions(item)}
+                {renderFulfillmentActions(item)}
                 <div className="patient-portal-update-time">{formatDateTime(item.activityAt || item.createdAt)} · {timeAgo(item.activityAt || item.createdAt)}</div>
               </div>
             ))}
@@ -1491,6 +1676,7 @@ export default function PatientPortal() {
                       <div className="patient-portal-update-title">{item.title}</div>
                       <div className="patient-portal-update-text">{item.summary}</div>
                       {renderPatientResponseBox(item)}
+                      {renderFulfillmentChoiceBox(item)}
                       <div className="patient-portal-update-time">{formatDateTime(item.activityAt || item.createdAt)} · {timeAgo(item.activityAt || item.createdAt)}</div>
                     </div>
                   ))}
