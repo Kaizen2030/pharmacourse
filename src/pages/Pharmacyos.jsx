@@ -1,154 +1,175 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
+import pharmacyosDashboard from "../assets/pharmacyos-dashboard.svg"
 import pharmacyosCopilot from "../assets/pharmacyos-copilot.svg"
 import SEO from "../components/SEO"
 import {
-  ShoppingCart, Package, AlertTriangle, CreditCard,
-  FileText, BarChart3, Settings, Cpu, Shield,
-  Building2, CheckCircle, ChevronRight, ArrowRight,
-  Receipt, Smartphone, TrendingUp, Truck, Clock3, Users,
+  Activity,
+  ArrowRight,
+  BarChart3,
+  Bot,
+  Building2,
+  Calendar,
+  CheckCircle,
+  ChevronRight,
+  Clock3,
+  CreditCard,
+  FileSpreadsheet,
+  FileText,
+  Link2,
+  Package,
+  Pill,
+  Shield,
+  ShoppingCart,
+  Smartphone,
+  Stethoscope,
+  Truck,
+  Users,
+  Video,
 } from "lucide-react"
 
 const WHATSAPP = "https://wa.me/254790059584?text=Hi%20Julius%2C%20I%27d%20like%20to%20book%20a%20demo%20of%20PharmacyOS."
 
 const modules = [
-  { icon: ShoppingCart, label: "Sales & POS", desc: "Multi-item cart, M-Pesa, Cash, Credit, SHA & Insurance payments. Receipt generation on every sale.", color: "#0F6E56" },
-  { icon: Package, label: "Inventory Management", desc: "Real-time stock tracking with PPB controlled substance classification, low-stock alerts & CSV export.", color: "#1A6BB5" },
-  { icon: AlertTriangle, label: "Expiry Alerts", desc: "Daily auto-monitoring with Expired / Urgent / Monitor / OK severity tiers. One-click dispose workflow.", color: "#E09B00" },
-  { icon: CreditCard, label: "Credit & Debts", desc: "Log credit sales, track outstanding balances, aged debt analysis, and Mark-Paid workflow.", color: "#7C3AED" },
-  { icon: FileText, label: "Prescriptions", desc: "Full prescription ledger with Rx/2026/XXXX numbering, patient tracking & dispenser attribution.", color: "#0F6E56" },
-  { icon: Smartphone, label: "M-Pesa Transactions", desc: "Live M-Pesa transaction log synced from your sales ledger. STK Push capability included.", color: "#00B300" },
-  { icon: Building2, label: "SHA Claims", desc: "Track SHA, SHIF, NHIF, PHC and ECCIF claims. Bulk CSV download for SHA portal submission.", color: "#1A6BB5" },
-  { icon: Shield, label: "Insurance Claims", desc: "Manage AAR, Jubilee, Britam, Madison, CIC, UAP & Resolution claims with batch download.", color: "#E24B4A" },
-  { icon: Receipt, label: "eTIMS / KRA Compliance", desc: "Auto-generate KRA-compliant CSV reports for every sale. Ready for manual eTIMS portal upload.", color: "#E09B00" },
-  { icon: BarChart3, label: "Reports & Analytics", desc: "Sales bar charts, Top Drugs rankings, monthly summaries & PPB Narcotics CSV for regulatory submission.", color: "#7C3AED" },
-  { icon: Settings, label: "Settings & Roles", desc: "Owner-protected settings. Manage pharmacy profile, PPB licence, KRA PIN, M-Pesa Paybill & staff roles.", color: "#0F6E56" },
-  { icon: Cpu, label: "AI Drug Advisor", desc: "AI-powered chatbot for drug dosage, interactions & contraindications. Image upload supported.", color: "#1A6BB5" },
-  { icon: Building2, label: "Branches", desc: "Create branch locations, compare branch performance, and roll out starter inventory into new outlets.", color: "#0F6E56" },
-  { icon: Truck, label: "Suppliers", desc: "Manage supplier records, follow purchase orders, and track pending deliveries before stock arrives.", color: "#1A6BB5" },
-  { icon: Clock3, label: "Shifts", desc: "Open and close cashier shifts with float control, sales reconciliation, and variance summaries.", color: "#E24B4A" },
-  { icon: Users, label: "Patients", desc: "Store patient profiles, allergies, chronic conditions, insurer details, and pharmacy history.", color: "#7C3AED" },
+  { icon: ShoppingCart, label: "Sales & POS", desc: "Fast checkout with cash, M-Pesa, credit, SHA and insurer workflows from one selling screen." },
+  { icon: Package, label: "Inventory Management", desc: "Track stock, expiry, controlled medicines, imports and branch-ready inventory operations." },
+  { icon: Users, label: "Patients Workspace", desc: "One patient view for allergies, chronic conditions, requests, appointments, deliveries and history." },
+  { icon: Video, label: "Telepharmacy Portal", desc: "Patients request medicines, upload prescriptions, book calls, accept alternatives and follow live updates online." },
+  { icon: Truck, label: "Delivery Operations", desc: "Move orders through packed, dispatched and delivered with partner assignment, ETA and linked prescription context." },
+  { icon: Activity, label: "Live Dashboard", desc: "Visual analytics for revenue, payment mix, patient activity, stock pressure and branch workload in real time." },
+  { icon: Clock3, label: "Shifts & History", desc: "Track current shifts, older shifts, staff filters, printable reports and time-aware operational history." },
+  { icon: CreditCard, label: "Claims & Debts", desc: "Run SHA, NHIF, insurer and outstanding balance workflows without breaking the pharmacy process." },
+  { icon: FileSpreadsheet, label: "Compliance Exports", desc: "Support PPB, eTIMS, claims and regulator-facing reporting from the same working system." },
+  { icon: Smartphone, label: "M-Pesa Visibility", desc: "Keep mobile money transactions tied to the sales ledger and reconciliation process." },
+  { icon: Building2, label: "Branches", desc: "Operate multiple outlets with branch-aware analytics, branch setup, inventory rollout and patient context." },
+  { icon: Bot, label: "AI Copilot", desc: "Drug guidance, dosage support and clinical prompts inside the same operating system your staff already use." },
 ]
 
-const compliance = [
-  "PPB Narcotics & Controlled Substances Report",
-  "SHA / NHIF / SHIF / PHC / ECCIF Claims",
-  "KRA eTIMS Electronic Tax Invoices",
-  "Prescription Ledger (Rx/2026/XXXX format)",
-  "M-Pesa Paybill & Till Integration",
-  "Multi-role Access Control (Admin / Pharmacist)",
+const pillars = [
+  { icon: Stethoscope, title: "Pharmacy-first workflow", body: "Built around what dispensaries actually do every day, not generic retail software assumptions." },
+  { icon: Link2, title: "Website and app connected", body: "The patient portal and PharmacyOS app now behave like one workflow from request to delivery." },
+  { icon: Shield, title: "Kenyan compliance aware", body: "Claims, eTIMS-facing exports, dispensing traceability and controlled-drug reporting stay in view." },
+  { icon: Building2, title: "Branch-ready operations", body: "Branch context, shift history, supplier flow and owner visibility support real business growth." },
 ]
 
-const whyCards = [
-  { emoji: "Claims", title: "SHA & NHIF Ready", body: "Process SHA, SHIF, NHIF, PHC and ECCIF claims from the same screen you use for cash sales." },
-  { emoji: "KRA", title: "eTIMS / KRA Built-in", body: "Auto-generate compliant CSV reports per sale. Stay KRA-compliant without extra work." },
-  { emoji: "PPB", title: "PPB Narcotics Report", body: "One-click PPB Narcotics & Controlled Substances CSV for regulatory submission." },
-  { emoji: "Pay", title: "M-Pesa Integrated", body: "Live M-Pesa transaction log, STK Push capability, and Paybill/Till reconciliation." },
-]
-
-const outcomes = [
-  { icon: ShoppingCart, title: "Faster checkout", desc: "Complete a sale, collect M-Pesa, and print receipts in seconds without manual price entry." },
-  { icon: Package, title: "Inventory you can trust", desc: "Auto update stock, expiry and PPB controls so your shelves always match the register." },
-  { icon: CreditCard, title: "Claims done right", desc: "Process SHA/NHIF, insurance and eTIMS reports from the same workflow with fewer mistakes." },
-  { icon: TrendingUp, title: "Better pharmacy margins", desc: "Spot fast-moving products, reduce losses and keep the business healthy with instant analytics." },
-]
-
-const branchOperations = [
+const patientFlows = [
   {
-    icon: Building2,
-    title: "Branch rollouts without chaos",
-    desc: "Launch new branches faster with branch profiles, branch stats, and inventory copy tools from the main store.",
+    icon: FileText,
+    title: "Prescription requests with alternatives",
+    desc: "Patients can request medicines, pharmacists can offer alternatives, and patients can accept, ask for another option or request a callback.",
+  },
+  {
+    icon: Calendar,
+    title: "Appointments and telepharmacy calls",
+    desc: "Book appointments, confirm virtual or phone consultations, and surface pharmacist notes and links back to the patient website.",
   },
   {
     icon: Truck,
-    title: "Supplier and ordering discipline",
-    desc: "Keep supplier contacts, purchase orders, and delivery follow-up inside one purchasing workflow.",
-  },
-  {
-    icon: Clock3,
-    title: "Shift accountability at the counter",
-    desc: "Track opening float, sales mix, closing float, and cashier variance before the day ends.",
+    title: "Pickup and delivery after dispense",
+    desc: "Once the medicine is ready, patients choose pickup or delivery, and the pharmacy keeps fulfillment tied to the right dispensed item.",
   },
   {
     icon: Users,
-    title: "Patient memory built in",
-    desc: "Pull up allergies, chronic conditions, insurance details, and prior pharmacy history when a patient returns.",
+    title: "One returning patient history",
+    desc: "Repeat requests from the same patient can keep building one connected history instead of fragmenting into disconnected records.",
   },
 ]
 
-const controlLayers = [
+const dashboardFlows = [
   {
-    title: "Offline-aware operations",
-    desc: "Connectivity and sync layers help the pharmacy keep moving when internet quality changes across branches.",
+    icon: BarChart3,
+    title: "Graphical owner visibility",
+    desc: "Visual dashboard sections summarize revenue, payment classification, patient activity, stock pressure and business direction at a glance.",
   },
   {
-    title: "Role-based staff handoff",
-    desc: "PIN-aware staff switching and protected owner actions reduce risk around sales, shifts, and pricing.",
+    icon: Activity,
+    title: "Realtime operational awareness",
+    desc: "The dashboard now reflects live pharmacy movement instead of static summary text, making branch pressure easier to understand quickly.",
   },
   {
-    title: "Audit-friendly workflows",
-    desc: "Sales, credit actions, and stock-sensitive operations are easier to review when accountability matters.",
+    icon: Clock3,
+    title: "Time-aware shift oversight",
+    desc: "Current shifts and older shift history can be separated, filtered and printed so administrators can audit over weeks, months and years.",
   },
   {
-    title: "Growth-ready structure",
-    desc: "Branches, suppliers, patients, claims, and reports now behave like one operating system instead of scattered tools.",
+    icon: Package,
+    title: "Scale-safe work queues",
+    desc: "Prescription, appointment and delivery boards are being shaped for real volume with filters, load-more patterns and safer layouts.",
+  },
+]
+
+const compliance = [
+  "PPB narcotics and controlled substances export support",
+  "SHA / NHIF / SHIF / PHC / ECCIF-aware pharmacy workflows",
+  "KRA eTIMS-facing sales and report preparation",
+  "Prescription ledger and dispensing traceability",
+  "M-Pesa-aware reconciliation and payment classification",
+  "Admin and staff role separation for sensitive actions",
+]
+
+const operationsLayers = [
+  {
+    icon: Building2,
+    title: "Branch growth without chaos",
+    desc: "Support new branch rollout, branch context and operational comparison without splitting the system into separate tools.",
+  },
+  {
+    icon: Truck,
+    title: "Supplier and fulfillment discipline",
+    desc: "Supplier follow-up, sourcing, delivery handoff and fulfillment choices stay closer to the actual medicine workflow.",
+  },
+  {
+    icon: Users,
+    title: "Served vs needs-action clarity",
+    desc: "Staff can see who is complete and who still needs work, even when a patient reactivates because of a later delivery or follow-up step.",
+  },
+  {
+    icon: Clock3,
+    title: "Admin reporting over time",
+    desc: "Shift history is designed to be searchable and printable by staff member, date window and operational period.",
   },
 ]
 
 const DOT_PATTERN = `url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='2' cy='2' r='1.2' fill='%23ffffff'/%3E%3C/svg%3E")`
 
 const css = `
-  @keyframes pulse-dot {
-    0%, 100% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.4); opacity: 0.7; }
+  .po-card, .po-mod, .po-flow-card, .po-ops-card {
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
   }
-  .pharmacyos-card,
-  .po-ops-card,
-  .po-control-card,
-  .po-outcome,
-  .module-card {
-    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
-  }
-  .pharmacyos-card:hover,
-  .po-ops-card:hover,
-  .po-control-card:hover,
-  .po-outcome:hover,
-  .module-card:hover {
+  .po-card:hover, .po-mod:hover, .po-flow-card:hover, .po-ops-card:hover {
     transform: translateY(-4px);
   }
-  .cta-btn-primary {
+  .po-btn-white {
     transition: transform 0.18s ease, box-shadow 0.18s ease;
   }
-  .cta-btn-primary:hover {
+  .po-btn-white:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(255,255,255,0.25);
+    box-shadow: 0 8px 24px rgba(255,255,255,0.2);
   }
-  .cta-btn-outline {
+  .po-btn-ghost {
     transition: background 0.18s ease;
   }
-  .cta-btn-outline:hover {
+  .po-btn-ghost:hover {
     background: rgba(255,255,255,0.1) !important;
   }
   @media (max-width: 640px) {
     .po-hero {
       padding: 74px 12px 36px !important;
     }
-    .po-hero-inner {
-      max-width: 100% !important;
+    .po-hero-copy {
+      font-size: 15px !important;
+      line-height: 1.55 !important;
+      max-width: 320px !important;
+      margin: 0 auto 24px !important;
     }
     .po-hero-badge {
       font-size: 9px !important;
-      letter-spacing: 1.2px !important;
       padding: 6px 10px !important;
       margin-bottom: 18px !important;
+      letter-spacing: 1.2px !important;
     }
-    .po-hero-copy {
-      font-size: 15px !important;
-      margin: 0 auto 24px !important;
-      line-height: 1.55 !important;
-      max-width: 320px !important;
-    }
-    .po-hero-actions {
+    .po-hero-actions,
+    .po-cta-actions {
       display: grid !important;
       grid-template-columns: 1fr 1fr !important;
       gap: 8px !important;
@@ -156,30 +177,13 @@ const css = `
       max-width: 320px !important;
       margin: 0 auto !important;
     }
-    .po-hero-actions a {
+    .po-hero-actions a,
+    .po-cta-actions a {
       min-width: 0 !important;
       width: 100% !important;
       padding: 11px 8px !important;
       font-size: 12px !important;
       justify-content: center !important;
-    }
-    .po-hero-stats {
-      display: grid !important;
-      grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-      gap: 0 !important;
-      margin-top: 28px !important;
-      padding: 12px 8px !important;
-      border-radius: 18px !important;
-    }
-    .po-hero-stat {
-      padding: 0 8px !important;
-    }
-    .po-hero-stat-number {
-      font-size: 22px !important;
-    }
-    .po-hero-stat-label {
-      font-size: 10px !important;
-      line-height: 1.3 !important;
     }
     .po-section {
       padding: 44px 12px !important;
@@ -187,54 +191,67 @@ const css = `
     .po-section-heading {
       margin-bottom: 28px !important;
     }
-    .po-section-copy {
-      font-size: 14px !important;
-      line-height: 1.6 !important;
-      max-width: 330px !important;
-    }
-    .po-why-grid {
+    .po-pillars-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
       gap: 10px !important;
     }
-    .pharmacyos-card {
+    .po-card {
       border-radius: 14px !important;
       padding: 14px 12px !important;
     }
-    .po-why-emoji {
-      font-size: 15px !important;
+    .po-card-icon {
+      width: 30px !important;
+      height: 30px !important;
       margin-bottom: 10px !important;
-      font-weight: 800 !important;
-      color: #0F6E56 !important;
+      border-radius: 10px !important;
     }
-    .po-why-title {
+    .po-card-title {
       font-size: 12px !important;
       margin: 0 0 6px !important;
       line-height: 1.25 !important;
     }
-    .po-why-body {
+    .po-card-body {
       font-size: 11px !important;
       line-height: 1.45 !important;
     }
+    .po-integration-grid {
+      grid-template-columns: 1fr 1fr !important;
+      gap: 14px !important;
+      padding: 18px 14px !important;
+      border-radius: 18px !important;
+    }
+    .po-integration-copy h3 {
+      font-size: 1.05rem !important;
+      margin: 0 0 10px !important;
+    }
+    .po-integration-copy p,
+    .po-integration-copy li {
+      font-size: 11px !important;
+      line-height: 1.5 !important;
+    }
+    .po-integration-shot {
+      padding: 10px !important;
+      border-radius: 14px !important;
+    }
     .po-modules-grid {
-      grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
       gap: 10px !important;
     }
-    .module-card {
+    .po-mod {
       border-radius: 14px !important;
       padding: 14px 10px !important;
     }
-    .po-module-icon {
+    .po-mod-icon {
       width: 30px !important;
       height: 30px !important;
       margin-bottom: 10px !important;
-      border-radius: 9px !important;
     }
-    .po-module-title {
+    .po-mod-title {
       font-size: 11px !important;
-      line-height: 1.2 !important;
       margin: 0 0 5px !important;
+      line-height: 1.2 !important;
     }
-    .po-module-text {
+    .po-mod-text {
       font-size: 10px !important;
       line-height: 1.35 !important;
     }
@@ -243,8 +260,8 @@ const css = `
       gap: 18px !important;
     }
     .po-compliance-card {
-      padding: 8px 14px !important;
       border-radius: 14px !important;
+      padding: 8px 14px !important;
     }
     .po-compliance-item {
       gap: 10px !important;
@@ -254,78 +271,16 @@ const css = `
       font-size: 12px !important;
       line-height: 1.4 !important;
     }
-    .po-outcomes-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-      gap: 10px !important;
-    }
-    .po-outcome {
-      border-radius: 16px !important;
-      padding: 14px 12px !important;
-    }
-    .po-outcome-icon {
-      width: 30px !important;
-      height: 30px !important;
-      margin-bottom: 10px !important;
-      border-radius: 10px !important;
-    }
-    .po-outcome-title {
-      font-size: 12px !important;
-      margin: 0 0 6px !important;
-      line-height: 1.25 !important;
-    }
-    .po-outcome-body {
-      font-size: 11px !important;
-      line-height: 1.45 !important;
-    }
-    .po-ai-grid {
-      grid-template-columns: 1fr 1fr !important;
-      gap: 14px !important;
-      padding: 18px 14px !important;
-      border-radius: 18px !important;
-    }
-    .po-ai-copy h3 {
-      font-size: 1.05rem !important;
-      margin: 0 0 10px !important;
-    }
-    .po-ai-copy p,
-    .po-ai-copy li {
-      font-size: 11px !important;
-      line-height: 1.5 !important;
-    }
-    .po-ai-shot {
-      padding: 10px !important;
-      border-radius: 14px !important;
-    }
-    .po-ai-copy li {
-      margin-bottom: 8px !important;
-    }
     .po-cta {
       padding: 44px 12px !important;
     }
-    .po-cta-actions {
-      display: grid !important;
-      grid-template-columns: 1fr 1fr !important;
-      gap: 8px !important;
-      max-width: 320px !important;
-      margin: 0 auto !important;
-    }
-    .po-cta-actions a {
-      width: 100% !important;
-      padding: 11px 8px !important;
-      font-size: 12px !important;
-      justify-content: center !important;
-      min-width: 0 !important;
-    }
   }
   @media (max-width: 420px) {
-    .po-why-grid,
-    .po-outcomes-grid {
-      grid-template-columns: 1fr 1fr !important;
-    }
+    .po-pillars-grid,
     .po-modules-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     }
-    .po-ai-grid {
+    .po-integration-grid {
       grid-template-columns: 1fr !important;
     }
   }
@@ -335,11 +290,14 @@ export default function PharmacyOS() {
   const [activeModule, setActiveModule] = useState(null)
   const [hoveredModule, setHoveredModule] = useState(null)
 
+  const GREEN = "#0F6E56"
+  const DARK = "#0a2e1f"
+
   return (
     <div style={{ fontFamily: "'Outfit', 'Segoe UI', sans-serif", background: "#f8faf9", minHeight: "100vh" }}>
       <SEO
         title="PharmacyOS Kenya"
-        description="PharmacyOS is a Kenyan pharmacy management system with POS, inventory, SHA claims, eTIMS/KRA reporting, M-Pesa support, and PPB compliance workflows."
+        description="PharmacyOS is a Kenyan pharmacy operating system with telepharmacy workflows, delivery coordination, patient continuity, live dashboard analytics, claims, shifts and branch-aware operations."
         path="/pharmacyos"
         jsonLd={{
           "@context": "https://schema.org",
@@ -348,7 +306,7 @@ export default function PharmacyOS() {
           applicationCategory: "BusinessApplication",
           operatingSystem: "Windows",
           description:
-            "Kenyan pharmacy management system with POS, inventory, claims, compliance, and M-Pesa workflows.",
+            "Kenyan pharmacy operating system with telepharmacy workflows, delivery coordination, patient continuity, analytics, claims and branch-aware operations.",
           offers: {
             "@type": "Offer",
             availability: "https://schema.org/InStock",
@@ -363,38 +321,28 @@ export default function PharmacyOS() {
       <style>{css}</style>
 
       <section className="po-hero" style={{ position: "relative", overflow: "hidden", background: "linear-gradient(135deg, #062318 0%, #0F6E56 58%, #1a9e7a 100%)", color: "#fff", padding: "96px 24px 72px", textAlign: "center" }}>
-        <div style={{ position: "absolute", inset: 0, backgroundImage: DOT_PATTERN, backgroundSize: "20px 20px", opacity: 0.06, pointerEvents: "none" }} />
+        <div style={{ position: "absolute", inset: 0, backgroundImage: DOT_PATTERN, backgroundSize: "20px 20px", opacity: 0.05, pointerEvents: "none" }} />
         <div style={{ position: "absolute", top: "-10%", left: "50%", transform: "translateX(-50%)", width: 700, height: 400, borderRadius: "50%", background: "radial-gradient(ellipse, rgba(26,158,122,0.35) 0%, transparent 70%)", pointerEvents: "none" }} />
 
-        <div className="po-hero-inner" style={{ position: "relative", maxWidth: 800, margin: "0 auto" }}>
-          <span className="po-hero-badge" style={{ display: "inline-block", background: "rgba(255,255,255,0.14)", border: "1px solid rgba(255,255,255,0.28)", borderRadius: 99, fontSize: 11, fontWeight: 700, letterSpacing: 1.8, padding: "7px 18px", marginBottom: 28, textTransform: "uppercase" }}>
-            PharmacyOS - Dispensary Manager v4.0
+        <div style={{ position: "relative", maxWidth: 820, margin: "0 auto" }}>
+          <span className="po-hero-badge" style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.22)", borderRadius: 99, fontSize: 11, fontWeight: 700, letterSpacing: 1.8, padding: "7px 18px", marginBottom: 28, textTransform: "uppercase" }}>
+            PharmacyOS - Dispensary Manager
           </span>
 
           <h1 style={{ fontSize: "clamp(2.2rem, 5.5vw, 3.6rem)", fontWeight: 800, lineHeight: 1.12, margin: "0 0 22px", letterSpacing: "-0.02em" }}>
-            The complete pharmacy<br />management system for Kenya.
+            A connected pharmacy workflow<br />from request to dispense to delivery.
           </h1>
-          <p className="po-hero-copy" style={{ fontSize: 18, opacity: 0.82, maxWidth: 600, margin: "0 auto 40px", lineHeight: 1.65 }}>
-            AI-powered pharmacy workflow for fast counters, accurate stock, and compliant reporting.<br />
-            SHA-ready, eTIMS/KRA compliant, with M-Pesa and PPB support.
+          <p className="po-hero-copy" style={{ fontSize: 18, opacity: 0.82, maxWidth: 650, margin: "0 auto 40px", lineHeight: 1.65 }}>
+            PharmacyOS now combines live dispensing, patient self-service, telepharmacy response flows, delivery coordination, claims awareness, branch operations and visual business analytics in one app.
           </p>
 
           <div className="po-hero-actions" style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-            <a href={WHATSAPP} target="_blank" rel="noreferrer" className="cta-btn-primary" style={{ background: "#fff", color: "#0F6E56", fontWeight: 700, padding: "15px 30px", borderRadius: 10, textDecoration: "none", fontSize: 15, display: "flex", alignItems: "center", gap: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.15)" }}>
-              Book a Free Demo <ArrowRight size={16} />
+            <a href={WHATSAPP} target="_blank" rel="noreferrer" className="po-btn-white" style={{ background: "#fff", color: GREEN, fontWeight: 700, padding: "15px 30px", borderRadius: 10, textDecoration: "none", fontSize: 15, display: "flex", alignItems: "center", gap: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.15)" }}>
+              Book a Demo <ArrowRight size={16} />
             </a>
-            <a href={WHATSAPP} target="_blank" rel="noreferrer" className="cta-btn-outline" style={{ background: "transparent", color: "#fff", fontWeight: 600, padding: "15px 30px", borderRadius: 10, textDecoration: "none", fontSize: 15, border: "1.5px solid rgba(255,255,255,0.38)" }}>
-              Request Pricing
+            <a href={WHATSAPP} target="_blank" rel="noreferrer" className="po-btn-ghost" style={{ background: "transparent", color: "#fff", fontWeight: 600, padding: "15px 30px", borderRadius: 10, textDecoration: "none", fontSize: 15, border: "1.5px solid rgba(255,255,255,0.35)" }}>
+              Talk to Julius
             </a>
-          </div>
-
-          <div className="po-hero-stats" style={{ display: "flex", gap: 0, justifyContent: "center", marginTop: 56, flexWrap: "wrap", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 24, padding: "22px 12px", backdropFilter: "blur(10px)" }}>
-            {[["16", "Modules"], ["3", "Platforms Supported"], ["100%", "Kenya-built"]].map(([n, l], i) => (
-              <div key={l} className="po-hero-stat" style={{ textAlign: "center", padding: "0 36px", color: "#fff", borderRight: i < 2 ? "1px solid rgba(255,255,255,0.18)" : "none" }}>
-                <div className="po-hero-stat-number" style={{ fontSize: 36, fontWeight: 800, letterSpacing: "-0.02em" }}>{n}</div>
-                <div className="po-hero-stat-label" style={{ fontSize: 13, opacity: 0.85, marginTop: 4 }}>{l}</div>
-              </div>
-            ))}
           </div>
         </div>
       </section>
@@ -402,33 +350,73 @@ export default function PharmacyOS() {
       <section className="po-section" style={{ padding: "80px 24px", background: "#f8faf9" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <div className="po-section-heading" style={{ textAlign: "center", marginBottom: 52 }}>
-            <span style={{ color: "#0F6E56", fontWeight: 700, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase" }}>Built for Kenya</span>
-            <h2 style={{ fontSize: "clamp(1.6rem, 3vw, 2.3rem)", fontWeight: 800, margin: "14px 0 18px", color: "#0a2e1f", letterSpacing: "-0.02em" }}>
-              Solving real problems in Kenyan pharmacy
+            <span style={{ color: GREEN, fontWeight: 700, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase" }}>Why PharmacyOS</span>
+            <h2 style={{ fontSize: "clamp(1.6rem, 3vw, 2.3rem)", fontWeight: 800, margin: "14px 0 0", color: DARK, letterSpacing: "-0.02em" }}>
+              Built for real Kenyan pharmacy operations.
             </h2>
-            <p className="po-section-copy" style={{ color: "#556", fontSize: 16, maxWidth: 640, margin: "0 auto", lineHeight: 1.75 }}>
-              Kenya's retail pharmacies deal with fragmented records, PPB compliance pressure, SHA claims paperwork, and M-Pesa integrations that do not talk to each other. PharmacyOS solves all of this in one app.
-            </p>
           </div>
 
-          <div className="po-why-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 24 }}>
-            {whyCards.map((card) => (
-              <div key={card.title} className="pharmacyos-card" style={{ background: "#fff", border: "1px solid #e0ece8", borderRadius: 16, padding: "28px 24px", boxShadow: "0 2px 12px rgba(15,110,86,0.05)" }}>
-                <div className="po-why-emoji" style={{ fontSize: 32, marginBottom: 14 }}>{card.emoji}</div>
-                <h3 className="po-why-title" style={{ fontSize: 16, fontWeight: 700, color: "#0a2e1f", margin: "0 0 10px" }}>{card.title}</h3>
-                <p className="po-why-body" style={{ color: "#666", fontSize: 14, lineHeight: 1.7, margin: 0 }}>{card.body}</p>
-              </div>
-            ))}
+          <div className="po-pillars-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 24 }}>
+            {pillars.map((pillar) => {
+              const Icon = pillar.icon
+              return (
+                <div key={pillar.title} className="po-card" style={{ background: "#fff", border: "1px solid #e0ece8", borderRadius: 16, padding: "28px 22px", boxShadow: "0 2px 12px rgba(15,110,86,0.05)" }}>
+                  <div className="po-card-icon" style={{ width: 44, height: 44, borderRadius: 12, background: "#e8f5f0", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
+                    <Icon size={20} color={GREEN} />
+                  </div>
+                  <h3 className="po-card-title" style={{ fontSize: 15, fontWeight: 700, color: DARK, margin: "0 0 10px" }}>{pillar.title}</h3>
+                  <p className="po-card-body" style={{ color: "#666", fontSize: 14, lineHeight: 1.7, margin: 0 }}>{pillar.body}</p>
+                </div>
+              )
+            })}
           </div>
         </div>
       </section>
 
       <section className="po-section" style={{ background: "#fff", padding: "80px 24px" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <div className="po-integration-grid" style={{ background: "linear-gradient(135deg, #e2f4ed 0%, #f0faf7 100%)", border: "1.5px solid #b8dfd3", borderRadius: 24, padding: "52px 48px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 48, alignItems: "center", boxShadow: "0 8px 40px rgba(15,110,86,0.08)" }}>
+            <div className="po-integration-copy">
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: GREEN, color: "#fff", borderRadius: 99, fontSize: 12, fontWeight: 700, padding: "7px 16px", marginBottom: 20 }}>
+                <Link2 size={13} /> Patient website and app connected
+              </div>
+              <h3 style={{ fontSize: "1.5rem", fontWeight: 800, color: DARK, margin: "0 0 14px", letterSpacing: "-0.02em" }}>
+                Patients and pharmacists now work inside one connected flow.
+              </h3>
+              <p style={{ color: "#3a6b57", fontSize: 15, lineHeight: 1.75, margin: "0 0 24px" }}>
+                A patient can request a medicine, receive an alternative, accept it, choose pickup or delivery, and follow updates, while the pharmacist keeps everything tied to the real dispensing and delivery workflow.
+              </p>
+              <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                {[
+                  "Patient submits a request or appointment online",
+                  "Pharmacist reviews it inside PharmacyOS",
+                  "Alternative, sourcing, delivery or pickup decisions are tracked clearly",
+                  "The patient sees updates from the same public portal",
+                ].map((step, index) => (
+                  <li key={index} style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 14, color: "#2a5a47", marginBottom: 12 }}>
+                    <span style={{ width: 24, height: 24, borderRadius: "50%", background: GREEN, color: "#fff", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{index + 1}</span>
+                    {step}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="po-integration-shot" style={{ background: "#ffffff", borderRadius: 20, padding: 14, border: "1px solid #cfe5dc", boxShadow: "0 12px 36px rgba(15,110,86,0.16)" }}>
+              <img
+                src={pharmacyosDashboard}
+                alt="PharmacyOS dashboard showing pharmacy operations and analytics"
+                style={{ display: "block", width: "100%", height: "auto", borderRadius: 14, border: "1px solid #dbe8e2" }}
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="po-section" style={{ padding: "80px 24px", background: "#f8faf9" }}>
         <div style={{ maxWidth: 1280, margin: "0 auto" }}>
           <div className="po-section-heading" style={{ textAlign: "center", marginBottom: 52 }}>
-            <span style={{ color: "#0F6E56", fontWeight: 700, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase" }}>Everything in one app</span>
-            <h2 style={{ fontSize: "clamp(1.6rem, 3vw, 2.3rem)", fontWeight: 800, margin: "14px 0 0", color: "#0a2e1f", letterSpacing: "-0.02em" }}>
-              16 practical modules. One connected pharmacy system.
+            <span style={{ color: GREEN, fontWeight: 700, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase" }}>Modules</span>
+            <h2 style={{ fontSize: "clamp(1.6rem, 3vw, 2.3rem)", fontWeight: 800, margin: "14px 0 0", color: DARK, letterSpacing: "-0.02em" }}>
+              Core pharmacy modules that expand on click.
             </h2>
           </div>
 
@@ -441,27 +429,20 @@ export default function PharmacyOS() {
               return (
                 <div
                   key={index}
-                  className="module-card"
+                  className="po-mod"
                   onClick={() => setActiveModule(isActive ? null : index)}
                   onMouseEnter={() => setHoveredModule(index)}
                   onMouseLeave={() => setHoveredModule(null)}
-                  style={{
-                    border: `1.5px solid ${isActive ? module.color : isHovered ? `${module.color}60` : "#e8ede9"}`,
-                    borderRadius: 14,
-                    padding: "22px 20px",
-                    cursor: "pointer",
-                    background: isActive ? `${module.color}08` : "#fafcfb",
-                    boxShadow: isActive ? `0 6px 24px ${module.color}28` : isHovered ? `0 4px 16px ${module.color}14` : "none",
-                  }}
+                  style={{ background: isActive ? "#eef8f4" : "#fff", cursor: "pointer", border: `1.5px solid ${isActive ? GREEN : isHovered ? "#b8dfd3" : "#e0ece8"}`, borderRadius: 14, padding: "22px 20px", boxShadow: isActive ? "0 6px 24px rgba(15,110,86,0.15)" : isHovered ? "0 4px 16px rgba(15,110,86,0.08)" : "none" }}
                 >
-                  <div className="po-module-icon" style={{ width: 42, height: 42, borderRadius: 11, background: `${module.color}18`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
-                    <Icon size={20} color={module.color} />
+                  <div className="po-mod-icon" style={{ width: 40, height: 40, borderRadius: 10, background: isActive ? "#d7f0e6" : "#edf7f2", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
+                    <Icon size={19} color={isActive ? GREEN : "#7db8a1"} />
                   </div>
-                  <h3 className="po-module-title" style={{ fontSize: 14, fontWeight: 700, color: "#0a2e1f", margin: "0 0 7px" }}>{module.label}</h3>
+                  <h3 className="po-mod-title" style={{ fontSize: 14, fontWeight: 700, color: DARK, margin: "0 0 7px" }}>{module.label}</h3>
                   {isActive ? (
-                    <p className="po-module-text" style={{ fontSize: 13, color: "#444", lineHeight: 1.65, margin: 0 }}>{module.desc}</p>
+                    <p className="po-mod-text" style={{ fontSize: 13, color: "#444", lineHeight: 1.65, margin: 0 }}>{module.desc}</p>
                   ) : (
-                    <p className="po-module-text" style={{ fontSize: 12, color: "#aaa", margin: 0 }}>Click to expand</p>
+                    <p className="po-mod-text" style={{ fontSize: 12, color: "#aaa", margin: 0 }}>Click to expand</p>
                   )}
                 </div>
               )
@@ -470,51 +451,55 @@ export default function PharmacyOS() {
         </div>
       </section>
 
-      <section className="po-section" style={{ padding: "80px 24px", background: "#f8faf9" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-          <div className="po-section-heading" style={{ textAlign: "center", marginBottom: 48 }}>
-            <span style={{ color: "#0F6E56", fontWeight: 700, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase" }}>Growth workflows</span>
-            <h2 style={{ fontSize: "clamp(1.5rem, 3vw, 2.15rem)", fontWeight: 800, margin: "14px 0 14px", color: "#0a2e1f", letterSpacing: "-0.02em" }}>
-              Built for pharmacies growing beyond one counter.
+      <section className="po-section" style={{ background: "#fff", padding: "76px 24px" }}>
+        <div style={{ maxWidth: 1180, margin: "0 auto" }}>
+          <div className="po-section-heading" style={{ textAlign: "center", marginBottom: 46 }}>
+            <span style={{ color: GREEN, fontWeight: 700, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase" }}>Telepharmacy workflows</span>
+            <h2 style={{ fontSize: "clamp(1.5rem, 3vw, 2.15rem)", fontWeight: 800, margin: "14px 0 14px", color: DARK, letterSpacing: "-0.02em" }}>
+              The new patient journey is visible all the way through.
             </h2>
-            <p className="po-section-copy" style={{ color: "#556", fontSize: 16, maxWidth: 700, margin: "0 auto", lineHeight: 1.75 }}>
-              The newer PharmacyOS workflows now support branch expansion, supplier follow-up, cashier accountability, and better patient continuity.
+            <p style={{ color: "#556", fontSize: 15, lineHeight: 1.75, maxWidth: 700, margin: "0 auto" }}>
+              PharmacyOS now supports a more complete public-to-pharmacy workflow instead of stopping at a request form.
             </p>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 20, marginBottom: 64 }}>
-            {branchOperations.map((item) => {
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 20 }}>
+            {patientFlows.map((item) => {
               const Icon = item.icon
               return (
-                <div key={item.title} className="po-ops-card" style={{ background: "#fff", border: "1px solid #dcebe4", borderRadius: 18, padding: "24px 22px", boxShadow: "0 6px 22px rgba(15,110,86,0.06)" }}>
+                <div key={item.title} className="po-flow-card" style={{ background: "#fff", border: "1px solid #dcebe4", borderRadius: 18, padding: "24px 22px", boxShadow: "0 6px 22px rgba(15,110,86,0.06)" }}>
                   <div style={{ width: 42, height: 42, borderRadius: 12, background: "#e8f5f0", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
-                    <Icon size={20} color="#0F6E56" />
+                    <Icon size={20} color={GREEN} />
                   </div>
-                  <h3 style={{ fontSize: 16, fontWeight: 700, color: "#0a2e1f", margin: "0 0 10px" }}>{item.title}</h3>
+                  <h3 style={{ fontSize: 16, fontWeight: 700, color: DARK, margin: "0 0 10px" }}>{item.title}</h3>
                   <p style={{ fontSize: 14, lineHeight: 1.75, color: "#556", margin: 0 }}>{item.desc}</p>
                 </div>
               )
             })}
           </div>
+        </div>
+      </section>
 
+      <section className="po-section" style={{ background: "#fff", padding: "80px 24px" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <div className="po-compliance-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 64, alignItems: "center" }}>
             <div>
-              <span style={{ color: "#0F6E56", fontWeight: 700, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase" }}>Compliance</span>
-              <h2 style={{ fontSize: "clamp(1.5rem, 3vw, 2.1rem)", fontWeight: 800, margin: "14px 0 18px", color: "#0a2e1f", letterSpacing: "-0.02em" }}>
-                Stay compliant with every Kenyan authority.
+              <span style={{ color: GREEN, fontWeight: 700, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase" }}>Compliance</span>
+              <h2 style={{ fontSize: "clamp(1.5rem, 3vw, 2.1rem)", fontWeight: 800, margin: "14px 0 18px", color: DARK, letterSpacing: "-0.02em" }}>
+                Operational depth without fake dashboard numbers.
               </h2>
               <p style={{ color: "#666", fontSize: 15, lineHeight: 1.75, marginBottom: 32 }}>
-                PharmacyOS is built around Kenya's specific regulatory requirements from PPB narcotics reporting to KRA eTIMS. Every report you need is one click away.
+                The product can now speak honestly about what it does: visual analytics, controlled workflows, patient continuity and Kenyan pharmacy control points that matter in practice.
               </p>
-              <a href={WHATSAPP} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#0F6E56", color: "#fff", textDecoration: "none", padding: "13px 24px", borderRadius: 10, fontWeight: 700, fontSize: 14, boxShadow: "0 4px 16px rgba(15,110,86,0.3)" }}>
-                See a Live Demo <ChevronRight size={16} />
+              <a href={WHATSAPP} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: GREEN, color: "#fff", textDecoration: "none", padding: "13px 24px", borderRadius: 10, fontWeight: 700, fontSize: 14, boxShadow: "0 4px 16px rgba(15,110,86,0.3)" }}>
+                Book a Live Demo <ChevronRight size={16} />
               </a>
             </div>
             <div className="po-compliance-card" style={{ background: "#fff", borderRadius: 16, padding: "8px 24px", border: "1px solid #e0ece8", boxShadow: "0 4px 20px rgba(15,110,86,0.06)" }}>
               {compliance.map((item, index) => (
                 <div key={index} className="po-compliance-item" style={{ display: "flex", alignItems: "flex-start", gap: 14, padding: "16px 0", borderBottom: index < compliance.length - 1 ? "1px solid #edf2ef" : "none" }}>
                   <div style={{ width: 22, height: 22, borderRadius: "50%", background: "#e8f5f0", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
-                    <CheckCircle size={14} color="#0F6E56" />
+                    <CheckCircle size={14} color={GREEN} />
                   </div>
                   <span style={{ fontSize: 15, color: "#2a3a30", fontWeight: 500 }}>{item}</span>
                 </div>
@@ -524,41 +509,28 @@ export default function PharmacyOS() {
         </div>
       </section>
 
-      <section className="po-section" style={{ background: "#fff", padding: "72px 24px" }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-          <div className="po-section-heading" style={{ textAlign: "center", marginBottom: 42 }}>
-            <span style={{ color: "#0F6E56", fontWeight: 700, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase" }}>Operational control</span>
-            <h2 style={{ fontSize: "clamp(1.4rem, 3vw, 2rem)", fontWeight: 800, margin: "14px 0 14px", color: "#0a2e1f", letterSpacing: "-0.02em" }}>
-              More control for owners, less friction for staff.
+      <section className="po-section" style={{ padding: "76px 24px", background: "#f4faf7" }}>
+        <div style={{ maxWidth: 1180, margin: "0 auto" }}>
+          <div className="po-section-heading" style={{ textAlign: "center", marginBottom: 46 }}>
+            <span style={{ color: GREEN, fontWeight: 700, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase" }}>Operational growth</span>
+            <h2 style={{ fontSize: "clamp(1.5rem, 3vw, 2.15rem)", fontWeight: 800, margin: "14px 0 14px", color: DARK, letterSpacing: "-0.02em" }}>
+              The platform is now behaving more like an operating system.
             </h2>
+            <p style={{ color: "#556", fontSize: 15, lineHeight: 1.75, maxWidth: 700, margin: "0 auto" }}>
+              Branches, shifts, queue scaling, delivery handling and patient continuity are all evolving together instead of being isolated features.
+            </p>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 18, marginBottom: 52 }}>
-            {controlLayers.map((item) => (
-              <div key={item.title} className="po-control-card" style={{ background: "#f8faf9", border: "1px solid #e3ede8", borderRadius: 16, padding: "22px 20px" }}>
-                <h3 style={{ fontSize: 15, fontWeight: 700, color: "#0a2e1f", margin: "0 0 8px" }}>{item.title}</h3>
-                <p style={{ fontSize: 13.5, lineHeight: 1.7, color: "#66706b", margin: 0 }}>{item.desc}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="po-section-heading" style={{ textAlign: "center", marginBottom: 48 }}>
-            <span style={{ color: "#0F6E56", fontWeight: 700, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase" }}>Real pharmacy outcomes</span>
-            <h2 style={{ fontSize: "clamp(1.4rem, 3vw, 2rem)", fontWeight: 800, margin: "14px 0 0", color: "#0a2e1f", letterSpacing: "-0.02em" }}>
-              Built for speed, accuracy and trust.
-            </h2>
-          </div>
-
-          <div className="po-outcomes-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 20 }}>
-            {outcomes.map((item, index) => {
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 20 }}>
+            {operationsLayers.map((item) => {
               const Icon = item.icon
               return (
-                <div key={index} className="po-outcome" style={{ background: "#f8faf9", borderRadius: 18, padding: "28px 22px", border: "1px solid #e9f2ed" }}>
-                  <div className="po-outcome-icon" style={{ width: 42, height: 42, borderRadius: 14, background: "#e6f4ef", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
-                    <Icon size={20} color="#0F6E56" />
+                <div key={item.title} className="po-ops-card" style={{ background: "#fff", border: "1px solid #dcebe4", borderRadius: 18, padding: "24px 22px", boxShadow: "0 6px 22px rgba(15,110,86,0.06)" }}>
+                  <div style={{ width: 42, height: 42, borderRadius: 12, background: "#e8f5f0", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
+                    <Icon size={20} color={GREEN} />
                   </div>
-                  <h3 className="po-outcome-title" style={{ fontSize: 16, fontWeight: 700, color: "#0a2e1f", margin: "0 0 10px" }}>{item.title}</h3>
-                  <p className="po-outcome-body" style={{ fontSize: 14, color: "#556", lineHeight: 1.75, margin: 0 }}>{item.desc}</p>
+                  <h3 style={{ fontSize: 16, fontWeight: 700, color: DARK, margin: "0 0 10px" }}>{item.title}</h3>
+                  <p style={{ fontSize: 14, lineHeight: 1.75, color: "#556", margin: 0 }}>{item.desc}</p>
                 </div>
               )
             })}
@@ -568,37 +540,35 @@ export default function PharmacyOS() {
 
       <section className="po-section" style={{ padding: "80px 24px", background: "#f8faf9" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-          <div className="po-ai-grid" style={{ background: "linear-gradient(135deg, #e2f4ed 0%, #f0faf7 100%)", border: "1.5px solid #b8dfd3", borderRadius: 24, padding: "52px 48px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 48, alignItems: "center", boxShadow: "0 8px 40px rgba(15,110,86,0.08)" }}>
-            <div className="po-ai-copy">
-              <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#0F6E56", color: "#fff", borderRadius: 99, fontSize: 12, fontWeight: 700, padding: "7px 16px", marginBottom: 20 }}>
-                <Cpu size={14} /> Powered by AI Integration
+          <div className="po-integration-grid" style={{ background: "linear-gradient(135deg, #e2f4ed 0%, #f0faf7 100%)", border: "1.5px solid #b8dfd3", borderRadius: 24, padding: "52px 48px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 48, alignItems: "center", boxShadow: "0 8px 40px rgba(15,110,86,0.08)" }}>
+            <div className="po-integration-copy">
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: GREEN, color: "#fff", borderRadius: 99, fontSize: 12, fontWeight: 700, padding: "7px 16px", marginBottom: 20 }}>
+                <Bot size={13} /> AI Copilot
               </div>
-              <h3 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#0a2e1f", margin: "0 0 14px", letterSpacing: "-0.02em" }}>
-                AI Drug Advisor built right in.
+              <h3 style={{ fontSize: "1.5rem", fontWeight: 800, color: DARK, margin: "0 0 14px", letterSpacing: "-0.02em" }}>
+                AI guidance is part of the workflow, not a disconnected add-on.
               </h3>
               <p style={{ color: "#3a6b57", fontSize: 15, lineHeight: 1.75, margin: "0 0 24px" }}>
-                Ask about drug dosages, interactions, contraindications, or upload images of medicine boxes for instant analysis, all powered by AI integration.
+                Use the copilot for drug questions, dosage guidance and clinical prompts while staying inside the same app that runs dispensing, patient follow-up and branch operations.
               </p>
               <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
                 {[
-                  "Natural language clinical queries",
-                  "Image upload for medicine boxes or prescriptions",
-                  "Context-aware of your pharmacy inventory",
-                  "One-click quick queries for common drugs",
-                ].map((item) => (
-                  <li key={item} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#2a5a47", marginBottom: 10 }}>
-                    <div style={{ width: 20, height: 20, borderRadius: "50%", background: "#d0ede4", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <CheckCircle size={13} color="#0F6E56" />
-                    </div>
-                    {item}
+                  "Ask dosage and interaction questions quickly",
+                  "Support branch staff with embedded guidance",
+                  "Keep clinical support close to inventory and dispensing context",
+                  "Reduce workflow switching during busy pharmacy hours",
+                ].map((step, index) => (
+                  <li key={index} style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 14, color: "#2a5a47", marginBottom: 12 }}>
+                    <span style={{ width: 24, height: 24, borderRadius: "50%", background: GREEN, color: "#fff", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{index + 1}</span>
+                    {step}
                   </li>
                 ))}
               </ul>
             </div>
-            <div className="po-ai-shot" style={{ background: "#ffffff", borderRadius: 20, padding: 14, border: "1px solid #cfe5dc", boxShadow: "0 12px 36px rgba(15,110,86,0.16)" }}>
+            <div className="po-integration-shot" style={{ background: "#ffffff", borderRadius: 20, padding: 14, border: "1px solid #cfe5dc", boxShadow: "0 12px 36px rgba(15,110,86,0.16)" }}>
               <img
                 src={pharmacyosCopilot}
-                alt="PharmacyOS AI Copilot dashboard showing branch-aware pharmacy operations and clinical guidance"
+                alt="PharmacyOS copilot view"
                 style={{ display: "block", width: "100%", height: "auto", borderRadius: 14, border: "1px solid #dbe8e2" }}
               />
             </div>
@@ -606,23 +576,24 @@ export default function PharmacyOS() {
         </div>
       </section>
 
-      <section className="po-cta" style={{ background: "#fff", padding: "80px 24px", textAlign: "center" }}>
-        <div style={{ maxWidth: 680, margin: "0 auto" }}>
-          <h2 style={{ fontSize: "clamp(1.6rem, 3vw, 2.4rem)", fontWeight: 800, color: "#0a2e1f", margin: "0 0 18px", letterSpacing: "-0.02em" }}>
-            Ready to modernise your pharmacy?
+      <section className="po-cta" style={{ position: "relative", overflow: "hidden", background: "linear-gradient(135deg, #062318 0%, #0F6E56 100%)", padding: "80px 24px", textAlign: "center" }}>
+        <div style={{ position: "absolute", inset: 0, backgroundImage: DOT_PATTERN, backgroundSize: "20px 20px", opacity: 0.04, pointerEvents: "none" }} />
+        <div style={{ position: "relative", maxWidth: 680, margin: "0 auto" }}>
+          <h2 style={{ fontSize: "clamp(1.6rem, 3vw, 2.4rem)", fontWeight: 800, color: "#fff", margin: "0 0 18px", letterSpacing: "-0.02em" }}>
+            Ready to modernise how the pharmacy actually works?
           </h2>
-          <p style={{ color: "#666", fontSize: 16, lineHeight: 1.75, marginBottom: 40 }}>
-            PharmacyOS is available now for Kenyan retail pharmacies. Book a free demo and see the full system live from POS to PPB reporting.
+          <p style={{ color: "rgba(255,255,255,0.72)", fontSize: 16, lineHeight: 1.75, marginBottom: 40 }}>
+            Book a live walkthrough and see the real PharmacyOS flow across patient requests, alternatives, delivery handling, dashboards, shifts and branch operations.
           </p>
           <div className="po-cta-actions" style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
-            <a href={WHATSAPP} target="_blank" rel="noreferrer" style={{ background: "#0F6E56", color: "#fff", fontWeight: 700, padding: "15px 30px", borderRadius: 10, textDecoration: "none", fontSize: 15, display: "flex", alignItems: "center", gap: 8, boxShadow: "0 4px 20px rgba(15,110,86,0.3)" }}>
+            <a href={WHATSAPP} target="_blank" rel="noreferrer" className="po-btn-white" style={{ background: "#fff", color: GREEN, fontWeight: 700, padding: "15px 30px", borderRadius: 10, textDecoration: "none", fontSize: 15, display: "flex", alignItems: "center", gap: 8, boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}>
               Book Free Demo <ArrowRight size={16} />
             </a>
-            <Link to="/courses" style={{ background: "transparent", color: "#0F6E56", fontWeight: 600, padding: "15px 30px", borderRadius: 10, textDecoration: "none", fontSize: 15, border: "1.5px solid #0F6E56", display: "flex", alignItems: "center", gap: 8 }}>
-              Explore PharmaCourse
+            <Link to="/courses" style={{ background: "transparent", color: "#fff", fontWeight: 600, padding: "15px 30px", borderRadius: 10, textDecoration: "none", fontSize: 15, border: "1.5px solid rgba(255,255,255,0.35)", display: "flex", alignItems: "center", gap: 8 }}>
+              Explore PharmaCourse <ChevronRight size={15} />
             </Link>
           </div>
-          <p style={{ color: "#bbb", fontSize: 13, marginTop: 24 }}>
+          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, marginTop: 28 }}>
             Built by Julius Kinyua Wanjau | Pharmacist & Software Developer | Nairobi, Kenya
           </p>
         </div>

@@ -1,0 +1,376 @@
+import { useEffect, useState } from "react"
+import { BellRing, CalendarClock, ClipboardList, PackageSearch } from "lucide-react"
+import { usePatient } from "../../components/PatientLayout"
+import { pharmacyosClient } from "../../lib/pharmacyosClient"
+
+const deliverySteps = ["pending", "packed", "dispatched", "delivered"]
+
+function isValidPhone(phone) {
+  return /^07\d{8}$/.test(phone)
+}
+
+function formatDateTime(value) {
+  if (!value) {
+    return ""
+  }
+
+  return new Intl.DateTimeFormat("en-KE", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value))
+}
+
+function getStatusClass(status) {
+  const normalizedStatus = (status || "").toLowerCase().replace(/\s+/g, "-")
+
+  if (
+    ["pending", "packed", "dispatched", "delivered", "confirmed", "ready", "completed", "cancelled", "rejected"].includes(
+      normalizedStatus,
+    )
+  ) {
+    return `patient-status-${normalizedStatus}`
+  }
+
+  return "patient-status-default"
+}
+
+function getCurrentDeliveryStepIndex(status) {
+  const normalizedStatus = (status || "").toLowerCase()
+  const index = deliverySteps.indexOf(normalizedStatus)
+  return index >= 0 ? index : 0
+}
+
+export default function PatientTrack() {
+  const { pharmacyId } = usePatient()
+  const [phoneInput, setPhoneInput] = useState("")
+  const [activePhone, setActivePhone] = useState("")
+  const [notifications, setNotifications] = useState([])
+  const [deliveries, setDeliveries] = useState([])
+  const [prescriptions, setPrescriptions] = useState([])
+  const [appointments, setAppointments] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [feedback, setFeedback] = useState({ type: "", message: "" })
+  const [lastUpdated, setLastUpdated] = useState("")
+
+  async function loadTrackingData(phone, { silent = false } = {}) {
+    if (!silent) {
+      setIsLoading(true)
+    }
+
+    const nowIso = new Date().toISOString()
+
+    const [notificationResult, deliveryResult, prescriptionResult, appointmentResult] = await Promise.all([
+      pharmacyosClient
+        .from("patient_notifications")
+        .select("id, type, message, read, created_at")
+        .eq("patient_phone", phone)
+        .eq("pharmacy_id", pharmacyId)
+        .order("created_at", { ascending: false })
+        .limit(20),
+      pharmacyosClient
+        .from("deliveries")
+        .select("id, patient_name, items, total_kes, rider_name, rider_phone, status, created_at, delivered_at")
+        .eq("patient_phone", phone)
+        .eq("pharmacy_id", pharmacyId)
+        .neq("status", "delivered")
+        .order("created_at", { ascending: false }),
+      pharmacyosClient
+        .from("prescription_requests")
+        .select("id, drug_requested, status, condition_notes, created_at")
+        .eq("patient_phone", phone)
+        .eq("pharmacy_id", pharmacyId)
+        .order("created_at", { ascending: false })
+        .limit(5),
+      pharmacyosClient
+        .from("appointments")
+        .select("id, appointment_type, slot_datetime, status, condition_summary")
+        .eq("patient_phone", phone)
+        .eq("pharmacy_id", pharmacyId)
+        .gt("slot_datetime", nowIso)
+        .order("slot_datetime", { ascending: true }),
+    ])
+
+    const firstError =
+      notificationResult.error || deliveryResult.error || prescriptionResult.error || appointmentResult.error
+
+    if (firstError) {
+      setFeedback({ type: "error", message: firstError.message || "We could not load your tracking updates right now." })
+      if (!silent) {
+        setIsLoading(false)
+      }
+      return
+    }
+
+    const notificationRows = notificationResult.data || []
+    setNotifications(notificationRows.map((item) => ({ ...item, read: true })))
+    setDeliveries(deliveryResult.data || [])
+    setPrescriptions(prescriptionResult.data || [])
+    setAppointments(appointmentResult.data || [])
+    setLastUpdated(formatDateTime(new Date().toISOString()))
+    setFeedback({ type: notificationRows.length ? "success" : "info", message: notificationRows.length ? "Updates refreshed." : "No notifications yet for this number." })
+
+    const unreadIds = notificationRows.filter((item) => !item.read).map((item) => item.id)
+
+    if (unreadIds.length) {
+      await pharmacyosClient.from("patient_notifications").update({ read: true }).in("id", unreadIds)
+    }
+
+    if (!silent) {
+      setIsLoading(false)
+    }
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault()
+
+    const normalizedPhone = phoneInput.trim()
+
+    if (!isValidPhone(normalizedPhone)) {
+      setFeedback({ type: "error", message: "Enter a valid phone number in the format 07XXXXXXXX." })
+      return
+    }
+
+    setActivePhone(normalizedPhone)
+    await loadTrackingData(normalizedPhone)
+  }
+
+  useEffect(() => {
+    if (!activePhone) {
+      return undefined
+    }
+
+    const intervalId = window.setInterval(() => {
+      loadTrackingData(activePhone, { silent: true })
+    }, 30000)
+
+    return () => {
+      window.clearInterval(intervalId)
+    }
+  }, [activePhone, pharmacyId])
+
+  return (
+    <div className="patient-page">
+      <section className="patient-card patient-card-muted patient-hero">
+        <span className="patient-badge">Tracking and notifications</span>
+        <h1>See every update in one place</h1>
+        <p className="patient-copy">Track pending deliveries, prescription request progress, appointment updates, and branch notifications.</p>
+      </section>
+
+      <section className="patient-card">
+        <div className="patient-section-header">
+          <div>
+            <h2 className="patient-section-title">Find my updates</h2>
+            <p className="patient-form-help">Use the same phone number you gave the pharmacy. This page refreshes automatically every 30 seconds.</p>
+          </div>
+          <div className="patient-refresh">{lastUpdated ? `Last updated ${lastUpdated}` : "Auto-refresh every 30s"}</div>
+        </div>
+
+        <form className="patient-form" onSubmit={handleSubmit}>
+          <div className="patient-form-group">
+            <label className="patient-label" htmlFor="trackPhone">
+              Phone number
+            </label>
+            <input
+              id="trackPhone"
+              className="patient-input"
+              type="tel"
+              inputMode="tel"
+              placeholder="07XXXXXXXX"
+              value={phoneInput}
+              onChange={(event) => setPhoneInput(event.target.value)}
+            />
+          </div>
+
+          <button className="patient-button" type="submit" disabled={isLoading}>
+            {isLoading ? "Loading updates..." : "Check my updates"}
+          </button>
+        </form>
+
+        {feedback.message ? (
+          <div
+            className={`patient-message ${
+              feedback.type === "error"
+                ? "patient-message-error"
+                : feedback.type === "success"
+                  ? "patient-message-success"
+                  : "patient-message-info"
+            }`}
+          >
+            {feedback.message}
+          </div>
+        ) : null}
+      </section>
+
+      {activePhone ? (
+        <>
+          <section className="patient-card">
+            <div className="patient-section-header">
+              <div>
+                <h2 className="patient-section-title">Notifications</h2>
+                <p className="patient-form-help">Latest messages from the pharmacy for this number.</p>
+              </div>
+              <span className="patient-inline-icon">
+                <BellRing />
+              </span>
+            </div>
+
+            {notifications.length ? (
+              <div className="patient-list">
+                {notifications.map((notification) => (
+                  <article key={notification.id} className="patient-list-item patient-note-item">
+                    <div className="patient-note-header">
+                      <span className={`patient-type-badge ${getStatusClass(notification.type)}`}>{notification.type || "Update"}</span>
+                      <span className="patient-note-time">{formatDateTime(notification.created_at)}</span>
+                    </div>
+                    <p className="patient-note-message">{notification.message}</p>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="patient-empty-state">
+                <span className="patient-empty-icon">
+                  <BellRing />
+                </span>
+                <p className="patient-empty">No notifications are available yet.</p>
+              </div>
+            )}
+          </section>
+
+          <section className="patient-card">
+            <div className="patient-section-header">
+              <div>
+                <h2 className="patient-section-title">Delivery tracking</h2>
+                <p className="patient-form-help">Open deliveries appear here with a live status timeline.</p>
+              </div>
+              <span className="patient-inline-icon">
+                <PackageSearch />
+              </span>
+            </div>
+
+            {deliveries.length ? (
+              <div className="patient-list">
+                {deliveries.map((delivery) => {
+                  const stepIndex = getCurrentDeliveryStepIndex(delivery.status)
+
+                  return (
+                    <article key={delivery.id} className="patient-list-item">
+                      <div className="patient-list-header">
+                        <div>
+                          <div className="patient-list-title">{delivery.patient_name || "Delivery request"}</div>
+                          <div className="patient-list-meta">Created {formatDateTime(delivery.created_at)}</div>
+                        </div>
+                        <span className={`patient-status-badge ${getStatusClass(delivery.status)}`}>{delivery.status || "Pending"}</span>
+                      </div>
+
+                      <div className="patient-info-list">
+                        {delivery.items ? <div>Items: {delivery.items}</div> : null}
+                        {delivery.total_kes != null ? <div>Total: KES {delivery.total_kes}</div> : null}
+                        {delivery.rider_name ? <div>Rider: {delivery.rider_name}</div> : null}
+                        {delivery.rider_phone ? <div>Rider phone: {delivery.rider_phone}</div> : null}
+                      </div>
+
+                      <div className="patient-timeline" aria-label="Delivery status timeline">
+                        {deliverySteps.map((step, index) => (
+                          <div key={step} style={{ display: "contents" }}>
+                            <div
+                              className={`patient-timeline-step${
+                                index < stepIndex ? " complete" : index === stepIndex ? " current" : ""
+                              }`}
+                            >
+                              <span className="patient-timeline-dot" />
+                              <span className="patient-timeline-caption">{step.charAt(0).toUpperCase() + step.slice(1)}</span>
+                            </div>
+                            {index < deliverySteps.length - 1 ? <div className="patient-timeline-line" /> : null}
+                          </div>
+                        ))}
+                      </div>
+                    </article>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="patient-empty-state">
+                <span className="patient-empty-icon">
+                  <PackageSearch />
+                </span>
+                <p className="patient-empty">There are no active deliveries for this phone number right now.</p>
+              </div>
+            )}
+          </section>
+
+          <section className="patient-card">
+            <div className="patient-section-header">
+              <div>
+                <h2 className="patient-section-title">Prescription requests</h2>
+                <p className="patient-form-help">Your five most recent prescription submissions.</p>
+              </div>
+              <span className="patient-inline-icon">
+                <ClipboardList />
+              </span>
+            </div>
+
+            {prescriptions.length ? (
+              <div className="patient-list">
+                {prescriptions.map((request) => (
+                  <article key={request.id} className="patient-list-item">
+                    <div className="patient-list-header">
+                      <div>
+                        <div className="patient-list-title">{request.drug_requested || "Prescription request"}</div>
+                        <div className="patient-list-meta">Submitted {formatDateTime(request.created_at)}</div>
+                      </div>
+                      <span className={`patient-status-badge ${getStatusClass(request.status)}`}>{request.status || "Pending"}</span>
+                    </div>
+                    {request.condition_notes ? <p className="patient-list-text">{request.condition_notes}</p> : null}
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="patient-empty-state">
+                <span className="patient-empty-icon">
+                  <ClipboardList />
+                </span>
+                <p className="patient-empty">No prescription requests have been logged for this number yet.</p>
+              </div>
+            )}
+          </section>
+
+          <section className="patient-card">
+            <div className="patient-section-header">
+              <div>
+                <h2 className="patient-section-title">Upcoming appointments</h2>
+                <p className="patient-form-help">Future bookings awaiting completion.</p>
+              </div>
+              <span className="patient-inline-icon">
+                <CalendarClock />
+              </span>
+            </div>
+
+            {appointments.length ? (
+              <div className="patient-list">
+                {appointments.map((appointment) => (
+                  <article key={appointment.id} className="patient-list-item">
+                    <div className="patient-list-header">
+                      <div>
+                        <div className="patient-list-title">{appointment.appointment_type}</div>
+                        <div className="patient-list-meta">{formatDateTime(appointment.slot_datetime)}</div>
+                      </div>
+                      <span className={`patient-status-badge ${getStatusClass(appointment.status)}`}>{appointment.status || "Pending"}</span>
+                    </div>
+                    {appointment.condition_summary ? <p className="patient-list-text">{appointment.condition_summary}</p> : null}
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="patient-empty-state">
+                <span className="patient-empty-icon">
+                  <CalendarClock />
+                </span>
+                <p className="patient-empty">No upcoming appointments are scheduled for this number.</p>
+              </div>
+            )}
+          </section>
+        </>
+      ) : null}
+    </div>
+  )
+}

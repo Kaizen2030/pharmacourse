@@ -1,34 +1,38 @@
 import { useEffect } from "react"
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom"
+import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom"
 import { AuthProvider } from "./context/AuthContext"
-import Navbar from "./components/Navbar"
 import Footer from "./components/Footer"
-import Home from "./pages/Home"
-import Login from "./pages/Login"
-import Register from "./pages/Register"
-import CompleteProfile from "./pages/CompleteProfile"
-import ForgotPassword from "./pages/ForgotPassword"
-import ResetPassword from "./pages/ResetPassword"
-import Courses from "./pages/Courses"
-import Workshops from "./pages/Workshops"
+import Navbar from "./components/Navbar"
+import PatientLayout from "./components/PatientLayout"
 import Blog from "./pages/Blog"
 import BlogPost from "./pages/BlogPost"
-import TeamPlans from "./pages/TeamPlans"
+import CaseSimulation from "./pages/CaseSimulation"
+import Certificate from "./pages/Certificate"
+import Community from "./pages/Community"
+import CompleteProfile from "./pages/CompleteProfile"
 import CourseDetail from "./pages/CourseDetail"
 import CoursePlayer from "./pages/CoursePlayer"
+import Courses from "./pages/Courses"
 import Dashboard from "./pages/Dashboard"
-import Certificate from "./pages/Certificate"
+import ForgotPassword from "./pages/ForgotPassword"
+import Home from "./pages/Home"
+import Login from "./pages/Login"
+import PatientAppointment from "./pages/patient/PatientAppointment"
+import PatientHome from "./pages/patient/PatientHome"
+import PatientPrescription from "./pages/patient/PatientPrescription"
+import PatientRegister from "./pages/patient/PatientRegister"
+import PatientTrack from "./pages/patient/PatientTrack"
+import PharmacyOS from "./pages/Pharmacyos"
+import Register from "./pages/Register"
+import RemedacareOS from "./pages/Remedacareos"
+import ResetPassword from "./pages/ResetPassword"
+import ResetRedirect from "./pages/ResetRedirect"
+import TeamPlans from "./pages/TeamPlans"
 import VerifyCertificate from "./pages/VerifyCertificate"
-import CaseSimulation from "./pages/CaseSimulation"
+import Workshops from "./pages/Workshops"
 import AdminDashboard from "./pages/admin/AdminDashboard"
 import CourseForm from "./pages/admin/CourseForm"
 import SimulationAdmin from "./pages/admin/SimulationAdmin"
-
-import PharmacyOS from "./pages/Pharmacyos"
-import RemedacareOS from "./pages/Remedacareos"
-import Community from "./pages/Community"
-import ResetRedirect from "./pages/ResetRedirect"
-import PatientPortal from "./pages/PatientPortal"
 
 function MediaProtection() {
   useEffect(() => {
@@ -57,21 +61,15 @@ function MediaProtection() {
     })
 
     function handleContextMenu(event) {
-      if (isProtectedMediaTarget(event.target)) {
-        event.preventDefault()
-      }
+      if (isProtectedMediaTarget(event.target)) event.preventDefault()
     }
 
     function handleDragStart(event) {
-      if (isProtectedMediaTarget(event.target)) {
-        event.preventDefault()
-      }
+      if (isProtectedMediaTarget(event.target)) event.preventDefault()
     }
 
     function handleSelectStart(event) {
-      if (isProtectedMediaTarget(event.target)) {
-        event.preventDefault()
-      }
+      if (isProtectedMediaTarget(event.target)) event.preventDefault()
     }
 
     applyDragProtection()
@@ -91,24 +89,14 @@ function MediaProtection() {
   return null
 }
 
-export default function App() {
-  return (
-    <AuthProvider>
-      <BrowserRouter>
-        <MediaProtection />
-        <AppShell />
-      </BrowserRouter>
-    </AuthProvider>
-  )
-}
-
 function AppShell() {
   const location = useLocation()
-  const hideChrome = location.pathname === "/patient" || location.pathname === "/patient-portal"
+  const isPatientRoute = location.pathname.startsWith("/patient")
 
   return (
     <>
-      {!hideChrome && <Navbar />}
+      <MediaProtection />
+      {!isPatientRoute ? <Navbar /> : null}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
@@ -130,18 +118,33 @@ function AppShell() {
         <Route path="/pharmacyos" element={<PharmacyOS />} />
         <Route path="/remedacareos" element={<RemedacareOS />} />
         <Route path="/community" element={<Community />} />
-        <Route path="/patient" element={<PatientPortal />} />
-        <Route path="/patient-portal" element={<PatientPortal />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/courses/new" element={<CourseForm />} />
         <Route path="/admin/courses/:id/edit" element={<CourseForm />} />
         <Route path="/admin/simulations" element={<SimulationAdmin />} />
 
-        {/* Deep link redirect routes for Electron apps */}
+        <Route path="/patient" element={<PatientLayout />}>
+          <Route index element={<PatientHome />} />
+          <Route path="register" element={<PatientRegister />} />
+          <Route path="prescription" element={<PatientPrescription />} />
+          <Route path="appointment" element={<PatientAppointment />} />
+          <Route path="track" element={<PatientTrack />} />
+        </Route>
+
         <Route path="/reset/remedacare" element={<ResetRedirect app="remedacare" />} />
         <Route path="/reset/pharmacyos" element={<ResetRedirect app="pharmacyos" />} />
       </Routes>
-      {!hideChrome && <Footer />}
+      {!isPatientRoute ? <Footer /> : null}
     </>
+  )
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <AppShell />
+      </BrowserRouter>
+    </AuthProvider>
   )
 }

@@ -18,6 +18,7 @@ export default function Navbar() {
   const { user, profile, isAdmin } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  if (location.pathname.startsWith("/patient")) return null
   const [menuOpen, setMenuOpen] = useState(false)
   const [openDropdown, setOpenDropdown] = useState(null)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
