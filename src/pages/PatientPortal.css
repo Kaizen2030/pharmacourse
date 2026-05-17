@@ -78,6 +78,27 @@
   color: var(--text-500);
 }
 
+.patient-portal-turnstile-wrap {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.patient-portal-turnstile {
+  min-height: 66px;
+}
+
+.patient-portal-turnstile-note {
+  color: var(--text-500);
+  font-size: 0.9rem;
+}
+
+.patient-portal-turnstile-error {
+  color: #b42318;
+  font-size: 0.9rem;
+}
+
 .patient-portal-content {
   padding: 0 1.5rem 3rem;
 }

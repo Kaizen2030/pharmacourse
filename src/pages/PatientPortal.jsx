@@ -4,6 +4,9 @@ import { pharmacyPortalSupabase as supabase } from "../lib/pharmacyPortalSupabas
 import SEO from "../components/SEO"
 import "./PatientPortal.css"
 
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || "0x4AAAAAADQ4Srgs_Q53E-3H"
+let turnstileScriptPromise = null
+
 const PORTAL_TABS = [
   { id: "prescription", label: "Prescription Request" },
   { id: "appointment", label: "Book Appointment" },
@@ -22,10 +25,103 @@ const DIRECTORY_BATCH_SIZES = {
   branches: 18,
 }
 
+function loadTurnstileScript() {
+  if (typeof window === "undefined") return Promise.resolve()
+  if (window.turnstile) return Promise.resolve()
+  if (turnstileScriptPromise) return turnstileScriptPromise
+
+  turnstileScriptPromise = new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[data-turnstile-script="true"]')
+
+    if (existing) {
+      existing.addEventListener("load", () => resolve(), { once: true })
+      existing.addEventListener("error", () => reject(new Error("Unable to load security check.")), { once: true })
+      return
+    }
+
+    const script = document.createElement("script")
+    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+    script.async = true
+    script.defer = true
+    script.dataset.turnstileScript = "true"
+    script.onload = () => resolve()
+    script.onerror = () => reject(new Error("Unable to load security check."))
+    document.head.appendChild(script)
+  })
+
+  return turnstileScriptPromise
+}
+
+function TurnstileWidget({ formId, resetSignal, onVerify, onExpire }) {
+  const [loadError, setLoadError] = useState("")
+  const [widgetReady, setWidgetReady] = useState(false)
+  const containerId = `turnstile-${formId}`
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function renderWidget() {
+      if (!TURNSTILE_SITE_KEY) {
+        setLoadError("Security check is not configured right now. Please try again later.")
+        return
+      }
+
+      setLoadError("")
+      setWidgetReady(false)
+
+      try {
+        await loadTurnstileScript()
+        if (cancelled || !window.turnstile) return
+
+        const container = document.getElementById(containerId)
+        if (!container) return
+
+        container.innerHTML = ""
+        window.turnstile.render(container, {
+          sitekey: TURNSTILE_SITE_KEY,
+          theme: "light",
+          callback: (token) => {
+            onVerify(token)
+            setWidgetReady(true)
+          },
+          "expired-callback": () => {
+            onExpire()
+            setWidgetReady(false)
+          },
+          "error-callback": () => {
+            onExpire()
+            setLoadError("Security check failed. Please refresh and try again.")
+            setWidgetReady(false)
+          },
+        })
+      } catch (error) {
+        setLoadError(error?.message || "Unable to load security check.")
+      }
+    }
+
+    renderWidget()
+
+    return () => {
+      cancelled = true
+    }
+  }, [containerId, onExpire, onVerify, resetSignal])
+
+  return (
+    <div className="patient-portal-turnstile-wrap">
+      <div id={containerId} className="patient-portal-turnstile" />
+      {widgetReady && !loadError ? (
+        <div className="patient-portal-turnstile-note">Security check complete. You can submit now.</div>
+      ) : null}
+      {loadError ? <div className="patient-portal-turnstile-error">{loadError}</div> : null}
+    </div>
+  )
+}
+
 function createEmptyPrescription() {
   return {
     patientName: "",
     patientPhone: "",
+    patientEmail: "",
     conditionNotes: "",
     drugRequested: "",
   }
@@ -35,6 +131,7 @@ function createEmptyAppointment() {
   return {
     patientName: "",
     patientPhone: "",
+    patientEmail: "",
     appointmentType: "phone_call",
     slotDatetime: defaultSlotValue(),
     patientNotes: "",
@@ -46,6 +143,7 @@ function createEmptyDelivery() {
   return {
     patientName: "",
     patientPhone: "",
+    patientEmail: "",
     patientAddress: "",
     patientLocationLat: "",
     patientLocationLng: "",
@@ -247,6 +345,16 @@ export default function PatientPortal() {
   const [submitting, setSubmitting] = useState("")
   const [submitMessage, setSubmitMessage] = useState("")
   const [submitError, setSubmitError] = useState("")
+  const [turnstileTokens, setTurnstileTokens] = useState({
+    prescription: "",
+    appointment: "",
+    delivery: "",
+  })
+  const [turnstileResetKeys, setTurnstileResetKeys] = useState({
+    prescription: 0,
+    appointment: 0,
+    delivery: 0,
+  })
 
   useEffect(() => {
     let cancelled = false
@@ -565,6 +673,41 @@ export default function PatientPortal() {
     return data?.publicUrl || ""
   }
 
+  function setTurnstileToken(formId, token) {
+    setTurnstileTokens((prev) => ({ ...prev, [formId]: token || "" }))
+  }
+
+  function resetTurnstile(formId) {
+    setTurnstileTokens((prev) => ({ ...prev, [formId]: "" }))
+    setTurnstileResetKeys((prev) => ({ ...prev, [formId]: prev[formId] + 1 }))
+  }
+
+  async function submitPortalRequest(submissionType, payload, formId) {
+    const turnstileToken = turnstileTokens[formId]
+
+    if (!TURNSTILE_SITE_KEY) {
+      throw new Error("Security check is not configured right now. Please try again later.")
+    }
+
+    if (!turnstileToken) {
+      throw new Error("Complete the security check before submitting.")
+    }
+
+    const { data, error } = await supabase.functions.invoke("patient-portal-submit", {
+      body: {
+        submissionType,
+        turnstileToken,
+        payload,
+      },
+    })
+
+    if (error) throw error
+    if (data?.error) throw new Error(data.error)
+
+    resetTurnstile(formId)
+    return data
+  }
+
   async function handlePrescriptionSubmit(event) {
     event.preventDefault()
     setSubmitting("prescription")
@@ -574,6 +717,7 @@ export default function PatientPortal() {
     try {
       const patientName = prescriptionForm.patientName.trim()
       const patientPhone = normalizePhone(prescriptionForm.patientPhone)
+      const patientEmail = prescriptionForm.patientEmail.trim().toLowerCase()
       const conditionNotes = prescriptionForm.conditionNotes.trim()
 
       if (!patientName || !patientPhone || !conditionNotes) {
@@ -582,17 +726,16 @@ export default function PatientPortal() {
 
       const prescriptionImageUrl = await uploadPrescriptionImage()
 
-      const { error } = await supabase.from("prescription_requests").insert([{
+      await submitPortalRequest("prescription", {
         pharmacy_id: pharmacyId,
         branch_id: pharmacyId,
         patient_name: patientName,
         patient_phone: patientPhone,
+        patient_email: patientEmail || null,
         condition_notes: conditionNotes,
         drug_requested: prescriptionForm.drugRequested.trim() || null,
         prescription_image_url: prescriptionImageUrl || null,
-      }])
-
-      if (error) throw error
+      }, "prescription")
 
       setPrescriptionForm(createEmptyPrescription())
       setPrescriptionFile(null)
@@ -616,24 +759,24 @@ export default function PatientPortal() {
     try {
       const patientName = appointmentForm.patientName.trim()
       const patientPhone = normalizePhone(appointmentForm.patientPhone)
+      const patientEmail = appointmentForm.patientEmail.trim().toLowerCase()
       const conditionSummary = appointmentForm.conditionSummary.trim()
 
       if (!patientName || !patientPhone || !conditionSummary || !appointmentForm.slotDatetime) {
         throw new Error("Name, phone number, appointment time, and condition summary are required.")
       }
 
-      const { error } = await supabase.from("appointments").insert([{
+      await submitPortalRequest("appointment", {
         pharmacy_id: pharmacyId,
         patient_name: patientName,
         patient_phone: patientPhone,
+        patient_email: patientEmail || null,
         appointment_type: appointmentForm.appointmentType,
         slot_datetime: new Date(appointmentForm.slotDatetime).toISOString(),
         status: "pending",
         patient_notes: appointmentForm.patientNotes.trim() || null,
         condition_summary: conditionSummary,
-      }])
-
-      if (error) throw error
+      }, "appointment")
 
       setAppointmentForm(createEmptyAppointment())
       setTrackerPhone(patientPhone)
@@ -656,6 +799,7 @@ export default function PatientPortal() {
     try {
       const patientName = deliveryForm.patientName.trim()
       const patientPhone = normalizePhone(deliveryForm.patientPhone)
+      const patientEmail = deliveryForm.patientEmail.trim().toLowerCase()
       const patientAddress = deliveryForm.patientAddress.trim()
       const items = deliveryForm.items
         .map((item) => ({
@@ -669,10 +813,11 @@ export default function PatientPortal() {
         throw new Error("Name, phone number, delivery address, and at least one item are required.")
       }
 
-      const { error } = await supabase.from("deliveries").insert([{
+      await submitPortalRequest("delivery", {
         pharmacy_id: pharmacyId,
         patient_name: patientName,
         patient_phone: patientPhone,
+        patient_email: patientEmail || null,
         patient_address: patientAddress,
         patient_location_lat: deliveryForm.patientLocationLat ? Number(deliveryForm.patientLocationLat) : null,
         patient_location_lng: deliveryForm.patientLocationLng ? Number(deliveryForm.patientLocationLng) : null,
@@ -680,9 +825,7 @@ export default function PatientPortal() {
         total_kes: items.reduce((sum, item) => sum + (item.qty * item.price), 0),
         rider_name: deliveryForm.riderName.trim() || null,
         rider_phone: normalizePhone(deliveryForm.riderPhone) || null,
-      }])
-
-      if (error) throw error
+      }, "delivery")
 
       setDeliveryForm(createEmptyDelivery())
       setTrackerPhone(patientPhone)
@@ -787,6 +930,10 @@ export default function PatientPortal() {
             <input className="form-input" value={prescriptionForm.patientPhone} onChange={(event) => updatePrescription("patientPhone", event.target.value)} placeholder="e.g. 07..." />
           </div>
           <div className="form-group patient-portal-span-full">
+            <label className="form-label">Email Address (optional)</label>
+            <input className="form-input" type="email" value={prescriptionForm.patientEmail} onChange={(event) => updatePrescription("patientEmail", event.target.value)} placeholder="For email updates" />
+          </div>
+          <div className="form-group patient-portal-span-full">
             <label className="form-label">What are you suffering from?</label>
             <textarea rows="5" value={prescriptionForm.conditionNotes} onChange={(event) => updatePrescription("conditionNotes", event.target.value)} placeholder="Describe your symptoms or condition briefly." />
           </div>
@@ -799,6 +946,12 @@ export default function PatientPortal() {
             <input className="form-input" type="file" accept="image/*" onChange={(event) => setPrescriptionFile(event.target.files?.[0] || null)} />
           </div>
         </div>
+        <TurnstileWidget
+          formId="prescription"
+          resetSignal={turnstileResetKeys.prescription}
+          onVerify={(token) => setTurnstileToken("prescription", token)}
+          onExpire={() => setTurnstileToken("prescription", "")}
+        />
         <button type="submit" className="btn btn-primary patient-portal-submit" disabled={submitting === "prescription"}>
           {submitting === "prescription" ? "Sending request..." : "Send Prescription Request"}
         </button>
@@ -817,6 +970,10 @@ export default function PatientPortal() {
           <div className="form-group">
             <label className="form-label">Phone Number</label>
             <input className="form-input" value={appointmentForm.patientPhone} onChange={(event) => updateAppointment("patientPhone", event.target.value)} placeholder="e.g. 07..." />
+          </div>
+          <div className="form-group patient-portal-span-full">
+            <label className="form-label">Email Address (optional)</label>
+            <input className="form-input" type="email" value={appointmentForm.patientEmail} onChange={(event) => updateAppointment("patientEmail", event.target.value)} placeholder="For email updates" />
           </div>
           <div className="form-group">
             <label className="form-label">Appointment Type</label>
@@ -839,6 +996,12 @@ export default function PatientPortal() {
             <textarea rows="4" value={appointmentForm.patientNotes} onChange={(event) => updateAppointment("patientNotes", event.target.value)} placeholder="Any extra details, allergies, or preferred contact instructions." />
           </div>
         </div>
+        <TurnstileWidget
+          formId="appointment"
+          resetSignal={turnstileResetKeys.appointment}
+          onVerify={(token) => setTurnstileToken("appointment", token)}
+          onExpire={() => setTurnstileToken("appointment", "")}
+        />
         <button type="submit" className="btn btn-primary patient-portal-submit" disabled={submitting === "appointment"}>
           {submitting === "appointment" ? "Booking appointment..." : "Book Appointment"}
         </button>
@@ -857,6 +1020,10 @@ export default function PatientPortal() {
           <div className="form-group">
             <label className="form-label">Phone Number</label>
             <input className="form-input" value={deliveryForm.patientPhone} onChange={(event) => updateDelivery("patientPhone", event.target.value)} placeholder="e.g. 07..." />
+          </div>
+          <div className="form-group patient-portal-span-full">
+            <label className="form-label">Email Address (optional)</label>
+            <input className="form-input" type="email" value={deliveryForm.patientEmail} onChange={(event) => updateDelivery("patientEmail", event.target.value)} placeholder="For email updates" />
           </div>
           <div className="form-group patient-portal-span-full">
             <label className="form-label">Delivery Address</label>
@@ -896,6 +1063,12 @@ export default function PatientPortal() {
 
           <div className="patient-portal-total">Estimated total: <strong>KES {deliveryTotal.toLocaleString()}</strong></div>
         </div>
+        <TurnstileWidget
+          formId="delivery"
+          resetSignal={turnstileResetKeys.delivery}
+          onVerify={(token) => setTurnstileToken("delivery", token)}
+          onExpire={() => setTurnstileToken("delivery", "")}
+        />
 
         <button type="submit" className="btn btn-primary patient-portal-submit" disabled={submitting === "delivery"}>
           {submitting === "delivery" ? "Sending delivery request..." : "Send Delivery Request"}
