@@ -55,7 +55,7 @@ const DEFAULT_SECTIONS = {
     enabled: true,
     order: 3,
     heading: "Everything your pharmacy needs. In one desktop app.",
-    subheading: "Built specifically for Kenyan retail pharmacies with SHA, eTIMS/KRA, M-Pesa, and PPB narcotics reporting.",
+    subheading: "Built for Kenyan pharmacies with telepharmacy, dispensing, inventory, claims, delivery coordination, M-Pesa, eTIMS/KRA, and PPB control in one workflow.",
     badge_text: "RemedacarePOS",
     primary_btn_text: "Book a Demo",
     primary_btn_url: WHATSAPP,
@@ -64,8 +64,8 @@ const DEFAULT_SECTIONS = {
   remedacareOS: {
     enabled: true,
     order: 4,
-    heading: "From clinic to dispensary. One connected system.",
-    subheading: "Full HMIS built for Kenyan hospitals with patient records, billing, MOH reports, and RemedacarePOS integration.",
+    heading: "Clinical depth, operational control, and one connected care system.",
+    subheading: "A Kenyan HMIS with consultations, laboratory, radiology, chronic disease follow-up, antibiogram, care pathways, AMS, finance, claims, and RemedacarePOS integration.",
     badge_text: "RemedacareHMIS",
     primary_btn_text: "Explore RemedacareHMIS",
     primary_btn_url: "/remedacarehmis",
@@ -493,7 +493,7 @@ export default function Home() {
                           <img src={remedacareposMark} alt="RemedacarePOS logo" className="service-icon-mark" />
                         </div>
                         <h3>RemedacarePOS</h3>
-                        <p>Complete pharmacy operations management: inventory, billing, compliance, and patient records in one system.</p>
+                        <p>Telepharmacy-ready pharmacy software for dispensing, inventory, patient requests, delivery coordination, claims, and branch workflow in one system.</p>
                         <Link to="/remedacarepos" className="service-link">Learn More <ChevronRight size={16} /></Link>
                       </div>
 
@@ -502,7 +502,7 @@ export default function Home() {
                           <img src={remedacarehmisMark} alt="RemedacareHMIS logo" className="service-icon-mark" />
                         </div>
                         <h3>RemedacareHMIS</h3>
-                        <p>Hospital management software connecting clinicians, billing teams, laboratory, pharmacy, and patient workflows in one system.</p>
+                        <p>Hospital management software connecting clinicians, laboratory, radiology, chronic care, finance, AMS, and pharmacy workflows in one system.</p>
                         <Link to="/remedacarehmis" className="service-link">Learn More <ChevronRight size={16} /></Link>
                       </div>
 
@@ -576,7 +576,7 @@ export default function Home() {
                         <ShoppingCart size={32} />
                         <span className="platform-status">Available</span>
                         <h3>RemedacarePOS</h3>
-                        <p>AI-powered dispensary management with POS, inventory, SHA claims, and M-Pesa integration.</p>
+                        <p>Telepharmacy-ready dispensary operations with POS, inventory, claims, delivery visibility, and M-Pesa integration.</p>
                         <Link to="/remedacarepos" className="platform-link">Explore RemedacarePOS <ChevronRight size={16} /></Link>
                       </div>
 
@@ -584,7 +584,7 @@ export default function Home() {
                         <Building2 size={32} />
                         <span className="platform-status">Available</span>
                         <h3>RemedacareHMIS</h3>
-                        <p>Full hospital management system with patient records, billing, and MOH reporting.</p>
+                        <p>Full HMIS with chronic disease tracking, care pathways, antibiogram intelligence, referrals, finance, and MOH reporting.</p>
                         <Link to="/remedacarehmis" className="platform-link">Explore RemedacareHMIS <ChevronRight size={16} /></Link>
                       </div>
                     </div>
@@ -612,10 +612,10 @@ export default function Home() {
                       <div className="product-features">
                         <div className="feature-list">
                           {[
-                            { icon: ShoppingCart, text: "Sales and POS with M-Pesa" },
-                            { icon: Package, text: "Real-time inventory management" },
-                            { icon: AlertTriangle, text: "Automated expiry alerts" },
-                            { icon: CreditCard, text: "SHA and insurance claims" },
+                            { icon: ShoppingCart, text: "Dispensing and POS with M-Pesa" },
+                            { icon: Package, text: "Live inventory and branch stock control" },
+                            { icon: AlertTriangle, text: "Telepharmacy and patient request workflow" },
+                            { icon: CreditCard, text: "SHA, insurance, and compliance reporting" },
                           ].map((feature, idx) => (
                             <div key={idx} className="feature-item">
                               <feature.icon size={20} />
@@ -653,9 +653,9 @@ export default function Home() {
                       <div className="product-features">
                         <div className="feature-list">
                           {[
-                            { icon: ClipboardList, text: "Complete patient records" },
-                            { icon: BarChart3, text: "Government-compliant reports" },
-                            { icon: Users, text: "Multi-role access control" },
+                            { icon: ClipboardList, text: "Care pathways and chronic disease follow-up" },
+                            { icon: BarChart3, text: "Finance, claims, and executive visibility" },
+                            { icon: Users, text: "Antibiogram, AMS, and clinical decision support" },
                             { icon: Link2, text: "Seamless RemedacarePOS integration" },
                           ].map((feature, idx) => (
                             <div key={idx} className="feature-item">

@@ -316,7 +316,7 @@ export default function RemedacareOS() {
             From clinic to dispensary.<br />One connected system.
           </h1>
           <p className="rc-hero-copy" style={{ fontSize: 18, opacity: 0.82, maxWidth: 640, margin: "0 auto 40px", lineHeight: 1.65 }}>
-            A full Hospital Management Information System built specifically for Kenyan hospitals with native RemedacarePOS integration, MOH reports, SHA claims, and AI clinical support.
+            A full Hospital Management Information System built for Kenyan hospitals with chronic disease follow-up, care pathways, antibiogram intelligence, AMS support, finance workflows, SHA claims, and native RemedacarePOS integration.
           </p>
 
           <div className="rc-hero-actions" style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
@@ -478,7 +478,7 @@ export default function RemedacareOS() {
               New workflows for real frontline hospital care.
             </h2>
             <p style={{ color: "#556", fontSize: 15, lineHeight: 1.75, maxWidth: 700, margin: "0 auto" }}>
-              The newer RemedacareHMIS build is not just records and billing. It now supports live consultation routing, AMR intelligence, department visibility, and a stronger pharmacy handoff.
+              RemedacareHMIS is not just records and billing. It now brings together live consultation routing, antibiogram intelligence, chronic disease follow-up, guided care pathways, AMS workflows, department visibility, and a stronger pharmacy handoff.
             </p>
           </div>
 
@@ -532,7 +532,7 @@ export default function RemedacareOS() {
             Ready to transform your hospital's operations?
           </h2>
           <p style={{ color: "rgba(255,255,255,0.72)", fontSize: 16, lineHeight: 1.75, marginBottom: 40 }}>
-            RemedacareHMIS is available now for Kenyan hospitals and clinics. Book a free demo and see the full HMIS live from patient registration to MOH reporting.
+            RemedacareHMIS is available now for Kenyan hospitals and clinics. Book a free demo and see the full HMIS live across patient registration, consultations, chronic care, laboratory, finance, AMS, and MOH reporting.
           </p>
           <div className="rc-cta-actions" style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
             <a href={WHATSAPP} target="_blank" rel="noreferrer" className="rc-btn-white" style={{ background: "#fff", color: GREEN, fontWeight: 700, padding: "15px 30px", borderRadius: 10, textDecoration: "none", fontSize: 15, display: "flex", alignItems: "center", gap: 8, boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}>

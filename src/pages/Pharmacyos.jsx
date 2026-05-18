@@ -333,7 +333,7 @@ export default function PharmacyOS() {
             A connected pharmacy workflow<br />from request to dispense to delivery.
           </h1>
           <p className="po-hero-copy" style={{ fontSize: 18, opacity: 0.82, maxWidth: 650, margin: "0 auto 40px", lineHeight: 1.65 }}>
-            RemedacarePOS now combines live dispensing, patient self-service, telepharmacy response flows, delivery coordination, claims awareness, branch operations and visual business analytics in one app.
+            RemedacarePOS combines live dispensing, telepharmacy response workflows, patient self-service, delivery coordination, claims visibility, branch operations, and business analytics in one connected pharmacy system.
           </p>
 
           <div className="po-hero-actions" style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
@@ -459,7 +459,7 @@ export default function PharmacyOS() {
               The new patient journey is visible all the way through.
             </h2>
             <p style={{ color: "#556", fontSize: 15, lineHeight: 1.75, maxWidth: 700, margin: "0 auto" }}>
-              RemedacarePOS now supports a more complete public-to-pharmacy workflow instead of stopping at a request form.
+              RemedacarePOS supports the full public-to-pharmacy journey: prescription request, pharmacist review, alternative handling, pickup or delivery choice, live updates, and telepharmacy follow-up.
             </p>
           </div>
 
@@ -486,7 +486,7 @@ export default function PharmacyOS() {
             <div>
               <span style={{ color: GREEN, fontWeight: 700, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase" }}>Compliance</span>
               <h2 style={{ fontSize: "clamp(1.5rem, 3vw, 2.1rem)", fontWeight: 800, margin: "14px 0 18px", color: DARK, letterSpacing: "-0.02em" }}>
-                Operational depth without fake dashboard numbers.
+                Built for pharmacists who need speed, control, and patient continuity.
               </h2>
               <p style={{ color: "#666", fontSize: 15, lineHeight: 1.75, marginBottom: 32 }}>
                 The product can now speak honestly about what it does: visual analytics, controlled workflows, patient continuity and Kenyan pharmacy control points that matter in practice.
@@ -583,7 +583,7 @@ export default function PharmacyOS() {
             Ready to modernise how the pharmacy actually works?
           </h2>
           <p style={{ color: "rgba(255,255,255,0.72)", fontSize: 16, lineHeight: 1.75, marginBottom: 40 }}>
-            Book a live walkthrough and see the real RemedacarePOS flow across patient requests, alternatives, delivery handling, dashboards, shifts and branch operations.
+            Book a live walkthrough and see how RemedacarePOS handles telepharmacy, dispensing, inventory, delivery coordination, branch workflows, and claims in one pharmacy operating system.
           </p>
           <div className="po-cta-actions" style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
             <a href={WHATSAPP} target="_blank" rel="noreferrer" className="po-btn-white" style={{ background: "#fff", color: GREEN, fontWeight: 700, padding: "15px 30px", borderRadius: 10, textDecoration: "none", fontSize: 15, display: "flex", alignItems: "center", gap: 8, boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}>
