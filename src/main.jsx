@@ -4,8 +4,11 @@ import { registerSW } from "virtual:pwa-register"
 import "./index.css"
 import App from "./App"
 
-registerSW({
+const updateSW = registerSW({
   immediate: true,
+  onNeedRefresh() {
+    updateSW(true)
+  },
   onOfflineReady() {
     console.info("Patient portal is ready for offline shell access.")
   },
