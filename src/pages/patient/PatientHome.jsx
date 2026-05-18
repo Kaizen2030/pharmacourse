@@ -1,40 +1,17 @@
 import { createElement, useEffect, useState } from "react"
-import { Bell, CalendarPlus2, ChevronRight, ClipboardPlus, IdCard, LogOut, PillBottle, UserRoundCheck } from "lucide-react"
+import { CalendarPlus2, ChevronRight, ClipboardPlus, IdCard, LogOut, PillBottle, ShieldCheck, UserRoundCheck } from "lucide-react"
 import { Link } from "react-router-dom"
 import { usePatient } from "../../components/PatientLayout"
-import { fetchPatientPortalUpdates } from "../../lib/patientPortalUpdates"
-import { buildPatientRouteUrl } from "../../lib/patientPortalRoutes"
+import { usePatientPortalAuth } from "../../hooks/usePatientPortalAuth"
 import { clearPatientPortalSession, getPatientPortalSession } from "../../lib/patientPortalSession"
-
-function formatDateTime(value) {
-  if (!value) {
-    return ""
-  }
-
-  return new Intl.DateTimeFormat("en-KE", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value))
-}
-
-function getTypeBadgeClass(type) {
-  const normalizedType = (type || "").toLowerCase()
-
-  if (normalizedType.includes("delivery")) return "patient-status-dispatched"
-  if (normalizedType.includes("appointment")) return "patient-status-confirmed"
-  if (normalizedType.includes("prescription")) return "patient-status-pending"
-
-  return "patient-status-default"
-}
 
 export default function PatientHome() {
   const { branchName, pharmacyId, createPatientPath } = usePatient()
   const [rememberedPatient, setRememberedPatient] = useState(() => getPatientPortalSession(pharmacyId))
-  const [phone, setPhone] = useState("")
-  const [notifications, setNotifications] = useState([])
-  const [isChecking, setIsChecking] = useState(false)
   const [feedback, setFeedback] = useState({ type: "", message: "" })
-  const patientLoginPath = buildPatientRouteUrl("/patient/login")
+  const patientLoginPath = createPatientPath("/patient/login")
+  const patientTrackPath = createPatientPath("/patient/track")
+  const { isAuthenticated, patientPhone, fullName, signOut } = usePatientPortalAuth()
 
   useEffect(() => {
     setRememberedPatient(getPatientPortalSession(pharmacyId))
@@ -70,47 +47,16 @@ export default function PatientHome() {
   function handleForgetPatient() {
     clearPatientPortalSession(pharmacyId)
     setRememberedPatient(null)
-    setPhone("")
-    setNotifications([])
     setFeedback({ type: "info", message: "This phone has been cleared on this device. You can register or switch to another number." })
   }
 
-  async function handleCheckNotifications(event) {
-    event.preventDefault()
-
-    const normalizedPhone = phone.trim()
-
-    if (!normalizedPhone) {
-      setFeedback({ type: "error", message: "Enter your phone number to check for updates." })
-      setNotifications([])
-      return
+  async function handleSignOut() {
+    try {
+      await signOut()
+      setFeedback({ type: "info", message: "You have signed out of the patient web account on this device." })
+    } catch (error) {
+      setFeedback({ type: "error", message: error?.message || "We could not sign you out right now." })
     }
-
-    setIsChecking(true)
-    setFeedback({ type: "", message: "" })
-
-    const { data, error } = await fetchPatientPortalUpdates({
-      pharmacyId,
-      phone: normalizedPhone,
-    })
-
-    if (error) {
-      setFeedback({ type: "error", message: error.message || "We could not load your notifications right now." })
-      setNotifications([])
-      setIsChecking(false)
-      return
-    }
-
-    const notificationRows = (data?.notifications || []).slice(0, 5)
-    setNotifications(notificationRows.map((item) => ({ ...item, read: true })))
-
-    if (notificationRows.length) {
-      setFeedback({ type: "success", message: `We found ${notificationRows.length} recent update(s) for this number.` })
-    } else {
-      setFeedback({ type: "info", message: "No notifications yet for that number at this branch." })
-    }
-
-    setIsChecking(false)
   }
 
   return (
@@ -225,34 +171,15 @@ export default function PatientHome() {
       <section className="patient-card">
         <div className="patient-section-header">
           <div>
-            <h2 className="patient-section-title">Check my notifications</h2>
-            <p className="patient-form-help">Enter the phone number you used with this pharmacy to see your latest updates.</p>
+            <h2 className="patient-section-title">Private updates and notifications</h2>
+            <p className="patient-form-help">
+              Updates are now locked to signed-in patient web accounts. Knowing a phone number alone is no longer enough.
+            </p>
           </div>
           <span className="patient-inline-icon">
-            <Bell />
+            <ShieldCheck />
           </span>
         </div>
-
-        <form className="patient-form" onSubmit={handleCheckNotifications}>
-          <div className="patient-form-group">
-            <label className="patient-label" htmlFor="notification-phone">
-              Phone number
-            </label>
-            <input
-              id="notification-phone"
-              className="patient-input"
-              type="tel"
-              inputMode="tel"
-              placeholder="07XXXXXXXX"
-              value={phone}
-              onChange={(event) => setPhone(event.target.value)}
-            />
-          </div>
-
-          <button className="patient-button" type="submit" disabled={isChecking}>
-            {isChecking ? "Checking..." : "Check my notifications"}
-          </button>
-        </form>
 
         {feedback.message ? (
           <div
@@ -268,17 +195,35 @@ export default function PatientHome() {
           </div>
         ) : null}
 
-        <div className="patient-list">
-          {notifications.map((notification) => (
-            <article key={notification.id} className="patient-list-item patient-note-item">
-              <div className="patient-note-header">
-                <span className={`patient-type-badge ${getTypeBadgeClass(notification.type)}`}>{notification.type || "Update"}</span>
-                <span className="patient-note-time">{formatDateTime(notification.created_at)}</span>
-              </div>
-              <p className="patient-note-message">{notification.message}</p>
-            </article>
-          ))}
-        </div>
+        {isAuthenticated ? (
+          <div className="patient-empty-state">
+            <p className="patient-form-help" style={{ margin: 0 }}>
+              Signed in as <strong>{fullName || "Patient account"}</strong>{patientPhone ? ` on ${patientPhone}` : ""}.
+            </p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.7rem" }}>
+              <Link to={patientTrackPath} className="patient-button" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                Open my updates
+              </Link>
+              <button type="button" className="patient-button-secondary" onClick={handleSignOut}>
+                Sign out
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="patient-empty-state">
+            <p className="patient-form-help" style={{ margin: 0 }}>
+              Sign in to your patient account before viewing notifications, delivery progress, or prescription updates.
+            </p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.7rem" }}>
+              <Link to={patientLoginPath} className="patient-button" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                Sign in to patient account
+              </Link>
+              <Link to={createPatientPath("/patient/register")} className="patient-button-secondary" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                Create my account
+              </Link>
+            </div>
+          </div>
+        )}
       </section>
     </div>
   )

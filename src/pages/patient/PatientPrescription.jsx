@@ -142,7 +142,7 @@ export default function PatientPrescription() {
 
     setSubmitMessage({
       type: "success",
-      message: "Request submitted! The pharmacist will review and respond. Check your notifications using your phone number.",
+      message: "Request submitted! The pharmacist will review and respond. Sign in to your patient account to view private updates and notifications.",
     })
     setDrugRequested("")
     setPrescriptionFile(null)

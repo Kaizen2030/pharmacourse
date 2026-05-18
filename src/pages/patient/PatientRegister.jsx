@@ -2,7 +2,10 @@ import { useCallback, useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import { usePatient } from "../../components/PatientLayout"
 import { pharmacyosClient } from "../../lib/pharmacyosClient"
+import { getAuthRedirectUrl } from "../../lib/authRedirect"
+import { buildPatientRouteUrl } from "../../lib/patientPortalRoutes"
 import { savePatientPortalSession } from "../../lib/patientPortalSession"
+import { buildPatientAuthMetadata } from "../../hooks/usePatientPortalAuth"
 import TurnstileWidget from "../../components/TurnstileWidget"
 
 const insuranceOptions = ["SHA/NHIF", "AAR", "Jubilee", "Britam", "Madison", "CIC", "None"]
@@ -28,15 +31,19 @@ export default function PatientRegister() {
   const [formValues, setFormValues] = useState({
     fullName: "",
     phone: "",
+    email: "",
     dob: "",
     gender: "",
     shaMemberNo: "",
     insurer: "None",
     insuranceMemberNo: "",
     allergies: "",
+    password: "",
+    confirmPassword: "",
   })
   const [selectedConditions, setSelectedConditions] = useState([])
   const [feedback, setFeedback] = useState({ type: "", message: "" })
+  const [accountFeedback, setAccountFeedback] = useState({ type: "", message: "" })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [turnstileToken, setTurnstileToken] = useState("")
   const [turnstileResetKey, setTurnstileResetKey] = useState(0)
@@ -79,26 +86,39 @@ export default function PatientRegister() {
       },
       {
         title: "Check My Updates",
-        copy: "Use the same phone number to track prescription, appointment, and delivery progress.",
+        copy: "Use your signed-in patient account to track prescription, appointment, and delivery progress.",
         to: createPatientPath("/patient/track"),
       },
     ],
     [createPatientPath, pharmacyId],
   )
 
+  const loginPath = buildPatientRouteUrl("/patient/login", typeof window !== "undefined" ? window.location.search : "")
+
   async function handleSubmit(event) {
     event.preventDefault()
 
     const trimmedName = formValues.fullName.trim()
     const normalizedPhone = formValues.phone.trim()
+    const normalizedEmail = formValues.email.trim().toLowerCase()
 
-    if (!trimmedName || !normalizedPhone) {
-      setFeedback({ type: "error", message: "Full name and phone number are required." })
+    if (!trimmedName || !normalizedPhone || !normalizedEmail) {
+      setFeedback({ type: "error", message: "Full name, phone number, and email address are required." })
       return
     }
 
     if (!isValidPhone(normalizedPhone)) {
       setFeedback({ type: "error", message: "Phone number must use the format 07XXXXXXXX." })
+      return
+    }
+
+    if (formValues.password.length < 8) {
+      setFeedback({ type: "error", message: "Password must be at least 8 characters." })
+      return
+    }
+
+    if (formValues.password !== formValues.confirmPassword) {
+      setFeedback({ type: "error", message: "Passwords do not match." })
       return
     }
 
@@ -109,6 +129,7 @@ export default function PatientRegister() {
 
     setIsSubmitting(true)
     setFeedback({ type: "", message: "" })
+    setAccountFeedback({ type: "", message: "" })
 
     const { data, error } = await pharmacyosClient.functions.invoke("patient-portal-submit", {
       body: {
@@ -118,6 +139,7 @@ export default function PatientRegister() {
           pharmacy_id: pharmacyId,
           full_name: trimmedName,
           phone: normalizedPhone,
+          email: normalizedEmail,
           dob: formValues.dob || null,
           gender: formValues.gender || null,
           sha_member_no: formValues.shaMemberNo.trim() || null,
@@ -147,6 +169,45 @@ export default function PatientRegister() {
       fullName: trimmedName,
       patientId: data?.patient?.id || null,
     })
+
+    const { data: authData, error: authError } = await pharmacyosClient.auth.signUp({
+      email: normalizedEmail,
+      password: formValues.password,
+      options: {
+        data: buildPatientAuthMetadata({
+          fullName: trimmedName,
+          phone: normalizedPhone,
+          pharmacyId,
+        }),
+        emailRedirectTo: getAuthRedirectUrl(loginPath),
+      },
+    })
+
+    if (authError) {
+      const normalizedMessage = String(authError.message || "").toLowerCase()
+      if (normalizedMessage.includes("already registered") || normalizedMessage.includes("already been registered")) {
+        setAccountFeedback({
+          type: "info",
+          message: "Your patient profile is saved. This email already has an account, so sign in or reset your password to view private updates.",
+        })
+      } else {
+        setAccountFeedback({
+          type: "error",
+          message: `Your patient profile was saved, but the web account could not be created: ${authError.message}`,
+        })
+      }
+    } else if (authData?.session?.user) {
+      setAccountFeedback({
+        type: "success",
+        message: "Your patient web account is now active. Sign in stays on this device, and only your account can view your updates and notifications.",
+      })
+    } else {
+      setAccountFeedback({
+        type: "success",
+        message: `Your patient web account has been created. Check ${normalizedEmail} to confirm it, then sign in to view private updates and notifications.`,
+      })
+    }
+
     setTurnstileResetKey((current) => current + 1)
     setTurnstileToken("")
     setIsSubmitting(false)
@@ -194,6 +255,59 @@ export default function PatientRegister() {
                 required
               />
             </div>
+          </div>
+
+          <div className="patient-grid-2">
+            <div className="patient-form-group">
+              <label className="patient-label" htmlFor="email">
+                Email Address*
+              </label>
+              <input
+                id="email"
+                name="email"
+                className="patient-input"
+                type="email"
+                value={formValues.email}
+                onChange={handleInputChange}
+                placeholder="you@example.com"
+                required
+              />
+            </div>
+
+            <div className="patient-form-group">
+              <label className="patient-label" htmlFor="password">
+                Web Account Password*
+              </label>
+              <input
+                id="password"
+                name="password"
+                className="patient-input"
+                type="password"
+                value={formValues.password}
+                onChange={handleInputChange}
+                placeholder="At least 8 characters"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="patient-form-group">
+            <label className="patient-label" htmlFor="confirmPassword">
+              Confirm Password*
+            </label>
+            <input
+              id="confirmPassword"
+              name="confirmPassword"
+              className="patient-input"
+              type="password"
+              value={formValues.confirmPassword}
+              onChange={handleInputChange}
+              placeholder="Repeat your password"
+              required
+            />
+            <p className="patient-form-help" style={{ margin: 0 }}>
+              This patient web account is what unlocks private updates and notifications. Phone number alone will no longer work.
+            </p>
           </div>
 
           <div className="patient-grid-2">
@@ -304,6 +418,27 @@ export default function PatientRegister() {
             </div>
           ) : null}
 
+          {accountFeedback.message ? (
+            <div
+              className={`patient-message ${
+                accountFeedback.type === "error"
+                  ? "patient-message-error"
+                  : accountFeedback.type === "success"
+                    ? "patient-message-success"
+                    : "patient-message-info"
+              }`}
+            >
+              {accountFeedback.message}
+              {accountFeedback.type !== "error" ? (
+                <div style={{ marginTop: "0.55rem" }}>
+                  <Link to={loginPath} style={{ color: "inherit", fontWeight: 800 }}>
+                    Open patient sign in
+                  </Link>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
           <div className="patient-form-group">
             <label className="patient-label">Security Check</label>
             <TurnstileWidget
@@ -326,7 +461,7 @@ export default function PatientRegister() {
             <div>
               <h2 className="patient-section-title">What would you like to do next?</h2>
               <p className="patient-form-help">
-                Your profile is now linked to {branchName}. Continue with the same phone number <strong>{formValues.phone.trim()}</strong> so the branch sees your full history.
+                Your profile is now linked to {branchName}. Continue with the same patient account and phone number <strong>{formValues.phone.trim()}</strong> so the branch sees your full history.
               </p>
             </div>
           </div>

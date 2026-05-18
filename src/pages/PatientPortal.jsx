@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { useNavigate, useSearchParams } from "react-router-dom"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { pharmacyPortalSupabase as supabase } from "../lib/pharmacyPortalSupabase"
 import SEO from "../components/SEO"
+import { usePatientPortalAuth } from "../hooks/usePatientPortalAuth"
+import { fetchCurrentPatientPortalMatches } from "../lib/patientPortalUpdates"
+import { buildPatientRouteUrl } from "../lib/patientPortalRoutes"
 import "./PatientPortal.css"
 
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || "0x4AAAAAADQ4Srgs_Q53E-3H"
@@ -539,6 +542,14 @@ export default function PatientPortal() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const pharmacyId = searchParams.get("pharmacy") || searchParams.get("branch") || ""
+  const patientLoginPath = useMemo(() => buildPatientRouteUrl("/patient/login", searchParams), [searchParams])
+  const patientRegisterPath = useMemo(() => buildPatientRouteUrl("/patient/register", searchParams), [searchParams])
+  const {
+    loading: patientAuthLoading,
+    isAuthenticated: patientAccountAuthenticated,
+    patientPhone: patientAccountPhone,
+    fullName: patientAccountName,
+  } = usePatientPortalAuth()
   const [activeTab, setActiveTab] = useState("prescription")
   const [pharmacy, setPharmacy] = useState(null)
   const [pharmacyOptions, setPharmacyOptions] = useState([])
@@ -567,6 +578,12 @@ export default function PatientPortal() {
   const [trackingFulfillmentNotes, setTrackingFulfillmentNotes] = useState({})
   const [trackingDeliveryAddresses, setTrackingDeliveryAddresses] = useState({})
   const [respondingActionKey, setRespondingActionKey] = useState("")
+
+  useEffect(() => {
+    if (patientAccountPhone) {
+      setTrackerPhone(patientAccountPhone)
+    }
+  }, [patientAccountPhone])
   const [submitting, setSubmitting] = useState("")
   const [submitMessage, setSubmitMessage] = useState("")
   const [submitError, setSubmitError] = useState("")
@@ -1220,10 +1237,17 @@ export default function PatientPortal() {
   }
 
   async function fetchTrackingFeed(phoneOverride, options = {}) {
-    const phone = normalizePhone(phoneOverride ?? trackerPhone)
+    const phone = normalizePhone((patientAccountPhone || phoneOverride) ?? trackerPhone)
+
+    if (!patientAccountAuthenticated) {
+      setTrackingMessage("Sign in to your patient account to view private updates and notifications.")
+      setTrackingFeed([])
+      setTrackingMatches([])
+      return
+    }
 
     if (!phone) {
-      setTrackingMessage("Enter the same phone number you used when submitting the request.")
+      setTrackingMessage("Your patient account does not have a linked phone number yet.")
       setTrackingFeed([])
       setTrackingMatches([])
       return
@@ -1248,24 +1272,20 @@ export default function PatientPortal() {
         const normalized = normalizeTrackingPayload(data)
         const feed = buildTrackingFeed(normalized)
 
-        setTrackingFeed(feed)
-        if (!feed.length) {
-          setTrackingMessage(options.showEmptySuccess
-            ? "Your request was submitted. Updates will appear here once the pharmacy reviews it."
-            : "No records were found for that phone number at this pharmacy yet.")
-        }
+          setTrackingFeed(feed)
+          if (!feed.length) {
+            setTrackingMessage(options.showEmptySuccess
+              ? "Your request was submitted. Updates will appear here once the pharmacy reviews it."
+              : "No records were found for your signed-in patient account at this pharmacy yet.")
+          }
       } else {
-        const { data, error } = await supabase.rpc("public_patient_portal_updates_by_phone", {
-          target_phone: phone,
-        })
-
+        const { data, error } = await fetchCurrentPatientPortalMatches({ phone })
         if (error) throw error
-
         const matches = buildGlobalTrackingMatches(Array.isArray(data?.matches) ? data.matches : [])
         setTrackingMatches(matches)
 
         if (!matches.length) {
-          setTrackingMessage("No records were found for that phone number yet.")
+          setTrackingMessage("No records were found for your signed-in patient account yet.")
         } else if (matches.length === 1) {
           setTrackingMessage("We found your latest update. Open the pharmacy below if you want to continue there.")
         } else {
@@ -1284,7 +1304,7 @@ export default function PatientPortal() {
   function openTrackedPharmacy(match) {
     if (!match?.pharmacyId) return
     navigate(
-      `/patient/track?pharmacy=${encodeURIComponent(match.pharmacyId)}&phone=${encodeURIComponent(trackerPhone.trim())}&branch_name=${encodeURIComponent(match.pharmacyName || "")}&branch_location=${encodeURIComponent(match.pharmacyLocation || "")}`,
+      `/patient/track?pharmacy=${encodeURIComponent(match.pharmacyId)}&branch_name=${encodeURIComponent(match.pharmacyName || "")}&branch_location=${encodeURIComponent(match.pharmacyLocation || "")}`,
     )
     setTrackingMessage("")
     window.scrollTo({ top: 0, behavior: "smooth" })
@@ -1671,23 +1691,38 @@ export default function PatientPortal() {
 
     return (
       <div className="patient-portal-updates">
-        <div className="patient-portal-track-bar">
-          <input
-            className="form-input"
-            value={trackerPhone}
-            onChange={(event) => setTrackerPhone(event.target.value)}
-            placeholder="Enter your phone number"
-          />
-          <button type="button" className="btn btn-primary" onClick={() => fetchTrackingFeed()} disabled={trackingLoading}>
-            {trackingLoading ? "Checking..." : "Check Updates"}
-          </button>
-        </div>
+        {patientAuthLoading ? <div className="patient-portal-track-message">Loading your patient account...</div> : null}
+
+        {!patientAuthLoading && !patientAccountAuthenticated ? (
+          <div className="patient-portal-feedback info">
+            Sign in to your patient account before opening updates and notifications.
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", marginTop: "0.85rem" }}>
+              <Link to={patientLoginPath} className="btn btn-primary">
+                Sign In
+              </Link>
+              <Link to={patientRegisterPath} className="btn btn-outline">
+                Create Account
+              </Link>
+            </div>
+          </div>
+        ) : null}
+
+        {!patientAuthLoading && patientAccountAuthenticated ? (
+          <div className="patient-portal-feedback success">
+            Signed in as <strong>{patientAccountName || "Patient account"}</strong>{patientAccountPhone ? ` on ${patientAccountPhone}` : ""}.
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", marginTop: "0.85rem" }}>
+              <button type="button" className="btn btn-primary" onClick={() => fetchTrackingFeed()} disabled={trackingLoading}>
+                {trackingLoading ? "Refreshing..." : "Refresh My Updates"}
+              </button>
+            </div>
+          </div>
+        ) : null}
 
         {trackingMessage && <div className="patient-portal-track-message">{trackingMessage}</div>}
         {trackingActionMessage && <div className="patient-portal-feedback success">{trackingActionMessage}</div>}
         {trackingActionError && <div className="patient-portal-feedback error">{trackingActionError}</div>}
 
-        {hasActionableRequest && (
+        {patientAccountAuthenticated && hasActionableRequest && (
           <div className="patient-portal-response-gate">
             <div className="patient-portal-response-head">
               <strong>Reply to the pharmacist</strong>
@@ -1733,21 +1768,36 @@ export default function PatientPortal() {
         <div className="patient-portal-panel-head">
           <div>
             <h2>Already Submitted a Request?</h2>
-            <p>Use your phone number to find updates even if you forgot the branch you selected earlier.</p>
+            <p>Your signed-in patient account can find updates even if you forgot the branch you selected earlier.</p>
           </div>
         </div>
 
-        <div className="patient-portal-track-bar">
-          <input
-            className="form-input"
-            value={trackerPhone}
-            onChange={(event) => setTrackerPhone(event.target.value)}
-            placeholder="Enter your phone number"
-          />
-          <button type="button" className="btn btn-primary" onClick={() => fetchTrackingFeed()} disabled={trackingLoading}>
-            {trackingLoading ? "Checking..." : "Find My Updates"}
-          </button>
-        </div>
+        {patientAuthLoading ? <div className="patient-portal-track-message">Loading your patient account...</div> : null}
+
+        {!patientAuthLoading && !patientAccountAuthenticated ? (
+          <div className="patient-portal-feedback info">
+            Sign in to your patient account before searching for updates across pharmacies.
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", marginTop: "0.85rem" }}>
+              <Link to={patientLoginPath} className="btn btn-primary">
+                Sign In
+              </Link>
+              <Link to={patientRegisterPath} className="btn btn-outline">
+                Create Account
+              </Link>
+            </div>
+          </div>
+        ) : null}
+
+        {!patientAuthLoading && patientAccountAuthenticated ? (
+          <div className="patient-portal-feedback success">
+            Signed in as <strong>{patientAccountName || "Patient account"}</strong>{patientAccountPhone ? ` on ${patientAccountPhone}` : ""}.
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", marginTop: "0.85rem" }}>
+              <button type="button" className="btn btn-primary" onClick={() => fetchTrackingFeed()} disabled={trackingLoading}>
+                {trackingLoading ? "Refreshing..." : "Find My Updates"}
+              </button>
+            </div>
+          </div>
+        ) : null}
 
         {trackingMessage && <div className="patient-portal-track-message">{trackingMessage}</div>}
 
@@ -2110,7 +2160,7 @@ export default function PatientPortal() {
                             {activeTab === "prescription" && "Tell the pharmacist what you are suffering from and upload a prescription if you have one."}
                             {activeTab === "appointment" && "Book a pharmacist callback, video consultation, or pickup discussion."}
                             {activeTab === "delivery" && "Request medicine delivery and share the items plus your address."}
-                            {activeTab === "updates" && "Check the current status of your submissions using your phone number."}
+                            {activeTab === "updates" && "Check the current status of your submissions from your signed-in patient account."}
                           </p>
                         </div>
                       </div>

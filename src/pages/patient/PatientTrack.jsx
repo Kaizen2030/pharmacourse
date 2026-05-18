@@ -1,15 +1,12 @@
 import { useCallback, useEffect, useState } from "react"
 import { ArrowUpRight, BellRing, CalendarClock, ClipboardList, PackageSearch, Video } from "lucide-react"
-import { useSearchParams } from "react-router-dom"
+import { Link } from "react-router-dom"
 import { usePatient } from "../../components/PatientLayout"
+import { usePatientPortalAuth } from "../../hooks/usePatientPortalAuth"
 import { fetchPatientPortalUpdates } from "../../lib/patientPortalUpdates"
 import { getPatientPortalSession, savePatientPortalSession } from "../../lib/patientPortalSession"
 
 const deliverySteps = ["pending", "packed", "dispatched", "delivered"]
-
-function isValidPhone(phone) {
-  return /^07\d{8}$/.test(phone)
-}
 
 function formatDateTime(value) {
   if (!value) {
@@ -53,12 +50,8 @@ function formatAppointmentType(value) {
 }
 
 export default function PatientTrack() {
-  const { pharmacyId } = usePatient()
-  const [searchParams] = useSearchParams()
-  const phoneParam = searchParams.get("phone")?.trim() || ""
+  const { pharmacyId, createPatientPath } = usePatient()
   const rememberedSession = getPatientPortalSession(pharmacyId)
-  const [phoneInput, setPhoneInput] = useState(phoneParam || rememberedSession?.phone || "")
-  const [activePhone, setActivePhone] = useState("")
   const [notifications, setNotifications] = useState([])
   const [deliveries, setDeliveries] = useState([])
   const [prescriptions, setPrescriptions] = useState([])
@@ -66,15 +59,21 @@ export default function PatientTrack() {
   const [isLoading, setIsLoading] = useState(false)
   const [feedback, setFeedback] = useState({ type: "", message: "" })
   const [lastUpdated, setLastUpdated] = useState("")
+  const { loading: authLoading, isAuthenticated, patientPhone, fullName } = usePatientPortalAuth()
+  const patientLoginPath = createPatientPath("/patient/login")
 
-  const loadTrackingData = useCallback(async (phone, { silent = false } = {}) => {
+  const loadTrackingData = useCallback(async ({ silent = false } = {}) => {
+    if (!patientPhone) {
+      setFeedback({ type: "error", message: "Your patient account is missing a linked phone number. Please contact the pharmacy team." })
+      return
+    }
+
     if (!silent) {
       setIsLoading(true)
     }
 
     const { data, error } = await fetchPatientPortalUpdates({
       pharmacyId,
-      phone,
     })
 
     if (error) {
@@ -94,8 +93,9 @@ export default function PatientTrack() {
     })
 
     savePatientPortalSession(pharmacyId, {
-      phone,
+      phone: patientPhone,
       fullName:
+        fullName ||
         prescriptionRows[0]?.patient_name ||
         deliveryRows[0]?.patient_name ||
         notificationRows[0]?.patient_name ||
@@ -108,49 +108,32 @@ export default function PatientTrack() {
     setPrescriptions(prescriptionRows)
     setAppointments(appointmentRows)
     setLastUpdated(formatDateTime(new Date().toISOString()))
-    setFeedback({ type: notificationRows.length ? "success" : "info", message: notificationRows.length ? "Updates refreshed." : "No notifications yet for this number." })
+    setFeedback({ type: notificationRows.length ? "success" : "info", message: notificationRows.length ? "Updates refreshed." : "No notifications yet for your signed-in account." })
 
     if (!silent) {
       setIsLoading(false)
     }
-  }, [pharmacyId, rememberedSession?.fullName, rememberedSession?.patientId])
-
-  async function handleSubmit(event) {
-    event.preventDefault()
-
-    const normalizedPhone = phoneInput.trim()
-
-    if (!isValidPhone(normalizedPhone)) {
-      setFeedback({ type: "error", message: "Enter a valid phone number in the format 07XXXXXXXX." })
-      return
-    }
-
-    setActivePhone(normalizedPhone)
-    await loadTrackingData(normalizedPhone)
-  }
+  }, [fullName, patientPhone, pharmacyId, rememberedSession?.fullName, rememberedSession?.patientId])
 
   useEffect(() => {
-    const initialPhone = phoneParam || rememberedSession?.phone || ""
-
-    if (initialPhone && isValidPhone(initialPhone) && !activePhone) {
-      setActivePhone(initialPhone)
-      loadTrackingData(initialPhone)
+    if (!authLoading && isAuthenticated && patientPhone) {
+      void loadTrackingData()
     }
-  }, [phoneParam, rememberedSession, activePhone, loadTrackingData])
+  }, [authLoading, isAuthenticated, patientPhone, loadTrackingData])
 
   useEffect(() => {
-    if (!activePhone) {
+    if (!isAuthenticated || !patientPhone) {
       return undefined
     }
 
     const intervalId = window.setInterval(() => {
-      loadTrackingData(activePhone, { silent: true })
+      void loadTrackingData({ silent: true })
     }, 30000)
 
     return () => {
       window.clearInterval(intervalId)
     }
-  }, [activePhone, loadTrackingData])
+  }, [isAuthenticated, patientPhone, loadTrackingData])
 
   return (
     <div className="patient-page">
@@ -163,32 +146,11 @@ export default function PatientTrack() {
       <section className="patient-card">
         <div className="patient-section-header">
           <div>
-            <h2 className="patient-section-title">Find my updates</h2>
-            <p className="patient-form-help">Use the same phone number you gave the pharmacy. This page refreshes automatically every 30 seconds.</p>
+            <h2 className="patient-section-title">Private patient updates</h2>
+            <p className="patient-form-help">This page refreshes automatically every 30 seconds, but only for the signed-in patient account.</p>
           </div>
           <div className="patient-refresh">{lastUpdated ? `Last updated ${lastUpdated}` : "Auto-refresh every 30s"}</div>
         </div>
-
-        <form className="patient-form" onSubmit={handleSubmit}>
-          <div className="patient-form-group">
-            <label className="patient-label" htmlFor="trackPhone">
-              Phone number
-            </label>
-            <input
-              id="trackPhone"
-              className="patient-input"
-              type="tel"
-              inputMode="tel"
-              placeholder="07XXXXXXXX"
-              value={phoneInput}
-              onChange={(event) => setPhoneInput(event.target.value)}
-            />
-          </div>
-
-          <button className="patient-button" type="submit" disabled={isLoading}>
-            {isLoading ? "Loading updates..." : "Check my updates"}
-          </button>
-        </form>
 
         {feedback.message ? (
           <div
@@ -203,9 +165,35 @@ export default function PatientTrack() {
             {feedback.message}
           </div>
         ) : null}
+
+        {authLoading ? (
+          <div className="patient-form-help">Loading your patient account...</div>
+        ) : null}
+
+        {!authLoading && !isAuthenticated ? (
+          <div className="patient-empty-state">
+            <p className="patient-form-help" style={{ margin: 0 }}>
+              Sign in to your patient account before viewing notifications, delivery tracking, or appointment updates.
+            </p>
+            <Link to={patientLoginPath} className="patient-button" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+              Sign in to continue
+            </Link>
+          </div>
+        ) : null}
+
+        {!authLoading && isAuthenticated ? (
+          <div className="patient-empty-state">
+            <p className="patient-form-help" style={{ margin: 0 }}>
+              Signed in as <strong>{fullName || "Patient account"}</strong>{patientPhone ? ` on ${patientPhone}` : ""}.
+            </p>
+            <button className="patient-button" type="button" onClick={() => void loadTrackingData()} disabled={isLoading}>
+              {isLoading ? "Refreshing updates..." : "Refresh my updates"}
+            </button>
+          </div>
+        ) : null}
       </section>
 
-      {activePhone ? (
+      {isAuthenticated && patientPhone ? (
         <>
           <section className="patient-card">
             <div className="patient-section-header">
@@ -299,7 +287,7 @@ export default function PatientTrack() {
                 <span className="patient-empty-icon">
                   <PackageSearch />
                 </span>
-                <p className="patient-empty">There are no active deliveries for this phone number right now.</p>
+                <p className="patient-empty">There are no active deliveries for your signed-in account right now.</p>
               </div>
             )}
           </section>
@@ -337,7 +325,7 @@ export default function PatientTrack() {
                 <span className="patient-empty-icon">
                   <ClipboardList />
                 </span>
-                <p className="patient-empty">No prescription requests have been logged for this number yet.</p>
+                <p className="patient-empty">No prescription requests have been logged for your signed-in account yet.</p>
               </div>
             )}
           </section>
@@ -434,7 +422,7 @@ export default function PatientTrack() {
                 <span className="patient-empty-icon">
                   <CalendarClock />
                 </span>
-                <p className="patient-empty">No upcoming appointments are scheduled for this number.</p>
+                <p className="patient-empty">No upcoming appointments are scheduled for your signed-in account.</p>
               </div>
             )}
           </section>

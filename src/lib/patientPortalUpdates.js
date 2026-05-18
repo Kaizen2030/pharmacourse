@@ -10,35 +10,19 @@ function normalizeUpdates(data) {
 }
 
 export async function fetchPatientPortalUpdates({ pharmacyId, phone }) {
-  const normalizedPhone = String(phone || "").trim()
   const normalizedPharmacyId = String(pharmacyId || "").trim()
 
-  if (!normalizedPharmacyId || !normalizedPhone) {
+  if (!normalizedPharmacyId) {
     return {
       data: normalizeUpdates(),
-      error: new Error("Pharmacy and phone number are required."),
+      error: new Error("Pharmacy is required."),
       source: "input",
-    }
-  }
-
-  const functionResult = await pharmacyosClient.functions.invoke("patient-portal-updates", {
-    body: {
-      pharmacy_id: normalizedPharmacyId,
-      phone: normalizedPhone,
-    },
-  })
-
-  if (!functionResult.error && !functionResult.data?.error) {
-    return {
-      data: normalizeUpdates(functionResult.data?.updates),
-      error: null,
-      source: "edge-function",
     }
   }
 
   const rpcResult = await pharmacyosClient.rpc("public_patient_portal_updates", {
     target_pharmacy_id: normalizedPharmacyId,
-    target_phone: normalizedPhone,
+    target_phone: String(phone || "").trim() || null,
   })
 
   if (!rpcResult.error) {
@@ -50,8 +34,6 @@ export async function fetchPatientPortalUpdates({ pharmacyId, phone }) {
   }
 
   const message =
-    functionResult.error?.message ||
-    functionResult.data?.error ||
     rpcResult.error?.message ||
     "We could not load your updates right now."
 
@@ -59,5 +41,25 @@ export async function fetchPatientPortalUpdates({ pharmacyId, phone }) {
     data: normalizeUpdates(),
     error: new Error(message),
     source: "failed",
+  }
+}
+
+export async function fetchCurrentPatientPortalMatches({ phone } = {}) {
+  const rpcResult = await pharmacyosClient.rpc("public_patient_portal_updates_by_phone", {
+    target_phone: String(phone || "").trim() || null,
+  })
+
+  if (!rpcResult.error) {
+    return {
+      data: {
+        matches: Array.isArray(rpcResult.data?.matches) ? rpcResult.data.matches : [],
+      },
+      error: null,
+    }
+  }
+
+  return {
+    data: { matches: [] },
+    error: new Error(rpcResult.error?.message || "We could not load your updates right now."),
   }
 }
