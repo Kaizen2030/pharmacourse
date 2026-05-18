@@ -94,6 +94,25 @@ function formatMoney(value) {
   return `KES ${Number(value || 0).toLocaleString()}`
 }
 
+function buildPaymentLabel(paymentStatus, paymentMethod, paymentReference = "") {
+  const normalizedStatus = String(paymentStatus || "").trim().toLowerCase()
+  const normalizedMethod = String(paymentMethod || "").trim()
+  const normalizedReference = String(paymentReference || "").trim()
+
+  if (normalizedStatus === "paid") {
+    if (normalizedReference) {
+      return `${normalizedMethod || "Paid"} · Ref ${normalizedReference}`
+    }
+    return normalizedMethod || "Paid"
+  }
+
+  if (normalizedStatus === "unpaid") {
+    return "Not paid yet"
+  }
+
+  return "Awaiting confirmation"
+}
+
 function buildReceiptEntries(requests = []) {
   return requests
     .filter((request) => {
@@ -121,6 +140,10 @@ function buildReceiptEntries(requests = []) {
         total,
         fulfilledAt: request.dispensed_at || request.updated_at || request.created_at,
         mode: String(request.linked_delivery_status || "").trim().toLowerCase() === "delivered" ? "Delivery completed" : "Pickup at pharmacy",
+        paymentStatus: request.payment_status || "",
+        paymentMethod: request.payment_method || "",
+        paymentReference: request.payment_reference || "",
+        documentLabel: String(request.payment_status || "").trim().toLowerCase() === "paid" ? "Receipt" : "Invoice",
       }
     })
 }
@@ -203,7 +226,10 @@ function getRequestProgressSummary(request) {
   const status = String(request?.status || "").trim().toLowerCase()
 
   if (linkedDeliveryStatus === "delivered") {
-    return "This order was delivered. The completed receipt is available below."
+    if (String(request?.payment_status || "").trim().toLowerCase() === "paid") {
+      return "This order was delivered and payment was confirmed. The completed receipt is available below."
+    }
+    return "This order was delivered, but payment still needs confirmation with the branch. The invoice is available below."
   }
   if (linkedDeliveryStatus) {
     return "The pharmacy has started the live delivery run and will keep updating this order until it reaches you."
@@ -370,11 +396,13 @@ export default function PatientTrack() {
     currentY += 8
 
     doc.setFontSize(11)
-    doc.text(`Receipt: ${receipt.receiptNumber}`, 16, currentY)
+    doc.text(`${receipt.documentLabel}: ${receipt.receiptNumber}`, 16, currentY)
     currentY += 6
     doc.text(`Patient: ${patientLabel}`, 16, currentY)
     currentY += 6
     doc.text(`Mode: ${receipt.mode}`, 16, currentY)
+    currentY += 6
+    doc.text(`Payment: ${buildPaymentLabel(receipt.paymentStatus, receipt.paymentMethod, receipt.paymentReference)}`, 16, currentY)
     currentY += 6
     doc.text(`Issued: ${formatDateTime(receipt.fulfilledAt)}`, 16, currentY)
     currentY += 10
@@ -400,7 +428,7 @@ export default function PatientTrack() {
     doc.setFontSize(10)
     doc.text("Issued through PharmaCourse patient portal.", 16, currentY)
 
-    doc.save(`${receipt.receiptNumber}.pdf`)
+    doc.save(`${receipt.documentLabel}-${receipt.receiptNumber}.pdf`)
   }
 
   async function handleFulfillmentChoice(request, fulfillmentChoice) {
@@ -994,7 +1022,7 @@ export default function PatientTrack() {
             <div className="patient-section-header">
               <div>
                 <h2 className="patient-section-title">Completed orders and receipts</h2>
-                <p className="patient-form-help">Download a receipt for completed deliveries and issued pickup orders.</p>
+                <p className="patient-form-help">Paid orders show a receipt. Delivered but unpaid orders stay here as invoices until the branch confirms payment.</p>
               </div>
               <span className="patient-inline-icon">
                 <ClipboardList />
@@ -1010,10 +1038,12 @@ export default function PatientTrack() {
                         <div className="patient-list-title">{receipt.receiptNumber}</div>
                         <div className="patient-list-meta">{receipt.mode} · {formatDateTime(receipt.fulfilledAt)}</div>
                       </div>
-                      <span className="patient-status-badge patient-status-completed">{formatMoney(receipt.total)}</span>
+                      <span className="patient-status-badge patient-status-completed">{receipt.documentLabel}</span>
                     </div>
 
                     <div className="patient-info-list">
+                      <div>Payment: {buildPaymentLabel(receipt.paymentStatus, receipt.paymentMethod, receipt.paymentReference)}</div>
+                      <div>Total: {formatMoney(receipt.total)}</div>
                       {receipt.items.map((item, index) => (
                         <div key={`${receipt.id}-item-${index}`}>
                           {(item?.drug_name || item?.requestedDrug || "Drug")} x{Number(item?.qty || 1)}{item?.total != null ? ` · ${formatMoney(item.total)}` : ""}
@@ -1023,7 +1053,7 @@ export default function PatientTrack() {
 
                     <div style={{ marginTop: "0.9rem" }}>
                       <button className="patient-button-secondary" type="button" onClick={() => downloadReceipt(receipt)}>
-                        Download receipt
+                        Download {receipt.documentLabel.toLowerCase()}
                       </button>
                     </div>
                   </article>
@@ -1180,6 +1210,9 @@ export default function PatientTrack() {
                 {selectedRequest.condition_notes ? (
                   <p className="patient-list-text" style={{ marginTop: "0.9rem" }}>{selectedRequest.condition_notes}</p>
                 ) : null}
+                <p className="patient-list-text" style={{ marginTop: "0.9rem" }}>
+                  Payment: {buildPaymentLabel(selectedRequest.payment_status, selectedRequest.payment_method, selectedRequest.payment_reference)}
+                </p>
               </section>
 
               <section className="patient-detail-card">
