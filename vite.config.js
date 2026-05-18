@@ -19,7 +19,7 @@ export default defineConfig({
         theme_color: "#0F6E56",
         background_color: "#f4fbf8",
         display: "standalone",
-        scope: "/",
+        scope: "/patient",
         start_url: "/patient",
         orientation: "portrait",
         icons: [
@@ -41,6 +41,12 @@ export default defineConfig({
           },
         ],
         shortcuts: [
+          {
+            name: "Create patient profile",
+            short_name: "Register",
+            url: "/patient/register",
+            icons: [{ src: "/pwa-192.png", sizes: "192x192", type: "image/png" }],
+          },
           {
             name: "Request prescription",
             short_name: "Prescription",
