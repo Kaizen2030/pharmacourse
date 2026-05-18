@@ -38,6 +38,16 @@ export default function TurnstileWidget({ formId, resetSignal, onVerify, onExpir
   const widgetIdRef = useRef(null)
   const renderTimeoutRef = useRef(null)
   const solvedRef = useRef(false)
+  const onVerifyRef = useRef(onVerify)
+  const onExpireRef = useRef(onExpire)
+
+  useEffect(() => {
+    onVerifyRef.current = onVerify
+  }, [onVerify])
+
+  useEffect(() => {
+    onExpireRef.current = onExpire
+  }, [onExpire])
 
   const handleResetWidget = useCallback(() => {
     if (window.turnstile && widgetIdRef.current !== null) {
@@ -47,8 +57,8 @@ export default function TurnstileWidget({ formId, resetSignal, onVerify, onExpir
     solvedRef.current = false
     setWidgetReady(false)
     setLoadError("")
-    onExpire?.()
-  }, [onExpire])
+    onExpireRef.current?.()
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -78,18 +88,18 @@ export default function TurnstileWidget({ formId, resetSignal, onVerify, onExpir
             solvedRef.current = true
             setWidgetReady(true)
             setLoadError("")
-            onVerify?.(token)
+            onVerifyRef.current?.(token)
           },
           "expired-callback": () => {
             solvedRef.current = false
             setWidgetReady(false)
-            onExpire?.()
+            onExpireRef.current?.()
           },
           "error-callback": () => {
             solvedRef.current = false
             setWidgetReady(false)
             setLoadError("Security check could not finish. Refresh it and try again.")
-            onExpire?.()
+            onExpireRef.current?.()
           },
         })
 
@@ -116,9 +126,10 @@ export default function TurnstileWidget({ formId, resetSignal, onVerify, onExpir
 
       if (window.turnstile && widgetIdRef.current !== null) {
         window.turnstile.remove(widgetIdRef.current)
+        widgetIdRef.current = null
       }
     }
-  }, [containerId, onExpire, onVerify])
+  }, [containerId])
 
   useEffect(() => {
     if (!window.turnstile || widgetIdRef.current === null) return
@@ -128,7 +139,7 @@ export default function TurnstileWidget({ formId, resetSignal, onVerify, onExpir
 
   return (
     <div style={{ display: "grid", gap: "0.45rem" }}>
-      <div id={containerId} />
+      <div id={containerId} style={{ minHeight: 70 }} />
       {widgetReady ? (
         <div className="patient-form-help" style={{ color: "#0f6e56", fontWeight: 700 }}>
           Security check complete. You can submit now.

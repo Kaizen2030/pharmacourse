@@ -146,6 +146,12 @@ export default function PatientTrack() {
   const unreadCount = notifications.filter((notification) => !notification.read).length
   const displayName = fullName || rememberedSession?.fullName || ""
   const receiptEntries = buildReceiptEntries(prescriptions)
+  const handleTurnstileVerify = useCallback((token) => {
+    setTurnstileToken(token || "")
+  }, [])
+  const handleTurnstileExpire = useCallback(() => {
+    setTurnstileToken("")
+  }, [])
 
   function downloadReceipt(receipt) {
     const doc = new jsPDF({ unit: "mm", format: "a4" })
@@ -604,8 +610,8 @@ export default function PatientTrack() {
                         <TurnstileWidget
                           formId={`patient-track-fulfillment-${request.id}`}
                           resetSignal={turnstileResetKey}
-                          onVerify={(token) => setTurnstileToken(token || "")}
-                          onExpire={() => setTurnstileToken("")}
+                          onVerify={handleTurnstileVerify}
+                          onExpire={handleTurnstileExpire}
                         />
 
                         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.7rem" }}>
