@@ -3,6 +3,7 @@ import { Bell, CalendarPlus2, ChevronRight, ClipboardPlus, IdCard, LogOut, PillB
 import { Link } from "react-router-dom"
 import { usePatient } from "../../components/PatientLayout"
 import { fetchPatientPortalUpdates } from "../../lib/patientPortalUpdates"
+import { buildPatientRouteUrl } from "../../lib/patientPortalRoutes"
 import { clearPatientPortalSession, getPatientPortalSession } from "../../lib/patientPortalSession"
 
 function formatDateTime(value) {
@@ -33,6 +34,7 @@ export default function PatientHome() {
   const [notifications, setNotifications] = useState([])
   const [isChecking, setIsChecking] = useState(false)
   const [feedback, setFeedback] = useState({ type: "", message: "" })
+  const patientLoginPath = buildPatientRouteUrl("/patient/login")
 
   useEffect(() => {
     setRememberedPatient(getPatientPortalSession(pharmacyId))
@@ -198,6 +200,26 @@ export default function PatientHome() {
             </span>
           </Link>
         ))}
+      </section>
+
+      <section className="patient-card patient-card-muted">
+        <div className="patient-section-header">
+          <div>
+            <h2 className="patient-section-title">Already have a patient portal account?</h2>
+            <p className="patient-form-help">
+              Sign in to manage your patient access with the same branch-linked portal on this device.
+            </p>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.7rem" }}>
+          <Link to={patientLoginPath} className="patient-button" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+            Sign in to patient account
+          </Link>
+          <Link to={createPatientPath("/patient/register")} className="patient-button-secondary" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+            Create or update profile
+          </Link>
+        </div>
       </section>
 
       <section className="patient-card">

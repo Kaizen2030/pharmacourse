@@ -25,7 +25,7 @@ export function usePatient() {
   return context
 }
 
-function PatientPortalStyles() {
+export function PatientPortalStyles() {
   return (
     <style>{`
       .patient-shell {

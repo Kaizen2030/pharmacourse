@@ -18,9 +18,12 @@ import ForgotPassword from "./pages/ForgotPassword"
 import Home from "./pages/Home"
 import Login from "./pages/Login"
 import PatientAppointment from "./pages/patient/PatientAppointment"
+import PatientForgotPassword from "./pages/patient/PatientForgotPassword"
 import PatientHome from "./pages/patient/PatientHome"
+import PatientLogin from "./pages/patient/PatientLogin"
 import PatientPrescription from "./pages/patient/PatientPrescription"
 import PatientRegister from "./pages/patient/PatientRegister"
+import PatientResetPassword from "./pages/patient/PatientResetPassword"
 import PatientTrack from "./pages/patient/PatientTrack"
 import PatientPortal from "./pages/PatientPortal"
 import PatientPortalFlyer from "./pages/PatientPortalFlyer"
@@ -131,6 +134,9 @@ function AppShell() {
 
         <Route path="/patient-portal" element={<PatientPortal />} />
         <Route path="/patient-flyer" element={<PatientPortalFlyer />} />
+        <Route path="/patient/login" element={<PatientLogin />} />
+        <Route path="/patient/forgot-password" element={<PatientForgotPassword />} />
+        <Route path="/patient/reset-password" element={<PatientResetPassword />} />
         <Route path="/patient" element={<PatientLayout />}>
           <Route index element={<PatientHome />} />
           <Route path="register" element={<PatientRegister />} />
