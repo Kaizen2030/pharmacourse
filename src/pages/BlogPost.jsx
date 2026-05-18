@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { Link, useParams } from "react-router-dom"
 import { ChevronLeft, Heart } from "lucide-react"
 import { supabase } from "../lib/supabaseClient"
@@ -252,7 +252,7 @@ export default function BlogPost() {
   }, [post?.slug, post?.like_count, post?.view_count])
 
 
-  async function loadPost() {
+  const loadPost = useCallback(async () => {
     setLoading(true)
     setNotFound(false)
     setEngagement(DEFAULT_ENGAGEMENT_STATE)
@@ -334,7 +334,7 @@ export default function BlogPost() {
 
     setRecommendedCourses(courseData)
     setLoading(false)
-  }
+  }, [slug])
 
   async function loadComments(postId) {
     setCommentsLoading(true)
@@ -358,7 +358,7 @@ export default function BlogPost() {
 
   useEffect(() => {
     loadPost()
-  }, [slug])
+  }, [loadPost])
 
   useEffect(() => {
     if (!post?.id) {

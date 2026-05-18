@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || "0x4AAAAAADQ4Srgs_Q53E-3H"
 
@@ -39,7 +39,7 @@ export default function TurnstileWidget({ formId, resetSignal, onVerify, onExpir
   const renderTimeoutRef = useRef(null)
   const solvedRef = useRef(false)
 
-  function handleResetWidget() {
+  const handleResetWidget = useCallback(() => {
     if (window.turnstile && widgetIdRef.current !== null) {
       window.turnstile.reset(widgetIdRef.current)
     }
@@ -48,7 +48,7 @@ export default function TurnstileWidget({ formId, resetSignal, onVerify, onExpir
     setWidgetReady(false)
     setLoadError("")
     onExpire?.()
-  }
+  }, [onExpire])
 
   useEffect(() => {
     let cancelled = false
@@ -124,7 +124,7 @@ export default function TurnstileWidget({ formId, resetSignal, onVerify, onExpir
     if (!window.turnstile || widgetIdRef.current === null) return
 
     handleResetWidget()
-  }, [resetSignal, onExpire])
+  }, [resetSignal, handleResetWidget])
 
   return (
     <div style={{ display: "grid", gap: "0.45rem" }}>

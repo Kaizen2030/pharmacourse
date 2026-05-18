@@ -12,7 +12,7 @@ function RichTextEditor({ value, onChange }) {
     if (ref.current && ref.current.innerHTML !== value) {
       ref.current.innerHTML = value || ""
     }
-  }, []) // only on mount
+  }, [value])
 
   function exec(cmd, val = null) {
     ref.current?.focus()
@@ -301,7 +301,7 @@ export default function CourseForm() {
     }
 
     loadCategoryOptions()
-  }, [])
+  }, [form.category])
 
   function setF(k) { return e => setForm(f => ({ ...f, [k]: e.target.value })) }
   function autoSlug(t) { return t.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"") }

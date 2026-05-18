@@ -83,7 +83,7 @@ export default function PatientRegister() {
         to: createPatientPath("/patient/track"),
       },
     ],
-    [createPatientPath],
+    [createPatientPath, pharmacyId],
   )
 
   async function handleSubmit(event) {

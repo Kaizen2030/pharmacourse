@@ -35,7 +35,7 @@ export default function ResetRedirect({ app }) {
     }, 800)
 
     return () => clearTimeout(timer)
-  }, [])
+  }, [isHMIS, scheme, searchParams])
 
   return (
     <div style={{

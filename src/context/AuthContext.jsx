@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, useCallback, useContext, useEffect, useState } from "react"
 import { supabase } from "../lib/supabaseClient"
 
 const AuthContext = createContext({})
@@ -21,6 +21,45 @@ export function AuthProvider({ children }) {
   const isAdmin = profile?.role === "admin"
   const isSuperAdmin = isAdmin && profile?.admin_role === "super"
   const isContentAdmin = isAdmin && profile?.admin_role === "content"
+
+  const fetchProfile = useCallback(async (userId) => {
+    const { data, error } = await withTimeout(
+      supabase.from("user_profiles").select("*").eq("id", userId).maybeSingle(),
+      "Timed out while loading your profile."
+    )
+
+    if (error) throw error
+    return data ?? null
+  }, [])
+
+  const ensureProfile = useCallback(async (nextUser) => {
+    const existingProfile = await fetchProfile(nextUser.id)
+    if (existingProfile) return existingProfile
+
+    const fullName =
+      nextUser.user_metadata?.full_name ??
+      nextUser.user_metadata?.name ??
+      [nextUser.user_metadata?.given_name, nextUser.user_metadata?.family_name]
+        .filter(Boolean)
+        .join(" ")
+
+    const profilePayload = {
+      id: nextUser.id,
+      email: nextUser.email ?? "",
+      full_name: fullName,
+      professional_id: nextUser.user_metadata?.professional_id ?? "",
+      role: "student",
+    }
+
+    const { error } = await withTimeout(
+      supabase.from("user_profiles").insert(profilePayload),
+      "Timed out while creating your profile."
+    )
+
+    if (error && error.code !== "23505") throw error
+
+    return fetchProfile(nextUser.id)
+  }, [fetchProfile])
 
   useEffect(() => {
     let isActive = true
@@ -79,46 +118,7 @@ export function AuthProvider({ children }) {
       isActive = false
       subscription.unsubscribe()
     }
-  }, [])
-
-  async function fetchProfile(userId) {
-    const { data, error } = await withTimeout(
-      supabase.from("user_profiles").select("*").eq("id", userId).maybeSingle(),
-      "Timed out while loading your profile."
-    )
-
-    if (error) throw error
-    return data ?? null
-  }
-
-  async function ensureProfile(nextUser) {
-    const existingProfile = await fetchProfile(nextUser.id)
-    if (existingProfile) return existingProfile
-
-    const fullName =
-      nextUser.user_metadata?.full_name ??
-      nextUser.user_metadata?.name ??
-      [nextUser.user_metadata?.given_name, nextUser.user_metadata?.family_name]
-        .filter(Boolean)
-        .join(" ")
-
-    const profilePayload = {
-      id: nextUser.id,
-      email: nextUser.email ?? "",
-      full_name: fullName,
-      professional_id: nextUser.user_metadata?.professional_id ?? "",
-      role: "student",
-    }
-
-    const { error } = await withTimeout(
-      supabase.from("user_profiles").insert(profilePayload),
-      "Timed out while creating your profile."
-    )
-
-    if (error && error.code !== "23505") throw error
-
-    return fetchProfile(nextUser.id)
-  }
+  }, [ensureProfile])
 
   async function updateProfile(updates) {
     if (!user?.id) {

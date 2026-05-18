@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { ImagePlus, UserRound } from "lucide-react"
 import { Link } from "react-router-dom"
 import { usePatient } from "../../components/PatientLayout"
@@ -43,7 +43,7 @@ export default function PatientPrescription() {
     }
   }, [patient, conditionNotes])
 
-  async function handleLookup(event, phoneOverride) {
+  const handleLookup = useCallback(async (event, phoneOverride) => {
     event.preventDefault()
 
     const normalizedPhone = String(phoneOverride ?? phone).trim()
@@ -90,7 +90,7 @@ export default function PatientPrescription() {
       message: `Welcome back ${data.patient.full_name}. You can submit your prescription request below.`,
     })
     setIsLookingUp(false)
-  }
+  }, [phone, pharmacyId])
 
   async function handleSubmit(event) {
     event.preventDefault()
@@ -163,7 +163,7 @@ export default function PatientPrescription() {
 
     const fakeEvent = { preventDefault() {} }
     handleLookup(fakeEvent, rememberedSession.phone)
-  }, [rememberedSession, patient])
+  }, [rememberedSession, patient, handleLookup])
 
   return (
     <div className="patient-page">

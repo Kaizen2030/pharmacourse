@@ -1,4 +1,4 @@
-import { createElement, useEffect, useRef, useState } from "react"
+import { createElement, useCallback, useEffect, useRef, useState } from "react"
 import { CalendarClock, PhoneCall, Store, UserRound, Video } from "lucide-react"
 import { usePatient } from "../../components/PatientLayout"
 import { pharmacyosClient } from "../../lib/pharmacyosClient"
@@ -123,7 +123,7 @@ export default function PatientAppointment() {
     }
   }, [bookedSlots, selectedSlot])
 
-  async function handleLookup(event, phoneOverride) {
+  const handleLookup = useCallback(async (event, phoneOverride) => {
     event.preventDefault()
 
     const normalizedPhone = String(phoneOverride ?? phone).trim()
@@ -167,7 +167,7 @@ export default function PatientAppointment() {
     })
     setLookupMessage({ type: "success", message: `Welcome back ${data.patient.full_name}. Choose your appointment details below.` })
     setIsLookingUp(false)
-  }
+  }, [phone, pharmacyId])
 
   async function handleSubmit(event) {
     event.preventDefault()
@@ -231,7 +231,7 @@ export default function PatientAppointment() {
 
     const fakeEvent = { preventDefault() {} }
     handleLookup(fakeEvent, rememberedSession.phone)
-  }, [rememberedSession, patient])
+  }, [rememberedSession, patient, handleLookup])
 
   return (
     <div className="patient-page">

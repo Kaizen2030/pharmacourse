@@ -1,5 +1,5 @@
 // src/pages/WhatsAppSettings.jsx
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { supabase } from "../lib/supabaseClient"
 import { useAuth } from "../context/AuthContext"
 import { Send, CheckCircle, AlertCircle } from "lucide-react"
@@ -59,6 +59,7 @@ async function sendWhatsAppMessage(toNumber, pearlTitle, pearlContent) {
 
 export default function WhatsAppSettings() {
   const { user, profile } = useAuth()
+  const userId = user?.id || ""
   const [phone, setPhone]         = useState("")
   const [optedIn, setOptedIn]     = useState(false)
   const [saving, setSaving]       = useState(false)
@@ -70,25 +71,30 @@ export default function WhatsAppSettings() {
   const [sendResult, setSendResult] = useState(null) // { ok, message }
   const credsMissing = !WA_TOKEN || !WA_PHONE_ID
 
-  async function loadPearls() {
+  const loadPearls = useCallback(async () => {
     const { data } = await supabase
       .from("clinical_pearls")
       .select("id, title, content")
       .order("created_at", { ascending: false })
     setPearls(data || [])
     if (data?.length > 0) setSelectedPearl(data[0].id)
-  }
+  }, [])
 
-  async function loadRecentSends() {
+  const loadRecentSends = useCallback(async () => {
+    if (!userId) {
+      setRecentSends([])
+      return
+    }
+
     // Fixed: join on pearl_id, use content not body
     const { data } = await supabase
       .from("whatsapp_send_log")
       .select("id, sent_at, status, pearl_id, clinical_pearls(title, content)")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .order("sent_at", { ascending: false })
       .limit(5)
     setRecentSends(data || [])
-  }
+  }, [userId])
 
   useEffect(() => {
     if (profile) {
@@ -99,7 +105,7 @@ export default function WhatsAppSettings() {
       loadPearls()
       loadRecentSends()
     }
-  }, [profile, user])
+  }, [profile, user, loadPearls, loadRecentSends])
 
   async function save() {
     setSaving(true)

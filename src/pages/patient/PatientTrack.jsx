@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { ArrowUpRight, BellRing, CalendarClock, ClipboardList, PackageSearch, Video } from "lucide-react"
 import { useSearchParams } from "react-router-dom"
 import { usePatient } from "../../components/PatientLayout"
@@ -67,7 +67,7 @@ export default function PatientTrack() {
   const [feedback, setFeedback] = useState({ type: "", message: "" })
   const [lastUpdated, setLastUpdated] = useState("")
 
-  async function loadTrackingData(phone, { silent = false } = {}) {
+  const loadTrackingData = useCallback(async (phone, { silent = false } = {}) => {
     if (!silent) {
       setIsLoading(true)
     }
@@ -113,7 +113,7 @@ export default function PatientTrack() {
     if (!silent) {
       setIsLoading(false)
     }
-  }
+  }, [pharmacyId, rememberedSession?.fullName, rememberedSession?.patientId])
 
   async function handleSubmit(event) {
     event.preventDefault()
@@ -136,7 +136,7 @@ export default function PatientTrack() {
       setActivePhone(initialPhone)
       loadTrackingData(initialPhone)
     }
-  }, [phoneParam, rememberedSession, activePhone])
+  }, [phoneParam, rememberedSession, activePhone, loadTrackingData])
 
   useEffect(() => {
     if (!activePhone) {
@@ -150,7 +150,7 @@ export default function PatientTrack() {
     return () => {
       window.clearInterval(intervalId)
     }
-  }, [activePhone, pharmacyId])
+  }, [activePhone, loadTrackingData])
 
   return (
     <div className="patient-page">
