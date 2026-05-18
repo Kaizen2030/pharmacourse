@@ -8,6 +8,8 @@ import { SITE_URL } from "../lib/siteConfig"
 import { formatBlogDate, getBlogCategoryLabel, getBlogCoverFallback, getBlogExcerpt } from "../lib/blogHelpers"
 import pharmacyosDashboard from "../assets/pharmacyos-dashboard.svg"
 import pharmacourseHeroVisual from "../assets/pharmacourse-hero-visual.svg"
+import remedacarehmisMark from "../assets/remedacarehmis-mark.svg"
+import remedacareposMark from "../assets/remedacarepos-mark.svg"
 import remedacareDashboard from "../assets/remedacare-dashboard.svg"
 import {
   BookOpen,
@@ -487,16 +489,20 @@ export default function Home() {
 
                     <div className="hero-services-grid">
                       <div className="service-showcase">
-                        <div className="service-icon pharmacyos"><CreditCard size={32} /></div>
+                        <div className="service-icon pharmacyos">
+                          <img src={remedacareposMark} alt="RemedacarePOS logo" className="service-icon-mark" />
+                        </div>
                         <h3>RemedacarePOS</h3>
                         <p>Complete pharmacy operations management: inventory, billing, compliance, and patient records in one system.</p>
                         <Link to="/remedacarepos" className="service-link">Learn More <ChevronRight size={16} /></Link>
                       </div>
 
                       <div className="service-showcase">
-                        <div className="service-icon remedacareos"><Users size={32} /></div>
+                        <div className="service-icon remedacareos">
+                          <img src={remedacarehmisMark} alt="RemedacareHMIS logo" className="service-icon-mark" />
+                        </div>
                         <h3>RemedacareHMIS</h3>
-                        <p>Healthcare delivery software connecting patients, pharmacists, and clinicians for better care coordination.</p>
+                        <p>Hospital management software connecting clinicians, billing teams, laboratory, pharmacy, and patient workflows in one system.</p>
                         <Link to="/remedacarehmis" className="service-link">Learn More <ChevronRight size={16} /></Link>
                       </div>
 
