@@ -338,10 +338,10 @@ export default function PharmacyOS() {
 
           <div className="po-hero-actions" style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <a href={WHATSAPP} target="_blank" rel="noreferrer" className="po-btn-white" style={{ background: "#fff", color: GREEN, fontWeight: 700, padding: "15px 30px", borderRadius: 10, textDecoration: "none", fontSize: 15, display: "flex", alignItems: "center", gap: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.15)" }}>
-              Book a Demo <ArrowRight size={16} />
+              Book Live Walkthrough <ArrowRight size={16} />
             </a>
             <a href={WHATSAPP} target="_blank" rel="noreferrer" className="po-btn-ghost" style={{ background: "transparent", color: "#fff", fontWeight: 600, padding: "15px 30px", borderRadius: 10, textDecoration: "none", fontSize: 15, border: "1.5px solid rgba(255,255,255,0.35)" }}>
-              Talk to Julius
+              Discuss Rollout
             </a>
           </div>
         </div>
@@ -587,7 +587,7 @@ export default function PharmacyOS() {
           </p>
           <div className="po-cta-actions" style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
             <a href={WHATSAPP} target="_blank" rel="noreferrer" className="po-btn-white" style={{ background: "#fff", color: GREEN, fontWeight: 700, padding: "15px 30px", borderRadius: 10, textDecoration: "none", fontSize: 15, display: "flex", alignItems: "center", gap: 8, boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}>
-              Book Free Demo <ArrowRight size={16} />
+              Book POS Walkthrough <ArrowRight size={16} />
             </a>
             <Link to="/courses" style={{ background: "transparent", color: "#fff", fontWeight: 600, padding: "15px 30px", borderRadius: 10, textDecoration: "none", fontSize: 15, border: "1.5px solid rgba(255,255,255,0.35)", display: "flex", alignItems: "center", gap: 8 }}>
               Explore PharmaCourse <ChevronRight size={15} />

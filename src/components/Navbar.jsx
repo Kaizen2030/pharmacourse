@@ -10,8 +10,8 @@ const learnLinks = [
 ]
 
 const productLinks = [
-  { to: "/remedacarepos", label: "RemedacarePOS" },
-  { to: "/remedacarehmis", label: "RemedacareHMIS" },
+  { to: "/remedacarepos", label: "RemedacarePOS", detail: "Telepharmacy, dispensing, inventory, claims, and branch pharmacy operations" },
+  { to: "/remedacarehmis", label: "RemedacareHMIS", detail: "Clinical workflows, chronic care, finance, AMS, and hospital-wide control" },
 ]
 
 export default function Navbar() {
@@ -122,7 +122,12 @@ export default function Navbar() {
                 className={`nav-dropdown-link${isActive(link.to) ? " active" : ""}`}
                 onClick={() => setOpenDropdown(null)}
               >
-                {link.label}
+                <span style={{ display: "block", fontWeight: 800 }}>{link.label}</span>
+                {link.detail ? (
+                  <span style={{ display: "block", marginTop: 4, fontSize: 12, lineHeight: 1.45, color: "var(--text-500)" }}>
+                    {link.detail}
+                  </span>
+                ) : null}
               </Link>
             ))}
           </div>
@@ -142,7 +147,7 @@ export default function Navbar() {
               <Link to="/" className={isActive("/") ? "active" : ""}>Home</Link>
             </li>
             {renderDesktopDropdown("learn", "Learn", learnLinks)}
-            {renderDesktopDropdown("products", "Products", productLinks)}
+            {renderDesktopDropdown("products", "Platforms", productLinks)}
             <li>
               <Link to="/community" className={isActive("/community") ? "active" : ""}>Community</Link>
             </li>
@@ -273,14 +278,19 @@ export default function Navbar() {
               aria-expanded={mobileSections.products}
               onClick={() => toggleMobileSection("products")}
             >
-              <span>Products</span>
+              <span>Platforms</span>
               <span className={`nav-chevron${mobileSections.products ? " open" : ""}`}>▾</span>
             </button>
             {mobileSections.products ? (
               <div className="nav-drawer-subgroup">
-                {productLinks.map(({ to, label }) => (
+                {productLinks.map(({ to, label, detail }) => (
                   <Link key={to} to={to} className={isActive(to) ? "active" : ""} onClick={() => setMenuOpen(false)}>
-                    {label}
+                    <span style={{ display: "block", fontWeight: 800 }}>{label}</span>
+                    {detail ? (
+                      <span style={{ display: "block", marginTop: 4, fontSize: 12, lineHeight: 1.45, color: "var(--text-500)" }}>
+                        {detail}
+                      </span>
+                    ) : null}
                   </Link>
                 ))}
               </div>

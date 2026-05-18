@@ -321,10 +321,10 @@ export default function RemedacareOS() {
 
           <div className="rc-hero-actions" style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <a href={WHATSAPP} target="_blank" rel="noreferrer" className="rc-btn-white" style={{ background: "#fff", color: GREEN, fontWeight: 700, padding: "15px 30px", borderRadius: 10, textDecoration: "none", fontSize: 15, display: "flex", alignItems: "center", gap: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.15)" }}>
-              Book a Demo <ArrowRight size={16} />
+              Book HMIS Walkthrough <ArrowRight size={16} />
             </a>
             <a href={WHATSAPP} target="_blank" rel="noreferrer" className="rc-btn-ghost" style={{ background: "transparent", color: "#fff", fontWeight: 600, padding: "15px 30px", borderRadius: 10, textDecoration: "none", fontSize: 15, border: "1.5px solid rgba(255,255,255,0.35)" }}>
-              Talk to Julius
+              Discuss Deployment
             </a>
           </div>
 
@@ -536,7 +536,7 @@ export default function RemedacareOS() {
           </p>
           <div className="rc-cta-actions" style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
             <a href={WHATSAPP} target="_blank" rel="noreferrer" className="rc-btn-white" style={{ background: "#fff", color: GREEN, fontWeight: 700, padding: "15px 30px", borderRadius: 10, textDecoration: "none", fontSize: 15, display: "flex", alignItems: "center", gap: 8, boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}>
-              Book Free Demo <ArrowRight size={16} />
+              Book HMIS Demo <ArrowRight size={16} />
             </a>
             <Link to="/remedacarepos" style={{ background: "transparent", color: "#fff", fontWeight: 600, padding: "15px 30px", borderRadius: 10, textDecoration: "none", fontSize: 15, border: "1.5px solid rgba(255,255,255,0.35)", display: "flex", alignItems: "center", gap: 8 }}>
               Explore RemedacarePOS <ChevronRight size={15} />
