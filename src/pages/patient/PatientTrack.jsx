@@ -289,6 +289,7 @@ export default function PatientTrack() {
 
     const { data, error } = await fetchPatientPortalUpdates({
       pharmacyId,
+      phone: patientPhone,
     })
 
     if (error) {
@@ -300,7 +301,7 @@ export default function PatientTrack() {
     }
 
     const notificationRows = data?.notifications || []
-    const deliveryRows = (data?.deliveries || []).filter((item) => String(item?.status || "").toLowerCase() !== "delivered")
+    const deliveryRows = data?.deliveries || []
     const prescriptionRows = data?.requests || []
     const appointmentRows = (data?.appointments || []).filter((item) => {
       if (!item?.slot_datetime) return false
