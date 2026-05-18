@@ -98,7 +98,6 @@ export default function PatientTrack() {
         fullName ||
         prescriptionRows[0]?.patient_name ||
         deliveryRows[0]?.patient_name ||
-        notificationRows[0]?.patient_name ||
         rememberedSession?.fullName ||
         "",
       patientId: rememberedSession?.patientId || null,

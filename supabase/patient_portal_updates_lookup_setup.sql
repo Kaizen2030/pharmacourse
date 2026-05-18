@@ -114,7 +114,6 @@ begin
         from (
           select
             id,
-            patient_name,
             type,
             message,
             read,
