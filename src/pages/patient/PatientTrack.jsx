@@ -670,12 +670,18 @@ export default function PatientTrack() {
                     {String(request.patient_fulfillment_choice || "").trim() === "delivery_requested" ? (
                       <div style={{ marginTop: "0.9rem", padding: "0.9rem", borderRadius: 14, border: "0.5px solid #d7e1dc", background: "#f6fbf8" }}>
                         <div style={{ fontWeight: 800, color: "#163329", marginBottom: 4 }}>
-                          {String(request.linked_delivery_status || "").toLowerCase() === "delivered" ? "Delivery completed" : "Delivery in progress"}
+                          {String(request.linked_delivery_status || "").toLowerCase() === "delivered"
+                            ? "Delivery completed"
+                            : String(request.linked_delivery_status || "").trim()
+                              ? "Delivery in progress"
+                              : "Delivery requested"}
                         </div>
                         <div style={{ color: "#5f746b", fontSize: "0.9rem", lineHeight: 1.5 }}>
                           {String(request.linked_delivery_status || "").toLowerCase() === "delivered"
                             ? "The branch marked this delivery as completed. Your receipt is available below."
-                            : "The pharmacy can now prepare, dispatch, and update this order all the way to delivery."}
+                            : String(request.linked_delivery_status || "").trim()
+                              ? "The pharmacy can now prepare, dispatch, and update this order all the way to delivery."
+                              : "Your delivery choice has been sent to the pharmacy. They will review it, dispense the order, then start dispatch updates here."}
                         </div>
                       </div>
                     ) : null}
