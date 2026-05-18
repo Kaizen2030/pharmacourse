@@ -11,7 +11,7 @@ const learnLinks = [
 
 const productLinks = [
   { to: "/remedacarepos", label: "RemedacarePOS", detail: "Telepharmacy, dispensing, inventory, claims, and branch pharmacy operations" },
-  { to: "/remedacarehms", label: "RemedacareHMS", detail: "Clinical workflows, chronic care, finance, AMS, and hospital-wide control" },
+  { to: "/remedacarehmis", label: "RemedacareHMS", detail: "Clinical workflows, chronic care, finance, AMS, and hospital-wide control" },
 ]
 
 export default function Navbar() {

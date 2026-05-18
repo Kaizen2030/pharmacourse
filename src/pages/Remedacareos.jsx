@@ -281,7 +281,7 @@ export default function RemedacareOS() {
       <SEO
         title="RemedacareHMS Kenya"
         description="RemedacareHMS is a Kenyan hospital management system with patient records, MOH reports, SHA claims, billing, and RemedacarePOS integration."
-        path="/remedacarehms"
+        path="/remedacarehmis"
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "SoftwareApplication",

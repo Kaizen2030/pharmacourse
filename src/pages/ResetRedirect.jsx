@@ -7,7 +7,7 @@ export default function ResetRedirect({ app }) {
 
   const isHMS = app === "remedacarehms"
   const appName = isHMS ? "RemedacareHMS" : "RemedacarePOS"
-  const scheme = isHMS ? "remedacarehms" : "remedacarepos"
+  const scheme = isHMS ? "remedacare" : "pharmacyos"
   const iconLetter = isHMS ? "H" : "P"
 
   useEffect(() => {
