@@ -2,13 +2,16 @@ import { createElement, useEffect, useState } from "react"
 import { CalendarPlus2, ChevronRight, ClipboardPlus, IdCard, LogOut, PillBottle, UserRoundCheck } from "lucide-react"
 import { Link } from "react-router-dom"
 import { usePatient } from "../../components/PatientLayout"
+import { usePatientPortalAuth } from "../../hooks/usePatientPortalAuth"
 import { clearPatientPortalSession, getPatientPortalSession } from "../../lib/patientPortalSession"
 
 export default function PatientHome() {
   const { branchName, pharmacyId, createPatientPath } = usePatient()
   const [rememberedPatient, setRememberedPatient] = useState(() => getPatientPortalSession(pharmacyId))
   const [feedback, setFeedback] = useState({ type: "", message: "" })
+  const [isSigningOut, setIsSigningOut] = useState(false)
   const patientLoginPath = createPatientPath("/patient/login")
+  const { isAuthenticated, fullName, patientPhone, signOut } = usePatientPortalAuth()
 
   useEffect(() => {
     setRememberedPatient(getPatientPortalSession(pharmacyId))
@@ -45,6 +48,20 @@ export default function PatientHome() {
     clearPatientPortalSession(pharmacyId)
     setRememberedPatient(null)
     setFeedback({ type: "info", message: "This phone has been cleared on this device. You can register or switch to another number." })
+  }
+
+  async function handlePatientSignOut() {
+    setIsSigningOut(true)
+    setFeedback({ type: "", message: "" })
+
+    try {
+      await signOut()
+      setFeedback({ type: "success", message: "Patient account signed out for this browser session." })
+    } catch (error) {
+      setFeedback({ type: "error", message: error?.message || "We could not sign you out right now." })
+    } finally {
+      setIsSigningOut(false)
+    }
   }
 
   return (
@@ -153,21 +170,42 @@ export default function PatientHome() {
       <section className="patient-card patient-card-muted">
         <div className="patient-section-header">
           <div>
-            <h2 className="patient-section-title">Already have a patient portal account?</h2>
+            <h2 className="patient-section-title">{isAuthenticated ? "Patient portal account active" : "Already have a patient portal account?"}</h2>
             <p className="patient-form-help">
-              Sign in to manage your patient access with the same branch-linked portal on this device.
+              {isAuthenticated
+                ? "Your patient portal sign-in is active for this branch. You can continue with services without signing in again."
+                : "Sign in to manage your patient access with the same branch-linked portal on this device."}
             </p>
           </div>
         </div>
 
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.7rem" }}>
-          <Link to={patientLoginPath} className="patient-button" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-            Sign in to patient account
-          </Link>
-          <Link to={createPatientPath("/patient/register")} className="patient-button-secondary" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-            Create or update profile
-          </Link>
-        </div>
+        {isAuthenticated ? (
+          <>
+            <div className="patient-auth-status" style={{ marginBottom: "0.9rem" }}>
+              <p className="patient-form-help" style={{ margin: 0 }}>
+                Signed in as <strong>{fullName || "Patient account"}</strong>{patientPhone ? ` on ${patientPhone}` : ""}.
+              </p>
+            </div>
+
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.7rem" }}>
+              <Link to={createPatientPath("/patient/prescription")} className="patient-button" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                Continue to prescriptions
+              </Link>
+              <button type="button" className="patient-button-secondary" onClick={() => void handlePatientSignOut()} disabled={isSigningOut}>
+                {isSigningOut ? "Signing out..." : "Sign out of patient account"}
+              </button>
+            </div>
+          </>
+        ) : (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.7rem" }}>
+            <Link to={patientLoginPath} className="patient-button" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+              Sign in to patient account
+            </Link>
+            <Link to={createPatientPath("/patient/register")} className="patient-button-secondary" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+              Create or update profile
+            </Link>
+          </div>
+        )}
       </section>
     </div>
   )
