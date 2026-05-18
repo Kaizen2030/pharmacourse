@@ -23,6 +23,13 @@ export default function DesktopAccountActivate({ app = "remedacarepos" }) {
 
   const searchString = useMemo(() => searchParams.toString(), [searchParams])
 
+  function openDesktopApp() {
+    const launchTarget = email
+      ? `${scheme}://login?email=${encodeURIComponent(email)}`
+      : `${scheme}://`
+    window.location.href = launchTarget
+  }
+
   useEffect(() => {
     let active = true
 
@@ -85,6 +92,14 @@ export default function DesktopAccountActivate({ app = "remedacarepos" }) {
     }
   }, [appName, searchParams, searchString])
 
+  useEffect(() => {
+    if (status !== "success") return
+    const timer = window.setTimeout(() => {
+      openDesktopApp()
+    }, 900)
+    return () => window.clearTimeout(timer)
+  }, [email, scheme, status])
+
   return (
     <div className="auth-wrap">
       <div className="auth-card" style={{ maxWidth: 560, textAlign: "center" }}>
@@ -139,14 +154,12 @@ export default function DesktopAccountActivate({ app = "remedacarepos" }) {
               <button
                 type="button"
                 className="btn btn-primary"
-                onClick={() => {
-                  window.location.href = `${scheme}://`
-                }}
+                onClick={openDesktopApp}
               >
                 Open {appName}
               </button>
               <div style={{ color: "var(--text-500)", fontSize: "0.95rem", lineHeight: 1.6 }}>
-                Open the desktop app, choose <strong>Sign In</strong>, then log in with the same email and password you used during account creation.
+                Your browser will try to open the desktop app automatically. If it does not, click the button above, then sign in with the same email and password you used during account creation.
               </div>
             </div>
           </>
