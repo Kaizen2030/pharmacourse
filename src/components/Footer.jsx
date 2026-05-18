@@ -3,7 +3,7 @@ import { Link } from "react-router-dom"
 export default function Footer() {
   return (
     <footer>
-      <div className="container" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", alignItems: "start", gap: "1.5rem" }}>
+      <div className="container-wide" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", alignItems: "start", gap: "1.5rem" }}>
         <div>
           <span className="footer-logo">PharmaCourse</span>
           <p style={{ marginTop: "0.75rem", color: "var(--text-500)", maxWidth: 360, lineHeight: 1.7 }}>
