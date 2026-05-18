@@ -54,7 +54,7 @@ const DEFAULT_SECTIONS = {
     order: 3,
     heading: "Everything your pharmacy needs. In one desktop app.",
     subheading: "Built specifically for Kenyan retail pharmacies with SHA, eTIMS/KRA, M-Pesa, and PPB narcotics reporting.",
-    badge_text: "PharmacyOS",
+    badge_text: "RemedacarePOS",
     primary_btn_text: "Book a Demo",
     primary_btn_url: WHATSAPP,
     video_url: "/images/pharmacyos-demo.mp4",
@@ -63,10 +63,10 @@ const DEFAULT_SECTIONS = {
     enabled: true,
     order: 4,
     heading: "From clinic to dispensary. One connected system.",
-    subheading: "Full HMIS built for Kenyan hospitals with patient records, billing, MOH reports, and PharmacyOS integration.",
-    badge_text: "RemedacareOS",
-    primary_btn_text: "Explore RemedacareOS",
-    primary_btn_url: "/remedacareos",
+    subheading: "Full HMIS built for Kenyan hospitals with patient records, billing, MOH reports, and RemedacarePOS integration.",
+    badge_text: "RemedacareHMIS",
+    primary_btn_text: "Explore RemedacareHMIS",
+    primary_btn_url: "/remedacarehmis",
     video_url: "/images/remedacareos-demo.mp4",
   },
   features: {
@@ -105,7 +105,7 @@ const DEFAULT_SECTIONS = {
     enabled: true,
     order: 10,
     heading: "Ready to transform your pharmacy practice?",
-    subheading: "Join PharmaCourse for learning, or book a demo to see PharmacyOS and RemedacareOS in action.",
+    subheading: "Join PharmaCourse for learning, or book a demo to see RemedacarePOS and RemedacareHMIS in action.",
     primary_btn_text: "Start Learning Free",
     primary_btn_url: "/register",
     secondary_btn_text: "Book a Demo",
@@ -196,7 +196,7 @@ const ProductMockup = ({ type }) => {
     pharmacyOS: {
       color: "#0F6E56",
       bg: "#e8f5f0",
-      title: "PharmacyOS POS",
+      title: "RemedacarePOS",
       rows: ["Amoxicillin 500mg x 2", "Prednisolone 5mg x 30", "Vitamin B Complex x 1"],
       badge: "M-Pesa ready",
       total: "KES 1,240",
@@ -204,7 +204,7 @@ const ProductMockup = ({ type }) => {
     remedacareOS: {
       color: "#1A6BB5",
       bg: "#e8f0fb",
-      title: "RemedacareOS HMIS",
+      title: "RemedacareHMIS",
       rows: ["Patient: John Mwangi", "Diagnosis: Hypertension", "Rx: Amlodipine 5mg OD"],
       badge: "MOH ready",
       total: "SHA claim ready",
@@ -241,7 +241,7 @@ const ProductMockup = ({ type }) => {
         <div className="mockup-frame" style={{ background: "#fff", borderRadius: 14, overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
           <img
             src={pharmacyosDashboard}
-            alt="PharmacyOS dashboard showing branch overview, revenue, inventory insights and recent sales"
+            alt="RemedacarePOS dashboard showing branch overview, revenue, inventory insights and recent sales"
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
         </div>
@@ -255,7 +255,7 @@ const ProductMockup = ({ type }) => {
         <div className="mockup-frame" style={{ background: "#fff", borderRadius: 14, overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
           <img
             src={remedacareDashboard}
-            alt="RemedacareOS dashboard showing patient, admissions, finance and pharmacy workflow panels"
+            alt="RemedacareHMIS dashboard showing patient, admissions, finance and pharmacy workflow panels"
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
         </div>
@@ -447,8 +447,8 @@ export default function Home() {
   return (
     <div className="home">
       <SEO
-        title="Pharmacy CPD Courses, PharmacyOS & RemedacareOS Kenya"
-        description="PharmaCourse helps Kenyan pharmacy professionals learn practical skills, earn certificates, and explore PharmacyOS and RemedacareOS software."
+        title="Pharmacy CPD Courses, RemedacarePOS & RemedacareHMIS Kenya"
+        description="PharmaCourse helps Kenyan pharmacy professionals learn practical skills, earn certificates, and explore RemedacarePOS and RemedacareHMIS software."
         path="/"
         jsonLd={{
           "@context": "https://schema.org",
@@ -457,7 +457,7 @@ export default function Home() {
           url: SITE_URL,
           logo: `${SITE_URL}/favicon.svg`,
           description:
-            "Kenyan pharmacy education and health-tech platform offering CPD courses, PharmacyOS, and RemedacareOS.",
+            "Kenyan pharmacy education and health-tech platform offering CPD courses, RemedacarePOS, and RemedacareHMIS.",
         }}
       />
 
@@ -488,16 +488,16 @@ export default function Home() {
                     <div className="hero-services-grid">
                       <div className="service-showcase">
                         <div className="service-icon pharmacyos"><CreditCard size={32} /></div>
-                        <h3>PharmacyOS</h3>
+                        <h3>RemedacarePOS</h3>
                         <p>Complete pharmacy operations management: inventory, billing, compliance, and patient records in one system.</p>
-                        <Link to="/pharmacyos" className="service-link">Learn More <ChevronRight size={16} /></Link>
+                        <Link to="/remedacarepos" className="service-link">Learn More <ChevronRight size={16} /></Link>
                       </div>
 
                       <div className="service-showcase">
                         <div className="service-icon remedacareos"><Users size={32} /></div>
-                        <h3>RemedacareOS</h3>
+                        <h3>RemedacareHMIS</h3>
                         <p>Healthcare delivery software connecting patients, pharmacists, and clinicians for better care coordination.</p>
-                        <Link to="/remedacareos" className="service-link">Learn More <ChevronRight size={16} /></Link>
+                        <Link to="/remedacarehmis" className="service-link">Learn More <ChevronRight size={16} /></Link>
                       </div>
 
                       <div className="service-showcase">
@@ -569,17 +569,17 @@ export default function Home() {
                       <div className="platform-card featured">
                         <ShoppingCart size={32} />
                         <span className="platform-status">Available</span>
-                        <h3>PharmacyOS</h3>
+                        <h3>RemedacarePOS</h3>
                         <p>AI-powered dispensary management with POS, inventory, SHA claims, and M-Pesa integration.</p>
-                        <Link to="/pharmacyos" className="platform-link">Explore PharmacyOS <ChevronRight size={16} /></Link>
+                        <Link to="/remedacarepos" className="platform-link">Explore RemedacarePOS <ChevronRight size={16} /></Link>
                       </div>
 
                       <div className="platform-card">
                         <Building2 size={32} />
                         <span className="platform-status">Available</span>
-                        <h3>RemedacareOS</h3>
+                        <h3>RemedacareHMIS</h3>
                         <p>Full hospital management system with patient records, billing, and MOH reporting.</p>
-                        <Link to="/remedacareos" className="platform-link">Explore RemedacareOS <ChevronRight size={16} /></Link>
+                        <Link to="/remedacarehmis" className="platform-link">Explore RemedacareHMIS <ChevronRight size={16} /></Link>
                       </div>
                     </div>
                   </div>
@@ -618,8 +618,8 @@ export default function Home() {
                           ))}
                         </div>
 
-                        <Link to="/pharmacyos" className="btn-primary">
-                          {config.primary_btn_text || "Explore PharmacyOS"}
+                        <Link to="/remedacarepos" className="btn-primary">
+                          {config.primary_btn_text || "Explore RemedacarePOS"}
                         </Link>
                       </div>
                     </div>
@@ -650,7 +650,7 @@ export default function Home() {
                             { icon: ClipboardList, text: "Complete patient records" },
                             { icon: BarChart3, text: "Government-compliant reports" },
                             { icon: Users, text: "Multi-role access control" },
-                            { icon: Link2, text: "Seamless PharmacyOS integration" },
+                            { icon: Link2, text: "Seamless RemedacarePOS integration" },
                           ].map((feature, idx) => (
                             <div key={idx} className="feature-item">
                               <feature.icon size={20} />
@@ -659,8 +659,8 @@ export default function Home() {
                           ))}
                         </div>
 
-                        <Link to="/remedacareos" className="btn-primary">
-                          {config.primary_btn_text || "Explore RemedacareOS"}
+                        <Link to="/remedacarehmis" className="btn-primary">
+                          {config.primary_btn_text || "Explore RemedacareHMIS"}
                         </Link>
                       </div>
                     </div>

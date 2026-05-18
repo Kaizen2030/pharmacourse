@@ -28,7 +28,7 @@ import {
   Video,
 } from "lucide-react"
 
-const WHATSAPP = "https://wa.me/254790059584?text=Hi%20Julius%2C%20I%27d%20like%20to%20book%20a%20demo%20of%20PharmacyOS."
+const WHATSAPP = "https://wa.me/254790059584?text=Hi%20Julius%2C%20I%27d%20like%20to%20book%20a%20demo%20of%20RemedacarePOS."
 
 const modules = [
   { icon: ShoppingCart, label: "Sales & POS", desc: "Fast checkout with cash, M-Pesa, credit, SHA and insurer workflows from one selling screen." },
@@ -47,7 +47,7 @@ const modules = [
 
 const pillars = [
   { icon: Stethoscope, title: "Pharmacy-first workflow", body: "Built around what dispensaries actually do every day, not generic retail software assumptions." },
-  { icon: Link2, title: "Website and app connected", body: "The patient portal and PharmacyOS app now behave like one workflow from request to delivery." },
+  { icon: Link2, title: "Website and app connected", body: "The patient portal and RemedacarePOS app now behave like one workflow from request to delivery." },
   { icon: Shield, title: "Kenyan compliance aware", body: "Claims, eTIMS-facing exports, dispensing traceability and controlled-drug reporting stay in view." },
   { icon: Building2, title: "Branch-ready operations", body: "Branch context, shift history, supplier flow and owner visibility support real business growth." },
 ]
@@ -296,13 +296,13 @@ export default function PharmacyOS() {
   return (
     <div style={{ fontFamily: "'Outfit', 'Segoe UI', sans-serif", background: "#f8faf9", minHeight: "100vh" }}>
       <SEO
-        title="PharmacyOS Kenya"
-        description="PharmacyOS is a Kenyan pharmacy operating system with telepharmacy workflows, delivery coordination, patient continuity, live dashboard analytics, claims, shifts and branch-aware operations."
-        path="/pharmacyos"
+        title="RemedacarePOS Kenya"
+        description="RemedacarePOS is a Kenyan pharmacy operating system with telepharmacy workflows, delivery coordination, patient continuity, live dashboard analytics, claims, shifts and branch-aware operations."
+        path="/remedacarepos"
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "SoftwareApplication",
-          name: "PharmacyOS",
+          name: "RemedacarePOS",
           applicationCategory: "BusinessApplication",
           operatingSystem: "Windows",
           description:
@@ -326,14 +326,14 @@ export default function PharmacyOS() {
 
         <div style={{ position: "relative", maxWidth: 820, margin: "0 auto" }}>
           <span className="po-hero-badge" style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.22)", borderRadius: 99, fontSize: 11, fontWeight: 700, letterSpacing: 1.8, padding: "7px 18px", marginBottom: 28, textTransform: "uppercase" }}>
-            PharmacyOS - Dispensary Manager
+            RemedacarePOS - Dispensary Manager
           </span>
 
           <h1 style={{ fontSize: "clamp(2.2rem, 5.5vw, 3.6rem)", fontWeight: 800, lineHeight: 1.12, margin: "0 0 22px", letterSpacing: "-0.02em" }}>
             A connected pharmacy workflow<br />from request to dispense to delivery.
           </h1>
           <p className="po-hero-copy" style={{ fontSize: 18, opacity: 0.82, maxWidth: 650, margin: "0 auto 40px", lineHeight: 1.65 }}>
-            PharmacyOS now combines live dispensing, patient self-service, telepharmacy response flows, delivery coordination, claims awareness, branch operations and visual business analytics in one app.
+            RemedacarePOS now combines live dispensing, patient self-service, telepharmacy response flows, delivery coordination, claims awareness, branch operations and visual business analytics in one app.
           </p>
 
           <div className="po-hero-actions" style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
@@ -350,7 +350,7 @@ export default function PharmacyOS() {
       <section className="po-section" style={{ padding: "80px 24px", background: "#f8faf9" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <div className="po-section-heading" style={{ textAlign: "center", marginBottom: 52 }}>
-            <span style={{ color: GREEN, fontWeight: 700, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase" }}>Why PharmacyOS</span>
+            <span style={{ color: GREEN, fontWeight: 700, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase" }}>Why RemedacarePOS</span>
             <h2 style={{ fontSize: "clamp(1.6rem, 3vw, 2.3rem)", fontWeight: 800, margin: "14px 0 0", color: DARK, letterSpacing: "-0.02em" }}>
               Built for real Kenyan pharmacy operations.
             </h2>
@@ -389,7 +389,7 @@ export default function PharmacyOS() {
               <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
                 {[
                   "Patient submits a request or appointment online",
-                  "Pharmacist reviews it inside PharmacyOS",
+                  "Pharmacist reviews it inside RemedacarePOS",
                   "Alternative, sourcing, delivery or pickup decisions are tracked clearly",
                   "The patient sees updates from the same public portal",
                 ].map((step, index) => (
@@ -403,7 +403,7 @@ export default function PharmacyOS() {
             <div className="po-integration-shot" style={{ background: "#ffffff", borderRadius: 20, padding: 14, border: "1px solid #cfe5dc", boxShadow: "0 12px 36px rgba(15,110,86,0.16)" }}>
               <img
                 src={pharmacyosDashboard}
-                alt="PharmacyOS dashboard showing pharmacy operations and analytics"
+                alt="RemedacarePOS dashboard showing pharmacy operations and analytics"
                 style={{ display: "block", width: "100%", height: "auto", borderRadius: 14, border: "1px solid #dbe8e2" }}
               />
             </div>
@@ -459,7 +459,7 @@ export default function PharmacyOS() {
               The new patient journey is visible all the way through.
             </h2>
             <p style={{ color: "#556", fontSize: 15, lineHeight: 1.75, maxWidth: 700, margin: "0 auto" }}>
-              PharmacyOS now supports a more complete public-to-pharmacy workflow instead of stopping at a request form.
+              RemedacarePOS now supports a more complete public-to-pharmacy workflow instead of stopping at a request form.
             </p>
           </div>
 
@@ -568,7 +568,7 @@ export default function PharmacyOS() {
             <div className="po-integration-shot" style={{ background: "#ffffff", borderRadius: 20, padding: 14, border: "1px solid #cfe5dc", boxShadow: "0 12px 36px rgba(15,110,86,0.16)" }}>
               <img
                 src={pharmacyosCopilot}
-                alt="PharmacyOS copilot view"
+                alt="RemedacarePOS copilot view"
                 style={{ display: "block", width: "100%", height: "auto", borderRadius: 14, border: "1px solid #dbe8e2" }}
               />
             </div>
@@ -583,7 +583,7 @@ export default function PharmacyOS() {
             Ready to modernise how the pharmacy actually works?
           </h2>
           <p style={{ color: "rgba(255,255,255,0.72)", fontSize: 16, lineHeight: 1.75, marginBottom: 40 }}>
-            Book a live walkthrough and see the real PharmacyOS flow across patient requests, alternatives, delivery handling, dashboards, shifts and branch operations.
+            Book a live walkthrough and see the real RemedacarePOS flow across patient requests, alternatives, delivery handling, dashboards, shifts and branch operations.
           </p>
           <div className="po-cta-actions" style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
             <a href={WHATSAPP} target="_blank" rel="noreferrer" className="po-btn-white" style={{ background: "#fff", color: GREEN, fontWeight: 700, padding: "15px 30px", borderRadius: 10, textDecoration: "none", fontSize: 15, display: "flex", alignItems: "center", gap: 8, boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}>

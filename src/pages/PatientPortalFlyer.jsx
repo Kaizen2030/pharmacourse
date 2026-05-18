@@ -15,8 +15,8 @@ export default function PatientPortalFlyer() {
       }}
     >
       <SEO
-        title="PharmacyOS Patient Portal Flyer"
-        description="Printable A4 flyer for the PharmacyOS patient portal."
+        title="RemedacarePOS Patient Portal Flyer"
+        description="Printable A4 flyer for the RemedacarePOS patient portal."
         path="/patient-flyer"
         noindex
       />
@@ -305,7 +305,7 @@ export default function PatientPortalFlyer() {
           <header className="portal-flyer-hero">
             <div className="portal-flyer-badge">
               <Smartphone size={14} />
-              PharmacyOS Patient Portal
+              RemedacarePOS Patient Portal
             </div>
             <h1>Your pharmacy on your phone.</h1>
             <p>
@@ -409,7 +409,7 @@ export default function PatientPortalFlyer() {
                   <Share2 size={15} />
                   Share this page with patients
                 </span>
-                <span>Powered by PharmaCourse + PharmacyOS</span>
+                <span>Powered by PharmaCourse + RemedacarePOS</span>
               </div>
             </section>
           </div>

@@ -300,7 +300,7 @@ export default function PatientPrescription() {
                 accept="image/*"
                 onChange={(event) => setPrescriptionFile(event.target.files?.[0] || null)}
               />
-              <p className="patient-form-help">Upload a clear image only. It will be stored in the branch’s secure PharmacyOS space.</p>
+              <p className="patient-form-help">Upload a clear image only. It will be stored in the branch’s secure RemedacarePOS space.</p>
             </div>
 
             {submitMessage.message ? (

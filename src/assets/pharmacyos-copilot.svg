@@ -5,7 +5,7 @@
   <rect x="18" y="18" width="184" height="74" fill="#11765D"/>
   <rect x="34" y="38" width="32" height="32" rx="10" fill="#CDEDE0"/>
   <text x="50" y="59" fill="#0F6E56" font-family="Arial, sans-serif" font-size="18" font-weight="700" text-anchor="middle">Rx</text>
-  <text x="76" y="52" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="24" font-weight="700">PharmacyOS</text>
+  <text x="76" y="52" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="24" font-weight="700">RemedacarePOS</text>
   <text x="76" y="72" fill="#9DE2C9" font-family="Arial, sans-serif" font-size="13">ReMEDcare</text>
 
   <rect x="32" y="110" width="146" height="120" rx="12" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.16)"/>
@@ -119,8 +119,8 @@
 
   <rect x="224" y="394" width="1180" height="322" rx="14" fill="#FFFFFF" stroke="#DDE6E2"/>
   <rect x="242" y="410" width="930" height="86" rx="10" fill="#FBFCFB" stroke="#E2E9E4"/>
-  <text x="256" y="428" fill="#0F6E56" font-family="Arial, sans-serif" font-size="11">PharmacyOS AI</text>
-  <text x="256" y="446" fill="#102233" font-family="Arial, sans-serif" font-size="13">Hello. I am your PharmacyOS copilot for ReMEDcare.</text>
+  <text x="256" y="428" fill="#0F6E56" font-family="Arial, sans-serif" font-size="11">RemedacarePOS AI</text>
+  <text x="256" y="446" fill="#102233" font-family="Arial, sans-serif" font-size="13">Hello. I am your RemedacarePOS copilot for ReMEDcare.</text>
   <text x="256" y="480" fill="#102233" font-family="Arial, sans-serif" font-size="13">I can answer both clinical questions and branch business questions about workers, inventory, sales, patients, M-Pesa, claims, suppliers, shifts, prescriptions, and reports.</text>
   <rect x="242" y="506" width="52" height="24" rx="8" fill="#FFFFFF" stroke="#CFDAD5"/>
   <text x="268" y="522" fill="#102233" font-family="Arial, sans-serif" font-size="11" font-weight="700" text-anchor="middle">Helpful</text>

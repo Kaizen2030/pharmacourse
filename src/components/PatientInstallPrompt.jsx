@@ -98,7 +98,7 @@ export default function PatientInstallPrompt() {
         <div className="patient-install-kicker">Install on your phone</div>
         <h2>Use this portal like an app</h2>
         <p>
-          Add the PharmacyOS patient portal to your home screen for faster access to prescriptions, appointments,
+          Add the RemedacarePOS patient portal to your home screen for faster access to prescriptions, appointments,
           delivery updates, and pharmacy messages.
         </p>
       </div>

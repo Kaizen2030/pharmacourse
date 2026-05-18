@@ -10,8 +10,8 @@ const learnLinks = [
 ]
 
 const productLinks = [
-  { to: "/pharmacyos", label: "PharmacyOS" },
-  { to: "/remedacareos", label: "RemedacareOS" },
+  { to: "/remedacarepos", label: "RemedacarePOS" },
+  { to: "/remedacarehmis", label: "RemedacareHMIS" },
 ]
 
 export default function Navbar() {

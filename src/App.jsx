@@ -119,7 +119,9 @@ function AppShell() {
         <Route path="/verify/:certificateId" element={<VerifyCertificate />} />
         <Route path="/simulation/:simulationId" element={<CaseSimulation />} />
         <Route path="/pharmacyos" element={<PharmacyOS />} />
+        <Route path="/remedacarepos" element={<PharmacyOS />} />
         <Route path="/remedacareos" element={<RemedacareOS />} />
+        <Route path="/remedacarehmis" element={<RemedacareOS />} />
         <Route path="/community" element={<Community />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/courses/new" element={<CourseForm />} />
@@ -136,8 +138,10 @@ function AppShell() {
           <Route path="track" element={<PatientTrack />} />
         </Route>
 
-        <Route path="/reset/remedacare" element={<ResetRedirect app="remedacare" />} />
-        <Route path="/reset/pharmacyos" element={<ResetRedirect app="pharmacyos" />} />
+        <Route path="/reset/remedacare" element={<ResetRedirect app="remedacarehmis" />} />
+        <Route path="/reset/remedacarehmis" element={<ResetRedirect app="remedacarehmis" />} />
+        <Route path="/reset/pharmacyos" element={<ResetRedirect app="remedacarepos" />} />
+        <Route path="/reset/remedacarepos" element={<ResetRedirect app="remedacarepos" />} />
       </Routes>
       {!isPatientRoute && !isFlyerRoute ? <Footer /> : null}
     </>

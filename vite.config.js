@@ -13,9 +13,9 @@ export default defineConfig({
       includeAssets: ["favicon.svg", "apple-touch-icon.png"],
       manifest: {
         id: "/patient",
-        name: "PharmacyOS Patient Portal",
+        name: "RemedacarePOS Patient Portal",
         short_name: "Patient Portal",
-        description: "Install the PharmacyOS patient portal to request prescriptions, book appointments, request deliveries, and track updates from your pharmacy.",
+        description: "Install the RemedacarePOS patient portal to request prescriptions, book appointments, request deliveries, and track updates from your pharmacy.",
         theme_color: "#0F6E56",
         background_color: "#f4fbf8",
         display: "standalone",

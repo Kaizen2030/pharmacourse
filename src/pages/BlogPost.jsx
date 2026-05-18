@@ -47,11 +47,11 @@ const SITE_RECOMMENDATIONS = [
     image: pharmacourseHeroVisual,
   },
   {
-    path: "/pharmacyos",
+    path: "/remedacarepos",
     badge: "Platform",
-    title: "Explore PharmacyOS",
-    description: "See how PharmacyOS supports pharmacy operations, inventory control, claims, and compliance workflows.",
-    cta: "Explore PharmacyOS",
+    title: "Explore RemedacarePOS",
+    description: "See how RemedacarePOS supports pharmacy operations, inventory control, claims, and compliance workflows.",
+    cta: "Explore RemedacarePOS",
     image: pharmacyosDashboard,
   },
 ]

@@ -5,7 +5,7 @@
   <rect x="20" y="20" width="182" height="74" fill="#11765D"/>
   <rect x="36" y="40" width="34" height="34" rx="10" fill="#CCEDE0"/>
   <text x="53" y="61" fill="#0F6E56" font-family="Arial, sans-serif" font-size="20" font-weight="700" text-anchor="middle">Rx</text>
-  <text x="80" y="52" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="24" font-weight="700">PharmacyOS</text>
+  <text x="80" y="52" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="24" font-weight="700">RemedacarePOS</text>
   <text x="80" y="72" fill="#9DE2C9" font-family="Arial, sans-serif" font-size="13">ReMEDcare</text>
 
   <rect x="34" y="112" width="146" height="124" rx="12" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.16)"/>

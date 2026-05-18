@@ -1837,7 +1837,7 @@ export default function PatientPortal() {
                   {hasActivePharmacy ? (
                     <>
                       <h2>What do you need?</h2>
-                      <p>Choose one option below. The pharmacy will receive it in PharmacyOS instantly.</p>
+                      <p>Choose one option below. The pharmacy will receive it in RemedacarePOS instantly.</p>
                       <div className="patient-portal-tab-list">
                         {PORTAL_TABS.map((tab) => (
                           <button

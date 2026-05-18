@@ -5,15 +5,16 @@ export default function ResetRedirect({ app }) {
   const [searchParams] = useSearchParams()
   const [status, setStatus] = useState("opening") // opening | success | error
 
-  const appName = app === "remedacare" ? "RemedaCare" : "PharmacyOS"
-  const scheme  = app === "remedacare" ? "remedacare" : "pharmacyos"
+  const isHMIS = app === "remedacarehmis"
+  const appName = isHMIS ? "RemedacareHMIS" : "RemedacarePOS"
+  const scheme = isHMIS ? "remedacare" : "remedacarepos"
 
   useEffect(() => {
     // Supabase can pass token in hash fragment OR query params depending on flow
-    // Hash example:  /reset/remedacare#access_token=xxx&type=recovery
-    // Query example: /reset/remedacare?token=xxx&type=recovery
+    // Hash example:  /reset/remedacarehmis#access_token=xxx&type=recovery
+    // Query example: /reset/remedacarehmis?token=xxx&type=recovery
     // Supabase puts tokens in the hash fragment: #access_token=xxx&refresh_token=yyy&type=recovery
-    // BUT hash fragments are stripped by the OS when firing custom protocol URLs (pharmacyos://)
+    // BUT hash fragments are stripped by the OS when firing custom protocol URLs (remedacarepos://)
     // So we MUST pass tokens as query params instead — they survive the handoff.
     const hash = window.location.hash.slice(1) // strip the leading #
     const hashParams = new URLSearchParams(hash)
@@ -82,7 +83,7 @@ export default function ResetRedirect({ app }) {
             const rt = hp.get("refresh_token") || ""
             const th = hp.get("token_hash") || searchParams.get("token_hash") || ""
             const tp = hp.get("type") || "recovery"
-            const scheme2 = app === "remedacare" ? "remedacare" : "pharmacyos"
+            const scheme2 = isHMIS ? "remedacare" : "remedacarepos"
             window.location.href = `${scheme2}://reset?access_token=${encodeURIComponent(at)}&refresh_token=${encodeURIComponent(rt)}&token_hash=${encodeURIComponent(th)}&type=${encodeURIComponent(tp)}`
           }}
           style={{
