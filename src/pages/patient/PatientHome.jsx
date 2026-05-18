@@ -1,8 +1,7 @@
 import { createElement, useEffect, useState } from "react"
-import { CalendarPlus2, ChevronRight, ClipboardPlus, IdCard, LogOut, PillBottle, ShieldCheck, UserRoundCheck } from "lucide-react"
+import { CalendarPlus2, ChevronRight, ClipboardPlus, IdCard, LogOut, PillBottle, UserRoundCheck } from "lucide-react"
 import { Link } from "react-router-dom"
 import { usePatient } from "../../components/PatientLayout"
-import { usePatientPortalAuth } from "../../hooks/usePatientPortalAuth"
 import { clearPatientPortalSession, getPatientPortalSession } from "../../lib/patientPortalSession"
 
 export default function PatientHome() {
@@ -10,8 +9,6 @@ export default function PatientHome() {
   const [rememberedPatient, setRememberedPatient] = useState(() => getPatientPortalSession(pharmacyId))
   const [feedback, setFeedback] = useState({ type: "", message: "" })
   const patientLoginPath = createPatientPath("/patient/login")
-  const patientTrackPath = createPatientPath("/patient/track")
-  const { isAuthenticated, patientPhone, fullName, signOut } = usePatientPortalAuth()
 
   useEffect(() => {
     setRememberedPatient(getPatientPortalSession(pharmacyId))
@@ -50,15 +47,6 @@ export default function PatientHome() {
     setFeedback({ type: "info", message: "This phone has been cleared on this device. You can register or switch to another number." })
   }
 
-  async function handleSignOut() {
-    try {
-      await signOut()
-      setFeedback({ type: "info", message: "You have signed out of the patient web account on this device." })
-    } catch (error) {
-      setFeedback({ type: "error", message: error?.message || "We could not sign you out right now." })
-    }
-  }
-
   return (
     <div className="patient-page">
       <section className="patient-card patient-card-muted patient-hero">
@@ -69,6 +57,20 @@ export default function PatientHome() {
           <strong>{branchName}</strong>.
         </p>
       </section>
+
+      {feedback.message ? (
+        <div
+          className={`patient-message ${
+            feedback.type === "error"
+              ? "patient-message-error"
+              : feedback.type === "success"
+                ? "patient-message-success"
+                : "patient-message-info"
+          }`}
+        >
+          {feedback.message}
+        </div>
+      ) : null}
 
       {rememberedPatient ? (
         <section className="patient-card">
@@ -166,64 +168,6 @@ export default function PatientHome() {
             Create or update profile
           </Link>
         </div>
-      </section>
-
-      <section className="patient-card">
-        <div className="patient-section-header">
-          <div>
-            <h2 className="patient-section-title">Private updates and notifications</h2>
-            <p className="patient-form-help">
-              Updates are now locked to signed-in patient web accounts. Knowing a phone number alone is no longer enough.
-            </p>
-          </div>
-          <span className="patient-inline-icon">
-            <ShieldCheck />
-          </span>
-        </div>
-
-        {feedback.message ? (
-          <div
-            className={`patient-message ${
-              feedback.type === "error"
-                ? "patient-message-error"
-                : feedback.type === "success"
-                  ? "patient-message-success"
-                  : "patient-message-info"
-            }`}
-          >
-            {feedback.message}
-          </div>
-        ) : null}
-
-        {isAuthenticated ? (
-          <div className="patient-empty-state">
-            <p className="patient-form-help" style={{ margin: 0 }}>
-              Signed in as <strong>{fullName || "Patient account"}</strong>{patientPhone ? ` on ${patientPhone}` : ""}.
-            </p>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.7rem" }}>
-              <Link to={patientTrackPath} className="patient-button" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-                Open my updates
-              </Link>
-              <button type="button" className="patient-button-secondary" onClick={handleSignOut}>
-                Sign out
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="patient-empty-state">
-            <p className="patient-form-help" style={{ margin: 0 }}>
-              Sign in to your patient account before viewing notifications, delivery progress, or prescription updates.
-            </p>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.7rem" }}>
-              <Link to={patientLoginPath} className="patient-button" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-                Sign in to patient account
-              </Link>
-              <Link to={createPatientPath("/patient/register")} className="patient-button-secondary" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-                Create my account
-              </Link>
-            </div>
-          </div>
-        )}
       </section>
     </div>
   )
