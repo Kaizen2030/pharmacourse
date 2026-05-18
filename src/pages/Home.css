@@ -132,33 +132,32 @@
 }
 
 .home .service-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 18px;
+  width: auto;
+  height: auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 1rem;
-  color: #fff;
+  margin-bottom: 0.85rem;
+  background: transparent;
 }
 
 .home .service-icon-mark {
-  width: 34px;
-  height: 34px;
+  width: 48px;
+  height: 48px;
   display: block;
   object-fit: contain;
 }
 
 .home .service-icon.pharmacyos {
-  background: linear-gradient(135deg, #0f6e56, #12a17d);
+  background: transparent;
 }
 
 .home .service-icon.remedacareos {
-  background: linear-gradient(135deg, #1a3a8a, #285bd1);
+  background: transparent;
 }
 
 .home .service-icon.pharmacourse {
-  background: linear-gradient(135deg, #0f6e56, #1a6bb5);
+  background: transparent;
 }
 
 .home .service-showcase h3 {
