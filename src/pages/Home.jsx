@@ -74,7 +74,7 @@ const DEFAULT_SECTIONS = {
     subheading: "A Kenyan HMIS with consultations, laboratory, radiology, chronic disease follow-up, antibiogram, care pathways, AMS, finance, claims, and RemedacarePOS integration.",
     badge_text: "RemedacareHMS",
     primary_btn_text: "Explore RemedacareHMS",
-    primary_btn_url: "/remedacarehmis",
+    primary_btn_url: "/remedacarehms",
     video_url: "/images/remedacareos-demo.mp4",
   },
   features: {
@@ -552,7 +552,7 @@ export default function Home() {
                         </div>
                         <h3>RemedacareHMS</h3>
                         <p>Hospital management software connecting clinicians, laboratory, radiology, chronic care, finance, AMS, and pharmacy workflows in one system.</p>
-                        <Link to="/remedacarehmis" className="service-link">Explore RemedacareHMS <ChevronRight size={16} /></Link>
+                        <Link to="/remedacarehms" className="service-link">Explore RemedacareHMS <ChevronRight size={16} /></Link>
                       </div>
 
                       <div className="service-showcase">
@@ -648,7 +648,7 @@ export default function Home() {
                         <span className="platform-status">Available</span>
                         <h3>RemedacareHMS</h3>
                         <p>Full HMIS with chronic disease tracking, care pathways, antibiogram intelligence, referrals, finance, and MOH reporting.</p>
-                        <Link to="/remedacarehmis" className="platform-link">Explore RemedacareHMS <ChevronRight size={16} /></Link>
+                        <Link to="/remedacarehms" className="platform-link">Explore RemedacareHMS <ChevronRight size={16} /></Link>
                       </div>
                     </div>
                   </div>
@@ -728,7 +728,7 @@ export default function Home() {
                           ))}
                         </div>
 
-                        <Link to="/remedacarehmis" className="btn-primary">
+                        <Link to="/remedacarehms" className="btn-primary">
                           {config.primary_btn_text || "Explore RemedacareHMS"}
                         </Link>
                       </div>
