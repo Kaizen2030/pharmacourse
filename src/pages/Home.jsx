@@ -35,26 +35,26 @@ const DEFAULT_SECTIONS = {
   hero: {
     enabled: true,
     order: 1,
-    heading: "Transform Pharmacy Operations & Education",
-    subheading: "An integrated platform combining clinic management, healthcare delivery, and professional education in one ecosystem.",
+    heading: "One connected ecosystem for pharmacy, telepharmacy, and hospital care.",
+    subheading: "PharmaCourse brings together professional education, RemedacarePOS for modern pharmacy operations, and RemedacareHMIS for hospital-wide clinical and financial workflows.",
     badge_text: "Complete Pharmacy Ecosystem",
     primary_btn_text: "Book Platform Demo",
     primary_btn_url: WHATSAPP,
-    secondary_btn_text: "Start Learning",
-    secondary_btn_url: "/courses",
+    secondary_btn_text: "Explore Platforms",
+    secondary_btn_url: "#ecosystem",
     video_url: "/images/pharmacourse-demo.mp4",
   },
   ecosystem: {
     enabled: true,
     order: 2,
-    heading: "One company. Three platforms. Built for pharmacy in Africa.",
-    subheading: "AI-powered pharmacy technology for Kenyan and African healthcare",
+    heading: "Three connected products. One stronger healthcare stack.",
+    subheading: "Education, pharmacy operations, and hospital management designed to work together instead of as disconnected tools.",
     badge_text: "The RemedaCare Ecosystem",
   },
   pharmacyOS: {
     enabled: true,
     order: 3,
-    heading: "Everything your pharmacy needs. In one desktop app.",
+    heading: "Telepharmacy-ready pharmacy operations in one desktop app.",
     subheading: "Built for Kenyan pharmacies with telepharmacy, dispensing, inventory, claims, delivery coordination, M-Pesa, eTIMS/KRA, and PPB control in one workflow.",
     badge_text: "RemedacarePOS",
     primary_btn_text: "Book a Demo",
@@ -64,7 +64,7 @@ const DEFAULT_SECTIONS = {
   remedacareOS: {
     enabled: true,
     order: 4,
-    heading: "Clinical depth, operational control, and one connected care system.",
+    heading: "Clinical depth, chronic care, and hospital-wide operational control.",
     subheading: "A Kenyan HMIS with consultations, laboratory, radiology, chronic disease follow-up, antibiogram, care pathways, AMS, finance, claims, and RemedacarePOS integration.",
     badge_text: "RemedacareHMIS",
     primary_btn_text: "Explore RemedacareHMIS",
@@ -106,8 +106,8 @@ const DEFAULT_SECTIONS = {
   cta: {
     enabled: true,
     order: 10,
-    heading: "Ready to transform your pharmacy practice?",
-    subheading: "Join PharmaCourse for learning, or book a demo to see RemedacarePOS and RemedacareHMIS in action.",
+    heading: "Ready to modernise the way your team delivers care?",
+    subheading: "Join PharmaCourse for learning, or book a live walkthrough of RemedacarePOS and RemedacareHMIS in action.",
     primary_btn_text: "Start Learning Free",
     primary_btn_url: "/register",
     secondary_btn_text: "Book a Demo",
@@ -494,7 +494,7 @@ export default function Home() {
                         </div>
                         <h3>RemedacarePOS</h3>
                         <p>Telepharmacy-ready pharmacy software for dispensing, inventory, patient requests, delivery coordination, claims, and branch workflow in one system.</p>
-                        <Link to="/remedacarepos" className="service-link">Learn More <ChevronRight size={16} /></Link>
+                        <Link to="/remedacarepos" className="service-link">Explore POS <ChevronRight size={16} /></Link>
                       </div>
 
                       <div className="service-showcase">
@@ -503,7 +503,7 @@ export default function Home() {
                         </div>
                         <h3>RemedacareHMIS</h3>
                         <p>Hospital management software connecting clinicians, laboratory, radiology, chronic care, finance, AMS, and pharmacy workflows in one system.</p>
-                        <Link to="/remedacarehmis" className="service-link">Learn More <ChevronRight size={16} /></Link>
+                        <Link to="/remedacarehmis" className="service-link">Explore HMIS <ChevronRight size={16} /></Link>
                       </div>
 
                       <div className="service-showcase">
