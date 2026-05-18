@@ -55,8 +55,20 @@ begin
             status,
             created_at,
             fulfillment_drug_name,
+            fulfillment_items,
+            fulfillment_qty,
+            receipt_total_kes,
+            receipt_number,
+            dispensed_at,
             pharmacist_notes,
-            patient_fulfillment_choice
+            patient_fulfillment_choice,
+            (
+              select deliveries.status
+              from public.deliveries
+              where deliveries.prescription_request_id = prescription_requests.id
+              order by deliveries.created_at desc
+              limit 1
+            ) as linked_delivery_status
           from public.prescription_requests, normalized
           where pharmacy_id = target_pharmacy_id
             and patient_phone = normalized.phone
@@ -100,7 +112,8 @@ begin
             rider_phone,
             estimated_delivery_minutes,
             status,
-            created_at
+            created_at,
+            delivered_at
           from public.deliveries, normalized
           where pharmacy_id = target_pharmacy_id
             and patient_phone = normalized.phone
@@ -184,7 +197,7 @@ begin
         coalesce((
           select jsonb_agg(row_to_json(request_rows))
           from (
-            select id, drug_requested, condition_notes, status, created_at
+            select id, drug_requested, condition_notes, status, created_at, fulfillment_drug_name, fulfillment_items, fulfillment_qty, receipt_total_kes, receipt_number, dispensed_at
             from public.prescription_requests, normalized
             where pharmacy_id = pharmacies.id and patient_phone = normalized.phone
             order by created_at desc
@@ -204,7 +217,7 @@ begin
         coalesce((
           select jsonb_agg(row_to_json(delivery_rows))
           from (
-            select id, patient_address, items, status, created_at
+            select id, patient_address, items, total_kes, status, created_at, delivered_at
             from public.deliveries, normalized
             where pharmacy_id = pharmacies.id and patient_phone = normalized.phone
             order by created_at desc
