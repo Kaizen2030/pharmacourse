@@ -109,7 +109,7 @@ export default function Navbar() {
           onClick={() => handleDesktopDropdownToggle(name)}
         >
           <span>{label}</span>
-          <span className={`nav-chevron${isOpen ? " open" : ""}`}>▾</span>
+          <span className={`nav-chevron${isOpen ? " open" : ""}`}>v</span>
         </button>
 
         {isOpen ? (
@@ -175,7 +175,7 @@ export default function Navbar() {
                 >
                   <span className="nav-user-avatar">{firstName.charAt(0).toUpperCase()}</span>
                   <span>{firstName}</span>
-                  <span className={`nav-chevron${userMenuOpen ? " open" : ""}`}>▾</span>
+                  <span className={`nav-chevron${userMenuOpen ? " open" : ""}`}>v</span>
                 </button>
 
                 {userMenuOpen ? (
@@ -258,7 +258,7 @@ export default function Navbar() {
               onClick={() => toggleMobileSection("learn")}
             >
               <span>Learn</span>
-              <span className={`nav-chevron${mobileSections.learn ? " open" : ""}`}>▾</span>
+              <span className={`nav-chevron${mobileSections.learn ? " open" : ""}`}>v</span>
             </button>
             {mobileSections.learn ? (
               <div className="nav-drawer-subgroup">
@@ -279,7 +279,7 @@ export default function Navbar() {
               onClick={() => toggleMobileSection("products")}
             >
               <span>Platforms</span>
-              <span className={`nav-chevron${mobileSections.products ? " open" : ""}`}>▾</span>
+              <span className={`nav-chevron${mobileSections.products ? " open" : ""}`}>v</span>
             </button>
             {mobileSections.products ? (
               <div className="nav-drawer-subgroup">

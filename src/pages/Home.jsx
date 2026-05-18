@@ -8,8 +8,8 @@ import { SITE_URL } from "../lib/siteConfig"
 import { formatBlogDate, getBlogCategoryLabel, getBlogCoverFallback, getBlogExcerpt } from "../lib/blogHelpers"
 import pharmacyosDashboard from "../assets/pharmacyos-dashboard.svg"
 import pharmacourseHeroVisual from "../assets/pharmacourse-hero-visual.svg"
-import remedacarehmisMark from "../assets/remedacarehmis-mark.svg"
-import remedacareposMark from "../assets/remedacarepos-mark.svg"
+import remedacarehmisMark from "../assets/remedacarehmis-mark.png"
+import remedacareposMark from "../assets/remedacarepos-mark.png"
 import remedacareDashboard from "../assets/remedacare-dashboard.svg"
 import {
   BookOpen,
@@ -507,7 +507,9 @@ export default function Home() {
                       </div>
 
                       <div className="service-showcase">
-                        <div className="service-icon pharmacourse"><BookOpen size={32} /></div>
+                        <div className="service-icon pharmacourse">
+                          <img src="/favicon.svg" alt="PharmaCourse logo" className="service-icon-mark" />
+                        </div>
                         <h3>PharmaCourse</h3>
                         <p>Professional CPD courses with certificates to help pharmacy teams keep sharpening practical skills.</p>
                         <Link to="/courses" className="service-link">Explore Courses <ChevronRight size={16} /></Link>
@@ -565,7 +567,11 @@ export default function Home() {
 
                     <div className="platform-grid">
                       <div className="platform-card">
-                        <BookOpen size={32} />
+                        <img
+                          src="/favicon.svg"
+                          alt="PharmaCourse logo"
+                          style={{ width: 32, height: 32, objectFit: "contain" }}
+                        />
                         <span className="platform-status">Live Now</span>
                         <h3>PharmaCourse</h3>
                         <p>Online CPD learning platform with self-paced courses, certificates, and clinical case simulations.</p>
@@ -573,7 +579,11 @@ export default function Home() {
                       </div>
 
                       <div className="platform-card featured">
-                        <ShoppingCart size={32} />
+                        <img
+                          src={remedacareposMark}
+                          alt="RemedacarePOS logo"
+                          style={{ width: 32, height: 32, objectFit: "contain" }}
+                        />
                         <span className="platform-status">Available</span>
                         <h3>RemedacarePOS</h3>
                         <p>Telepharmacy-ready dispensary operations with POS, inventory, claims, delivery visibility, and M-Pesa integration.</p>
@@ -581,7 +591,11 @@ export default function Home() {
                       </div>
 
                       <div className="platform-card">
-                        <Building2 size={32} />
+                        <img
+                          src={remedacarehmisMark}
+                          alt="RemedacareHMIS logo"
+                          style={{ width: 32, height: 32, objectFit: "contain" }}
+                        />
                         <span className="platform-status">Available</span>
                         <h3>RemedacareHMIS</h3>
                         <p>Full HMIS with chronic disease tracking, care pathways, antibiogram intelligence, referrals, finance, and MOH reporting.</p>
