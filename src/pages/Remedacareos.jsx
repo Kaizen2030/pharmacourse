@@ -9,7 +9,7 @@ import {
   ChevronRight, Stethoscope, TrendingUp,
 } from "lucide-react"
 
-const WHATSAPP = "https://wa.me/254790059584?text=Hi%20Julius%2C%20I%27d%20like%20to%20book%20a%20demo%20of%20RemedacareHMIS."
+const WHATSAPP = "https://wa.me/254790059584?text=Hi%20Julius%2C%20I%27d%20like%20to%20book%20a%20demo%20of%20RemedacareHMS."
 
 const modules = [
   { icon: ClipboardList, label: "Patient Records", desc: "Complete electronic health records with visit history, diagnoses, allergies and vitals." },
@@ -279,13 +279,13 @@ export default function RemedacareOS() {
   return (
     <div style={{ fontFamily: "'Outfit', 'Segoe UI', sans-serif", background: "#f8faf9", minHeight: "100vh" }}>
       <SEO
-        title="RemedacareHMIS Kenya"
-        description="RemedacareHMIS is a Kenyan hospital management system with patient records, MOH reports, SHA claims, billing, and RemedacarePOS integration."
-        path="/remedacarehmis"
+        title="RemedacareHMS Kenya"
+        description="RemedacareHMS is a Kenyan hospital management system with patient records, MOH reports, SHA claims, billing, and RemedacarePOS integration."
+        path="/remedacarehms"
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "SoftwareApplication",
-          name: "RemedacareHMIS",
+          name: "RemedacareHMS",
           applicationCategory: "BusinessApplication",
           operatingSystem: "Cloud",
           description:
@@ -309,7 +309,7 @@ export default function RemedacareOS() {
 
         <div style={{ position: "relative", maxWidth: 820, margin: "0 auto" }}>
           <span className="rc-hero-badge" style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.22)", borderRadius: 99, fontSize: 11, fontWeight: 700, letterSpacing: 1.8, padding: "7px 18px", marginBottom: 28, textTransform: "uppercase" }}>
-            RemedacareHMIS - Hospital Management System
+            RemedacareHMS - Hospital Management System
           </span>
 
           <h1 style={{ fontSize: "clamp(2.2rem, 5.5vw, 3.6rem)", fontWeight: 800, lineHeight: 1.12, margin: "0 0 22px", letterSpacing: "-0.02em" }}>
@@ -342,7 +342,7 @@ export default function RemedacareOS() {
       <section className="rc-section" style={{ padding: "80px 24px", background: "#f8faf9" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <div className="rc-section-heading" style={{ textAlign: "center", marginBottom: 52 }}>
-            <span style={{ color: GREEN, fontWeight: 700, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase" }}>Why RemedacareHMIS</span>
+            <span style={{ color: GREEN, fontWeight: 700, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase" }}>Why RemedacareHMS</span>
             <h2 style={{ fontSize: "clamp(1.6rem, 3vw, 2.3rem)", fontWeight: 800, margin: "14px 0 0", color: DARK, letterSpacing: "-0.02em" }}>
               Kenya's hospital software - finally done right.
             </h2>
@@ -376,11 +376,11 @@ export default function RemedacareOS() {
                 Prescriptions flow directly to the dispensary.
               </h3>
               <p style={{ color: "#3a6b57", fontSize: 15, lineHeight: 1.75, margin: "0 0 24px" }}>
-                When a doctor issues a prescription in RemedacareHMIS, it lands instantly in RemedacarePOS with no paper, no transcription errors and no delays.
+                When a doctor issues a prescription in RemedacareHMS, it lands instantly in RemedacarePOS with no paper, no transcription errors and no delays.
               </p>
               <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
                 {[
-                  "Doctor issues prescription in RemedacareHMIS",
+                  "Doctor issues prescription in RemedacareHMS",
                   "Pharmacist sees it live in RemedacarePOS",
                   "Drug dispensed and stock auto-updated",
                   "Patient billed across both systems",
@@ -395,7 +395,7 @@ export default function RemedacareOS() {
             <div className="rc-integration-shot" style={{ background: "#ffffff", borderRadius: 20, padding: 14, border: "1px solid #cfe5dc", boxShadow: "0 12px 36px rgba(15,110,86,0.16)" }}>
               <img
                 src={remedacareDashboard}
-                alt="RemedacareHMIS dashboard showing patient, admissions, finance and pharmacy workflow panels"
+                alt="RemedacareHMS dashboard showing patient, admissions, finance and pharmacy workflow panels"
                 style={{ display: "block", width: "100%", height: "auto", borderRadius: 14, border: "1px solid #dbe8e2" }}
               />
             </div>
@@ -450,7 +450,7 @@ export default function RemedacareOS() {
                 Built around Kenya's health system standards.
               </h2>
               <p style={{ color: "#666", fontSize: 15, lineHeight: 1.75, marginBottom: 32 }}>
-                RemedacareHMIS handles every Kenyan regulatory requirement out of the box so your clinical staff can focus on patients, not paperwork.
+                RemedacareHMS handles every Kenyan regulatory requirement out of the box so your clinical staff can focus on patients, not paperwork.
               </p>
               <a href={WHATSAPP} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: GREEN, color: "#fff", textDecoration: "none", padding: "13px 24px", borderRadius: 10, fontWeight: 700, fontSize: 14, boxShadow: "0 4px 16px rgba(15,110,86,0.3)" }}>
                 Book a Live Demo <ChevronRight size={16} />
@@ -478,7 +478,7 @@ export default function RemedacareOS() {
               New workflows for real frontline hospital care.
             </h2>
             <p style={{ color: "#556", fontSize: 15, lineHeight: 1.75, maxWidth: 700, margin: "0 auto" }}>
-              RemedacareHMIS is not just records and billing. It now brings together live consultation routing, antibiogram intelligence, chronic disease follow-up, guided care pathways, AMS workflows, department visibility, and a stronger pharmacy handoff.
+              RemedacareHMS is not just records and billing. It now brings together live consultation routing, antibiogram intelligence, chronic disease follow-up, guided care pathways, AMS workflows, department visibility, and a stronger pharmacy handoff.
             </p>
           </div>
 
@@ -532,7 +532,7 @@ export default function RemedacareOS() {
             Ready to transform your hospital's operations?
           </h2>
           <p style={{ color: "rgba(255,255,255,0.72)", fontSize: 16, lineHeight: 1.75, marginBottom: 40 }}>
-            RemedacareHMIS is available now for Kenyan hospitals and clinics. Book a free demo and see the full HMIS live across patient registration, consultations, chronic care, laboratory, finance, AMS, and MOH reporting.
+            RemedacareHMS is available now for Kenyan hospitals and clinics. Book a free demo and see the full HMIS live across patient registration, consultations, chronic care, laboratory, finance, AMS, and MOH reporting.
           </p>
           <div className="rc-cta-actions" style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
             <a href={WHATSAPP} target="_blank" rel="noreferrer" className="rc-btn-white" style={{ background: "#fff", color: GREEN, fontWeight: 700, padding: "15px 30px", borderRadius: 10, textDecoration: "none", fontSize: 15, display: "flex", alignItems: "center", gap: 8, boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}>

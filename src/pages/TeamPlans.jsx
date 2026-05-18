@@ -120,7 +120,7 @@ export default function TeamPlans() {
           <h1>Train your entire pharmacy team</h1>
           <p>
             Bulk CPD compliance, SHA readiness, and structured team learning for pharmacies, hospitals, and
-            organizations already running RemedacarePOS or RemedacareHMIS.
+            organizations already running RemedacarePOS or RemedacareHMS.
           </p>
           <a href={WHATSAPP_DEMO_LINK} target="_blank" rel="noreferrer" className="btn btn-primary">
             Enquire on WhatsApp

@@ -120,6 +120,7 @@ function AppShell() {
         <Route path="/simulation/:simulationId" element={<CaseSimulation />} />
         <Route path="/pharmacyos" element={<PharmacyOS />} />
         <Route path="/remedacarepos" element={<PharmacyOS />} />
+        <Route path="/remedacarehms" element={<RemedacareOS />} />
         <Route path="/remedacareos" element={<RemedacareOS />} />
         <Route path="/remedacarehmis" element={<RemedacareOS />} />
         <Route path="/community" element={<Community />} />
@@ -138,8 +139,9 @@ function AppShell() {
           <Route path="track" element={<PatientTrack />} />
         </Route>
 
-        <Route path="/reset/remedacare" element={<ResetRedirect app="remedacarehmis" />} />
-        <Route path="/reset/remedacarehmis" element={<ResetRedirect app="remedacarehmis" />} />
+        <Route path="/reset/remedacarehms" element={<ResetRedirect app="remedacarehms" />} />
+        <Route path="/reset/remedacare" element={<ResetRedirect app="remedacarehms" />} />
+        <Route path="/reset/remedacarehmis" element={<ResetRedirect app="remedacarehms" />} />
         <Route path="/reset/pharmacyos" element={<ResetRedirect app="remedacarepos" />} />
         <Route path="/reset/remedacarepos" element={<ResetRedirect app="remedacarepos" />} />
       </Routes>

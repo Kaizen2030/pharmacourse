@@ -21,7 +21,7 @@ export default function Footer() {
               <div className="site-footer-heading">Products</div>
               <ul className="footer-links site-footer-links">
                 <li><Link to="/remedacarepos">RemedacarePOS</Link></li>
-                <li><Link to="/remedacarehmis">RemedacareHMS</Link></li>
+                <li><Link to="/remedacarehms">RemedacareHMS</Link></li>
                 <li><Link to="/patient">Patient Portal</Link></li>
               </ul>
             </div>
