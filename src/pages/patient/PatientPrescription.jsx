@@ -1,13 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import { ImagePlus, UserRound } from "lucide-react"
+import { ImagePlus, ShieldCheck, UserRound } from "lucide-react"
 import { Link } from "react-router-dom"
 import { usePatient } from "../../components/PatientLayout"
+import { usePatientPortalAuth } from "../../hooks/usePatientPortalAuth"
 import { pharmacyosClient } from "../../lib/pharmacyosClient"
 import { getPatientPortalSession, savePatientPortalSession } from "../../lib/patientPortalSession"
-
-function isValidPhone(phone) {
-  return /^07\d{8}$/.test(phone)
-}
 
 function sanitizeFileName(fileName) {
   return fileName.replace(/[^a-zA-Z0-9.-]/g, "-").toLowerCase()
@@ -16,7 +13,6 @@ function sanitizeFileName(fileName) {
 export default function PatientPrescription() {
   const { pharmacyId, createPatientPath } = usePatient()
   const rememberedSession = getPatientPortalSession(pharmacyId)
-  const [phone, setPhone] = useState(rememberedSession?.phone || "")
   const [patient, setPatient] = useState(null)
   const [lookupMessage, setLookupMessage] = useState({ type: "", message: "" })
   const [isLookingUp, setIsLookingUp] = useState(false)
@@ -26,6 +22,9 @@ export default function PatientPrescription() {
   const [submitMessage, setSubmitMessage] = useState({ type: "", message: "" })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const autoLookupDoneRef = useRef(false)
+  const { loading: authLoading, isAuthenticated, patientPhone, fullName } = usePatientPortalAuth()
+  const loginPath = createPatientPath("/patient/login")
+  const registerPath = createPatientPath("/patient/register")
 
   useEffect(() => {
     if (!patient) {
@@ -43,13 +42,17 @@ export default function PatientPrescription() {
     }
   }, [patient, conditionNotes])
 
-  const handleLookup = useCallback(async (event, phoneOverride) => {
-    event.preventDefault()
+  const handleLookup = useCallback(async () => {
+    const normalizedPhone = String(patientPhone || "").trim()
 
-    const normalizedPhone = String(phoneOverride ?? phone).trim()
+    if (!isAuthenticated) {
+      setLookupMessage({ type: "error", message: "Sign in to your patient account before confirming your profile." })
+      setPatient(null)
+      return
+    }
 
-    if (!isValidPhone(normalizedPhone)) {
-      setLookupMessage({ type: "error", message: "Enter a valid phone number in the format 07XXXXXXXX." })
+    if (!normalizedPhone) {
+      setLookupMessage({ type: "error", message: "Your patient account does not have a linked phone number. Please contact the pharmacy team." })
       setPatient(null)
       return
     }
@@ -58,15 +61,13 @@ export default function PatientPrescription() {
     setLookupMessage({ type: "", message: "" })
     setSubmitMessage({ type: "", message: "" })
 
-    const { data, error } = await pharmacyosClient.functions.invoke("patient-portal-profile", {
-      body: {
-        pharmacy_id: pharmacyId,
-        phone: normalizedPhone,
-      },
+    const { data, error } = await pharmacyosClient.rpc("public_patient_portal_profile", {
+      target_pharmacy_id: pharmacyId,
+      target_phone: normalizedPhone,
     })
 
-    if (error || data?.error) {
-      setLookupMessage({ type: "error", message: error?.message || data?.error || "We could not verify this patient right now." })
+    if (error) {
+      setLookupMessage({ type: "error", message: error?.message || "We could not verify this patient right now." })
       setPatient(null)
       setIsLookingUp(false)
       return
@@ -90,7 +91,7 @@ export default function PatientPrescription() {
       message: `Welcome back ${data.patient.full_name}. You can submit your prescription request below.`,
     })
     setIsLookingUp(false)
-  }, [phone, pharmacyId])
+  }, [isAuthenticated, patientPhone, pharmacyId])
 
   async function handleSubmit(event) {
     event.preventDefault()
@@ -155,55 +156,61 @@ export default function PatientPrescription() {
       return
     }
 
-    if (!rememberedSession?.phone || patient || !isValidPhone(rememberedSession.phone)) {
+    if (authLoading || !isAuthenticated || !patientPhone || patient) {
       return
     }
 
     autoLookupDoneRef.current = true
-
-    const fakeEvent = { preventDefault() {} }
-    handleLookup(fakeEvent, rememberedSession.phone)
-  }, [rememberedSession, patient, handleLookup])
+    void handleLookup()
+  }, [authLoading, isAuthenticated, patientPhone, patient, handleLookup])
 
   return (
     <div className="patient-page">
       <section className="patient-card patient-card-muted patient-hero">
         <span className="patient-badge">Prescription request</span>
         <h1>Request a refill or review</h1>
-        <p className="patient-copy">Start with your registered phone number, then upload a prescription photo for the pharmacist to review.</p>
+        <p className="patient-copy">Sign in with your patient account, then upload a prescription photo for the pharmacist to review securely.</p>
       </section>
 
       <section className="patient-card">
         <div className="patient-section-header">
           <div>
-            <h2 className="patient-section-title">Step 1: Confirm your phone number</h2>
-            <p className="patient-form-help">We will look up your patient profile at this branch.</p>
+            <h2 className="patient-section-title">Step 1: Confirm your signed-in patient account</h2>
+            <p className="patient-form-help">We will look up your patient profile at this branch using the phone number linked to your account.</p>
           </div>
           <span className="patient-inline-icon">
-            <UserRound />
+            <ShieldCheck />
           </span>
         </div>
 
-        <form className="patient-form" onSubmit={handleLookup}>
-          <div className="patient-form-group">
-            <label className="patient-label" htmlFor="lookupPhone">
-              Phone number
-            </label>
-            <input
-              id="lookupPhone"
-              className="patient-input"
-              type="tel"
-              inputMode="tel"
-              placeholder="07XXXXXXXX"
-              value={phone}
-              onChange={(event) => setPhone(event.target.value)}
-            />
-          </div>
+        {authLoading ? <div className="patient-form-help">Loading your patient account...</div> : null}
 
-          <button className="patient-button-secondary" type="submit" disabled={isLookingUp}>
-            {isLookingUp ? "Checking profile..." : "Find my profile"}
-          </button>
-        </form>
+        {!authLoading && !isAuthenticated ? (
+          <div className="patient-empty-state">
+            <p className="patient-form-help" style={{ margin: 0 }}>
+              Sign in first so this page can load only your own patient profile.
+            </p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.7rem" }}>
+              <Link to={loginPath} className="patient-button" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                Sign in to continue
+              </Link>
+              <Link to={registerPath} className="patient-button-secondary" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                Create my account
+              </Link>
+            </div>
+          </div>
+        ) : null}
+
+        {!authLoading && isAuthenticated ? (
+          <div className="patient-empty-state">
+            <p className="patient-form-help" style={{ margin: 0 }}>
+              Signed in as <strong>{fullName || rememberedSession?.fullName || "Patient account"}</strong>{patientPhone ? ` on ${patientPhone}` : ""}.
+            </p>
+            <button className="patient-button-secondary" type="button" onClick={() => void handleLookup()} disabled={isLookingUp}>
+              {isLookingUp ? "Checking profile..." : "Load my profile"}
+            </button>
+          </div>
+        ) : null}
 
         {lookupMessage.message ? (
           <div
@@ -219,7 +226,7 @@ export default function PatientPrescription() {
             {lookupMessage.type === "info" ? (
               <>
                 {" "}
-                <Link to={createPatientPath("/patient/register")} style={{ fontWeight: 800, textDecoration: "underline" }}>
+                <Link to={registerPath} style={{ fontWeight: 800, textDecoration: "underline" }}>
                   Register here
                 </Link>
                 .
