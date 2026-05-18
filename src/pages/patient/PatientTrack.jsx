@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
 import { jsPDF } from "jspdf"
-import { ArrowUpRight, BellRing, CalendarClock, ClipboardList, PackageSearch, Video } from "lucide-react"
+import { ArrowUpRight, BellRing, CalendarClock, ClipboardList, PackageSearch, Video, X } from "lucide-react"
 import { Link } from "react-router-dom"
 import TurnstileWidget from "../../components/TurnstileWidget"
 import { usePatient } from "../../components/PatientLayout"
@@ -52,7 +52,7 @@ function getStatusClass(status) {
   const normalizedStatus = (status || "").toLowerCase().replace(/\s+/g, "-")
 
   if (
-    ["pending", "packed", "dispatched", "delivered", "confirmed", "ready", "completed", "cancelled", "rejected"].includes(
+    ["pending", "packed", "dispatched", "delivered", "confirmed", "ready", "completed", "cancelled", "rejected", "approved", "dispensed"].includes(
       normalizedStatus,
     )
   ) {
@@ -125,6 +125,189 @@ function buildReceiptEntries(requests = []) {
     })
 }
 
+function uniqueCompactList(values = []) {
+  return Array.from(new Set(values.map((value) => String(value || "").trim()).filter(Boolean)))
+}
+
+function getRequestedDrugs(request) {
+  const fulfillmentItems = Array.isArray(request?.fulfillment_items) ? request.fulfillment_items : []
+  const itemNames = uniqueCompactList(
+    fulfillmentItems.flatMap((item) => [item?.drug_name, item?.requestedDrug, item?.requested_drug]),
+  )
+
+  if (itemNames.length) {
+    return itemNames
+  }
+
+  const requested = String(request?.drug_requested || request?.fulfillment_drug_name || "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean)
+
+  return uniqueCompactList(requested)
+}
+
+function getRequestHeadline(request) {
+  const drugs = getRequestedDrugs(request)
+  if (!drugs.length) {
+    return "Prescription request"
+  }
+  if (drugs.length === 1) {
+    return drugs[0]
+  }
+  return `${drugs[0]} +${drugs.length - 1} more`
+}
+
+function getRequestProgressState(request) {
+  const linkedDeliveryStatus = String(request?.linked_delivery_status || "").trim().toLowerCase()
+  const fulfillmentChoice = String(request?.patient_fulfillment_choice || "").trim().toLowerCase()
+  const status = String(request?.status || "").trim().toLowerCase()
+
+  if (linkedDeliveryStatus === "delivered") {
+    return { label: "Delivered", tone: "delivered" }
+  }
+  if (linkedDeliveryStatus === "dispatched") {
+    return { label: "Dispatched", tone: "dispatched" }
+  }
+  if (linkedDeliveryStatus === "packed") {
+    return { label: "Packed", tone: "packed" }
+  }
+  if (fulfillmentChoice === "delivery_requested" && !linkedDeliveryStatus) {
+    return { label: "Delivery requested", tone: "pending" }
+  }
+  if (status === "dispensed" && fulfillmentChoice === "pickup") {
+    return { label: "Ready for pickup", tone: "ready" }
+  }
+  if (status === "dispensed") {
+    return { label: "Dispensed", tone: "dispensed" }
+  }
+  if (status === "approved" && !fulfillmentChoice) {
+    return { label: "Action needed", tone: "approved" }
+  }
+  if (status === "approved") {
+    return { label: "Approved", tone: "approved" }
+  }
+  if (status === "rejected") {
+    return { label: "Rejected", tone: "rejected" }
+  }
+  if (status === "cancelled") {
+    return { label: "Cancelled", tone: "cancelled" }
+  }
+
+  return { label: "Under review", tone: "pending" }
+}
+
+function getRequestProgressSummary(request) {
+  const linkedDeliveryStatus = String(request?.linked_delivery_status || "").trim().toLowerCase()
+  const fulfillmentChoice = String(request?.patient_fulfillment_choice || "").trim().toLowerCase()
+  const status = String(request?.status || "").trim().toLowerCase()
+
+  if (linkedDeliveryStatus === "delivered") {
+    return "This order was delivered. The completed receipt is available below."
+  }
+  if (linkedDeliveryStatus) {
+    return "The pharmacy has started the live delivery run and will keep updating this order until it reaches you."
+  }
+  if (fulfillmentChoice === "delivery_requested") {
+    return "Delivery was requested. The branch now needs to dispense the order and create the live dispatch card."
+  }
+  if (status === "approved" && !fulfillmentChoice) {
+    return "The pharmacist approved this request. Choose pickup or delivery to keep the order moving."
+  }
+  if (status === "approved") {
+    return "The pharmacist approved this request and is waiting for the next fulfillment step."
+  }
+  if (status === "dispensed" && fulfillmentChoice === "pickup") {
+    return "This order is ready for collection at the branch."
+  }
+  if (status === "rejected") {
+    return "This request was not approved. Review the pharmacist note and decide on the next step."
+  }
+
+  return "The branch is still reviewing this request."
+}
+
+function buildProgressEvents(request) {
+  const events = [
+    {
+      id: `${request?.id || "request"}-submitted`,
+      title: "Request submitted",
+      note: "The patient request reached the branch for review.",
+      at: request?.created_at || "",
+      tone: "pending",
+    },
+  ]
+
+  const status = String(request?.status || "").trim().toLowerCase()
+  const fulfillmentChoice = String(request?.patient_fulfillment_choice || "").trim().toLowerCase()
+  const linkedDeliveryStatus = String(request?.linked_delivery_status || "").trim().toLowerCase()
+
+  if (status === "approved") {
+    events.push({
+      id: `${request?.id}-approved`,
+      title: "Approved by pharmacist",
+      note: request?.pharmacist_notes || "The branch approved the request and is waiting for the next fulfillment choice.",
+      at: request?.updated_at || request?.created_at || "",
+      tone: "approved",
+    })
+  }
+
+  if (status === "rejected") {
+    events.push({
+      id: `${request?.id}-rejected`,
+      title: "Request not approved",
+      note: request?.pharmacist_notes || "The branch declined this request.",
+      at: request?.updated_at || request?.created_at || "",
+      tone: "rejected",
+    })
+  }
+
+  if (fulfillmentChoice === "pickup") {
+    events.push({
+      id: `${request?.id}-pickup`,
+      title: "Pickup selected",
+      note: "The patient confirmed branch pickup for this order.",
+      at: request?.updated_at || request?.created_at || "",
+      tone: "ready",
+    })
+  }
+
+  if (fulfillmentChoice === "delivery_requested") {
+    events.push({
+      id: `${request?.id}-delivery-requested`,
+      title: "Delivery requested",
+      note: request?.fulfillment_address || "The patient asked for delivery after approval.",
+      at: request?.updated_at || request?.created_at || "",
+      tone: "pending",
+    })
+  }
+
+  if (status === "dispensed") {
+    events.push({
+      id: `${request?.id}-dispensed`,
+      title: "Dispensed by branch",
+      note: request?.pharmacist_notes || "The branch issued the medicines for pickup or delivery.",
+      at: request?.dispensed_at || request?.updated_at || request?.created_at || "",
+      tone: "dispensed",
+    })
+  }
+
+  if (linkedDeliveryStatus) {
+    events.push({
+      id: `${request?.id}-delivery-live`,
+      title: linkedDeliveryStatus.charAt(0).toUpperCase() + linkedDeliveryStatus.slice(1),
+      note:
+        linkedDeliveryStatus === "delivered"
+          ? "The branch marked this delivery as completed."
+          : "The branch is actively moving this order through delivery.",
+      at: request?.updated_at || request?.created_at || "",
+      tone: linkedDeliveryStatus,
+    })
+  }
+
+  return events
+}
+
 export default function PatientTrack() {
   const { pharmacyId, branchName, createPatientPath } = usePatient()
   const rememberedSession = getPatientPortalSession(pharmacyId)
@@ -149,16 +332,27 @@ export default function PatientTrack() {
   const [trackingDeliveryAddresses, setTrackingDeliveryAddresses] = useState({})
   const [turnstileToken, setTurnstileToken] = useState("")
   const [turnstileResetKey, setTurnstileResetKey] = useState(0)
+  const [selectedRequestId, setSelectedRequestId] = useState("")
   const { loading: authLoading, isAuthenticated, patientPhone, fullName } = usePatientPortalAuth()
   const patientLoginPath = createPatientPath("/patient/login")
   const unreadCount = notifications.filter((notification) => !notification.read).length
   const displayName = fullName || rememberedSession?.fullName || ""
   const receiptEntries = buildReceiptEntries(prescriptions)
-  const visibleNotifications = notifications.slice(0, visibleCounts.notifications)
+  const progressCards = prescriptions.map((request) => ({
+    request,
+    drugs: getRequestedDrugs(request),
+    headline: getRequestHeadline(request),
+    progressState: getRequestProgressState(request),
+    summary: getRequestProgressSummary(request),
+    lastUpdatedAt: request?.dispensed_at || request?.updated_at || request?.created_at || "",
+  }))
+  const selectedRequest = prescriptions.find((request) => String(request.id) === String(selectedRequestId)) || null
+  const visibleProgressCards = progressCards.slice(0, visibleCounts.notifications)
   const visibleDeliveries = deliveries.slice(0, visibleCounts.deliveries)
   const visiblePrescriptions = prescriptions.slice(0, visibleCounts.prescriptions)
   const visibleReceipts = receiptEntries.slice(0, visibleCounts.receipts)
   const visibleAppointments = appointments.slice(0, visibleCounts.appointments)
+  const compactBranchNotices = notifications.slice(0, 3)
   const handleTurnstileVerify = useCallback((token) => {
     setTurnstileToken(token || "")
   }, [])
@@ -498,26 +692,65 @@ export default function PatientTrack() {
           <section className="patient-card">
             <div className="patient-section-header">
               <div>
-                <h2 className="patient-section-title">Notifications</h2>
-                <p className="patient-form-help">Latest messages from the pharmacy for this number.</p>
+                <h2 className="patient-section-title">Order progress</h2>
+                <p className="patient-form-help">Each request stays in one card. Open it to see the full product and delivery progress.</p>
               </div>
               <span className="patient-inline-icon">
                 <BellRing />
               </span>
             </div>
 
-            {notifications.length ? (
+            {progressCards.length ? (
               <div className="patient-list">
-                {visibleNotifications.map((notification) => (
-                  <article key={notification.id} className="patient-list-item patient-note-item">
-                    <div className="patient-note-header">
-                      <span className={`patient-type-badge ${getStatusClass(notification.type)}`}>{getNotificationTypeLabel(notification.type)}</span>
-                      <span className="patient-note-time">{formatRelativeTime(notification.created_at)}</span>
+                {visibleProgressCards.map(({ request, drugs, headline, progressState, summary, lastUpdatedAt }) => (
+                  <article key={request.id} className="patient-list-item patient-progress-card">
+                    <div className="patient-list-header">
+                      <div style={{ minWidth: 0 }}>
+                        <div className="patient-list-title">{headline}</div>
+                        <div className="patient-list-meta">
+                          {drugs.length} {drugs.length === 1 ? "product" : "products"} · Last updated {formatRelativeTime(lastUpdatedAt || request.created_at)}
+                        </div>
+                      </div>
+                      <span className={`patient-status-badge ${getStatusClass(progressState.tone)}`}>{progressState.label}</span>
                     </div>
-                    <p className="patient-note-message">{notification.message}</p>
+
+                    <p className="patient-list-text" style={{ marginBottom: "0.75rem" }}>{summary}</p>
+
+                    <div className="patient-progress-chip-row">
+                      {drugs.slice(0, 3).map((drug) => (
+                        <span key={`${request.id}-${drug}`} className="patient-progress-chip">{drug}</span>
+                      ))}
+                      {drugs.length > 3 ? <span className="patient-progress-chip patient-progress-chip-muted">+{drugs.length - 3} more</span> : null}
+                    </div>
+
+                    <div className="patient-progress-actions">
+                      <button type="button" className="patient-button-secondary" onClick={() => setSelectedRequestId(String(request.id))}>
+                        View progress
+                      </button>
+                    </div>
                   </article>
                 ))}
-                {renderLoadMore("notifications", notifications.length, visibleNotifications.length)}
+                {renderLoadMore("notifications", progressCards.length, visibleProgressCards.length)}
+
+                {compactBranchNotices.length ? (
+                  <div className="patient-progress-notice-panel">
+                    <div className="patient-progress-notice-head">
+                      <strong>Latest branch notices</strong>
+                      <span>{notifications.length} total</span>
+                    </div>
+                    <div className="patient-progress-notice-list">
+                      {compactBranchNotices.map((notification) => (
+                        <article key={notification.id} className="patient-progress-notice-row">
+                          <div className="patient-note-header">
+                            <span className={`patient-type-badge ${getStatusClass(notification.type)}`}>{getNotificationTypeLabel(notification.type)}</span>
+                            <span className="patient-note-time">{formatRelativeTime(notification.created_at)}</span>
+                          </div>
+                          <p className="patient-note-message">{notification.message}</p>
+                        </article>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
               </div>
             ) : (
               <div className="patient-empty-state">
@@ -598,7 +831,7 @@ export default function PatientTrack() {
             <div className="patient-section-header">
               <div>
                 <h2 className="patient-section-title">Prescription requests</h2>
-                <p className="patient-form-help">Your five most recent prescription submissions.</p>
+                <p className="patient-form-help">Compact request cards with load-more so repeat orders stay manageable.</p>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "0.7rem" }}>
                 <Link to={createPatientPath("/patient/prescription")} className="patient-subtle-link">
@@ -617,13 +850,29 @@ export default function PatientTrack() {
                     <div className="patient-list-header">
                       <div>
                         <div className="patient-list-title">{request.fulfillment_drug_name || request.drug_requested || "Prescription request"}</div>
-                        <div className="patient-list-meta">Submitted {formatDateTime(request.created_at)}</div>
+                        <div className="patient-list-meta">
+                          Submitted {formatDateTime(request.created_at)} · {getRequestedDrugs(request).length} {getRequestedDrugs(request).length === 1 ? "product" : "products"}
+                        </div>
                       </div>
                       <span className={`patient-status-badge ${getStatusClass(request.status)}`}>{request.status || "Pending"}</span>
+                    </div>
+                    <div className="patient-progress-chip-row" style={{ marginBottom: "0.8rem" }}>
+                      {getRequestedDrugs(request).slice(0, 4).map((drug) => (
+                        <span key={`${request.id}-request-${drug}`} className="patient-progress-chip">{drug}</span>
+                      ))}
+                      {getRequestedDrugs(request).length > 4 ? (
+                        <span className="patient-progress-chip patient-progress-chip-muted">+{getRequestedDrugs(request).length - 4} more</span>
+                      ) : null}
                     </div>
                     {request.condition_notes ? <p className="patient-list-text">{request.condition_notes}</p> : null}
                     {request.pharmacist_notes ? <p className="patient-list-text">Pharmacist note: {request.pharmacist_notes}</p> : null}
                     {request.patient_fulfillment_choice ? <p className="patient-list-text">Next step: {request.patient_fulfillment_choice}</p> : null}
+
+                    <div className="patient-progress-actions" style={{ marginTop: "0.85rem" }}>
+                      <button type="button" className="patient-button-secondary" onClick={() => setSelectedRequestId(String(request.id))}>
+                        Open request
+                      </button>
+                    </div>
 
                     {String(request.status || "").toLowerCase() === "approved" && !request.patient_fulfillment_choice ? (
                       <div style={{ marginTop: "0.9rem", display: "grid", gap: "0.75rem", padding: "0.9rem", borderRadius: 14, border: "0.5px solid #d7e1dc", background: "#fbfefd" }}>
@@ -895,6 +1144,73 @@ export default function PatientTrack() {
               </div>
             )}
           </section>
+        </div>
+      ) : null}
+
+      {selectedRequest ? (
+        <div className="patient-detail-overlay" role="dialog" aria-modal="true" aria-label="Prescription request progress">
+          <div className="patient-detail-backdrop" onClick={() => setSelectedRequestId("")} />
+          <div className="patient-detail-sheet">
+            <div className="patient-detail-head">
+              <div>
+                <div className="patient-kicker">Request progress</div>
+                <h2 className="patient-detail-title">{getRequestHeadline(selectedRequest)}</h2>
+                <p className="patient-form-help">
+                  Submitted {formatDateTime(selectedRequest.created_at)} · Last updated {formatDateTime(selectedRequest.dispensed_at || selectedRequest.updated_at || selectedRequest.created_at)}
+                </p>
+              </div>
+              <div className="patient-detail-head-actions">
+                <span className={`patient-status-badge ${getStatusClass(getRequestProgressState(selectedRequest).tone)}`}>
+                  {getRequestProgressState(selectedRequest).label}
+                </span>
+                <button type="button" className="patient-detail-close" onClick={() => setSelectedRequestId("")} aria-label="Close progress view">
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            <div className="patient-detail-grid">
+              <section className="patient-detail-card">
+                <h3 className="patient-detail-card-title">Requested products</h3>
+                <div className="patient-progress-chip-row">
+                  {getRequestedDrugs(selectedRequest).map((drug) => (
+                    <span key={`${selectedRequest.id}-detail-${drug}`} className="patient-progress-chip">{drug}</span>
+                  ))}
+                </div>
+                {selectedRequest.condition_notes ? (
+                  <p className="patient-list-text" style={{ marginTop: "0.9rem" }}>{selectedRequest.condition_notes}</p>
+                ) : null}
+              </section>
+
+              <section className="patient-detail-card">
+                <h3 className="patient-detail-card-title">What happens next</h3>
+                <p className="patient-list-text">{getRequestProgressSummary(selectedRequest)}</p>
+                {selectedRequest.pharmacist_notes ? (
+                  <p className="patient-list-text" style={{ marginTop: "0.8rem" }}>
+                    Pharmacist note: {selectedRequest.pharmacist_notes}
+                  </p>
+                ) : null}
+              </section>
+            </div>
+
+            <section className="patient-detail-card">
+              <h3 className="patient-detail-card-title">Progress timeline</h3>
+              <div className="patient-progress-event-list">
+                {buildProgressEvents(selectedRequest).map((event) => (
+                  <article key={event.id} className="patient-progress-event">
+                    <span className={`patient-progress-event-dot ${getStatusClass(event.tone)}`} />
+                    <div style={{ minWidth: 0 }}>
+                      <div className="patient-progress-event-top">
+                        <strong>{event.title}</strong>
+                        <span>{formatDateTime(event.at)}</span>
+                      </div>
+                      <p>{event.note}</p>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+          </div>
         </div>
       ) : null}
     </div>

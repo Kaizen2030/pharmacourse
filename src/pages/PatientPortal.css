@@ -681,6 +681,218 @@
   color: var(--text-900);
 }
 
+.patient-progress-card {
+  gap: 0.85rem;
+}
+
+.patient-progress-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.patient-progress-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0.35rem 0.72rem;
+  border-radius: 999px;
+  background: rgba(15, 110, 86, 0.08);
+  color: var(--green);
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.patient-progress-chip-muted {
+  background: rgba(17, 35, 29, 0.06);
+  color: var(--text-500);
+}
+
+.patient-progress-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.patient-progress-notice-panel {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.95rem 1rem;
+  border-radius: 14px;
+  border: 0.5px solid rgba(215, 225, 220, 0.9);
+  background: rgba(248, 252, 250, 0.96);
+}
+
+.patient-progress-notice-head,
+.patient-progress-event-top,
+.patient-detail-head,
+.patient-detail-head-actions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.9rem;
+}
+
+.patient-progress-notice-head strong,
+.patient-detail-card-title,
+.patient-detail-title {
+  color: var(--text-900);
+}
+
+.patient-progress-notice-head span,
+.patient-progress-event-top span {
+  color: var(--text-500);
+  font-size: 0.85rem;
+}
+
+.patient-progress-notice-list,
+.patient-progress-event-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.patient-progress-notice-row,
+.patient-progress-event {
+  padding: 0.9rem 0.95rem;
+  border-radius: 14px;
+  border: 0.5px solid rgba(223, 232, 227, 0.95);
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.patient-detail-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.patient-detail-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(17, 35, 29, 0.42);
+  backdrop-filter: blur(6px);
+}
+
+.patient-detail-sheet {
+  position: relative;
+  width: min(760px, 100%);
+  max-height: min(90vh, 860px);
+  overflow: auto;
+  border-radius: 22px;
+  border: 1px solid rgba(223, 232, 227, 0.95);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(245, 250, 247, 0.98));
+  box-shadow: 0 30px 65px rgba(15, 42, 32, 0.22);
+  padding: 1.15rem;
+}
+
+.patient-detail-title {
+  margin-top: 0.25rem;
+  font-size: clamp(1.2rem, 3vw, 1.7rem);
+}
+
+.patient-detail-close {
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(15, 110, 86, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--text-700);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.patient-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+  margin-top: 1rem;
+}
+
+.patient-detail-card {
+  display: grid;
+  gap: 0.65rem;
+  padding: 1rem;
+  border-radius: 16px;
+  border: 0.5px solid rgba(223, 232, 227, 0.95);
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.patient-detail-card-title {
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.patient-progress-event {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr);
+  gap: 0.8rem;
+  align-items: start;
+}
+
+.patient-progress-event-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: rgba(15, 110, 86, 0.18);
+  margin-top: 0.2rem;
+}
+
+.patient-progress-event-dot.patient-status-approved {
+  background: rgba(15, 110, 86, 0.84);
+}
+
+.patient-progress-event-dot.patient-status-dispensed,
+.patient-progress-event-dot.patient-status-ready {
+  background: rgba(37, 99, 235, 0.82);
+}
+
+.patient-progress-event-dot.patient-status-rejected,
+.patient-progress-event-dot.patient-status-cancelled {
+  background: rgba(220, 38, 38, 0.82);
+}
+
+.patient-progress-event-dot.patient-status-packed,
+.patient-progress-event-dot.patient-status-dispatched,
+.patient-progress-event-dot.patient-status-delivered {
+  background: rgba(245, 158, 11, 0.88);
+}
+
+.patient-progress-event p {
+  color: var(--text-500);
+  font-size: 0.92rem;
+  line-height: 1.5;
+  margin-top: 0.2rem;
+}
+
+@media (max-width: 720px) {
+  .patient-detail-overlay {
+    padding: 0.75rem;
+  }
+
+  .patient-detail-sheet {
+    padding: 1rem;
+    border-radius: 18px;
+  }
+
+  .patient-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .patient-detail-head,
+  .patient-detail-head-actions,
+  .patient-progress-notice-head,
+  .patient-progress-event-top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
 .patient-portal-response-head span {
   color: var(--text-500);
   font-size: 0.92rem;
