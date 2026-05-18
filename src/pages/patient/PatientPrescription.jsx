@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import { ImagePlus, Plus, ShieldCheck, Trash2 } from "lucide-react"
+import { FileText, ImagePlus, Plus, ShieldCheck, Trash2 } from "lucide-react"
 import { Link } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import { usePatient } from "../../components/PatientLayout"
 import { usePatientPortalAuth } from "../../hooks/usePatientPortalAuth"
 import { pharmacyosClient } from "../../lib/pharmacyosClient"
@@ -10,8 +11,15 @@ function sanitizeFileName(fileName) {
   return fileName.replace(/[^a-zA-Z0-9.-]/g, "-").toLowerCase()
 }
 
+function formatFileSize(bytes) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return ""
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
 export default function PatientPrescription() {
   const { pharmacyId, createPatientPath } = usePatient()
+  const navigate = useNavigate()
   const rememberedSession = getPatientPortalSession(pharmacyId)
   const [patient, setPatient] = useState(null)
   const [lookupMessage, setLookupMessage] = useState({ type: "", message: "" })
@@ -20,6 +28,7 @@ export default function PatientPrescription() {
   const [requestedDrugs, setRequestedDrugs] = useState([""])
   const [prescriptionFile, setPrescriptionFile] = useState(null)
   const [submitMessage, setSubmitMessage] = useState({ type: "", message: "" })
+  const [fieldErrors, setFieldErrors] = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const autoLookupDoneRef = useRef(false)
   const { loading: authLoading, isAuthenticated, patientPhone, fullName } = usePatientPortalAuth()
@@ -108,6 +117,34 @@ export default function PatientPrescription() {
     })
   }
 
+  function handleFileChange(event) {
+    const nextFile = event.target.files?.[0] || null
+    setFieldErrors((current) => ({ ...current, prescriptionFile: "" }))
+
+    if (!nextFile) {
+      setPrescriptionFile(null)
+      return
+    }
+
+    const allowedTypes = ["application/pdf"]
+    const isImage = nextFile.type.startsWith("image/")
+    const isAllowed = isImage || allowedTypes.includes(nextFile.type)
+
+    if (!isAllowed) {
+      setPrescriptionFile(null)
+      setFieldErrors((current) => ({ ...current, prescriptionFile: "Upload an image or PDF only." }))
+      return
+    }
+
+    if (nextFile.size > 10 * 1024 * 1024) {
+      setPrescriptionFile(null)
+      setFieldErrors((current) => ({ ...current, prescriptionFile: "The file is too large. Maximum size is 10MB." }))
+      return
+    }
+
+    setPrescriptionFile(nextFile)
+  }
+
   async function handleSubmit(event) {
     event.preventDefault()
 
@@ -118,9 +155,16 @@ export default function PatientPrescription() {
 
     setIsSubmitting(true)
     setSubmitMessage({ type: "", message: "" })
+    setFieldErrors({})
 
     const normalizedNotes = conditionNotes.trim()
     const normalizedDrugs = requestedDrugs.map((item) => item.trim()).filter(Boolean)
+
+    if (normalizedNotes && normalizedNotes.length < 10) {
+      setFieldErrors({ conditionNotes: "Please add a little more detail so the pharmacist can understand the request." })
+      setIsSubmitting(false)
+      return
+    }
 
     if (!normalizedNotes && normalizedDrugs.length === 0 && !prescriptionFile) {
       setSubmitMessage({
@@ -175,6 +219,9 @@ export default function PatientPrescription() {
     setPrescriptionFile(null)
     setConditionNotes("")
     setIsSubmitting(false)
+    window.setTimeout(() => {
+      navigate(createPatientPath("/patient/track"))
+    }, 1800)
   }
 
   useEffect(() => {
@@ -313,6 +360,7 @@ export default function PatientPrescription() {
                     : "What are you suffering from / why do you need this medicine?"
                 }
               />
+              {fieldErrors.conditionNotes ? <div className="patient-inline-message patient-inline-error">{fieldErrors.conditionNotes}</div> : null}
             </div>
 
             <div className="patient-form-group">
@@ -332,13 +380,16 @@ export default function PatientPrescription() {
               <div className="patient-drug-stack">
                 {requestedDrugs.map((drug, index) => (
                   <div key={`requested-drug-${index}`} className="patient-drug-row">
-                    <input
-                      id={`drugRequested${index}`}
-                      className="patient-input"
-                      value={drug}
-                      onChange={(event) => updateRequestedDrug(index, event.target.value)}
-                      placeholder={index === 0 ? "Example: Amoxicillin 500mg" : `Medicine ${index + 1}`}
-                    />
+                    <div style={{ display: "grid", gap: "0.42rem" }}>
+                      <span className="patient-kicker" style={{ letterSpacing: "0.04em" }}>Drug {index + 1}</span>
+                      <input
+                        id={`drugRequested${index}`}
+                        className="patient-input"
+                        value={drug}
+                        onChange={(event) => updateRequestedDrug(index, event.target.value)}
+                        placeholder={index === 0 ? "Example: Amoxicillin 500mg" : `Medicine ${index + 1}`}
+                      />
+                    </div>
                     <button
                       className="patient-button-secondary patient-button-inline patient-drug-remove"
                       type="button"
@@ -358,14 +409,33 @@ export default function PatientPrescription() {
               <label className="patient-label" htmlFor="prescriptionPhoto">
                 Prescription photo (optional)
               </label>
-              <input
-                id="prescriptionPhoto"
-                className="patient-input"
-                type="file"
-                accept="image/*"
-                onChange={(event) => setPrescriptionFile(event.target.files?.[0] || null)}
-              />
-              <p className="patient-form-help">Upload a clear image only if you have one. It will be stored in the branch's secure RemedacarePOS space.</p>
+              <div className="patient-upload-zone">
+                <input
+                  id="prescriptionPhoto"
+                  className="patient-input"
+                  type="file"
+                  accept="image/*,application/pdf"
+                  onChange={handleFileChange}
+                />
+                <p className="patient-form-help" style={{ margin: 0 }}>Upload a clear image or PDF only if you have one. The request can still be submitted without a file.</p>
+                {prescriptionFile ? (
+                  <div className="patient-upload-file">
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", minWidth: 0 }}>
+                      <span className="patient-inline-icon" style={{ width: 36, height: 36, borderRadius: 10 }}>
+                        <FileText size={18} />
+                      </span>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontWeight: 700, color: "#163329", overflow: "hidden", textOverflow: "ellipsis" }}>{prescriptionFile.name}</div>
+                        <div style={{ color: "#5f746b", fontSize: "0.82rem" }}>{formatFileSize(prescriptionFile.size)}</div>
+                      </div>
+                    </div>
+                    <button type="button" className="patient-button-secondary patient-button-inline" onClick={() => setPrescriptionFile(null)}>
+                      Remove
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+              {fieldErrors.prescriptionFile ? <div className="patient-inline-message patient-inline-error">{fieldErrors.prescriptionFile}</div> : null}
             </div>
 
             {submitMessage.message ? (

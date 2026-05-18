@@ -19,6 +19,19 @@ function formatDateTime(value) {
   }).format(new Date(value))
 }
 
+function formatRelativeTime(value) {
+  if (!value) return ""
+
+  const seconds = Math.max(1, Math.floor((Date.now() - new Date(value).getTime()) / 1000))
+  if (seconds < 60) return `${seconds}s ago`
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${minutes}m ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  return `${days}d ago`
+}
+
 function getStatusClass(status) {
   const normalizedStatus = (status || "").toLowerCase().replace(/\s+/g, "-")
 
@@ -49,6 +62,18 @@ function formatAppointmentType(value) {
   return normalized || "Appointment"
 }
 
+function getGreeting(name) {
+  const hour = new Date().getHours()
+  const part = hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening"
+  return `Good ${part}${name ? `, ${name}` : ""}`
+}
+
+function getNotificationTypeLabel(value) {
+  const normalized = String(value || "").trim().toUpperCase()
+  if (!normalized) return "UPDATE"
+  return normalized.replace(/_/g, " ")
+}
+
 export default function PatientTrack() {
   const { pharmacyId, createPatientPath } = usePatient()
   const rememberedSession = getPatientPortalSession(pharmacyId)
@@ -61,6 +86,8 @@ export default function PatientTrack() {
   const [lastUpdated, setLastUpdated] = useState("")
   const { loading: authLoading, isAuthenticated, patientPhone, fullName } = usePatientPortalAuth()
   const patientLoginPath = createPatientPath("/patient/login")
+  const unreadCount = notifications.filter((notification) => !notification.read).length
+  const displayName = fullName || rememberedSession?.fullName || ""
 
   const loadTrackingData = useCallback(async ({ silent = false } = {}) => {
     if (!patientPhone) {
@@ -102,7 +129,7 @@ export default function PatientTrack() {
         "",
       patientId: rememberedSession?.patientId || null,
     })
-    setNotifications(notificationRows.map((item) => ({ ...item, read: true })))
+    setNotifications(notificationRows)
     setDeliveries(deliveryRows)
     setPrescriptions(prescriptionRows)
     setAppointments(appointmentRows)
@@ -138,17 +165,51 @@ export default function PatientTrack() {
     <div className="patient-page">
       <section className="patient-card patient-card-muted patient-hero">
         <span className="patient-badge">Tracking and notifications</span>
-        <h1>See every update in one place</h1>
-        <p className="patient-copy">Track pending deliveries, prescription request progress, appointment updates, and branch notifications.</p>
+        <div className="patient-toolbar">
+          <div className="patient-meta-copy">
+            <h1 style={{ margin: 0 }}>{getGreeting(displayName)}</h1>
+            <p>Track pending deliveries, prescription progress, appointment updates, and branch messages in one place.</p>
+          </div>
+          <div className="patient-inline-icon" style={{ position: "relative" }}>
+            <BellRing />
+            {unreadCount ? (
+              <span
+                style={{
+                  position: "absolute",
+                  top: -4,
+                  right: -4,
+                  minWidth: 18,
+                  height: 18,
+                  borderRadius: 999,
+                  background: "#f59e0b",
+                  color: "#163329",
+                  fontSize: "0.68rem",
+                  fontWeight: 800,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  paddingInline: 4,
+                }}
+              >
+                {unreadCount}
+              </span>
+            ) : null}
+          </div>
+        </div>
       </section>
 
       <section className="patient-card">
-        <div className="patient-section-header">
-          <div>
-            <h2 className="patient-section-title">Private patient updates</h2>
-            <p className="patient-form-help">This page refreshes automatically every 30 seconds, but only for the signed-in patient account.</p>
+        <div className="patient-toolbar">
+          <div className="patient-meta-copy">
+            <span className="patient-kicker">Private patient updates</span>
+            <div className="patient-meta-title">This page refreshes every 30 seconds for the signed-in patient account.</div>
+            <p>{lastUpdated ? `Last updated ${lastUpdated}` : "Auto-refresh every 30s"}</p>
           </div>
-          <div className="patient-refresh">{lastUpdated ? `Last updated ${lastUpdated}` : "Auto-refresh every 30s"}</div>
+          <div className="patient-toolbar-actions">
+            <button className="patient-button-secondary" type="button" onClick={() => void loadTrackingData()} disabled={isLoading || !isAuthenticated}>
+              {isLoading ? "Refreshing..." : "Refresh"}
+            </button>
+          </div>
         </div>
 
         {feedback.message ? (
@@ -181,19 +242,16 @@ export default function PatientTrack() {
         ) : null}
 
         {!authLoading && isAuthenticated ? (
-          <div className="patient-empty-state">
+          <div className="patient-auth-status">
             <p className="patient-form-help" style={{ margin: 0 }}>
               Signed in as <strong>{fullName || "Patient account"}</strong>{patientPhone ? ` on ${patientPhone}` : ""}.
             </p>
-            <button className="patient-button" type="button" onClick={() => void loadTrackingData()} disabled={isLoading}>
-              {isLoading ? "Refreshing updates..." : "Refresh my updates"}
-            </button>
           </div>
         ) : null}
       </section>
 
       {isAuthenticated && patientPhone ? (
-        <>
+        <div className="patient-dashboard-grid">
           <section className="patient-card">
             <div className="patient-section-header">
               <div>
@@ -210,8 +268,8 @@ export default function PatientTrack() {
                 {notifications.map((notification) => (
                   <article key={notification.id} className="patient-list-item patient-note-item">
                     <div className="patient-note-header">
-                      <span className={`patient-type-badge ${getStatusClass(notification.type)}`}>{notification.type || "Update"}</span>
-                      <span className="patient-note-time">{formatDateTime(notification.created_at)}</span>
+                      <span className={`patient-type-badge ${getStatusClass(notification.type)}`}>{getNotificationTypeLabel(notification.type)}</span>
+                      <span className="patient-note-time">{formatRelativeTime(notification.created_at)}</span>
                     </div>
                     <p className="patient-note-message">{notification.message}</p>
                   </article>
@@ -297,9 +355,14 @@ export default function PatientTrack() {
                 <h2 className="patient-section-title">Prescription requests</h2>
                 <p className="patient-form-help">Your five most recent prescription submissions.</p>
               </div>
-              <span className="patient-inline-icon">
-                <ClipboardList />
-              </span>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.7rem" }}>
+                <Link to={createPatientPath("/patient/prescription")} className="patient-subtle-link">
+                  New request
+                </Link>
+                <span className="patient-inline-icon">
+                  <ClipboardList />
+                </span>
+              </div>
             </div>
 
             {prescriptions.length ? (
@@ -335,9 +398,16 @@ export default function PatientTrack() {
                 <h2 className="patient-section-title">Upcoming appointments</h2>
                 <p className="patient-form-help">Future bookings awaiting completion.</p>
               </div>
-              <span className="patient-inline-icon">
-                <CalendarClock />
-              </span>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.7rem" }}>
+                {!appointments.length ? (
+                  <Link to={createPatientPath("/patient/appointment")} className="patient-subtle-link">
+                    Book now
+                  </Link>
+                ) : null}
+                <span className="patient-inline-icon">
+                  <CalendarClock />
+                </span>
+              </div>
             </div>
 
             {appointments.length ? (
@@ -425,7 +495,7 @@ export default function PatientTrack() {
               </div>
             )}
           </section>
-        </>
+        </div>
       ) : null}
     </div>
   )

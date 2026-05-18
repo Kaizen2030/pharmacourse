@@ -5,13 +5,26 @@ import { usePatient } from "../../components/PatientLayout"
 import { usePatientPortalAuth } from "../../hooks/usePatientPortalAuth"
 import { clearPatientPortalSession, getPatientPortalSession } from "../../lib/patientPortalSession"
 
+function getInitials(value) {
+  return String(value || "")
+    .split(" ")
+    .map((part) => part.trim()[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase() || "PT"
+}
+
 export default function PatientHome() {
-  const { branchName, pharmacyId, createPatientPath } = usePatient()
+  const { branchName, pharmacyId, branchLocation, createPatientPath } = usePatient()
   const [rememberedPatient, setRememberedPatient] = useState(() => getPatientPortalSession(pharmacyId))
   const [feedback, setFeedback] = useState({ type: "", message: "" })
   const [isSigningOut, setIsSigningOut] = useState(false)
   const patientLoginPath = createPatientPath("/patient/login")
   const { isAuthenticated, fullName, patientPhone, signOut } = usePatientPortalAuth()
+  const displayName = fullName || rememberedPatient?.fullName || "Patient account"
+  const displayPhone = patientPhone || rememberedPatient?.phone || ""
+  const hasKnownPatient = Boolean(rememberedPatient || isAuthenticated)
 
   useEffect(() => {
     setRememberedPatient(getPatientPortalSession(pharmacyId))
@@ -67,12 +80,17 @@ export default function PatientHome() {
   return (
     <div className="patient-page">
       <section className="patient-card patient-card-muted patient-hero">
-        <span className="patient-badge">{branchName}</span>
-        <h1>Welcome</h1>
-        <p className="patient-copy">
-          Use this portal to register, request a prescription review, book an appointment, and follow updates from{" "}
-          <strong>{branchName}</strong>.
-        </p>
+        <span className="patient-badge">Branch home</span>
+        <h1>{hasKnownPatient ? `Welcome back to ${branchName}` : `Start with ${branchName}`}</h1>
+        <p className="patient-copy">Use this branch portal to keep patient details together, request prescriptions, book follow-up help, and track private updates without restarting the process each time.</p>
+        <div className="patient-session-bar">
+          <div className="patient-session-bar-copy">
+            <span className="patient-kicker">Active branch</span>
+            <div className="patient-meta-title">{branchName}</div>
+            <p>{branchLocation || "Requests, appointments, and tracking from this screen go straight to the selected branch."}</p>
+          </div>
+          <span className="patient-badge">{hasKnownPatient ? "Session ready" : "New session"}</span>
+        </div>
       </section>
 
       {feedback.message ? (
@@ -89,27 +107,27 @@ export default function PatientHome() {
         </div>
       ) : null}
 
-      {rememberedPatient ? (
+      {hasKnownPatient ? (
         <section className="patient-card">
-          <div className="patient-section-header">
-            <div>
-              <h2 className="patient-section-title">Continue as {rememberedPatient.fullName || rememberedPatient.phone}</h2>
-              <p className="patient-form-help">
-                This phone was already used on this device for <strong>{branchName}</strong>. You can continue with the same profile right away.
-              </p>
-            </div>
-            <span className="patient-inline-icon">
-              <UserRoundCheck />
-            </span>
-          </div>
-
-          <div className="patient-list-item" style={{ marginBottom: "0.9rem" }}>
-            <div className="patient-list-header">
-              <div>
-                <div className="patient-list-title">{rememberedPatient.fullName || "Registered patient"}</div>
-                <div className="patient-list-meta">{rememberedPatient.phone}</div>
+          <div className="patient-identity-card">
+            <div className="patient-identity-main">
+              <span className="patient-avatar">{getInitials(displayName)}</span>
+              <div className="patient-identity-copy">
+                <span className="patient-kicker">Continue as</span>
+                <div className="patient-identity-name">{displayName}</div>
+                <p>{displayPhone || "Patient account saved on this device"}</p>
               </div>
-              <span className="patient-badge">Saved on this device</span>
+            </div>
+
+            <div className="patient-mini-grid">
+              <div className="patient-stat">
+                <p className="patient-stat-label">Portal status</p>
+                <p className="patient-stat-value">{isAuthenticated ? "Signed in" : "Saved on device"}</p>
+              </div>
+              <div className="patient-stat">
+                <p className="patient-stat-label">Ready for</p>
+                <p className="patient-stat-value">Prescriptions and appointments</p>
+              </div>
             </div>
           </div>
 
@@ -141,10 +159,17 @@ export default function PatientHome() {
             </Link>
           </div>
 
-          <button type="button" className="patient-button-secondary" onClick={handleForgetPatient} style={{ display: "inline-flex", alignItems: "center", gap: "0.55rem" }}>
-            <LogOut size={16} />
-            Use another phone number
-          </button>
+          <div className="patient-toolbar-actions">
+            <button type="button" className="patient-button-secondary" onClick={handleForgetPatient} style={{ display: "inline-flex", alignItems: "center", gap: "0.55rem" }}>
+              <LogOut size={16} />
+              Use another phone number
+            </button>
+            {isAuthenticated ? (
+              <button type="button" className="patient-button-secondary" onClick={() => void handlePatientSignOut()} disabled={isSigningOut}>
+                {isSigningOut ? "Signing out..." : "Sign out"}
+              </button>
+            ) : null}
+          </div>
         </section>
       ) : null}
 

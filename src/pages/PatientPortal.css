@@ -1,9 +1,8 @@
 .patient-portal-page {
   min-height: 100vh;
   background:
-    radial-gradient(circle at top left, rgba(15, 110, 86, 0.18), transparent 24%),
-    radial-gradient(circle at top right, rgba(26, 107, 181, 0.12), transparent 20%),
-    linear-gradient(180deg, #f6faf8, #eef5f1);
+    radial-gradient(circle at top left, rgba(15, 110, 86, 0.12), transparent 24%),
+    linear-gradient(180deg, #f7fbf9, #eef5f1);
 }
 
 .patient-portal-hero {
@@ -14,7 +13,7 @@
   width: min(1180px, calc(100% - 1rem));
   margin: 0 auto;
   padding: clamp(1.5rem, 4vw, 3rem);
-  border-radius: 32px;
+  border-radius: 18px;
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(237, 248, 243, 0.96)),
     radial-gradient(circle at top right, rgba(15, 110, 86, 0.1), transparent 30%);
@@ -53,7 +52,7 @@
   gap: 1rem;
   margin-top: 1.5rem;
   padding: 1rem 1.1rem;
-  border-radius: 20px;
+  border-radius: 14px;
   background: rgba(255, 255, 255, 0.72);
   border: 1px solid rgba(15, 110, 86, 0.12);
 }
@@ -139,7 +138,7 @@
 .patient-portal-update-card {
   background: rgba(255, 255, 255, 0.92);
   border: 1px solid rgba(223, 232, 227, 0.95);
-  border-radius: 24px;
+  border-radius: 14px;
   box-shadow: var(--shadow-sm);
 }
 
@@ -193,7 +192,7 @@
   width: 100%;
   text-align: left;
   border: 1px solid rgba(15, 110, 86, 0.12);
-  border-radius: 18px;
+  border-radius: 14px;
   background: rgba(248, 252, 250, 0.96);
   padding: 0.95rem 1rem;
   color: var(--text-700);
@@ -227,7 +226,7 @@
 
 .patient-portal-empty {
   padding: 1.2rem;
-  border-radius: 20px;
+  border-radius: 14px;
   background: rgba(248, 252, 250, 0.96);
   border: 1px dashed rgba(15, 110, 86, 0.2);
   color: var(--text-500);
@@ -242,7 +241,7 @@
 .patient-portal-global-updates,
 .patient-portal-global-group {
   padding: 1.1rem 1.2rem;
-  border-radius: 22px;
+  border-radius: 14px;
   background: rgba(248, 252, 250, 0.96);
   border: 1px solid rgba(15, 110, 86, 0.12);
 }
@@ -366,7 +365,7 @@
 .patient-portal-choice-card {
   text-align: left;
   border: 1px solid rgba(15, 110, 86, 0.14);
-  border-radius: 22px;
+  border-radius: 14px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 251, 247, 0.98));
   padding: 1rem;
@@ -666,7 +665,7 @@
 .patient-portal-response-gate {
   margin-bottom: 1rem;
   padding: 1rem 1.05rem;
-  border-radius: 20px;
+  border-radius: 14px;
   background: rgba(248, 252, 250, 0.96);
   border: 1px solid rgba(15, 110, 86, 0.12);
 }
@@ -808,6 +807,22 @@
     padding-right: 0.75rem;
   }
 
+  .patient-portal-hero-inner {
+    padding: 1.1rem;
+  }
+
+  .patient-portal-hero h1 {
+    font-size: clamp(1.8rem, 8vw, 2.5rem);
+  }
+
+  .patient-portal-branch-card,
+  .patient-portal-sidebar-card,
+  .patient-portal-panel,
+  .patient-portal-items-card,
+  .patient-portal-update-card {
+    padding: 1rem;
+  }
+
   .patient-portal-grid,
   .patient-portal-item-row,
   .patient-portal-track-bar {
@@ -832,5 +847,13 @@
 
   .patient-portal-card-rail {
     grid-auto-columns: minmax(240px, 86vw);
+  }
+
+  .patient-portal-choice-actions {
+    flex-direction: column;
+  }
+
+  .patient-portal-choice-action {
+    margin-top: 0.75rem;
   }
 }

@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, createElement, useContext, useEffect, useState } from "react"
-import { NavLink, Outlet, useSearchParams } from "react-router-dom"
+import { Link, NavLink, Outlet, useSearchParams } from "react-router-dom"
 import { Building2, CalendarDays, ClipboardList, House, PackageSearch } from "lucide-react"
 import { pharmacyosClient } from "../lib/pharmacyosClient"
 import PatientInstallPrompt from "./PatientInstallPrompt"
@@ -926,6 +926,366 @@ export function PatientPortalStyles() {
           font-size: 0.68rem;
         }
       }
+
+      .patient-shell {
+        background:
+          linear-gradient(180deg, #f5faf7 0%, #edf6f2 100%);
+      }
+
+      .patient-topbar {
+        background: rgba(247, 252, 249, 0.96);
+        border-bottom: 1px solid rgba(15, 110, 86, 0.08);
+      }
+
+      .patient-main {
+        width: min(100%, 820px);
+      }
+
+      .patient-card,
+      .patient-missing-card,
+      .patient-loading-card,
+      .patient-branch-lock,
+      .patient-install-card,
+      .patient-list-item,
+      .patient-radio-card {
+        border-radius: 14px;
+      }
+
+      .patient-card {
+        border: 0.5px solid #e5e7eb;
+        box-shadow: 0 10px 28px rgba(15, 42, 32, 0.06);
+      }
+
+      .patient-card-muted,
+      .patient-branch-lock,
+      .patient-install-card,
+      .patient-action-card,
+      .patient-list-item {
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(246, 251, 248, 0.98));
+      }
+
+      .patient-hero {
+        display: grid;
+        gap: 0.8rem;
+      }
+
+      .patient-hero h1 {
+        font-size: clamp(1.6rem, 4vw, 2.2rem);
+        line-height: 1.1;
+      }
+
+      .patient-copy {
+        font-size: 0.98rem;
+        line-height: 1.6;
+      }
+
+      .patient-branch-lock {
+        gap: 0.45rem;
+        padding: 0.9rem 1rem;
+      }
+
+      .patient-actions-grid {
+        gap: 0.8rem;
+      }
+
+      .patient-action-card {
+        border-radius: 14px;
+        border: 0.5px solid #e5e7eb;
+        padding: 1rem;
+        text-decoration: none;
+      }
+
+      .patient-action-content h2,
+      .patient-action-content h3 {
+        font-size: 0.98rem;
+        line-height: 1.3;
+      }
+
+      .patient-action-content p {
+        font-size: 0.9rem;
+        line-height: 1.5;
+      }
+
+      .patient-action-icon,
+      .patient-empty-icon,
+      .patient-inline-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+      }
+
+      .patient-input,
+      .patient-textarea,
+      .patient-select {
+        border-radius: 14px;
+        border: 0.5px solid #d7e1dc;
+        background: #ffffff;
+      }
+
+      .patient-button,
+      .patient-button-secondary {
+        min-height: 48px;
+        border-radius: 999px;
+      }
+
+      .patient-button {
+        background: #0F6E56;
+      }
+
+      .patient-button-secondary {
+        background: #ffffff;
+        border: 0.5px solid rgba(15, 110, 86, 0.22);
+      }
+
+      .patient-message,
+      .patient-inline-message {
+        border-radius: 14px;
+      }
+
+      .patient-section-header {
+        margin-bottom: 0.9rem;
+      }
+
+      .patient-section-title {
+        font-size: 1.02rem;
+      }
+
+      .patient-auth-status {
+        padding: 0.95rem 1rem;
+        border-radius: 14px;
+        border: 0.5px solid #d7e1dc;
+        background: #fbfefd;
+      }
+
+      .patient-session-bar,
+      .patient-meta-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.8rem;
+        padding: 0.8rem 0.95rem;
+        border-radius: 14px;
+        border: 0.5px solid #d7e1dc;
+        background: rgba(255, 255, 255, 0.9);
+      }
+
+      .patient-session-bar-copy,
+      .patient-meta-copy {
+        min-width: 0;
+        display: grid;
+        gap: 0.2rem;
+      }
+
+      .patient-kicker {
+        color: #0F6E56;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .patient-meta-title {
+        color: #163329;
+        font-size: 0.95rem;
+        font-weight: 800;
+        line-height: 1.3;
+      }
+
+      .patient-meta-copy p,
+      .patient-session-bar-copy p {
+        margin: 0;
+        color: #5f746b;
+        font-size: 0.88rem;
+        line-height: 1.45;
+      }
+
+      .patient-identity-card {
+        display: grid;
+        gap: 1rem;
+      }
+
+      .patient-identity-main {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.9rem;
+        align-items: center;
+      }
+
+      .patient-avatar {
+        width: 52px;
+        height: 52px;
+        border-radius: 16px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(15, 110, 86, 0.12);
+        color: #0F6E56;
+        font-weight: 800;
+        font-size: 1rem;
+      }
+
+      .patient-identity-copy {
+        min-width: 0;
+        display: grid;
+        gap: 0.15rem;
+      }
+
+      .patient-identity-name {
+        color: #163329;
+        font-size: 1rem;
+        font-weight: 800;
+        line-height: 1.25;
+      }
+
+      .patient-identity-copy p {
+        margin: 0;
+        color: #5f746b;
+        font-size: 0.9rem;
+      }
+
+      .patient-chip-row {
+        gap: 0.45rem;
+      }
+
+      .patient-chip {
+        border-radius: 999px;
+        font-size: 0.75rem;
+      }
+
+      .patient-dashboard-grid {
+        display: grid;
+        gap: 1rem;
+      }
+
+      .patient-dashboard-card {
+        display: grid;
+        gap: 0.85rem;
+      }
+
+      .patient-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.8rem;
+        flex-wrap: wrap;
+      }
+
+      .patient-toolbar-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.7rem;
+      }
+
+      .patient-mini-grid {
+        display: grid;
+        gap: 0.8rem;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .patient-stat {
+        padding: 0.95rem;
+        border-radius: 14px;
+        border: 0.5px solid #e5e7eb;
+        background: #ffffff;
+      }
+
+      .patient-stat-label {
+        margin: 0 0 0.25rem;
+        color: #5f746b;
+        font-size: 0.8rem;
+      }
+
+      .patient-stat-value {
+        margin: 0;
+        color: #163329;
+        font-size: 1rem;
+        font-weight: 800;
+      }
+
+      .patient-upload-zone {
+        display: grid;
+        gap: 0.7rem;
+        padding: 1rem;
+        border-radius: 14px;
+        border: 1px dashed rgba(15, 110, 86, 0.28);
+        background: rgba(245, 251, 248, 0.75);
+      }
+
+      .patient-upload-file {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.8rem;
+        padding: 0.8rem 0.9rem;
+        border-radius: 12px;
+        background: #ffffff;
+        border: 0.5px solid #d7e1dc;
+        font-size: 0.88rem;
+        color: #24463a;
+      }
+
+      .patient-drug-row {
+        padding: 0.8rem;
+        border-radius: 14px;
+        border: 0.5px solid #e5e7eb;
+        background: #fbfefd;
+      }
+
+      .patient-note-message,
+      .patient-list-text {
+        margin: 0;
+        line-height: 1.55;
+      }
+
+      .patient-list {
+        gap: 0.75rem;
+      }
+
+      .patient-list-item {
+        border: 0.5px solid #e5e7eb;
+      }
+
+      .patient-note-header,
+      .patient-list-header {
+        margin-bottom: 0.55rem;
+      }
+
+      .patient-subtle-link {
+        color: #0F6E56;
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .patient-subtle-link:hover {
+        text-decoration: underline;
+      }
+
+      @media (min-width: 720px) {
+        .patient-dashboard-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          align-items: start;
+        }
+      }
+
+      @media (max-width: 520px) {
+        .patient-session-bar,
+        .patient-meta-bar,
+        .patient-toolbar,
+        .patient-identity-main {
+          grid-template-columns: 1fr;
+          display: grid;
+        }
+
+        .patient-mini-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .patient-avatar {
+          width: 48px;
+          height: 48px;
+        }
+      }
     `}</style>
   )
 }
@@ -963,6 +1323,9 @@ export default function PatientLayout() {
       if (error) {
         setPharmacy(null)
         setLoadError(error.message || "We could not load the pharmacy details.")
+      } else if (!data) {
+        setPharmacy(null)
+        setLoadError("This branch is no longer available.")
       } else {
         setPharmacy(data)
       }
@@ -1013,6 +1376,7 @@ export default function PatientLayout() {
         pharmacyId,
         pharmacy,
         branchName,
+        branchLocation,
         createPatientPath,
       }}
     >
@@ -1033,7 +1397,22 @@ export default function PatientLayout() {
         </header>
 
         <main className="patient-main">
-          {loadError ? (
+          {loadError && !pharmacy ? (
+            <section className="patient-card patient-card-muted">
+              <div className="patient-toolbar">
+                <div className="patient-meta-copy">
+                  <span className="patient-kicker">Branch not found</span>
+                  <div className="patient-meta-title">This patient portal link is no longer active.</div>
+                  <p>{loadError}</p>
+                </div>
+                <Link to="/patient" className="patient-button" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                  Find another pharmacy
+                </Link>
+              </div>
+            </section>
+          ) : null}
+
+          {loadError && pharmacy ? (
             <div className="patient-message patient-message-error">
               We loaded the portal, but the branch details could not be refreshed: {loadError}
             </div>

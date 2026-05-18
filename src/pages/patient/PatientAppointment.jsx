@@ -43,7 +43,7 @@ function formatAppointmentDate(date, time) {
 }
 
 export default function PatientAppointment() {
-  const { pharmacyId } = usePatient()
+  const { pharmacyId, createPatientPath } = usePatient()
   const rememberedSession = getPatientPortalSession(pharmacyId)
   const [patient, setPatient] = useState(null)
   const [lookupMessage, setLookupMessage] = useState({ type: "", message: "" })
@@ -59,8 +59,9 @@ export default function PatientAppointment() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const autoLookupDoneRef = useRef(false)
   const { loading: authLoading, isAuthenticated, patientPhone, fullName } = usePatientPortalAuth()
-  const loginPath = `/patient/login?pharmacy=${encodeURIComponent(pharmacyId)}`
-  const registerPath = `/patient/register?pharmacy=${encodeURIComponent(pharmacyId)}`
+  const loginPath = createPatientPath("/patient/login")
+  const registerPath = createPatientPath("/patient/register")
+  const availableSlots = slotOptions.filter((slot) => !bookedSlots.includes(slot.value))
 
   useEffect(() => {
     if (!selectedDate) {
@@ -239,6 +240,14 @@ export default function PatientAppointment() {
         <span className="patient-badge">Appointment booking</span>
         <h1>Speak with the pharmacy team</h1>
         <p className="patient-copy">Book a phone call, video call, or in-person pickup consultation in just a few steps.</p>
+        <div className="patient-session-bar">
+          <div className="patient-session-bar-copy">
+            <span className="patient-kicker">Booking flow</span>
+            <div className="patient-meta-title">Choose a visit type, date, and open slot</div>
+            <p>We keep this branch context attached so the pharmacy sees the same patient account and history.</p>
+          </div>
+          <span className="patient-badge">Step by step</span>
+        </div>
       </section>
 
       <section className="patient-card">
@@ -310,6 +319,9 @@ export default function PatientAppointment() {
               </div>
               <span className="patient-badge">Verified</span>
             </div>
+            <div className="patient-chip-row">
+              <span className="patient-chip">{patient.chronic_conditions?.trim() ? patient.chronic_conditions : "No chronic conditions on file"}</span>
+            </div>
           </div>
         ) : null}
       </section>
@@ -371,9 +383,7 @@ export default function PatientAppointment() {
                 {isLoadingSlots ? <p className="patient-form-help">Loading available time slots...</p> : null}
                 {slotMessage ? <p className="patient-form-help">{slotMessage}</p> : null}
                 <div className="patient-slot-grid">
-                  {slotOptions
-                    .filter((slot) => !bookedSlots.includes(slot.value))
-                    .map((slot) => (
+                  {availableSlots.map((slot) => (
                       <button
                         key={slot.value}
                         type="button"
@@ -382,13 +392,26 @@ export default function PatientAppointment() {
                       >
                         {slot.label}
                       </button>
-                    ))}
+                  ))}
                 </div>
-                {selectedDate && !isLoadingSlots && !slotOptions.some((slot) => !bookedSlots.includes(slot.value)) ? (
+                {selectedDate && !isLoadingSlots && !availableSlots.length ? (
                   <p className="patient-form-help">No open slots remain for this date. Please choose another date.</p>
                 ) : null}
               </div>
             </div>
+
+            {selectedDate || selectedSlot ? (
+              <div className="patient-meta-bar">
+                <div className="patient-meta-copy">
+                  <span className="patient-kicker">Selected slot</span>
+                  <div className="patient-meta-title">
+                    {selectedDate && selectedSlot ? formatAppointmentDate(selectedDate, selectedSlot) : "Choose both date and time"}
+                  </div>
+                  <p>{appointmentTypes.find((item) => item.value === appointmentType)?.label || "Appointment"}</p>
+                </div>
+                <span className="patient-badge">{selectedSlot ? "Ready to book" : "Choose time"}</span>
+              </div>
+            ) : null}
 
             <div className="patient-form-group">
               <label className="patient-label" htmlFor="conditionSummary">
