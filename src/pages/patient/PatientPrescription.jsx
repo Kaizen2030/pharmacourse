@@ -43,21 +43,6 @@ export default function PatientPrescription() {
     }
   }, [patient, conditionNotes])
 
-  useEffect(() => {
-    if (autoLookupDoneRef.current) {
-      return
-    }
-
-    if (!rememberedSession?.phone || patient || !isValidPhone(rememberedSession.phone)) {
-      return
-    }
-
-    autoLookupDoneRef.current = true
-
-    const fakeEvent = { preventDefault() {} }
-    handleLookup(fakeEvent, rememberedSession.phone)
-  }, [rememberedSession, patient])
-
   async function handleLookup(event, phoneOverride) {
     event.preventDefault()
 
@@ -164,6 +149,21 @@ export default function PatientPrescription() {
     setConditionNotes("")
     setIsSubmitting(false)
   }
+
+  useEffect(() => {
+    if (autoLookupDoneRef.current) {
+      return
+    }
+
+    if (!rememberedSession?.phone || patient || !isValidPhone(rememberedSession.phone)) {
+      return
+    }
+
+    autoLookupDoneRef.current = true
+
+    const fakeEvent = { preventDefault() {} }
+    handleLookup(fakeEvent, rememberedSession.phone)
+  }, [rememberedSession, patient])
 
   return (
     <div className="patient-page">

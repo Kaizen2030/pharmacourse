@@ -39,6 +39,17 @@ export default function TurnstileWidget({ formId, resetSignal, onVerify, onExpir
   const renderTimeoutRef = useRef(null)
   const solvedRef = useRef(false)
 
+  function handleResetWidget() {
+    if (window.turnstile && widgetIdRef.current !== null) {
+      window.turnstile.reset(widgetIdRef.current)
+    }
+
+    solvedRef.current = false
+    setWidgetReady(false)
+    setLoadError("")
+    onExpire?.()
+  }
+
   useEffect(() => {
     let cancelled = false
 
@@ -112,23 +123,8 @@ export default function TurnstileWidget({ formId, resetSignal, onVerify, onExpir
   useEffect(() => {
     if (!window.turnstile || widgetIdRef.current === null) return
 
-    window.turnstile.reset(widgetIdRef.current)
-    solvedRef.current = false
-    setWidgetReady(false)
-    setLoadError("")
-    onExpire?.()
+    handleResetWidget()
   }, [resetSignal, onExpire])
-
-  function handleResetWidget() {
-    if (window.turnstile && widgetIdRef.current !== null) {
-      window.turnstile.reset(widgetIdRef.current)
-    }
-
-    solvedRef.current = false
-    setWidgetReady(false)
-    setLoadError("")
-    onExpire?.()
-  }
 
   return (
     <div style={{ display: "grid", gap: "0.45rem" }}>

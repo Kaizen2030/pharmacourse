@@ -4812,7 +4812,7 @@ function CourseEditorModal({ course, onClose, onSave }) {
     setUploading(true)
     try {
       const safeName = `courses/${Date.now()}-${file.name.replace(/[^a-z0-9.]/gi, "_")}`
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from("media")
         .upload(safeName, file, { cacheControl: "3600", upsert: false })
 
@@ -5370,7 +5370,6 @@ function HomepageTab() {
     setLoading(true)
     setError(null)
     try {
-      const { data: { session } } = await supabase.auth.getSession()
       const { data, error } = await supabase
         .from("homepage_content")
         .select("*")
@@ -5484,12 +5483,12 @@ VALUES
    'Complete Pharmacy Ecosystem','Book Platform Demo',
    'https://wa.me/254790059584','Start Learning','/courses',NULL),
   ('ecosystem','Ecosystem Section',2,true,
-   'One company. Three platforms. Built for Africa.',
-   'The RemedaCare Ecosystem',NULL,NULL,NULL,NULL,NULL),
+   'Three connected products for pharmacy, care delivery, and growth.',
+   'The Remedacare Ecosystem',NULL,NULL,NULL,NULL,NULL),
   ('pharmacyOS','RemedacarePOS Section',3,true,'Everything your pharmacy needs.',
    'RemedacarePOS','Book a Demo','https://wa.me/254790059584',NULL,NULL,NULL),
-  ('remedacareOS','RemedacareHMIS Section',4,true,'From clinic to dispensary.',
-   'RemedacareHMIS','Join Waitlist','https://wa.me/254790059584',NULL,NULL,NULL),
+  ('remedacareOS','RemedacareHMS Section',4,true,'From clinic to dispensary.',
+   'RemedacareHMS','Join Waitlist','https://wa.me/254790059584',NULL,NULL,NULL),
   ('features','Features Section',5,true,
    'Accelerate your career with practical skills','Key Features',NULL,NULL,NULL,NULL,NULL),
   ('courses','Featured Courses',6,true,'Courses built for real-world practice',
@@ -6455,7 +6454,7 @@ function ModuleEditor({ module, index, onUpdate, onDelete }) {
     setUploading(true)
     try {
       const safeName = `modules/${Date.now()}-${file.name.replace(/[^a-z0-9.]/gi, "_")}`
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from("media")
         .upload(safeName, file, { cacheControl: "3600", upsert: false })
 
@@ -6678,7 +6677,7 @@ function SectionEditorModal({ section, saving, onClose, onSave }) {
     setUploadError(null)
     try {
       const safeName = `${folder}/${Date.now()}-${file.name.replace(/[^a-z0-9.]/gi, "_")}`
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from("media")
         .upload(safeName, file, { cacheControl: "3600", upsert: false })
 

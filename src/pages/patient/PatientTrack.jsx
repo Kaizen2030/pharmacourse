@@ -67,15 +67,6 @@ export default function PatientTrack() {
   const [feedback, setFeedback] = useState({ type: "", message: "" })
   const [lastUpdated, setLastUpdated] = useState("")
 
-  useEffect(() => {
-    const initialPhone = phoneParam || rememberedSession?.phone || ""
-
-    if (initialPhone && isValidPhone(initialPhone) && !activePhone) {
-      setActivePhone(initialPhone)
-      loadTrackingData(initialPhone)
-    }
-  }, [phoneParam, rememberedSession, activePhone])
-
   async function loadTrackingData(phone, { silent = false } = {}) {
     if (!silent) {
       setIsLoading(true)
@@ -137,6 +128,15 @@ export default function PatientTrack() {
     setActivePhone(normalizedPhone)
     await loadTrackingData(normalizedPhone)
   }
+
+  useEffect(() => {
+    const initialPhone = phoneParam || rememberedSession?.phone || ""
+
+    if (initialPhone && isValidPhone(initialPhone) && !activePhone) {
+      setActivePhone(initialPhone)
+      loadTrackingData(initialPhone)
+    }
+  }, [phoneParam, rememberedSession, activePhone])
 
   useEffect(() => {
     if (!activePhone) {

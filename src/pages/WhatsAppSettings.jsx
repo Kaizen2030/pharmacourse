@@ -70,17 +70,6 @@ export default function WhatsAppSettings() {
   const [sendResult, setSendResult] = useState(null) // { ok, message }
   const credsMissing = !WA_TOKEN || !WA_PHONE_ID
 
-  useEffect(() => {
-    if (profile) {
-      setPhone(profile.whatsapp_number || "")
-      setOptedIn(profile.whatsapp_opted_in || false)
-    }
-    if (user) {
-      loadPearls()
-      loadRecentSends()
-    }
-  }, [profile, user])
-
   async function loadPearls() {
     const { data } = await supabase
       .from("clinical_pearls")
@@ -100,6 +89,17 @@ export default function WhatsAppSettings() {
       .limit(5)
     setRecentSends(data || [])
   }
+
+  useEffect(() => {
+    if (profile) {
+      setPhone(profile.whatsapp_number || "")
+      setOptedIn(profile.whatsapp_opted_in || false)
+    }
+    if (user) {
+      loadPearls()
+      loadRecentSends()
+    }
+  }, [profile, user])
 
   async function save() {
     setSaving(true)

@@ -11,14 +11,14 @@ const learnLinks = [
 
 const productLinks = [
   { to: "/remedacarepos", label: "RemedacarePOS", detail: "Telepharmacy, dispensing, inventory, claims, and branch pharmacy operations" },
-  { to: "/remedacarehmis", label: "RemedacareHMIS", detail: "Clinical workflows, chronic care, finance, AMS, and hospital-wide control" },
+  { to: "/remedacarehmis", label: "RemedacareHMS", detail: "Clinical workflows, chronic care, finance, AMS, and hospital-wide control" },
 ]
 
 export default function Navbar() {
   const { user, profile, isAdmin } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  if (location.pathname.startsWith("/patient")) return null
+  const isPatientRoute = location.pathname.startsWith("/patient")
   const [menuOpen, setMenuOpen] = useState(false)
   const [openDropdown, setOpenDropdown] = useState(null)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
@@ -30,12 +30,6 @@ export default function Navbar() {
 
   const isActive = (path) => location.pathname === path
   const isGroupActive = (links) => links.some((link) => isActive(link.to))
-
-  useEffect(() => {
-    setMenuOpen(false)
-    setOpenDropdown(null)
-    setUserMenuOpen(false)
-  }, [location.pathname])
 
   useEffect(() => {
     function handleClick(event) {
@@ -136,6 +130,8 @@ export default function Navbar() {
     )
   }
 
+  if (isPatientRoute) return null
+
   return (
     <>
       <nav className="nav">
@@ -147,7 +143,7 @@ export default function Navbar() {
               <Link to="/" className={isActive("/") ? "active" : ""}>Home</Link>
             </li>
             {renderDesktopDropdown("learn", "Learn", learnLinks)}
-            {renderDesktopDropdown("products", "Platforms", productLinks)}
+            {renderDesktopDropdown("products", "Products", productLinks)}
             <li>
               <Link to="/community" className={isActive("/community") ? "active" : ""}>Community</Link>
             </li>
@@ -278,7 +274,7 @@ export default function Navbar() {
               aria-expanded={mobileSections.products}
               onClick={() => toggleMobileSection("products")}
             >
-              <span>Platforms</span>
+              <span>Products</span>
               <span className={`nav-chevron${mobileSections.products ? " open" : ""}`}>v</span>
             </button>
             {mobileSections.products ? (
@@ -433,7 +429,8 @@ export default function Navbar() {
           position: absolute;
           top: calc(100% + 0.6rem);
           left: 0;
-          min-width: 220px;
+          width: min(340px, calc(100vw - 2rem));
+          min-width: 280px;
           padding: 8px;
           border: 0.5px solid var(--border, #dfe8e3);
           border-radius: var(--radius-lg, 26px);
@@ -447,8 +444,11 @@ export default function Navbar() {
         .nav-dropdown-link {
           width: 100%;
           display: flex;
-          align-items: center;
-          min-height: 42px;
+          flex-direction: column;
+          align-items: flex-start;
+          justify-content: center;
+          gap: 0.15rem;
+          min-height: 56px;
           padding: 0.7rem 0.85rem;
           border: none;
           border-radius: 14px;
@@ -457,6 +457,7 @@ export default function Navbar() {
           font-size: 0.9rem;
           font-weight: 700;
           text-align: left;
+          white-space: normal;
           cursor: pointer;
           transition: background 0.18s ease, color 0.18s ease;
         }
@@ -526,6 +527,15 @@ export default function Navbar() {
         .nav-user-panel {
           right: 0;
           left: auto;
+          width: 220px;
+          min-width: 220px;
+        }
+
+        .nav-user-panel .nav-dropdown-link {
+          flex-direction: row;
+          align-items: center;
+          gap: 0;
+          min-height: 42px;
         }
 
         .nav-overlay {

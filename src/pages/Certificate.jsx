@@ -186,7 +186,6 @@ export default function Certificate() {
       const innerX = margin + 6
       const innerY = margin + 6
       const innerWidth = pageWidth - margin * 2 - 12
-      const innerHeight = pageHeight - margin * 2 - 12
       const contentX = innerX + railWidth + 10
       const contentWidth = innerWidth - railWidth - 18
 

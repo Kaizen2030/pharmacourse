@@ -15,7 +15,10 @@ export default function CompleteProfile() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { user, profile, loading, updateProfile } = useAuth()
-  const [form, setForm] = useState({ full_name: "", professional_id: "" })
+  const [form, setForm] = useState(() => ({
+    full_name: profile?.full_name || "",
+    professional_id: profile?.professional_id || "",
+  }))
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
 
@@ -26,13 +29,6 @@ export default function CompleteProfile() {
       navigate("/login", { replace: true })
     }
   }, [loading, navigate, user])
-
-  useEffect(() => {
-    setForm({
-      full_name: profile?.full_name || "",
-      professional_id: profile?.professional_id || "",
-    })
-  }, [profile?.full_name, profile?.professional_id])
 
   function handleChange(key) {
     return (event) => {

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { createElement, useEffect, useRef, useState } from "react"
 import { CalendarClock, PhoneCall, Store, UserRound, Video } from "lucide-react"
 import { usePatient } from "../../components/PatientLayout"
 import { pharmacyosClient } from "../../lib/pharmacyosClient"
@@ -123,21 +123,6 @@ export default function PatientAppointment() {
     }
   }, [bookedSlots, selectedSlot])
 
-  useEffect(() => {
-    if (autoLookupDoneRef.current) {
-      return
-    }
-
-    if (!rememberedSession?.phone || patient || !isValidPhone(rememberedSession.phone)) {
-      return
-    }
-
-    autoLookupDoneRef.current = true
-
-    const fakeEvent = { preventDefault() {} }
-    handleLookup(fakeEvent, rememberedSession.phone)
-  }, [rememberedSession, patient])
-
   async function handleLookup(event, phoneOverride) {
     event.preventDefault()
 
@@ -233,6 +218,21 @@ export default function PatientAppointment() {
     setIsSubmitting(false)
   }
 
+  useEffect(() => {
+    if (autoLookupDoneRef.current) {
+      return
+    }
+
+    if (!rememberedSession?.phone || patient || !isValidPhone(rememberedSession.phone)) {
+      return
+    }
+
+    autoLookupDoneRef.current = true
+
+    const fakeEvent = { preventDefault() {} }
+    handleLookup(fakeEvent, rememberedSession.phone)
+  }, [rememberedSession, patient])
+
   return (
     <div className="patient-page">
       <section className="patient-card patient-card-muted patient-hero">
@@ -304,7 +304,7 @@ export default function PatientAppointment() {
             <div className="patient-form-group">
               <span className="patient-label">Appointment type</span>
               <div className="patient-radio-grid">
-                {appointmentTypes.map(({ value, label, icon: Icon }) => (
+                {appointmentTypes.map(({ value, label, icon }) => (
                   <label key={value} className="patient-radio">
                     <input
                       type="radio"
@@ -315,7 +315,7 @@ export default function PatientAppointment() {
                     />
                     <span className="patient-radio-card">
                       <span className="patient-action-icon">
-                        <Icon />
+                        {createElement(icon)}
                       </span>
                       <span>{label}</span>
                     </span>

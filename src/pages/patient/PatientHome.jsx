@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { createElement, useEffect, useState } from "react"
 import { Bell, CalendarPlus2, ChevronRight, ClipboardPlus, IdCard, LogOut, PillBottle, UserRoundCheck } from "lucide-react"
 import { Link } from "react-router-dom"
 import { usePatient } from "../../components/PatientLayout"
@@ -182,10 +182,10 @@ export default function PatientHome() {
       ) : null}
 
       <section className="patient-actions-grid">
-        {actions.map(({ title, description, to, icon: Icon }) => (
+        {actions.map(({ title, description, to, icon }) => (
           <Link key={title} to={to} className="patient-action-card">
             <span className="patient-action-icon">
-              <Icon />
+              {createElement(icon)}
             </span>
 
             <div className="patient-action-content">

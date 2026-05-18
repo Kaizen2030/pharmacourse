@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useState } from "react"
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, createElement, useContext, useEffect, useState } from "react"
 import { NavLink, Outlet, useSearchParams } from "react-router-dom"
 import { Building2, CalendarDays, ClipboardList, House, PackageSearch } from "lucide-react"
 import { pharmacyosClient } from "../lib/pharmacyosClient"
@@ -863,9 +864,6 @@ export default function PatientLayout() {
 
   useEffect(() => {
     if (!pharmacyId) {
-      setPharmacy(null)
-      setLoadError("")
-      setIsLoading(false)
       return
     }
 
@@ -977,14 +975,14 @@ export default function PatientLayout() {
         </main>
 
         <nav className="patient-bottom-nav" aria-label="Patient portal navigation">
-          {tabs.map(({ to, label, icon: Icon }) => (
+          {tabs.map(({ to, label, icon }) => (
             <NavLink
               key={to}
               to={createPatientPath(to)}
               className={({ isActive }) => `patient-tab${isActive ? " active" : ""}`}
               end={to === "/patient"}
             >
-              <Icon />
+              {createElement(icon)}
               <span>{label}</span>
             </NavLink>
           ))}

@@ -75,29 +75,6 @@ const patientFlows = [
   },
 ]
 
-const dashboardFlows = [
-  {
-    icon: BarChart3,
-    title: "Graphical owner visibility",
-    desc: "Visual dashboard sections summarize revenue, payment classification, patient activity, stock pressure and business direction at a glance.",
-  },
-  {
-    icon: Activity,
-    title: "Realtime operational awareness",
-    desc: "The dashboard now reflects live pharmacy movement instead of static summary text, making branch pressure easier to understand quickly.",
-  },
-  {
-    icon: Clock3,
-    title: "Time-aware shift oversight",
-    desc: "Current shifts and older shift history can be separated, filtered and printed so administrators can audit over weeks, months and years.",
-  },
-  {
-    icon: Package,
-    title: "Scale-safe work queues",
-    desc: "Prescription, appointment and delivery boards are being shaped for real volume with filters, load-more patterns and safer layouts.",
-  },
-]
-
 const compliance = [
   "PPB narcotics and controlled substances export support",
   "SHA / NHIF / SHIF / PHC / ECCIF-aware pharmacy workflows",

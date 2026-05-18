@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
 import { getAuthRedirectUrl } from "../lib/authRedirect"
@@ -7,26 +7,17 @@ import SEO from "../components/SEO"
 export default function Login() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const [email, setEmail] = useState("")
+  const emailFromQuery = searchParams.get("email") || ""
+  const resetStatus = searchParams.get("reset")
+  const [email, setEmail] = useState(emailFromQuery)
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  const [info, setInfo] = useState("")
-
-  useEffect(() => {
-    const emailFromQuery = searchParams.get("email")
-    const resetStatus = searchParams.get("reset")
-
-    if (emailFromQuery) {
-      setEmail(emailFromQuery)
-    }
-
-    if (resetStatus === "success") {
-      setInfo("Password updated. Sign in with your email and new password.")
-    }
-  }, [searchParams])
+  const [info] = useState(() =>
+    resetStatus === "success" ? "Password updated. Sign in with your email and new password." : ""
+  )
 
   async function handleLogin(event) {
     event.preventDefault()

@@ -198,10 +198,6 @@ export default function Workshops() {
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState("")
 
-  useEffect(() => {
-    loadWorkshops()
-  }, [])
-
   async function loadWorkshops() {
     setLoading(true)
     setErrorMessage("")
@@ -222,6 +218,10 @@ export default function Workshops() {
 
     setLoading(false)
   }
+
+  useEffect(() => {
+    loadWorkshops()
+  }, [])
 
   const { upcomingWorkshops, pastWorkshops } = useMemo(() => {
     const upcoming = []

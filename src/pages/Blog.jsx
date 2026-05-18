@@ -57,10 +57,6 @@ export default function Blog() {
   const [currentPage, setCurrentPage] = useState(1)
   const [errorMessage, setErrorMessage] = useState("")
 
-  useEffect(() => {
-    loadPosts()
-  }, [])
-
   async function loadPosts() {
     setLoading(true)
     setErrorMessage("")
@@ -97,6 +93,10 @@ export default function Blog() {
 
     setLoading(false)
   }
+
+  useEffect(() => {
+    loadPosts()
+  }, [])
 
   const categories = useMemo(() => {
     const activeCategories = categoryOptions.filter(Boolean)

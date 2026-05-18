@@ -3,31 +3,54 @@ import { Link } from "react-router-dom"
 export default function Footer() {
   return (
     <footer>
-      <div className="container-wide" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", alignItems: "start", gap: "1.5rem" }}>
-        <div>
-          <span className="footer-logo">PharmaCourse</span>
-          <p style={{ marginTop: "0.75rem", color: "var(--text-500)", maxWidth: 360, lineHeight: 1.7 }}>
-            A connected healthcare ecosystem for learning, telepharmacy-ready pharmacy operations, and hospital-wide clinical management.
-          </p>
+      <div className="container-wide site-footer-shell">
+        <div className="site-footer-top">
+          <div className="site-footer-brand">
+            <span className="footer-logo">PharmaCourse</span>
+            <p className="site-footer-copy">
+              Learning, pharmacy operations, and hospital workflows connected for modern Kenyan healthcare teams.
+            </p>
+            <div className="site-footer-actions">
+              <Link to="/courses" className="site-footer-pill">Explore Courses</Link>
+              <Link to="/workshops" className="site-footer-pill">Upcoming Workshops</Link>
+            </div>
+          </div>
+
+          <div className="site-footer-grid">
+            <div>
+              <div className="site-footer-heading">Products</div>
+              <ul className="footer-links site-footer-links">
+                <li><Link to="/remedacarepos">RemedacarePOS</Link></li>
+                <li><Link to="/remedacarehmis">RemedacareHMS</Link></li>
+                <li><Link to="/patient">Patient Portal</Link></li>
+              </ul>
+            </div>
+
+            <div>
+              <div className="site-footer-heading">Learning</div>
+              <ul className="footer-links site-footer-links">
+                <li><Link to="/courses">Courses</Link></li>
+                <li><Link to="/workshops">Workshops</Link></li>
+                <li><Link to="/dashboard">My Learning</Link></li>
+              </ul>
+            </div>
+
+            <div>
+              <div className="site-footer-heading">Explore</div>
+              <ul className="footer-links site-footer-links">
+                <li><Link to="/community">Community</Link></li>
+                <li><Link to="/blog">Blog</Link></li>
+                <li><Link to="/team-plans">Team Plans</Link></li>
+                <li><Link to="/login">Sign In</Link></li>
+              </ul>
+            </div>
+          </div>
         </div>
-        <div>
-          <div style={{ fontWeight: 800, marginBottom: "0.75rem" }}>Platforms</div>
-          <ul className="footer-links" style={{ flexDirection: "column", alignItems: "flex-start", gap: "0.6rem" }}>
-            <li><Link to="/remedacarepos">RemedacarePOS</Link></li>
-            <li><Link to="/remedacarehmis">RemedacareHMIS</Link></li>
-            <li><Link to="/patient">Patient Portal</Link></li>
-          </ul>
+
+        <div className="site-footer-bottom">
+          <span className="footer-copy">Copyright 2026 PharmaCourse. All rights reserved.</span>
+          <span className="footer-copy">Built for pharmacy, clinic, and hospital teams across Kenya.</span>
         </div>
-        <div>
-          <div style={{ fontWeight: 800, marginBottom: "0.75rem" }}>Company</div>
-          <ul className="footer-links" style={{ flexDirection: "column", alignItems: "flex-start", gap: "0.6rem" }}>
-            <li><Link to="/courses">Explore</Link></li>
-            <li><Link to="/community">Community</Link></li>
-            <li><Link to="/blog">Blog</Link></li>
-            <li><Link to="/login">Sign In</Link></li>
-          </ul>
-        </div>
-        <span className="footer-copy" style={{ gridColumn: "1 / -1" }}>Copyright 2026 PharmaCourse. All rights reserved.</span>
       </div>
     </footer>
   )

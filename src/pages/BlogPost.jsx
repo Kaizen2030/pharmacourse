@@ -145,10 +145,6 @@ function BlogSectionImagePlayer({ images, postTitle, sectionTitle }) {
   const [isPaused, setIsPaused] = useState(false)
 
   useEffect(() => {
-    setActiveIndex(0)
-  }, [images])
-
-  useEffect(() => {
     if (images.length <= 1 || isPaused) return
 
     const intervalId = window.setInterval(() => {
@@ -206,10 +202,6 @@ export default function BlogPost() {
   const [engagement, setEngagement] = useState(DEFAULT_ENGAGEMENT_STATE)
 
   useEffect(() => {
-    loadPost()
-  }, [slug])
-
-  useEffect(() => {
     if (!post?.slug) return
 
     let isActive = true
@@ -259,15 +251,6 @@ export default function BlogPost() {
     }
   }, [post?.slug, post?.like_count, post?.view_count])
 
-  useEffect(() => {
-    if (!post?.id) {
-      setComments([])
-      setCommentsLoading(false)
-      return
-    }
-
-    void loadComments(post.id)
-  }, [post?.id])
 
   async function loadPost() {
     setLoading(true)
@@ -372,6 +355,20 @@ export default function BlogPost() {
 
     setCommentsLoading(false)
   }
+
+  useEffect(() => {
+    loadPost()
+  }, [slug])
+
+  useEffect(() => {
+    if (!post?.id) {
+      setComments([])
+      setCommentsLoading(false)
+      return
+    }
+
+    void loadComments(post.id)
+  }, [post?.id])
 
   async function handleCommentSubmit(event) {
     event.preventDefault()

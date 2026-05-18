@@ -39,14 +39,6 @@ export default function Courses() {
     canScrollRight: false,
   })
 
-  useEffect(() => {
-    loadCourses(page)
-  }, [page])
-
-  useEffect(() => {
-    loadCategories()
-  }, [])
-
   async function loadCourses(targetPage) {
     setLoading(true)
 
@@ -105,6 +97,14 @@ export default function Courses() {
 
     setCategoryTabs(["All", ...nextCategories])
   }
+
+  useEffect(() => {
+    loadCourses(page)
+  }, [page])
+
+  useEffect(() => {
+    loadCategories()
+  }, [])
 
   const totalPages = Math.max(1, Math.ceil(totalCourses / PAGE_SIZE))
   const normalizedSearchQuery = searchQuery.trim().toLowerCase()

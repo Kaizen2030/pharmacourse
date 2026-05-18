@@ -1,19 +1,15 @@
 ﻿import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../../context/AuthContext'
 
 export default function SimulationAdmin() {
   const { user } = useAuth()
-  const navigate = useNavigate()
   const [simulations, setSimulations] = useState([])
   const [pearls, setPearls] = useState([])
   const [tab, setTab] = useState('simulations')
   const [loading, setLoading] = useState(false)
   const [newSim, setNewSim] = useState({ title: '', patient_context: '', difficulty: 'intermediate', competencies: [], antibiogram: {} })
   const [newPearl, setNewPearl] = useState({ title: '', content: '', category: '', tags: [] })
-
-  useEffect(() => { loadData() }, [])
 
   async function loadData() {
     const [simRes, pearlRes] = await Promise.all([
@@ -23,6 +19,8 @@ export default function SimulationAdmin() {
     setSimulations(simRes.data || [])
     setPearls(pearlRes.data || [])
   }
+
+  useEffect(() => { loadData() }, [])
 
   async function createSimulation() {
     if (!newSim.title || !newSim.patient_context) { alert('Please fill in title and patient context'); return }
