@@ -244,8 +244,12 @@ export default function PatientAppointment() {
       <section className="patient-card">
         <div className="patient-section-header">
           <div>
-            <h2 className="patient-section-title">Step 1: Confirm your signed-in patient account</h2>
-            <p className="patient-form-help">We will find your registered patient profile using the phone number linked to your account.</p>
+            <h2 className="patient-section-title">{patient ? "Patient account ready" : "Step 1: Confirm your patient account"}</h2>
+            <p className="patient-form-help">
+              {patient
+                ? "You are already signed in and linked to this branch profile."
+                : "We will find your registered patient profile using the phone number linked to your account."}
+            </p>
           </div>
           <span className="patient-inline-icon">
             <ShieldCheck />
@@ -271,13 +275,15 @@ export default function PatientAppointment() {
         ) : null}
 
         {!authLoading && isAuthenticated ? (
-          <div className="patient-empty-state">
+          <div className="patient-auth-status">
             <p className="patient-form-help" style={{ margin: 0 }}>
               Signed in as <strong>{fullName || rememberedSession?.fullName || "Patient account"}</strong>{patientPhone ? ` on ${patientPhone}` : ""}.
             </p>
-            <button className="patient-button-secondary" type="button" onClick={() => void handleLookup()} disabled={isLookingUp}>
-              {isLookingUp ? "Checking profile..." : "Load my profile"}
-            </button>
+            <div className="patient-inline-actions">
+              <button className="patient-button-secondary patient-button-inline" type="button" onClick={() => void handleLookup()} disabled={isLookingUp}>
+                {isLookingUp ? "Checking profile..." : patient ? "Refresh profile" : "Load my profile"}
+              </button>
+            </div>
           </div>
         ) : null}
 

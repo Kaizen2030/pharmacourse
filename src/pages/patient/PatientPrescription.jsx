@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import { ImagePlus, ShieldCheck, UserRound } from "lucide-react"
+import { ImagePlus, Plus, ShieldCheck, Trash2 } from "lucide-react"
 import { Link } from "react-router-dom"
 import { usePatient } from "../../components/PatientLayout"
 import { usePatientPortalAuth } from "../../hooks/usePatientPortalAuth"
@@ -17,7 +17,7 @@ export default function PatientPrescription() {
   const [lookupMessage, setLookupMessage] = useState({ type: "", message: "" })
   const [isLookingUp, setIsLookingUp] = useState(false)
   const [conditionNotes, setConditionNotes] = useState("")
-  const [drugRequested, setDrugRequested] = useState("")
+  const [requestedDrugs, setRequestedDrugs] = useState([""])
   const [prescriptionFile, setPrescriptionFile] = useState(null)
   const [submitMessage, setSubmitMessage] = useState({ type: "", message: "" })
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -88,10 +88,25 @@ export default function PatientPrescription() {
     })
     setLookupMessage({
       type: "success",
-      message: `Welcome back ${data.patient.full_name}. You can submit your prescription request below.`,
+      message: `Welcome back ${data.patient.full_name}. Your branch profile is ready for prescription requests.`,
     })
     setIsLookingUp(false)
   }, [isAuthenticated, patientPhone, pharmacyId])
+
+  function updateRequestedDrug(index, value) {
+    setRequestedDrugs((prev) => prev.map((item, itemIndex) => (itemIndex === index ? value : item)))
+  }
+
+  function addRequestedDrug() {
+    setRequestedDrugs((prev) => [...prev, ""])
+  }
+
+  function removeRequestedDrug(index) {
+    setRequestedDrugs((prev) => {
+      if (prev.length === 1) return [""]
+      return prev.filter((_, itemIndex) => itemIndex !== index)
+    })
+  }
 
   async function handleSubmit(event) {
     event.preventDefault()
@@ -101,27 +116,38 @@ export default function PatientPrescription() {
       return
     }
 
-    if (!prescriptionFile) {
-      setSubmitMessage({ type: "error", message: "Please upload a prescription photo before submitting." })
-      return
-    }
-
     setIsSubmitting(true)
     setSubmitMessage({ type: "", message: "" })
 
-    const filePath = `${pharmacyId}/${patient.id}/${Date.now()}-${sanitizeFileName(prescriptionFile.name)}`
-    const uploadResult = await pharmacyosClient.storage
-      .from("prescription-photos")
-      .upload(filePath, prescriptionFile, { upsert: false })
+    const normalizedNotes = conditionNotes.trim()
+    const normalizedDrugs = requestedDrugs.map((item) => item.trim()).filter(Boolean)
 
-    if (uploadResult.error) {
-      setSubmitMessage({ type: "error", message: uploadResult.error.message || "Photo upload failed." })
+    if (!normalizedNotes && normalizedDrugs.length === 0 && !prescriptionFile) {
+      setSubmitMessage({
+        type: "error",
+        message: "Add a condition note, at least one medicine name, or a prescription photo before submitting.",
+      })
       setIsSubmitting(false)
       return
     }
 
-    const { data: publicUrlData } = pharmacyosClient.storage.from("prescription-photos").getPublicUrl(filePath)
-    const prescriptionImageUrl = publicUrlData.publicUrl
+    let prescriptionImageUrl = null
+
+    if (prescriptionFile) {
+      const filePath = `${pharmacyId}/${patient.id}/${Date.now()}-${sanitizeFileName(prescriptionFile.name)}`
+      const uploadResult = await pharmacyosClient.storage
+        .from("prescription-photos")
+        .upload(filePath, prescriptionFile, { upsert: false })
+
+      if (uploadResult.error) {
+        setSubmitMessage({ type: "error", message: uploadResult.error.message || "Photo upload failed." })
+        setIsSubmitting(false)
+        return
+      }
+
+      const { data: publicUrlData } = pharmacyosClient.storage.from("prescription-photos").getPublicUrl(filePath)
+      prescriptionImageUrl = publicUrlData.publicUrl || null
+    }
 
     const { error } = await pharmacyosClient.from("prescription_requests").insert({
       pharmacy_id: pharmacyId,
@@ -129,9 +155,9 @@ export default function PatientPrescription() {
       patient_id: patient.id,
       patient_phone: patient.phone,
       patient_name: patient.full_name,
-      condition_notes: conditionNotes.trim(),
+      condition_notes: normalizedNotes,
       prescription_image_url: prescriptionImageUrl,
-      drug_requested: drugRequested.trim() || null,
+      drug_requested: normalizedDrugs.join(", ") || null,
       status: "pending",
     })
 
@@ -143,9 +169,9 @@ export default function PatientPrescription() {
 
     setSubmitMessage({
       type: "success",
-      message: "Request submitted! The pharmacist will review and respond. Sign in to your patient account to view private updates and notifications.",
+      message: "Request submitted. The pharmacist will review it and send updates to your signed-in patient account.",
     })
-    setDrugRequested("")
+    setRequestedDrugs([""])
     setPrescriptionFile(null)
     setConditionNotes("")
     setIsSubmitting(false)
@@ -169,14 +195,18 @@ export default function PatientPrescription() {
       <section className="patient-card patient-card-muted patient-hero">
         <span className="patient-badge">Prescription request</span>
         <h1>Request a refill or review</h1>
-        <p className="patient-copy">Sign in with your patient account, then upload a prescription photo for the pharmacist to review securely.</p>
+        <p className="patient-copy">Sign in once, tell the pharmacist what you need, add one or more medicines if you know them, and upload a prescription only when you have one.</p>
       </section>
 
       <section className="patient-card">
         <div className="patient-section-header">
           <div>
-            <h2 className="patient-section-title">Step 1: Confirm your signed-in patient account</h2>
-            <p className="patient-form-help">We will look up your patient profile at this branch using the phone number linked to your account.</p>
+            <h2 className="patient-section-title">{patient ? "Patient account ready" : "Step 1: Confirm your patient account"}</h2>
+            <p className="patient-form-help">
+              {patient
+                ? "You are already signed in and linked to this branch profile."
+                : "We will look up your patient profile at this branch using the phone number linked to your account."}
+            </p>
           </div>
           <span className="patient-inline-icon">
             <ShieldCheck />
@@ -202,13 +232,15 @@ export default function PatientPrescription() {
         ) : null}
 
         {!authLoading && isAuthenticated ? (
-          <div className="patient-empty-state">
+          <div className="patient-auth-status">
             <p className="patient-form-help" style={{ margin: 0 }}>
               Signed in as <strong>{fullName || rememberedSession?.fullName || "Patient account"}</strong>{patientPhone ? ` on ${patientPhone}` : ""}.
             </p>
-            <button className="patient-button-secondary" type="button" onClick={() => void handleLookup()} disabled={isLookingUp}>
-              {isLookingUp ? "Checking profile..." : "Load my profile"}
-            </button>
+            <div className="patient-inline-actions">
+              <button className="patient-button-secondary patient-button-inline" type="button" onClick={() => void handleLookup()} disabled={isLookingUp}>
+                {isLookingUp ? "Checking profile..." : patient ? "Refresh profile" : "Load my profile"}
+              </button>
+            </div>
           </div>
         ) : null}
 
@@ -258,7 +290,7 @@ export default function PatientPrescription() {
           <div className="patient-section-header">
             <div>
               <h2 className="patient-section-title">Step 2: Submit your request</h2>
-              <p className="patient-form-help">Share what you need and upload the prescription image for review.</p>
+              <p className="patient-form-help">Share what you need below. A prescription image is helpful, but not required.</p>
             </div>
             <span className="patient-inline-icon">
               <ImagePlus />
@@ -284,21 +316,47 @@ export default function PatientPrescription() {
             </div>
 
             <div className="patient-form-group">
-              <label className="patient-label" htmlFor="drugRequested">
-                Medicine name if known (optional)
-              </label>
-              <input
-                id="drugRequested"
-                className="patient-input"
-                value={drugRequested}
-                onChange={(event) => setDrugRequested(event.target.value)}
-                placeholder="Example: Amoxicillin 500mg"
-              />
+              <div className="patient-section-header patient-section-header-tight">
+                <div>
+                  <label className="patient-label" htmlFor="drugRequested0">
+                    Medicines needed if known
+                  </label>
+                  <p className="patient-form-help">Add one or more medicine names if you know them.</p>
+                </div>
+                <button className="patient-button-secondary patient-button-inline" type="button" onClick={addRequestedDrug}>
+                  <Plus size={16} />
+                  Add drug
+                </button>
+              </div>
+
+              <div className="patient-drug-stack">
+                {requestedDrugs.map((drug, index) => (
+                  <div key={`requested-drug-${index}`} className="patient-drug-row">
+                    <input
+                      id={`drugRequested${index}`}
+                      className="patient-input"
+                      value={drug}
+                      onChange={(event) => updateRequestedDrug(index, event.target.value)}
+                      placeholder={index === 0 ? "Example: Amoxicillin 500mg" : `Medicine ${index + 1}`}
+                    />
+                    <button
+                      className="patient-button-secondary patient-button-inline patient-drug-remove"
+                      type="button"
+                      onClick={() => removeRequestedDrug(index)}
+                      disabled={requestedDrugs.length === 1}
+                      aria-label={`Remove medicine ${index + 1}`}
+                    >
+                      <Trash2 size={16} />
+                      <span>Remove</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="patient-form-group">
               <label className="patient-label" htmlFor="prescriptionPhoto">
-                Prescription photo
+                Prescription photo (optional)
               </label>
               <input
                 id="prescriptionPhoto"

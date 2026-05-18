@@ -393,6 +393,19 @@ export function PatientPortalStyles() {
         gap: 0.42rem;
       }
 
+      .patient-auth-status {
+        display: grid;
+        gap: 0.8rem;
+        justify-items: start;
+      }
+
+      .patient-inline-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.7rem;
+        width: 100%;
+      }
+
       .patient-label {
         font-size: 0.78rem;
         font-weight: 800;
@@ -458,6 +471,14 @@ export function PatientPortalStyles() {
       .patient-button-secondary {
         background: rgba(15, 110, 86, 0.08);
         color: #0f6e56;
+      }
+
+      .patient-button-inline {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        min-height: 44px;
       }
 
       .patient-message,
@@ -680,8 +701,29 @@ export function PatientPortalStyles() {
         margin-bottom: 0.8rem;
       }
 
+      .patient-section-header-tight {
+        align-items: end;
+        margin-bottom: 0.55rem;
+      }
+
       .patient-section-title {
         font-size: 1.08rem;
+      }
+
+      .patient-drug-stack {
+        display: grid;
+        gap: 0.75rem;
+      }
+
+      .patient-drug-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 0.7rem;
+        align-items: center;
+      }
+
+      .patient-drug-remove {
+        white-space: nowrap;
       }
 
       .patient-empty-state {
@@ -827,6 +869,29 @@ export function PatientPortalStyles() {
       }
 
       @media (max-width: 520px) {
+        .patient-topbar {
+          align-items: flex-start;
+          flex-direction: column;
+          padding-bottom: 0.8rem;
+        }
+
+        .patient-powered {
+          text-align: left;
+        }
+
+        .patient-main {
+          padding: 0.85rem 0.8rem 6.6rem;
+        }
+
+        .patient-card {
+          padding: 1rem;
+          border-radius: 20px;
+        }
+
+        .patient-hero h1 {
+          font-size: 1.55rem;
+        }
+
         .patient-checkbox-grid,
         .patient-slot-grid {
           grid-template-columns: 1fr;
@@ -837,6 +902,18 @@ export function PatientPortalStyles() {
         .patient-section-header {
           flex-direction: column;
           align-items: flex-start;
+        }
+
+        .patient-inline-actions > * {
+          width: 100%;
+        }
+
+        .patient-drug-row {
+          grid-template-columns: 1fr;
+        }
+
+        .patient-drug-remove {
+          width: 100%;
         }
 
         .patient-bottom-nav {
