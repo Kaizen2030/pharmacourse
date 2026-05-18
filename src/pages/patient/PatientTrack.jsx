@@ -10,6 +10,7 @@ import { fetchPatientPortalUpdates } from "../../lib/patientPortalUpdates"
 import { getPatientPortalSession, savePatientPortalSession } from "../../lib/patientPortalSession"
 
 const deliverySteps = ["pending", "packed", "dispatched", "delivered"]
+const TRACK_PAGE_SIZE = 5
 const FULFILLMENT_ACTIONS = {
   pickup: {
     label: "I Will Pick Up at Pharmacy",
@@ -131,6 +132,13 @@ export default function PatientTrack() {
   const [deliveries, setDeliveries] = useState([])
   const [prescriptions, setPrescriptions] = useState([])
   const [appointments, setAppointments] = useState([])
+  const [visibleCounts, setVisibleCounts] = useState({
+    notifications: TRACK_PAGE_SIZE,
+    deliveries: TRACK_PAGE_SIZE,
+    prescriptions: TRACK_PAGE_SIZE,
+    receipts: TRACK_PAGE_SIZE,
+    appointments: TRACK_PAGE_SIZE,
+  })
   const [isLoading, setIsLoading] = useState(false)
   const [feedback, setFeedback] = useState({ type: "", message: "" })
   const [lastUpdated, setLastUpdated] = useState("")
@@ -146,6 +154,11 @@ export default function PatientTrack() {
   const unreadCount = notifications.filter((notification) => !notification.read).length
   const displayName = fullName || rememberedSession?.fullName || ""
   const receiptEntries = buildReceiptEntries(prescriptions)
+  const visibleNotifications = notifications.slice(0, visibleCounts.notifications)
+  const visibleDeliveries = deliveries.slice(0, visibleCounts.deliveries)
+  const visiblePrescriptions = prescriptions.slice(0, visibleCounts.prescriptions)
+  const visibleReceipts = receiptEntries.slice(0, visibleCounts.receipts)
+  const visibleAppointments = appointments.slice(0, visibleCounts.appointments)
   const handleTurnstileVerify = useCallback((token) => {
     setTurnstileToken(token || "")
   }, [])
@@ -356,6 +369,33 @@ export default function PatientTrack() {
     }
   }, [isAuthenticated, patientPhone, loadTrackingData])
 
+  useEffect(() => {
+    setVisibleCounts({
+      notifications: TRACK_PAGE_SIZE,
+      deliveries: TRACK_PAGE_SIZE,
+      prescriptions: TRACK_PAGE_SIZE,
+      receipts: TRACK_PAGE_SIZE,
+      appointments: TRACK_PAGE_SIZE,
+    })
+  }, [notifications.length, deliveries.length, prescriptions.length, receiptEntries.length, appointments.length])
+
+  function renderLoadMore(sectionKey, total, showing) {
+    if (total <= showing) return null
+
+    return (
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.8rem", flexWrap: "wrap" }}>
+        <span className="patient-form-help">Showing {showing} of {total}</span>
+        <button
+          type="button"
+          className="patient-button-secondary"
+          onClick={() => setVisibleCounts((prev) => ({ ...prev, [sectionKey]: prev[sectionKey] + TRACK_PAGE_SIZE }))}
+        >
+          Load more
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div className="patient-page">
       <section className="patient-card patient-card-muted patient-hero">
@@ -468,7 +508,7 @@ export default function PatientTrack() {
 
             {notifications.length ? (
               <div className="patient-list">
-                {notifications.map((notification) => (
+                {visibleNotifications.map((notification) => (
                   <article key={notification.id} className="patient-list-item patient-note-item">
                     <div className="patient-note-header">
                       <span className={`patient-type-badge ${getStatusClass(notification.type)}`}>{getNotificationTypeLabel(notification.type)}</span>
@@ -477,6 +517,7 @@ export default function PatientTrack() {
                     <p className="patient-note-message">{notification.message}</p>
                   </article>
                 ))}
+                {renderLoadMore("notifications", notifications.length, visibleNotifications.length)}
               </div>
             ) : (
               <div className="patient-empty-state">
@@ -501,7 +542,7 @@ export default function PatientTrack() {
 
             {deliveries.length ? (
               <div className="patient-list">
-                {deliveries.map((delivery) => {
+                {visibleDeliveries.map((delivery) => {
                   const stepIndex = getCurrentDeliveryStepIndex(delivery.status)
 
                   return (
@@ -541,6 +582,7 @@ export default function PatientTrack() {
                     </article>
                   )
                 })}
+                {renderLoadMore("deliveries", deliveries.length, visibleDeliveries.length)}
               </div>
             ) : (
               <div className="patient-empty-state">
@@ -570,7 +612,7 @@ export default function PatientTrack() {
 
             {prescriptions.length ? (
               <div className="patient-list">
-                {prescriptions.map((request) => (
+                {visiblePrescriptions.map((request) => (
                   <article key={request.id} className="patient-list-item">
                     <div className="patient-list-header">
                       <div>
@@ -687,6 +729,7 @@ export default function PatientTrack() {
                     ) : null}
                   </article>
                 ))}
+                {renderLoadMore("prescriptions", prescriptions.length, visiblePrescriptions.length)}
               </div>
             ) : (
               <div className="patient-empty-state">
@@ -711,7 +754,7 @@ export default function PatientTrack() {
 
             {receiptEntries.length ? (
               <div className="patient-list">
-                {receiptEntries.map((receipt) => (
+                {visibleReceipts.map((receipt) => (
                   <article key={`receipt-${receipt.id}`} className="patient-list-item">
                     <div className="patient-list-header">
                       <div>
@@ -736,6 +779,7 @@ export default function PatientTrack() {
                     </div>
                   </article>
                 ))}
+                {renderLoadMore("receipts", receiptEntries.length, visibleReceipts.length)}
               </div>
             ) : (
               <div className="patient-empty-state">
@@ -767,7 +811,7 @@ export default function PatientTrack() {
 
             {appointments.length ? (
               <div className="patient-list">
-                {appointments.map((appointment) => (
+                {visibleAppointments.map((appointment) => (
                   <article key={appointment.id} className="patient-list-item">
                     <div className="patient-list-header">
                       <div>
@@ -840,6 +884,7 @@ export default function PatientTrack() {
                     ) : null}
                   </article>
                 ))}
+                {renderLoadMore("appointments", appointments.length, visibleAppointments.length)}
               </div>
             ) : (
               <div className="patient-empty-state">
