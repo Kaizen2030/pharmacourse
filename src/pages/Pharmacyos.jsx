@@ -489,7 +489,7 @@ export default function PharmacyOS() {
                 Built for pharmacists who need speed, control, and patient continuity.
               </h2>
               <p style={{ color: "#666", fontSize: 15, lineHeight: 1.75, marginBottom: 32 }}>
-                The product can now speak honestly about what it does: visual analytics, controlled workflows, patient continuity and Kenyan pharmacy control points that matter in practice.
+                RemedacarePOS brings together live dashboard visibility, controlled dispensing workflows, patient continuity, and the Kenyan pharmacy safeguards that matter in daily operations.
               </p>
               <a href={WHATSAPP} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: GREEN, color: "#fff", textDecoration: "none", padding: "13px 24px", borderRadius: 10, fontWeight: 700, fontSize: 14, boxShadow: "0 4px 16px rgba(15,110,86,0.3)" }}>
                 Book a Live Demo <ChevronRight size={16} />
