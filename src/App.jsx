@@ -14,6 +14,7 @@ import CourseDetail from "./pages/CourseDetail"
 import CoursePlayer from "./pages/CoursePlayer"
 import Courses from "./pages/Courses"
 import Dashboard from "./pages/Dashboard"
+import DesktopAccountActivate from "./pages/DesktopAccountActivate"
 import ForgotPassword from "./pages/ForgotPassword"
 import Home from "./pages/Home"
 import Login from "./pages/Login"
@@ -98,11 +99,12 @@ function AppShell() {
   const location = useLocation()
   const isPatientRoute = location.pathname.startsWith("/patient") || location.pathname === "/patient-portal"
   const isFlyerRoute = location.pathname === "/patient-flyer"
+  const isActivationRoute = location.pathname.startsWith("/activate/")
 
   return (
     <>
       <MediaProtection />
-      {!isPatientRoute && !isFlyerRoute ? <Navbar /> : null}
+      {!isPatientRoute && !isFlyerRoute && !isActivationRoute ? <Navbar /> : null}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
@@ -134,6 +136,10 @@ function AppShell() {
 
         <Route path="/patient-portal" element={<PatientPortal />} />
         <Route path="/patient-flyer" element={<PatientPortalFlyer />} />
+        <Route path="/activate/remedacarepos" element={<DesktopAccountActivate app="remedacarepos" />} />
+        <Route path="/activate/pharmacyos" element={<DesktopAccountActivate app="remedacarepos" />} />
+        <Route path="/activate/remedacarehmis" element={<DesktopAccountActivate app="remedacarehmis" />} />
+        <Route path="/activate/remedacarehms" element={<DesktopAccountActivate app="remedacarehmis" />} />
         <Route path="/patient/login" element={<PatientLogin />} />
         <Route path="/patient/forgot-password" element={<PatientForgotPassword />} />
         <Route path="/patient/reset-password" element={<PatientResetPassword />} />
@@ -151,7 +157,7 @@ function AppShell() {
         <Route path="/reset/remedacarehmis" element={<ResetRedirect app="remedacarehms" />} />
         <Route path="/reset/pharmacyos" element={<ResetRedirect app="remedacarepos" />} />
       </Routes>
-      {!isPatientRoute && !isFlyerRoute ? <Footer /> : null}
+      {!isPatientRoute && !isFlyerRoute && !isActivationRoute ? <Footer /> : null}
     </>
   )
 }
