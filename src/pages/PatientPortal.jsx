@@ -496,6 +496,191 @@ function normalizeTrackingPayload(payload) {
   }
 }
 
+function getTrackingRequestProducts(item) {
+  const fulfillmentRows = Array.isArray(item?.fulfillment_items) ? item.fulfillment_items : []
+  const fulfillmentProducts = fulfillmentRows
+    .map((row) => row?.drug_name || row?.requestedDrug || row?.requested_drug || "")
+    .filter(Boolean)
+
+  if (fulfillmentProducts.length) {
+    return [...new Set(fulfillmentProducts)]
+  }
+
+  return String(item?.drug_requested || "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean)
+}
+
+function buildHistoryEntry(id, label, body, at, tone = "info") {
+  return { id, label, body, at, tone }
+}
+
+function getMatchingNotifications(notifications = [], referenceIds = []) {
+  const validIds = new Set(referenceIds.map((value) => String(value || "").trim()).filter(Boolean))
+  if (!validIds.size) return []
+  return notifications.filter((item) => validIds.has(String(item?.reference_id || "").trim()))
+}
+
+function buildTrackingCards(payload) {
+  const { requests = [], appointments = [], deliveries = [], notifications = [] } = normalizeTrackingPayload(payload)
+  const deliveryByRequestId = new Map(
+    deliveries
+      .filter((item) => item?.prescription_request_id)
+      .map((item) => [String(item.prescription_request_id), item]),
+  )
+
+  const requestCards = requests.map((item) => {
+    const linkedDelivery = deliveryByRequestId.get(String(item.id)) || null
+    const products = getTrackingRequestProducts(item)
+    const relatedNotifications = getMatchingNotifications(notifications, [item.id, linkedDelivery?.id])
+    const history = [
+      buildHistoryEntry(`request-${item.id}-submitted`, "Request submitted", item.condition_notes || "Your prescription request reached the branch for review.", item.created_at, "warning"),
+      item.status && item.status !== "pending"
+        ? buildHistoryEntry(`request-${item.id}-status`, formatTokenLabel(item.status), item.pharmacist_notes || "The pharmacist updated this request.", item.updated_at || item.created_at, getStatusTone(item.status))
+        : null,
+      item.patient_response_action
+        ? buildHistoryEntry(`request-${item.id}-response`, formatTokenLabel(item.patient_response_action, "Patient response"), item.patient_response_notes || "You replied to the pharmacist.", item.patient_response_at || item.updated_at, "info")
+        : null,
+      item.patient_fulfillment_choice
+        ? buildHistoryEntry(`request-${item.id}-fulfillment`, formatTokenLabel(item.patient_fulfillment_choice), [item.patient_fulfillment_address ? `Address: ${item.patient_fulfillment_address}` : "", item.patient_fulfillment_notes || ""].filter(Boolean).join(" · ") || "You chose how this order should be fulfilled.", item.patient_fulfillment_at || item.updated_at, "info")
+        : null,
+      linkedDelivery
+        ? buildHistoryEntry(
+            `request-${item.id}-delivery`,
+            `Delivery ${formatTokenLabel(linkedDelivery.status)}`,
+            [
+              Array.isArray(linkedDelivery.items) && linkedDelivery.items.length ? linkedDelivery.items.map((row) => `${row.drug_name || "Drug"} x${row.qty || 1}`).join(", ") : "",
+              linkedDelivery.delivery_partner_type || linkedDelivery.rider_name ? `Partner: ${[linkedDelivery.delivery_partner_type, linkedDelivery.rider_name].filter(Boolean).join(" - ")}${linkedDelivery.rider_phone ? ` (${linkedDelivery.rider_phone})` : ""}` : "",
+              linkedDelivery.estimated_delivery_minutes ? `ETA ${linkedDelivery.estimated_delivery_minutes} min` : "",
+            ].filter(Boolean).join(" · ") || "The branch is moving this order through delivery.",
+            linkedDelivery.delivered_at || linkedDelivery.created_at,
+            getStatusTone(linkedDelivery.status),
+          )
+        : null,
+      ...relatedNotifications.map((note) => buildHistoryEntry(`request-${item.id}-note-${note.id}`, formatTokenLabel(note.type, "Update"), note.message || "Branch update", note.created_at, note.read ? "muted" : "info")),
+    ].filter(Boolean).sort((a, b) => new Date(b.at || 0) - new Date(a.at || 0))
+
+    const currentStatus = linkedDelivery?.status || item.linked_delivery_status || item.status || "pending"
+
+    return {
+      id: `request-${item.id}`,
+      requestId: item.id,
+      typeKey: "request",
+      type: "Prescription request",
+      title: products.length > 1 ? `${products[0]} +${products.length - 1} more` : (products[0] || "Prescription request"),
+      badgeCount: products.length,
+      products,
+      status: currentStatus,
+      statusLabel: formatTokenLabel(currentStatus),
+      activityAt: history[0]?.at || item.updated_at || item.created_at,
+      pharmacistNotes: item.pharmacist_notes || "",
+      patientResponseAction: item.patient_response_action || "",
+      patientResponseNotes: item.patient_response_notes || "",
+      patientResponseAt: item.patient_response_at || "",
+      patientFulfillmentChoice: item.patient_fulfillment_choice || "",
+      patientFulfillmentNotes: item.patient_fulfillment_notes || "",
+      patientFulfillmentAddress: item.patient_fulfillment_address || "",
+      patientFulfillmentAt: item.patient_fulfillment_at || "",
+      linkedDeliveryId: linkedDelivery?.id || item.linked_delivery_id || "",
+      linkedDeliveryStatus: linkedDelivery?.status || item.linked_delivery_status || "",
+      canRespond: item.status === "alternative_offered" && !item.patient_response_action,
+      canChooseFulfillment: !item.patient_fulfillment_choice && !(linkedDelivery?.id || item.linked_delivery_id) && (item.status === "approved" || item.status === "dispensed" || item.patient_response_action === "accept_alternative"),
+      deliveryAddress: linkedDelivery?.patient_address || "",
+      deliveryItems: Array.isArray(linkedDelivery?.items) ? linkedDelivery.items : [],
+      deliveryPartnerType: linkedDelivery?.delivery_partner_type || "",
+      deliveryPartnerName: linkedDelivery?.rider_name || "",
+      deliveryPartnerPhone: linkedDelivery?.rider_phone || "",
+      deliveryEtaMinutes: linkedDelivery?.estimated_delivery_minutes || "",
+      summary: history[0]?.body || item.condition_notes || "Waiting for pharmacist review.",
+      createdAt: item.created_at,
+      history,
+      notificationCount: relatedNotifications.length,
+    }
+  })
+
+  const appointmentCards = appointments.map((item) => {
+    const relatedNotifications = getMatchingNotifications(notifications, [item.id])
+    const history = [
+      buildHistoryEntry(`appointment-${item.id}-booked`, "Appointment booked", item.condition_summary || item.patient_notes || formatDateTime(item.slot_datetime), item.created_at, "warning"),
+      item.status && item.status !== "pending"
+        ? buildHistoryEntry(`appointment-${item.id}-status`, formatTokenLabel(item.status), item.pharmacist_response || "The pharmacist updated your appointment.", item.updated_at || item.created_at, getStatusTone(item.status))
+        : null,
+      ...relatedNotifications.map((note) => buildHistoryEntry(`appointment-${item.id}-note-${note.id}`, formatTokenLabel(note.type, "Update"), note.message || "Appointment update", note.created_at, note.read ? "muted" : "info")),
+    ].filter(Boolean).sort((a, b) => new Date(b.at || 0) - new Date(a.at || 0))
+
+    return {
+      id: `appointment-${item.id}`,
+      typeKey: "appointment",
+      type: "Appointment",
+      title: formatAppointmentType(item.appointment_type),
+      status: item.status || "pending",
+      statusLabel: formatTokenLabel(item.status),
+      activityAt: history[0]?.at || item.updated_at || item.created_at,
+      pharmacistResponse: item.pharmacist_response || "",
+      videoLink: item.video_link || "",
+      actionLink: normalizePortalActionLink(item.video_link || ""),
+      summary: history[0]?.body || formatDateTime(item.slot_datetime),
+      createdAt: item.created_at,
+      history,
+      notificationCount: relatedNotifications.length,
+    }
+  })
+
+  const deliveryOnlyCards = deliveries
+    .filter((item) => !item?.prescription_request_id || !requests.some((row) => String(row.id) === String(item.prescription_request_id)))
+    .map((item) => {
+      const relatedNotifications = getMatchingNotifications(notifications, [item.id])
+      const history = [
+        buildHistoryEntry(`delivery-${item.id}-created`, "Delivery created", Array.isArray(item.items) && item.items.length ? item.items.map((row) => `${row.drug_name || "Drug"} x${row.qty || 1}`).join(", ") : "Delivery request created.", item.created_at, "warning"),
+        item.status && item.status !== "pending"
+          ? buildHistoryEntry(`delivery-${item.id}-status`, formatTokenLabel(item.status), item.delivery_partner_type || item.rider_name ? `Partner: ${[item.delivery_partner_type, item.rider_name].filter(Boolean).join(" - ")}${item.rider_phone ? ` (${item.rider_phone})` : ""}` : "The branch updated delivery progress.", item.delivered_at || item.created_at, getStatusTone(item.status))
+          : null,
+        ...relatedNotifications.map((note) => buildHistoryEntry(`delivery-${item.id}-note-${note.id}`, formatTokenLabel(note.type, "Update"), note.message || "Delivery update", note.created_at, note.read ? "muted" : "info")),
+      ].filter(Boolean).sort((a, b) => new Date(b.at || 0) - new Date(a.at || 0))
+
+      return {
+        id: `delivery-${item.id}`,
+        typeKey: "delivery",
+        type: "Delivery",
+        title: item.patient_address || "Delivery request",
+        status: item.status || "pending",
+        statusLabel: formatTokenLabel(item.status),
+        activityAt: history[0]?.at || item.created_at,
+        deliveryAddress: item.patient_address || "",
+        deliveryItems: Array.isArray(item.items) ? item.items : [],
+        deliveryPartnerType: item.delivery_partner_type || "",
+        deliveryPartnerName: item.rider_name || "",
+        deliveryPartnerPhone: item.rider_phone || "",
+        deliveryEtaMinutes: item.estimated_delivery_minutes || "",
+        summary: history[0]?.body || "Delivery in progress.",
+        createdAt: item.created_at,
+        history,
+        notificationCount: relatedNotifications.length,
+      }
+    })
+
+  return [...requestCards, ...appointmentCards, ...deliveryOnlyCards]
+    .sort((a, b) => new Date(b.activityAt || b.createdAt || 0) - new Date(a.activityAt || a.createdAt || 0))
+}
+
+function buildGlobalTrackingGroups(matches = []) {
+  return matches
+    .map((match) => {
+      const cards = buildTrackingCards(match)
+      return {
+        pharmacyId: match?.pharmacy_id || "",
+        pharmacyName: match?.pharmacy_name || "Pharmacy",
+        pharmacyLocation: match?.pharmacy_location || "Location not provided",
+        lastActivityAt: match?.last_activity_at || cards[0]?.activityAt || cards[0]?.createdAt || "",
+        cards,
+        feed: [],
+      }
+    })
+    .filter((match) => match.pharmacyId && match.cards.length > 0)
+    .sort((first, second) => new Date(second.lastActivityAt || 0) - new Date(first.lastActivityAt || 0))
+}
+
 function parseLocationMeta(value) {
   const parts = String(value || "")
     .split(",")
@@ -569,6 +754,7 @@ export default function PatientPortal() {
   const [deliveryForm, setDeliveryForm] = useState(createEmptyDelivery)
   const [trackerPhone, setTrackerPhone] = useState("")
   const [trackingFeed, setTrackingFeed] = useState([])
+  const [trackingCards, setTrackingCards] = useState([])
   const [trackingMatches, setTrackingMatches] = useState([])
   const [trackingLoading, setTrackingLoading] = useState(false)
   const [trackingMessage, setTrackingMessage] = useState("")
@@ -1242,6 +1428,7 @@ export default function PatientPortal() {
     if (!patientAccountAuthenticated) {
       setTrackingMessage("Sign in to your patient account to view private updates and notifications.")
       setTrackingFeed([])
+      setTrackingCards([])
       setTrackingMatches([])
       return
     }
@@ -1249,6 +1436,7 @@ export default function PatientPortal() {
     if (!phone) {
       setTrackingMessage("Your patient account does not have a linked phone number yet.")
       setTrackingFeed([])
+      setTrackingCards([])
       setTrackingMatches([])
       return
     }
@@ -1258,6 +1446,7 @@ export default function PatientPortal() {
     setTrackingActionMessage("")
     setTrackingActionError("")
     setTrackingFeed([])
+    setTrackingCards([])
     setTrackingMatches([])
 
     try {
@@ -1270,10 +1459,11 @@ export default function PatientPortal() {
         if (error) throw error
 
         const normalized = normalizeTrackingPayload(data)
-        const feed = buildTrackingFeed(normalized)
+        const cards = buildTrackingCards(normalized)
 
-          setTrackingFeed(feed)
-          if (!feed.length) {
+          setTrackingFeed([])
+          setTrackingCards(cards)
+          if (!cards.length) {
             setTrackingMessage(options.showEmptySuccess
               ? "Your request was submitted. Updates will appear here once the pharmacy reviews it."
               : "No records were found for your signed-in patient account at this pharmacy yet.")
@@ -1281,7 +1471,7 @@ export default function PatientPortal() {
       } else {
         const { data, error } = await fetchCurrentPatientPortalMatches({ phone })
         if (error) throw error
-        const matches = buildGlobalTrackingMatches(Array.isArray(data?.matches) ? data.matches : [])
+        const matches = buildGlobalTrackingGroups(Array.isArray(data?.matches) ? data.matches : [])
         setTrackingMatches(matches)
 
         if (!matches.length) {
@@ -1294,6 +1484,7 @@ export default function PatientPortal() {
       }
     } catch (error) {
       setTrackingFeed([])
+      setTrackingCards([])
       setTrackingMatches([])
       setTrackingMessage(error?.message || "Unable to load updates right now.")
     } finally {
@@ -1417,6 +1608,65 @@ export default function PatientPortal() {
           </a>
         )}
       </div>
+    )
+  }
+
+  function renderTrackingHistory(item) {
+    if (!Array.isArray(item.history) || !item.history.length) return null
+
+    return (
+      <div className="patient-portal-card-history">
+        {item.history.map((entry) => (
+          <div key={entry.id} className={`patient-portal-card-history-row ${entry.tone || "info"}`}>
+            <div className="patient-portal-card-history-top">
+              <strong>{entry.label}</strong>
+              <span>{formatDateTime(entry.at)} · {timeAgo(entry.at)}</span>
+            </div>
+            <div className="patient-portal-card-history-text">{entry.body}</div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  function renderTrackingCard(item, { allowActions = true } = {}) {
+    return (
+      <details key={item.id} className="patient-portal-track-card" open={Boolean(allowActions && (item.canRespond || item.canChooseFulfillment))}>
+        <summary className="patient-portal-track-card-summary">
+          <div className="patient-portal-update-top">
+            <span className="patient-portal-update-type">{item.type}</span>
+            <span className={`patient-portal-status ${getStatusTone(item.status)}`}>{item.statusLabel || formatTokenLabel(item.status)}</span>
+          </div>
+          <div className="patient-portal-track-card-main">
+            <div>
+              <div className="patient-portal-update-title">{item.title}</div>
+              <div className="patient-portal-update-text">{item.summary}</div>
+            </div>
+            <div className="patient-portal-track-card-meta">
+              {item.badgeCount ? <span>{item.badgeCount} {item.badgeCount === 1 ? "product" : "products"}</span> : null}
+              {item.notificationCount ? <span>{item.notificationCount} updates</span> : null}
+              <span>{timeAgo(item.activityAt || item.createdAt)}</span>
+            </div>
+          </div>
+        </summary>
+
+        <div className="patient-portal-track-card-body">
+          {item.products?.length ? (
+            <div className="patient-portal-choice-location-row" style={{ marginBottom: "0.85rem" }}>
+              {item.products.map((product) => (
+                <span key={`${item.id}-${product}`} className="patient-portal-choice-chip">{product}</span>
+              ))}
+            </div>
+          ) : null}
+          {renderAppointmentActionBox(item)}
+          {renderDeliveryDetailsBox(item)}
+          {renderPatientResponseBox(item)}
+          {renderFulfillmentChoiceBox(item)}
+          {allowActions ? renderRequestResponseActions(item) : null}
+          {allowActions ? renderFulfillmentActions(item) : null}
+          {renderTrackingHistory(item)}
+        </div>
+      </details>
     )
   }
 
@@ -1687,7 +1937,7 @@ export default function PatientPortal() {
   }
 
   function renderUpdatesPanel() {
-    const hasActionableRequest = trackingFeed.some((item) => item.canRespond || item.canChooseFulfillment)
+    const hasActionableRequest = trackingCards.some((item) => item.canRespond || item.canChooseFulfillment)
 
     return (
       <div className="patient-portal-updates">
@@ -1734,6 +1984,18 @@ export default function PatientPortal() {
               onVerify={handleResponseVerify}
               onExpire={handleResponseExpire}
             />
+          </div>
+        )}
+
+        {trackingCards.length > 0 && (
+          <div className="patient-portal-track-message">
+            Recent history is grouped per order or appointment. Open a card to see the full update trail for that item.
+          </div>
+        )}
+
+        {trackingCards.length > 0 && (
+          <div className="patient-portal-timeline">
+            {trackingCards.map((item) => renderTrackingCard(item))}
           </div>
         )}
 
@@ -1809,6 +2071,7 @@ export default function PatientPortal() {
                   <div>
                     <h3>{match.pharmacyName}</h3>
                     <p>{match.pharmacyLocation}</p>
+                    <p className="patient-portal-directory-summary">{match.cards.length} grouped items. Open a card to see that order or appointment history.</p>
                   </div>
                   <button type="button" className="btn btn-outline" onClick={() => openTrackedPharmacy(match)}>
                     Open this pharmacy
@@ -1816,6 +2079,10 @@ export default function PatientPortal() {
                 </div>
 
                 <div className="patient-portal-timeline">
+                  {match.cards.map((item) => renderTrackingCard({ ...item, id: `${match.pharmacyId}-${item.id}` }, { allowActions: false }))}
+                </div>
+
+                <div className="patient-portal-timeline" style={{ display: "none" }}>
                   {match.feed.map((item) => (
                     <div key={`${match.pharmacyId}-${item.id}`} className="patient-portal-update-card">
                       <div className="patient-portal-update-top">

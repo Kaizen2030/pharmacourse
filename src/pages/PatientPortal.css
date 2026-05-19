@@ -598,6 +598,109 @@
   padding: 1rem 1.05rem;
 }
 
+.patient-portal-track-card {
+  border: 1px solid rgba(223, 232, 227, 0.95);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: var(--shadow-sm);
+}
+
+.patient-portal-track-card[open] {
+  border-color: rgba(15, 110, 86, 0.2);
+  box-shadow: 0 14px 28px rgba(15, 42, 32, 0.08);
+}
+
+.patient-portal-track-card-summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 1rem 1.05rem;
+}
+
+.patient-portal-track-card-summary::-webkit-details-marker {
+  display: none;
+}
+
+.patient-portal-track-card-main {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.patient-portal-track-card-meta {
+  display: grid;
+  gap: 0.2rem;
+  text-align: right;
+  color: var(--text-500);
+  font-size: 0.82rem;
+  flex-shrink: 0;
+}
+
+.patient-portal-track-card-body {
+  padding: 0 1.05rem 1rem;
+}
+
+.patient-portal-card-history {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 0.9rem;
+}
+
+.patient-portal-card-history-row {
+  padding: 0.85rem 0.9rem;
+  border-radius: 14px;
+  border: 1px solid rgba(223, 232, 227, 0.95);
+  background: rgba(248, 252, 250, 0.96);
+}
+
+.patient-portal-card-history-row.info {
+  border-color: rgba(191, 219, 254, 0.95);
+  background: rgba(239, 246, 255, 0.82);
+}
+
+.patient-portal-card-history-row.warning {
+  border-color: rgba(253, 230, 138, 0.9);
+  background: rgba(255, 251, 235, 0.92);
+}
+
+.patient-portal-card-history-row.success {
+  border-color: rgba(167, 243, 208, 0.95);
+  background: rgba(236, 253, 245, 0.88);
+}
+
+.patient-portal-card-history-row.danger {
+  border-color: rgba(254, 202, 202, 0.95);
+  background: rgba(254, 242, 242, 0.92);
+}
+
+.patient-portal-card-history-row.muted {
+  border-color: rgba(229, 231, 235, 0.95);
+  background: rgba(249, 250, 251, 0.92);
+}
+
+.patient-portal-card-history-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  align-items: flex-start;
+}
+
+.patient-portal-card-history-top strong {
+  color: var(--text-900);
+}
+
+.patient-portal-card-history-top span {
+  color: var(--text-500);
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.patient-portal-card-history-text {
+  margin-top: 0.3rem;
+  color: var(--text-700);
+  line-height: 1.5;
+}
+
 .patient-portal-update-top {
   display: flex;
   justify-content: space-between;
@@ -890,6 +993,15 @@
   .patient-progress-event-top {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .patient-portal-track-card-main,
+  .patient-portal-card-history-top {
+    flex-direction: column;
+  }
+
+  .patient-portal-track-card-meta {
+    text-align: left;
   }
 }
 
