@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { jsPDF } from "jspdf"
 import { ArrowUpRight, BellRing, CalendarClock, ClipboardList, PackageSearch, Video, X } from "lucide-react"
 import { Link } from "react-router-dom"
@@ -92,6 +92,12 @@ function getNotificationTypeLabel(value) {
 
 function formatMoney(value) {
   return `KES ${Number(value || 0).toLocaleString()}`
+}
+
+function truncateText(value, maxLength = 140) {
+  const normalized = String(value || "").trim()
+  if (normalized.length <= maxLength) return normalized
+  return `${normalized.slice(0, Math.max(0, maxLength - 1)).trimEnd()}…`
 }
 
 function buildPaymentLabel(paymentStatus, paymentMethod, paymentReference = "") {
@@ -253,7 +259,29 @@ function getRequestProgressSummary(request) {
   return "The branch is still reviewing this request."
 }
 
-function buildProgressEvents(request) {
+function findLinkedDelivery(deliveries, request) {
+  return deliveries.find((delivery) => String(delivery?.prescription_request_id || "").trim() === String(request?.id || "").trim()) || null
+}
+
+function getRelatedNotifications(request, notifications = [], deliveries = []) {
+  const linkedDelivery = findLinkedDelivery(deliveries, request)
+  const relatedIds = new Set([
+    String(request?.id || "").trim(),
+    String(linkedDelivery?.id || "").trim(),
+  ].filter(Boolean))
+
+  return notifications.filter((notification) => relatedIds.has(String(notification?.reference_id || "").trim()))
+}
+
+function getNoticeTone(notification) {
+  const type = String(notification?.type || "").trim().toLowerCase()
+  if (type.includes("delivery")) return "dispatched"
+  if (type.includes("appointment")) return "approved"
+  if (type.includes("reject")) return "rejected"
+  return "pending"
+}
+
+function buildProgressEvents(request, notifications = []) {
   const events = [
     {
       id: `${request?.id || "request"}-submitted`,
@@ -331,7 +359,19 @@ function buildProgressEvents(request) {
     })
   }
 
+  notifications.forEach((notification) => {
+    events.push({
+      id: `notification-${notification.id}`,
+      title: getNotificationTypeLabel(notification.type),
+      note: notification.message || "The branch sent an update for this order.",
+      at: notification.created_at || request?.updated_at || request?.created_at || "",
+      tone: getNoticeTone(notification),
+    })
+  })
+
   return events
+    .sort((first, second) => new Date(first.at || 0).getTime() - new Date(second.at || 0).getTime())
+    .filter((event, index, list) => list.findIndex((item) => item.id === event.id) === index)
 }
 
 export default function PatientTrack() {
@@ -364,21 +404,53 @@ export default function PatientTrack() {
   const unreadCount = notifications.filter((notification) => !notification.read).length
   const displayName = fullName || rememberedSession?.fullName || ""
   const receiptEntries = buildReceiptEntries(prescriptions)
-  const progressCards = prescriptions.map((request) => ({
-    request,
-    drugs: getRequestedDrugs(request),
-    headline: getRequestHeadline(request),
-    progressState: getRequestProgressState(request),
-    summary: getRequestProgressSummary(request),
-    lastUpdatedAt: request?.dispensed_at || request?.updated_at || request?.created_at || "",
-  }))
-  const selectedRequest = prescriptions.find((request) => String(request.id) === String(selectedRequestId)) || null
+  const completedReceiptRequestIds = useMemo(
+    () => new Set(receiptEntries.map((entry) => String(entry.id))),
+    [receiptEntries],
+  )
+  const progressCards = useMemo(() => (
+    prescriptions.map((request) => {
+      const drugs = getRequestedDrugs(request)
+      const linkedDelivery = findLinkedDelivery(deliveries, request)
+      const relatedNotifications = getRelatedNotifications(request, notifications, deliveries)
+
+      return {
+        request,
+        drugs,
+        linkedDelivery,
+        relatedNotifications,
+        headline: getRequestHeadline(request),
+        progressState: getRequestProgressState(request),
+        summary: getRequestProgressSummary(request),
+        lastUpdatedAt: request?.dispensed_at || request?.updated_at || request?.created_at || "",
+      }
+    })
+  ), [deliveries, notifications, prescriptions])
+  const selectedProgressCard = progressCards.find((card) => String(card.request.id) === String(selectedRequestId)) || null
+  const selectedRequest = selectedProgressCard?.request || null
   const visibleProgressCards = progressCards.slice(0, visibleCounts.notifications)
-  const visibleDeliveries = deliveries.slice(0, visibleCounts.deliveries)
-  const visiblePrescriptions = prescriptions.slice(0, visibleCounts.prescriptions)
+  const activeDeliveries = useMemo(
+    () => deliveries.filter((delivery) => !["delivered", "cancelled"].includes(String(delivery?.status || "").trim().toLowerCase())),
+    [deliveries],
+  )
+  const visibleDeliveries = activeDeliveries.slice(0, visibleCounts.deliveries)
+  const openPrescriptions = useMemo(
+    () => prescriptions.filter((request) => !completedReceiptRequestIds.has(String(request.id))),
+    [completedReceiptRequestIds, prescriptions],
+  )
+  const visiblePrescriptions = openPrescriptions.slice(0, visibleCounts.prescriptions)
   const visibleReceipts = receiptEntries.slice(0, visibleCounts.receipts)
   const visibleAppointments = appointments.slice(0, visibleCounts.appointments)
-  const compactBranchNotices = notifications.slice(0, 3)
+  const standaloneBranchNotices = useMemo(() => {
+    const linkedReferenceIds = new Set([
+      ...prescriptions.map((request) => String(request?.id || "").trim()),
+      ...deliveries.map((delivery) => String(delivery?.id || "").trim()),
+      ...appointments.map((appointment) => String(appointment?.id || "").trim()),
+    ].filter(Boolean))
+
+    return notifications.filter((notification) => !linkedReferenceIds.has(String(notification?.reference_id || "").trim()))
+  }, [appointments, deliveries, notifications, prescriptions])
+  const visibleStandaloneBranchNotices = standaloneBranchNotices.slice(0, visibleCounts.notifications)
   const handleTurnstileVerify = useCallback((token) => {
     setTurnstileToken(token || "")
   }, [])
@@ -730,7 +802,7 @@ export default function PatientTrack() {
 
             {progressCards.length ? (
               <div className="patient-list">
-                {visibleProgressCards.map(({ request, drugs, headline, progressState, summary, lastUpdatedAt }) => (
+                {visibleProgressCards.map(({ request, drugs, headline, progressState, summary, lastUpdatedAt, relatedNotifications }) => (
                   <article key={request.id} className="patient-list-item patient-progress-card">
                     <div className="patient-list-header">
                       <div style={{ minWidth: 0 }}>
@@ -752,6 +824,9 @@ export default function PatientTrack() {
                     </div>
 
                     <div className="patient-progress-actions">
+                      {relatedNotifications.length ? (
+                        <span className="patient-form-help">{relatedNotifications.length} branch update{relatedNotifications.length === 1 ? "" : "s"} inside</span>
+                      ) : null}
                       <button type="button" className="patient-button-secondary" onClick={() => setSelectedRequestId(String(request.id))}>
                         View progress
                       </button>
@@ -759,26 +834,6 @@ export default function PatientTrack() {
                   </article>
                 ))}
                 {renderLoadMore("notifications", progressCards.length, visibleProgressCards.length)}
-
-                {compactBranchNotices.length ? (
-                  <div className="patient-progress-notice-panel">
-                    <div className="patient-progress-notice-head">
-                      <strong>Latest branch notices</strong>
-                      <span>{notifications.length} total</span>
-                    </div>
-                    <div className="patient-progress-notice-list">
-                      {compactBranchNotices.map((notification) => (
-                        <article key={notification.id} className="patient-progress-notice-row">
-                          <div className="patient-note-header">
-                            <span className={`patient-type-badge ${getStatusClass(notification.type)}`}>{getNotificationTypeLabel(notification.type)}</span>
-                            <span className="patient-note-time">{formatRelativeTime(notification.created_at)}</span>
-                          </div>
-                          <p className="patient-note-message">{notification.message}</p>
-                        </article>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
               </div>
             ) : (
               <div className="patient-empty-state">
@@ -801,7 +856,7 @@ export default function PatientTrack() {
               </span>
             </div>
 
-            {deliveries.length ? (
+            {activeDeliveries.length ? (
               <div className="patient-list">
                 {visibleDeliveries.map((delivery) => {
                   const stepIndex = getCurrentDeliveryStepIndex(delivery.status)
@@ -843,7 +898,7 @@ export default function PatientTrack() {
                     </article>
                   )
                 })}
-                {renderLoadMore("deliveries", deliveries.length, visibleDeliveries.length)}
+                {renderLoadMore("deliveries", activeDeliveries.length, visibleDeliveries.length)}
               </div>
             ) : (
               <div className="patient-empty-state">
@@ -858,8 +913,8 @@ export default function PatientTrack() {
           <section className="patient-card">
             <div className="patient-section-header">
               <div>
-                <h2 className="patient-section-title">Prescription requests</h2>
-                <p className="patient-form-help">Compact request cards with load-more so repeat orders stay manageable.</p>
+                <h2 className="patient-section-title">Open prescription requests</h2>
+                <p className="patient-form-help">Only active request cards stay here. Delivered and completed orders move to receipts so this view stays readable.</p>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "0.7rem" }}>
                 <Link to={createPatientPath("/patient/prescription")} className="patient-subtle-link">
@@ -871,7 +926,7 @@ export default function PatientTrack() {
               </div>
             </div>
 
-            {prescriptions.length ? (
+            {openPrescriptions.length ? (
               <div className="patient-list">
                 {visiblePrescriptions.map((request) => (
                   <article key={request.id} className="patient-list-item">
@@ -892,8 +947,22 @@ export default function PatientTrack() {
                         <span className="patient-progress-chip patient-progress-chip-muted">+{getRequestedDrugs(request).length - 4} more</span>
                       ) : null}
                     </div>
-                    {request.condition_notes ? <p className="patient-list-text">{request.condition_notes}</p> : null}
-                    {request.pharmacist_notes ? <p className="patient-list-text">Pharmacist note: {request.pharmacist_notes}</p> : null}
+                    {request.condition_notes ? (
+                      <p
+                        className="patient-list-text"
+                        style={{ display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}
+                      >
+                        {truncateText(request.condition_notes, 180)}
+                      </p>
+                    ) : null}
+                    {request.pharmacist_notes ? (
+                      <p
+                        className="patient-list-text"
+                        style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}
+                      >
+                        Pharmacist note: {truncateText(request.pharmacist_notes, 120)}
+                      </p>
+                    ) : null}
                     {request.patient_fulfillment_choice ? <p className="patient-list-text">Next step: {request.patient_fulfillment_choice}</p> : null}
 
                     <div className="patient-progress-actions" style={{ marginTop: "0.85rem" }}>
@@ -1006,7 +1075,7 @@ export default function PatientTrack() {
                     ) : null}
                   </article>
                 ))}
-                {renderLoadMore("prescriptions", prescriptions.length, visiblePrescriptions.length)}
+                {renderLoadMore("prescriptions", openPrescriptions.length, visiblePrescriptions.length)}
               </div>
             ) : (
               <div className="patient-empty-state">
@@ -1066,6 +1135,40 @@ export default function PatientTrack() {
                   <ClipboardList />
                 </span>
                 <p className="patient-empty">Receipts will appear here after a pickup order is issued or a delivery is marked completed.</p>
+              </div>
+            )}
+          </section>
+
+          <section className="patient-card">
+            <div className="patient-section-header">
+              <div>
+                <h2 className="patient-section-title">Branch notices</h2>
+                <p className="patient-form-help">Only stand-alone branch notices appear here. Order and delivery updates stay grouped inside their own cards above.</p>
+              </div>
+              <span className="patient-inline-icon">
+                <BellRing />
+              </span>
+            </div>
+
+            {standaloneBranchNotices.length ? (
+              <div className="patient-list">
+                {visibleStandaloneBranchNotices.map((notification) => (
+                  <article key={notification.id} className="patient-progress-notice-row">
+                    <div className="patient-note-header">
+                      <span className={`patient-type-badge ${getStatusClass(notification.type)}`}>{getNotificationTypeLabel(notification.type)}</span>
+                      <span className="patient-note-time">{formatRelativeTime(notification.created_at)}</span>
+                    </div>
+                    <p className="patient-note-message">{notification.message}</p>
+                  </article>
+                ))}
+                {renderLoadMore("notifications", standaloneBranchNotices.length, visibleStandaloneBranchNotices.length)}
+              </div>
+            ) : (
+              <div className="patient-empty-state">
+                <span className="patient-empty-icon">
+                  <BellRing />
+                </span>
+                <p className="patient-empty">No extra branch-wide notices are waiting right now.</p>
               </div>
             )}
           </section>
@@ -1229,7 +1332,7 @@ export default function PatientTrack() {
             <section className="patient-detail-card">
               <h3 className="patient-detail-card-title">Progress timeline</h3>
               <div className="patient-progress-event-list">
-                {buildProgressEvents(selectedRequest).map((event) => (
+                {buildProgressEvents(selectedRequest, selectedProgressCard?.relatedNotifications || []).map((event) => (
                   <article key={event.id} className="patient-progress-event">
                     <span className={`patient-progress-event-dot ${getStatusClass(event.tone)}`} />
                     <div style={{ minWidth: 0 }}>

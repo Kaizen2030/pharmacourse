@@ -1290,6 +1290,22 @@ export function PatientPortalStyles() {
   )
 }
 
+function buildBranchLocationLabel(row = {}, branchLocationParam = "") {
+  const directLocation = String(row?.location || "").trim()
+  if (directLocation) return directLocation
+
+  const pieces = [row?.town, row?.subcounty, row?.county]
+    .map((value) => String(value || "").trim())
+    .filter(Boolean)
+
+  if (pieces.length) return pieces.join(", ")
+
+  const address = String(row?.address || "").trim()
+  if (address) return address
+
+  return branchLocationParam
+}
+
 export default function PatientLayout() {
   const [searchParams] = useSearchParams()
   const pharmacyId = searchParams.get("pharmacy")?.trim() || ""
@@ -1310,11 +1326,27 @@ export default function PatientLayout() {
       setIsLoading(true)
       setLoadError("")
 
-      const { data, error } = await pharmacyosClient
+      let data = null
+      let error = null
+
+      const primaryResult = await pharmacyosClient
         .from("pharmacies")
-        .select("id, name, location")
+        .select("id, name, location, address, town, subcounty, county")
         .eq("id", pharmacyId)
         .maybeSingle()
+
+      if (primaryResult.error && String(primaryResult.error.message || "").toLowerCase().includes("location")) {
+        const fallbackResult = await pharmacyosClient
+          .from("pharmacies")
+          .select("id, name, address, town, subcounty, county")
+          .eq("id", pharmacyId)
+          .maybeSingle()
+        data = fallbackResult.data
+        error = fallbackResult.error
+      } else {
+        data = primaryResult.data
+        error = primaryResult.error
+      }
 
       if (ignore) {
         return
@@ -1368,7 +1400,7 @@ export default function PatientLayout() {
   }
 
   const branchName = pharmacy?.name || branchNameParam || "Pharmacy branch"
-  const branchLocation = pharmacy?.location || branchLocationParam || ""
+  const branchLocation = buildBranchLocationLabel(pharmacy, branchLocationParam)
 
   return (
     <PatientContext.Provider
@@ -1418,12 +1450,14 @@ export default function PatientLayout() {
             </div>
           ) : null}
 
-          <div className="patient-branch-lock">
-            <div className="patient-branch-lock-title">Branch locked for this session</div>
-            <div className="patient-branch-lock-copy">
-              You are connected to <strong>{branchName}</strong>. Registration, prescriptions, appointments, and tracking on these pages all go directly to this branch in RemedacarePOS.
+          {(!loadError || pharmacy) ? (
+            <div className="patient-branch-lock">
+              <div className="patient-branch-lock-title">Branch locked for this session</div>
+              <div className="patient-branch-lock-copy">
+                You are connected to <strong>{branchName}</strong>. Registration, prescriptions, appointments, and tracking on these pages all go directly to this branch in RemedacarePOS.
+              </div>
             </div>
-          </div>
+          ) : null}
 
           <PatientInstallPrompt />
 
