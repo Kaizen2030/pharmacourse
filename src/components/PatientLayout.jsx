@@ -1454,7 +1454,7 @@ export default function PatientLayout() {
             <div className="patient-branch-lock">
               <div className="patient-branch-lock-title">Branch locked for this session</div>
               <div className="patient-branch-lock-copy">
-                You are connected to <strong>{branchName}</strong>. Registration, prescriptions, appointments, and tracking on these pages all go directly to this branch in RemedacarePOS.
+                You are connected to <strong>{branchName}</strong>. Registration, prescriptions, appointments, maternal requests, and tracking on these pages all go directly to this branch in RemedacarePOS.
               </div>
             </div>
           ) : null}

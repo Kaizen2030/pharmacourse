@@ -1,5 +1,5 @@
 import { createElement, useEffect, useState } from "react"
-import { CalendarPlus2, ChevronRight, ClipboardPlus, IdCard, LogOut, PillBottle, UserRoundCheck } from "lucide-react"
+import { CalendarPlus2, ChevronRight, ClipboardPlus, HeartPulse, IdCard, LogOut, PillBottle } from "lucide-react"
 import { Link } from "react-router-dom"
 import { usePatient } from "../../components/PatientLayout"
 import { usePatientPortalAuth } from "../../hooks/usePatientPortalAuth"
@@ -25,6 +25,8 @@ export default function PatientHome() {
   const displayName = fullName || rememberedPatient?.fullName || "Patient account"
   const displayPhone = patientPhone || rememberedPatient?.phone || ""
   const hasKnownPatient = Boolean(rememberedPatient || isAuthenticated)
+  const patientPortalPath = createPatientPath("/patient-portal")
+  const maternalPortalPath = `${patientPortalPath}${patientPortalPath.includes("?") ? "&" : "?"}tab=maternal`
 
   useEffect(() => {
     setRememberedPatient(getPatientPortalSession(pharmacyId))
@@ -48,6 +50,12 @@ export default function PatientHome() {
       description: "Book a phone call or video consultation",
       to: createPatientPath("/patient/appointment"),
       icon: CalendarPlus2,
+    },
+    {
+      title: "Maternal Care",
+      description: "Register ANC follow-up and maternal outreach support",
+      to: maternalPortalPath,
+      icon: HeartPulse,
     },
     {
       title: "Track & Notifications",
@@ -82,12 +90,12 @@ export default function PatientHome() {
       <section className="patient-card patient-card-muted patient-hero">
         <span className="patient-badge">Branch home</span>
         <h1>{hasKnownPatient ? `Welcome back to ${branchName}` : `Start with ${branchName}`}</h1>
-        <p className="patient-copy">Use this branch portal to keep patient details together, request prescriptions, book follow-up help, and track private updates without restarting the process each time.</p>
+        <p className="patient-copy">Use this branch portal to keep patient details together, request prescriptions, book follow-up help, register maternal care outreach, and track private updates without restarting the process each time.</p>
         <div className="patient-session-bar">
           <div className="patient-session-bar-copy">
             <span className="patient-kicker">Active branch</span>
             <div className="patient-meta-title">{branchName}</div>
-            <p>{branchLocation || "Requests, appointments, and tracking from this screen go straight to the selected branch."}</p>
+            <p>{branchLocation || "Requests, appointments, maternal follow-up, and tracking from this screen go straight to the selected branch."}</p>
           </div>
           <span className="patient-badge">{hasKnownPatient ? "Session ready" : "New session"}</span>
         </div>
@@ -126,7 +134,7 @@ export default function PatientHome() {
               </div>
               <div className="patient-stat">
                 <p className="patient-stat-label">Ready for</p>
-                <p className="patient-stat-value">Prescriptions and appointments</p>
+                <p className="patient-stat-value">Prescriptions, appointments, and maternal care</p>
               </div>
             </div>
           </div>
@@ -152,6 +160,19 @@ export default function PatientHome() {
               <div className="patient-action-content">
                 <h2>Continue to appointments</h2>
                 <p>Book again without re-entering everything from scratch.</p>
+              </div>
+              <span className="patient-action-arrow" aria-hidden="true">
+                <ChevronRight />
+              </span>
+            </Link>
+
+            <Link to={maternalPortalPath} className="patient-action-card">
+              <span className="patient-action-icon">
+                <HeartPulse />
+              </span>
+              <div className="patient-action-content">
+                <h2>Continue to maternal care</h2>
+                <p>Open ANC and pregnancy follow-up intake for this branch.</p>
               </div>
               <span className="patient-action-arrow" aria-hidden="true">
                 <ChevronRight />

@@ -13,6 +13,7 @@ let turnstileScriptPromise = null
 const PORTAL_TABS = [
   { id: "prescription", label: "Prescription Request" },
   { id: "appointment", label: "Book Appointment" },
+  { id: "maternal", label: "Maternal Care" },
   { id: "delivery", label: "Delivery Request" },
   { id: "updates", label: "Check Updates" },
 ]
@@ -496,6 +497,21 @@ function normalizeTrackingPayload(payload) {
   }
 }
 
+function createEmptyMaternal() {
+  return {
+    patientName: "",
+    patientPhone: "",
+    patientEmail: "",
+    idNumber: "",
+    lmpDate: "",
+    gravida: "1",
+    parity: "0",
+    village: "",
+    ward: "",
+    notes: "",
+  }
+}
+
 function getTrackingRequestProducts(item) {
   const fulfillmentRows = Array.isArray(item?.fulfillment_items) ? item.fulfillment_items : []
   const fulfillmentProducts = fulfillmentRows
@@ -727,6 +743,7 @@ export default function PatientPortal() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const pharmacyId = searchParams.get("pharmacy") || searchParams.get("branch") || ""
+  const requestedTab = String(searchParams.get("tab") || "").trim()
   const patientLoginPath = useMemo(() => buildPatientRouteUrl("/patient/login", searchParams), [searchParams])
   const patientRegisterPath = useMemo(() => buildPatientRouteUrl("/patient/register", searchParams), [searchParams])
   const {
@@ -735,7 +752,9 @@ export default function PatientPortal() {
     patientPhone: patientAccountPhone,
     fullName: patientAccountName,
   } = usePatientPortalAuth()
-  const [activeTab, setActiveTab] = useState("prescription")
+  const [activeTab, setActiveTab] = useState(() => (
+    PORTAL_TABS.some((tab) => tab.id === requestedTab) ? requestedTab : "prescription"
+  ))
   const [pharmacy, setPharmacy] = useState(null)
   const [pharmacyOptions, setPharmacyOptions] = useState([])
   const [portalLoading, setPortalLoading] = useState(true)
@@ -752,6 +771,7 @@ export default function PatientPortal() {
   const [prescriptionFile, setPrescriptionFile] = useState(null)
   const [appointmentForm, setAppointmentForm] = useState(createEmptyAppointment)
   const [deliveryForm, setDeliveryForm] = useState(createEmptyDelivery)
+  const [maternalForm, setMaternalForm] = useState(createEmptyMaternal)
   const [trackerPhone, setTrackerPhone] = useState("")
   const [trackingFeed, setTrackingFeed] = useState([])
   const [trackingCards, setTrackingCards] = useState([])
@@ -770,18 +790,26 @@ export default function PatientPortal() {
       setTrackerPhone(patientAccountPhone)
     }
   }, [patientAccountPhone])
+
+  useEffect(() => {
+    if (PORTAL_TABS.some((tab) => tab.id === requestedTab)) {
+      setActiveTab(requestedTab)
+    }
+  }, [requestedTab])
   const [submitting, setSubmitting] = useState("")
   const [submitMessage, setSubmitMessage] = useState("")
   const [submitError, setSubmitError] = useState("")
   const [turnstileTokens, setTurnstileTokens] = useState({
     prescription: "",
     appointment: "",
+    maternal: "",
     delivery: "",
     response: "",
   })
   const [turnstileResetKeys, setTurnstileResetKeys] = useState({
     prescription: 0,
     appointment: 0,
+    maternal: 0,
     delivery: 0,
     response: 0,
   })
@@ -1044,6 +1072,10 @@ export default function PatientPortal() {
     setDeliveryForm((prev) => ({ ...prev, [field]: value }))
   }
 
+  function updateMaternal(field, value) {
+    setMaternalForm((prev) => ({ ...prev, [field]: value }))
+  }
+
   function updateDeliveryItem(index, field, value) {
     setDeliveryForm((prev) => ({
       ...prev,
@@ -1244,6 +1276,8 @@ export default function PatientPortal() {
   const handlePrescriptionExpire = useCallback(() => setTurnstileToken("prescription", ""), [])
   const handleAppointmentVerify = useCallback((token) => setTurnstileToken("appointment", token), [])
   const handleAppointmentExpire = useCallback(() => setTurnstileToken("appointment", ""), [])
+  const handleMaternalVerify = useCallback((token) => setTurnstileToken("maternal", token), [])
+  const handleMaternalExpire = useCallback(() => setTurnstileToken("maternal", ""), [])
   const handleDeliveryVerify = useCallback((token) => setTurnstileToken("delivery", token), [])
   const handleDeliveryExpire = useCallback(() => setTurnstileToken("delivery", ""), [])
   const handleResponseVerify = useCallback((token) => setTurnstileToken("response", token), [])
@@ -1330,6 +1364,55 @@ export default function PatientPortal() {
       await fetchTrackingFeed(patientPhone, { showEmptySuccess: true })
     } catch (error) {
       setSubmitError(error?.message || "Unable to book that appointment right now.")
+    } finally {
+      setSubmitting("")
+    }
+  }
+
+  async function handleMaternalSubmit(event) {
+    event.preventDefault()
+    setSubmitting("maternal")
+    setSubmitMessage("")
+    setSubmitError("")
+
+    try {
+      const patientName = maternalForm.patientName.trim()
+      const patientPhone = normalizePhone(maternalForm.patientPhone)
+      const patientEmail = maternalForm.patientEmail.trim().toLowerCase()
+      const lmpDate = String(maternalForm.lmpDate || "").trim()
+
+      if (!patientName || !patientPhone || !lmpDate) {
+        throw new Error("Full name, phone number, and last menstrual period date are required.")
+      }
+
+      const result = await submitPortalRequest("maternal", {
+        pharmacy_id: pharmacyId,
+        full_name: patientName,
+        patient_phone: patientPhone,
+        patient_email: patientEmail || null,
+        id_number: maternalForm.idNumber.trim() || null,
+        lmp_date: lmpDate,
+        gravida: Number(maternalForm.gravida || 1),
+        parity: Number(maternalForm.parity || 0),
+        village: maternalForm.village.trim() || null,
+        ward: maternalForm.ward.trim() || null,
+        notes: maternalForm.notes.trim() || null,
+      }, "maternal")
+
+      setMaternalForm(createEmptyMaternal())
+      setTrackerPhone(patientPhone)
+      setSubmitMessage(
+        result?.alreadyRegistered
+          ? "This branch already has an active maternal care record for this phone number. The maternal team will continue follow-up from the POS maternal screen."
+          : "Your maternal care request has been sent to the branch. The maternal team will follow up for ANC planning, review, and next steps."
+      )
+
+      if (patientAccountAuthenticated) {
+        setActiveTab("updates")
+        await fetchTrackingFeed(patientPhone, { showEmptySuccess: true })
+      }
+    } catch (error) {
+      setSubmitError(error?.message || "Unable to send your maternal care request right now.")
     } finally {
       setSubmitting("")
     }
@@ -1868,6 +1951,64 @@ export default function PatientPortal() {
     )
   }
 
+  function renderMaternalForm() {
+    return (
+      <form className="patient-portal-form" onSubmit={handleMaternalSubmit}>
+        <div className="patient-portal-grid">
+          <div className="form-group">
+            <label className="form-label">Full Name</label>
+            <input className="form-input" value={maternalForm.patientName} onChange={(event) => updateMaternal("patientName", event.target.value)} placeholder="Mother's full name" />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Phone Number</label>
+            <input className="form-input" value={maternalForm.patientPhone} onChange={(event) => updateMaternal("patientPhone", event.target.value)} placeholder="e.g. 07..." />
+          </div>
+          <div className="form-group patient-portal-span-full">
+            <label className="form-label">Email Address (optional)</label>
+            <input className="form-input" type="email" value={maternalForm.patientEmail} onChange={(event) => updateMaternal("patientEmail", event.target.value)} placeholder="For email updates" />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Last Menstrual Period</label>
+            <input className="form-input" type="date" value={maternalForm.lmpDate} onChange={(event) => updateMaternal("lmpDate", event.target.value)} />
+          </div>
+          <div className="form-group">
+            <label className="form-label">National ID (optional)</label>
+            <input className="form-input" value={maternalForm.idNumber} onChange={(event) => updateMaternal("idNumber", event.target.value)} placeholder="ID number if available" />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Gravida</label>
+            <input className="form-input" type="number" min="0" value={maternalForm.gravida} onChange={(event) => updateMaternal("gravida", event.target.value)} placeholder="Total pregnancies" />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Parity</label>
+            <input className="form-input" type="number" min="0" value={maternalForm.parity} onChange={(event) => updateMaternal("parity", event.target.value)} placeholder="Births after viability" />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Village (optional)</label>
+            <input className="form-input" value={maternalForm.village} onChange={(event) => updateMaternal("village", event.target.value)} placeholder="Village or estate" />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Ward (optional)</label>
+            <input className="form-input" value={maternalForm.ward} onChange={(event) => updateMaternal("ward", event.target.value)} placeholder="Ward or town" />
+          </div>
+          <div className="form-group patient-portal-span-full">
+            <label className="form-label">Current Concerns or Notes</label>
+            <textarea rows="4" value={maternalForm.notes} onChange={(event) => updateMaternal("notes", event.target.value)} placeholder="Share ANC concerns, missed visits, danger signs, or any follow-up note for the branch." />
+          </div>
+        </div>
+        <TurnstileWidget
+          formId="maternal"
+          resetSignal={turnstileResetKeys.maternal}
+          onVerify={handleMaternalVerify}
+          onExpire={handleMaternalExpire}
+        />
+        <button type="submit" className="btn btn-primary patient-portal-submit" disabled={submitting === "maternal"}>
+          {submitting === "maternal" ? "Sending maternal request..." : "Send Maternal Care Request"}
+        </button>
+      </form>
+    )
+  }
+
   function renderDeliveryForm() {
     return (
       <form className="patient-portal-form" onSubmit={handleDeliverySubmit}>
@@ -2115,7 +2256,7 @@ export default function PatientPortal() {
     <>
       <SEO
         title={pharmacy?.name ? `${pharmacy.name} Patient Portal | PharmaCourse` : "Find a Pharmacy | PharmaCourse"}
-        description="Send prescription requests, book pharmacist appointments, request deliveries, and check updates online."
+        description="Send prescription requests, book pharmacist appointments, request maternal care outreach, request deliveries, and check updates online."
       />
 
       <div className="patient-portal-page">
@@ -2426,6 +2567,7 @@ export default function PatientPortal() {
                           <p>
                             {activeTab === "prescription" && "Tell the pharmacist what you are suffering from and upload a prescription if you have one."}
                             {activeTab === "appointment" && "Book a pharmacist callback, video consultation, or pickup discussion."}
+                            {activeTab === "maternal" && "Register a pregnancy, share ANC details, and send maternal follow-up requests to the branch maternal desk."}
                             {activeTab === "delivery" && "Request medicine delivery and share the items plus your address."}
                             {activeTab === "updates" && "Check the current status of your submissions from your signed-in patient account."}
                           </p>
@@ -2435,6 +2577,7 @@ export default function PatientPortal() {
                       {renderFeedback()}
                       {activeTab === "prescription" && renderPrescriptionForm()}
                       {activeTab === "appointment" && renderAppointmentForm()}
+                      {activeTab === "maternal" && renderMaternalForm()}
                       {activeTab === "delivery" && renderDeliveryForm()}
                       {activeTab === "updates" && renderUpdatesPanel()}
                     </>
