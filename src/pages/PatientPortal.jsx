@@ -258,6 +258,13 @@ function defaultSlotValue() {
   return local.toISOString().slice(0, 16)
 }
 
+function todayDateValue() {
+  const date = new Date()
+  const offset = date.getTimezoneOffset()
+  const local = new Date(date.getTime() - (offset * 60000))
+  return local.toISOString().slice(0, 10)
+}
+
 function normalizePhone(value) {
   return String(value || "").trim().replace(/\s+/g, "")
 }
@@ -813,6 +820,14 @@ export default function PatientPortal() {
     delivery: 0,
     response: 0,
   })
+  const maternalLockedName = patientAccountAuthenticated && patientAccountName
+    ? patientAccountName.trim()
+    : ""
+  const maternalLockedPhone = patientAccountAuthenticated && patientAccountPhone
+    ? normalizePhone(patientAccountPhone)
+    : ""
+  const maternalResolvedName = maternalLockedName || maternalForm.patientName
+  const maternalResolvedPhone = maternalLockedPhone || normalizePhone(maternalForm.patientPhone)
 
   useEffect(() => {
     let cancelled = false
@@ -1192,7 +1207,13 @@ export default function PatientPortal() {
       },
     })
 
-    if (error) throw error
+    if (error) {
+      if (error?.context && typeof error.context.json === "function") {
+        const errorBody = await error.context.json().catch(() => null)
+        throw new Error(errorBody?.error || error.message || "Unable to send your request right now.")
+      }
+      throw error
+    }
     if (data?.error) throw new Error(data.error)
 
     resetTurnstile(formId)
@@ -1376,13 +1397,18 @@ export default function PatientPortal() {
     setSubmitError("")
 
     try {
-      const patientName = maternalForm.patientName.trim()
-      const patientPhone = normalizePhone(maternalForm.patientPhone)
+      const patientName = maternalResolvedName.trim()
+      const patientPhone = maternalResolvedPhone.trim()
       const patientEmail = maternalForm.patientEmail.trim().toLowerCase()
       const lmpDate = String(maternalForm.lmpDate || "").trim()
+      const todayValue = todayDateValue()
 
       if (!patientName || !patientPhone || !lmpDate) {
         throw new Error("Full name, phone number, and last menstrual period date are required.")
+      }
+
+      if (lmpDate > todayValue) {
+        throw new Error(`Last menstrual period date cannot be after ${todayValue}.`)
       }
 
       const result = await submitPortalRequest("maternal", {
@@ -1954,14 +1980,32 @@ export default function PatientPortal() {
   function renderMaternalForm() {
     return (
       <form className="patient-portal-form" onSubmit={handleMaternalSubmit}>
+        {patientAccountAuthenticated && (maternalLockedName || maternalLockedPhone) ? (
+          <div className="patient-portal-feedback info" style={{ marginBottom: "1rem" }}>
+            Signed in as <strong>{maternalLockedName || patientAccountName || "Patient account"}</strong>
+            {maternalLockedPhone ? ` on ${maternalLockedPhone}` : ""}. This maternal request will use your patient portal account details directly.
+          </div>
+        ) : null}
         <div className="patient-portal-grid">
           <div className="form-group">
             <label className="form-label">Full Name</label>
-            <input className="form-input" value={maternalForm.patientName} onChange={(event) => updateMaternal("patientName", event.target.value)} placeholder="Mother's full name" />
+            <input
+              className="form-input"
+              value={maternalResolvedName}
+              onChange={(event) => updateMaternal("patientName", event.target.value)}
+              placeholder="Mother's full name"
+              disabled={Boolean(maternalLockedName)}
+            />
           </div>
           <div className="form-group">
             <label className="form-label">Phone Number</label>
-            <input className="form-input" value={maternalForm.patientPhone} onChange={(event) => updateMaternal("patientPhone", event.target.value)} placeholder="e.g. 07..." />
+            <input
+              className="form-input"
+              value={maternalLockedPhone || maternalForm.patientPhone}
+              onChange={(event) => updateMaternal("patientPhone", event.target.value)}
+              placeholder="e.g. 07..."
+              disabled={Boolean(maternalLockedPhone)}
+            />
           </div>
           <div className="form-group patient-portal-span-full">
             <label className="form-label">Email Address (optional)</label>
@@ -1969,7 +2013,7 @@ export default function PatientPortal() {
           </div>
           <div className="form-group">
             <label className="form-label">Last Menstrual Period</label>
-            <input className="form-input" type="date" value={maternalForm.lmpDate} onChange={(event) => updateMaternal("lmpDate", event.target.value)} />
+            <input className="form-input" type="date" max={todayDateValue()} value={maternalForm.lmpDate} onChange={(event) => updateMaternal("lmpDate", event.target.value)} />
           </div>
           <div className="form-group">
             <label className="form-label">National ID (optional)</label>
