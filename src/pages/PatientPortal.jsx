@@ -1208,10 +1208,24 @@ export default function PatientPortal() {
     })
 
     if (error) {
+      const responseStatus = error?.context?.status || 0
       if (error?.context && typeof error.context.json === "function") {
         const errorBody = await error.context.json().catch(() => null)
-        throw new Error(errorBody?.error || error.message || "Unable to send your request right now.")
+        const backendMessage = errorBody?.error || error.message || "Unable to send your request right now."
+
+        if (responseStatus === 403 || /security check failed/i.test(backendMessage)) {
+          resetTurnstile(formId)
+          throw new Error("Security check expired or failed. Please complete it again, then submit immediately.")
+        }
+
+        throw new Error(backendMessage)
       }
+
+      if (responseStatus === 403) {
+        resetTurnstile(formId)
+        throw new Error("Security check expired or failed. Please complete it again, then submit immediately.")
+      }
+
       throw error
     }
     if (data?.error) throw new Error(data.error)
