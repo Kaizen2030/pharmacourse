@@ -306,6 +306,7 @@
   display: block;
   object-fit: contain;
   background: transparent;
+  border-radius: 0;
 }
 
 .home .section-header {
