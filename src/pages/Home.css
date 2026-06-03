@@ -306,6 +306,10 @@
   border-radius: 22px;
 }
 
+.home .mockup-frame.video-frame {
+  aspect-ratio: 16 / 10.9;
+}
+
 .home .mockup-frame > img,
 .home .mockup-frame > video {
   width: 100%;
@@ -956,6 +960,12 @@
   .home .testimonials-grid,
   .home .faq-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 968px) {
+  .home .mockup-frame.video-frame {
+    aspect-ratio: 16 / 10;
   }
 }
 

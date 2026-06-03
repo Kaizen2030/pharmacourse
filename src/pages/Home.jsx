@@ -281,11 +281,13 @@ const ProductMockup = ({ type, videoUrl, imageSrc, imageAlt }) => {
 
   const imageStyle = { width: "100%", height: "100%", objectFit: "cover", display: "block" }
   const videoStyle = { width: "100%", height: "100%", objectFit: "contain", display: "block", backgroundColor: "#06131a" }
+  const videoFrameClass = "mockup-frame video-frame"
+  const imageFrameClass = "mockup-frame"
 
   if (type === "pharmaCourse") {
     return (
       <div className="product-mockup">
-        <div className="mockup-frame" style={{ background: "#06131a", borderRadius: 14, overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
+        <div className={videoUrl && !videoFailed ? videoFrameClass : imageFrameClass} style={{ background: "#06131a", borderRadius: 14, overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
           {videoUrl && !videoFailed ? (
             <video
               key={videoUrl}
@@ -312,7 +314,7 @@ const ProductMockup = ({ type, videoUrl, imageSrc, imageAlt }) => {
   if (type === "pharmacyOS") {
     return (
       <div className="product-mockup">
-        <div className="mockup-frame" style={{ background: "#06131a", borderRadius: 14, overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
+        <div className={videoUrl && !videoFailed ? videoFrameClass : imageFrameClass} style={{ background: "#06131a", borderRadius: 14, overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
           {videoUrl && !videoFailed ? (
             <video
               key={videoUrl}
@@ -339,7 +341,7 @@ const ProductMockup = ({ type, videoUrl, imageSrc, imageAlt }) => {
   if (type === "remedacareOS") {
     return (
       <div className="product-mockup">
-        <div className="mockup-frame" style={{ background: "#06131a", borderRadius: 14, overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
+        <div className={videoUrl && !videoFailed ? videoFrameClass : imageFrameClass} style={{ background: "#06131a", borderRadius: 14, overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
           {videoUrl && !videoFailed ? (
             <video
               key={videoUrl}
