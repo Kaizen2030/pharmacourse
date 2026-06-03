@@ -306,6 +306,15 @@
   border-radius: 22px;
 }
 
+.home .mockup-frame > img,
+.home .mockup-frame > video {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
 .home .section-header {
   width: 100%;
   max-width: none;

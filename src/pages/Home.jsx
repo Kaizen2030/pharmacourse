@@ -242,7 +242,8 @@ const AnimatedSection = ({ children, delay = 0 }) => {
   )
 }
 
-const ProductMockup = ({ type }) => {
+const ProductMockup = ({ type, videoUrl, imageSrc, imageAlt }) => {
+  const [videoFailed, setVideoFailed] = useState(false)
   const configs = {
     pharmacyOS: {
       color: "#0F6E56",
@@ -271,16 +272,37 @@ const ProductMockup = ({ type }) => {
   }
 
   const c = configs[type] || configs.pharmacyOS
+  const fallbackImageSrc = imageSrc || pharmacourseHeroVisual
+  const visualAlt = imageAlt || `${c.title || "Product"} dashboard preview`
+
+  useEffect(() => {
+    setVideoFailed(false)
+  }, [videoUrl])
+
+  const mediaStyle = { width: "100%", height: "100%", objectFit: "cover", display: "block" }
 
   if (type === "pharmaCourse") {
     return (
       <div className="product-mockup">
         <div className="mockup-frame" style={{ background: "#fff", borderRadius: 14, overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
-          <img
-            src={pharmacourseHeroVisual}
-            alt="PharmaCourse My Learning dashboard showing learner progress, enrolled courses and certificates"
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          />
+          {videoUrl && !videoFailed ? (
+            <video
+              key={videoUrl}
+              src={videoUrl}
+              poster={fallbackImageSrc}
+              controls
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              aria-label={visualAlt}
+              onError={() => setVideoFailed(true)}
+              style={mediaStyle}
+            />
+          ) : (
+            <img src={fallbackImageSrc} alt={visualAlt} style={mediaStyle} />
+          )}
         </div>
       </div>
     )
@@ -290,11 +312,24 @@ const ProductMockup = ({ type }) => {
     return (
       <div className="product-mockup">
         <div className="mockup-frame" style={{ background: "#fff", borderRadius: 14, overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
-          <img
-            src={pharmacyosDashboard}
-            alt="RemedacarePOS dashboard showing branch overview, revenue, inventory insights and recent sales"
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          />
+          {videoUrl && !videoFailed ? (
+            <video
+              key={videoUrl}
+              src={videoUrl}
+              poster={fallbackImageSrc}
+              controls
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              aria-label={visualAlt}
+              onError={() => setVideoFailed(true)}
+              style={mediaStyle}
+            />
+          ) : (
+            <img src={fallbackImageSrc} alt={visualAlt} style={mediaStyle} />
+          )}
         </div>
       </div>
     )
@@ -304,11 +339,24 @@ const ProductMockup = ({ type }) => {
     return (
       <div className="product-mockup">
         <div className="mockup-frame" style={{ background: "#fff", borderRadius: 14, overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
-          <img
-            src={remedacareDashboard}
-            alt="RemedacareHMS dashboard showing patient, admissions, finance and pharmacy workflow panels"
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          />
+          {videoUrl && !videoFailed ? (
+            <video
+              key={videoUrl}
+              src={videoUrl}
+              poster={fallbackImageSrc}
+              controls
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              aria-label={visualAlt}
+              onError={() => setVideoFailed(true)}
+              style={mediaStyle}
+            />
+          ) : (
+            <img src={fallbackImageSrc} alt={visualAlt} style={mediaStyle} />
+          )}
         </div>
       </div>
     )
@@ -567,7 +615,12 @@ export default function Home() {
 
                     <div className="hero-grid-main">
                       <div className="hero-visual">
-                        <ProductMockup type="pharmaCourse" />
+                        <ProductMockup
+                          type="pharmaCourse"
+                          videoUrl={config.video_url}
+                          imageSrc={config.image_url || pharmacourseHeroVisual}
+                          imageAlt="PharmaCourse My Learning dashboard showing learner progress, enrolled courses and certificates"
+                        />
                       </div>
 
                       <div className="hero-content">
@@ -669,7 +722,12 @@ export default function Home() {
                       </div>
 
                       <div className="product-visual">
-                        <ProductMockup type="pharmacyOS" />
+                        <ProductMockup
+                          type="pharmacyOS"
+                          videoUrl={config.video_url}
+                          imageSrc={config.image_url || pharmacyosDashboard}
+                          imageAlt="RemedacarePOS dashboard showing branch overview, revenue, inventory insights and recent sales"
+                        />
                       </div>
 
                       <div className="product-features">
@@ -710,7 +768,12 @@ export default function Home() {
                       </div>
 
                       <div className="product-visual">
-                        <ProductMockup type="remedacareOS" />
+                        <ProductMockup
+                          type="remedacareOS"
+                          videoUrl={config.video_url}
+                          imageSrc={config.image_url || remedacareDashboard}
+                          imageAlt="RemedacareHMS dashboard showing patient, admissions, finance and pharmacy workflow panels"
+                        />
                       </div>
 
                       <div className="product-features">
