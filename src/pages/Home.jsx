@@ -279,15 +279,15 @@ const ProductMockup = ({ type, videoUrl, imageSrc, imageAlt }) => {
     setVideoFailed(false)
   }, [videoUrl])
 
-  const imageStyle = { width: "100%", height: "100%", objectFit: "cover", display: "block" }
-  const videoStyle = { width: "100%", height: "100%", objectFit: "contain", display: "block", backgroundColor: "#06131a" }
+  const mediaStyle = { width: "100%", height: "100%", objectFit: "contain", display: "block", backgroundColor: "transparent" }
   const videoFrameClass = "mockup-frame video-frame"
   const imageFrameClass = "mockup-frame"
+  const mediaFrameStyle = { background: "transparent", borderRadius: 14, overflow: "hidden" }
 
   if (type === "pharmaCourse") {
     return (
       <div className="product-mockup">
-        <div className={videoUrl && !videoFailed ? videoFrameClass : imageFrameClass} style={{ background: "#06131a", borderRadius: 14, overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
+        <div className={videoUrl && !videoFailed ? videoFrameClass : imageFrameClass} style={mediaFrameStyle}>
           {videoUrl && !videoFailed ? (
             <video
               key={videoUrl}
@@ -301,10 +301,10 @@ const ProductMockup = ({ type, videoUrl, imageSrc, imageAlt }) => {
               preload="metadata"
               aria-label={visualAlt}
               onError={() => setVideoFailed(true)}
-              style={videoStyle}
+              style={mediaStyle}
             />
           ) : (
-            <img src={fallbackImageSrc} alt={visualAlt} style={imageStyle} />
+            <img src={fallbackImageSrc} alt={visualAlt} style={mediaStyle} />
           )}
         </div>
       </div>
@@ -314,7 +314,7 @@ const ProductMockup = ({ type, videoUrl, imageSrc, imageAlt }) => {
   if (type === "pharmacyOS") {
     return (
       <div className="product-mockup">
-        <div className={videoUrl && !videoFailed ? videoFrameClass : imageFrameClass} style={{ background: "#06131a", borderRadius: 14, overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
+        <div className={videoUrl && !videoFailed ? videoFrameClass : imageFrameClass} style={mediaFrameStyle}>
           {videoUrl && !videoFailed ? (
             <video
               key={videoUrl}
@@ -328,10 +328,10 @@ const ProductMockup = ({ type, videoUrl, imageSrc, imageAlt }) => {
               preload="metadata"
               aria-label={visualAlt}
               onError={() => setVideoFailed(true)}
-              style={videoStyle}
+              style={mediaStyle}
             />
           ) : (
-            <img src={fallbackImageSrc} alt={visualAlt} style={imageStyle} />
+            <img src={fallbackImageSrc} alt={visualAlt} style={mediaStyle} />
           )}
         </div>
       </div>
@@ -341,7 +341,7 @@ const ProductMockup = ({ type, videoUrl, imageSrc, imageAlt }) => {
   if (type === "remedacareOS") {
     return (
       <div className="product-mockup">
-        <div className={videoUrl && !videoFailed ? videoFrameClass : imageFrameClass} style={{ background: "#06131a", borderRadius: 14, overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
+        <div className={videoUrl && !videoFailed ? videoFrameClass : imageFrameClass} style={mediaFrameStyle}>
           {videoUrl && !videoFailed ? (
             <video
               key={videoUrl}
@@ -355,10 +355,10 @@ const ProductMockup = ({ type, videoUrl, imageSrc, imageAlt }) => {
               preload="metadata"
               aria-label={visualAlt}
               onError={() => setVideoFailed(true)}
-              style={videoStyle}
+              style={mediaStyle}
             />
           ) : (
-            <img src={fallbackImageSrc} alt={visualAlt} style={imageStyle} />
+            <img src={fallbackImageSrc} alt={visualAlt} style={mediaStyle} />
           )}
         </div>
       </div>

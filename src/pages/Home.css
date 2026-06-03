@@ -304,6 +304,8 @@
   width: 100%;
   aspect-ratio: 16 / 10;
   border-radius: 22px;
+  background: transparent;
+  box-shadow: none;
 }
 
 .home .mockup-frame.video-frame {
@@ -319,12 +321,13 @@
 }
 
 .home .mockup-frame > img {
-  object-fit: cover;
+  object-fit: contain;
+  background: transparent;
 }
 
 .home .mockup-frame > video {
   object-fit: contain;
-  background: #06131a;
+  background: transparent;
 }
 
 .home .section-header {
