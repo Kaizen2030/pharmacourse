@@ -279,34 +279,39 @@ const ProductMockup = ({ type, videoUrl, imageSrc, imageAlt }) => {
     setVideoFailed(false)
   }, [videoUrl])
 
-  const mediaStyle = { width: "100%", height: "100%", objectFit: "contain", display: "block", backgroundColor: "transparent" }
-  const videoFrameClass = "mockup-frame video-frame"
-  const imageFrameClass = "mockup-frame"
-  const mediaFrameStyle = { background: "transparent", borderRadius: 14, overflow: "hidden" }
+  const mediaStyle = { width: "100%", height: "auto", display: "block" }
+
+  const renderMedia = () => (
+    videoUrl && !videoFailed ? (
+      <video
+        key={videoUrl}
+        src={videoUrl}
+        poster={fallbackImageSrc}
+        controls
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        aria-label={visualAlt}
+        onError={() => setVideoFailed(true)}
+        style={mediaStyle}
+        className="homepage-media"
+      />
+    ) : (
+      <img
+        src={fallbackImageSrc}
+        alt={visualAlt}
+        style={mediaStyle}
+        className="homepage-media"
+      />
+    )
+  )
 
   if (type === "pharmaCourse") {
     return (
       <div className="product-mockup">
-        <div className={videoUrl && !videoFailed ? videoFrameClass : imageFrameClass} style={mediaFrameStyle}>
-          {videoUrl && !videoFailed ? (
-            <video
-              key={videoUrl}
-              src={videoUrl}
-              poster={fallbackImageSrc}
-              controls
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="metadata"
-              aria-label={visualAlt}
-              onError={() => setVideoFailed(true)}
-              style={mediaStyle}
-            />
-          ) : (
-            <img src={fallbackImageSrc} alt={visualAlt} style={mediaStyle} />
-          )}
-        </div>
+        {renderMedia()}
       </div>
     )
   }
@@ -314,26 +319,7 @@ const ProductMockup = ({ type, videoUrl, imageSrc, imageAlt }) => {
   if (type === "pharmacyOS") {
     return (
       <div className="product-mockup">
-        <div className={videoUrl && !videoFailed ? videoFrameClass : imageFrameClass} style={mediaFrameStyle}>
-          {videoUrl && !videoFailed ? (
-            <video
-              key={videoUrl}
-              src={videoUrl}
-              poster={fallbackImageSrc}
-              controls
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="metadata"
-              aria-label={visualAlt}
-              onError={() => setVideoFailed(true)}
-              style={mediaStyle}
-            />
-          ) : (
-            <img src={fallbackImageSrc} alt={visualAlt} style={mediaStyle} />
-          )}
-        </div>
+        {renderMedia()}
       </div>
     )
   }
@@ -341,26 +327,7 @@ const ProductMockup = ({ type, videoUrl, imageSrc, imageAlt }) => {
   if (type === "remedacareOS") {
     return (
       <div className="product-mockup">
-        <div className={videoUrl && !videoFailed ? videoFrameClass : imageFrameClass} style={mediaFrameStyle}>
-          {videoUrl && !videoFailed ? (
-            <video
-              key={videoUrl}
-              src={videoUrl}
-              poster={fallbackImageSrc}
-              controls
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="metadata"
-              aria-label={visualAlt}
-              onError={() => setVideoFailed(true)}
-              style={mediaStyle}
-            />
-          ) : (
-            <img src={fallbackImageSrc} alt={visualAlt} style={mediaStyle} />
-          )}
-        </div>
+        {renderMedia()}
       </div>
     )
   }
