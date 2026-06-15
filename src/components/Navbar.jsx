@@ -107,7 +107,13 @@ export default function Navbar() {
         </button>
 
         {isOpen ? (
-          <div className="nav-dropdown-panel" role="menu" aria-label={label}>
+          <div
+            className="nav-dropdown-panel"
+            role="menu"
+            aria-label={label}
+            onMouseEnter={() => setOpenDropdown(name)}
+            onMouseLeave={() => setOpenDropdown((current) => (current === name ? null : current))}
+          >
             {links.map((link) => (
               <Link
                 key={link.to}
@@ -427,7 +433,7 @@ export default function Navbar() {
 
         .nav-dropdown-panel {
           position: absolute;
-          top: calc(100% + 0.6rem);
+          top: 100%;
           left: 0;
           width: min(340px, calc(100vw - 2rem));
           min-width: 280px;
