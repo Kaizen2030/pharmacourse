@@ -166,6 +166,11 @@ function cleanGeoLabel(value, fallback = "Unknown") {
   return normalized || fallback
 }
 
+function getGeoCountryLabel(geo) {
+  const label = cleanGeoLabel(geo.country || geo.country_name || geo.country_code || geo.country_hint || "", "")
+  return label || "Unknown"
+}
+
 function toSeries(events, days) {
   const today = new Date()
   const start = new Date(today)
@@ -556,7 +561,7 @@ export default function WebsiteAnalyticsTab() {
   const geoCountryBreakdown = useMemo(() => {
     const map = countBy(pageViewEvents, (event) => {
       const geo = getGeoMetadata(event)
-      return cleanGeoLabel(geo.country_hint || geo.country || geo.locale, "Unknown")
+      return getGeoCountryLabel(geo)
     })
 
     return Array.from(map.entries())
@@ -569,6 +574,18 @@ export default function WebsiteAnalyticsTab() {
     const map = countBy(pageViewEvents, (event) => {
       const geo = getGeoMetadata(event)
       return cleanGeoLabel(geo.time_zone || geo.timezone, "Unknown")
+    })
+
+    return Array.from(map.entries())
+      .map(([label, value]) => ({ label, value }))
+      .sort((first, second) => second.value - first.value)
+      .slice(0, 6)
+  }, [pageViewEvents])
+
+  const geoRegionBreakdown = useMemo(() => {
+    const map = countBy(pageViewEvents, (event) => {
+      const geo = getGeoMetadata(event)
+      return cleanGeoLabel(geo.region || geo.city || geo.country_code || "Unknown", "Unknown")
     })
 
     return Array.from(map.entries())
@@ -753,12 +770,12 @@ export default function WebsiteAnalyticsTab() {
       <div className="analytics-grid analytics-grid-single">
         <ChartCard
           title="Location signals"
-          subtitle="Browser locale and timezone hints captured from visits. This is best-effort geography, not IP-based geolocation."
-          action={<span className="analytics-chip">{formatFull(geoCountryBreakdown.length)} country hints</span>}
+          subtitle="Country, region, and timezone are resolved from the visit IP when possible, with browser locale as a fallback."
+          action={<span className="analytics-chip">{formatFull(geoCountryBreakdown.length)} countries</span>}
         >
           <div className="analytics-dual-stack">
             <div>
-              <h4>Country hints</h4>
+              <h4>Countries</h4>
               {loading ? <div className="analytics-loading compact">Loading location data...</div> : <TrafficPillList items={geoCountryBreakdown} />}
             </div>
             <div>
@@ -770,8 +787,12 @@ export default function WebsiteAnalyticsTab() {
             <h4 style={{ margin: "0 0 0.8rem", fontSize: "0.92rem", color: "var(--gray-900)" }}>Locales</h4>
             {loading ? <div className="analytics-loading compact">Loading locale data...</div> : <TrafficPillList items={geoLocaleBreakdown} />}
           </div>
+          <div style={{ marginTop: "1rem" }}>
+            <h4 style={{ margin: "0 0 0.8rem", fontSize: "0.92rem", color: "var(--gray-900)" }}>Regions / cities</h4>
+            {loading ? <div className="analytics-loading compact">Loading region data...</div> : <TrafficPillList items={geoRegionBreakdown} />}
+          </div>
           <p className="analytics-geo-note">
-            Browser locale hints are useful for spotting audience patterns quickly. If you want real country-by-IP analytics, we can add GeoIP capture later.
+            Location data is cached and collected passively, so the dashboard can show both exact GeoIP country data and browser fallback signals.
           </p>
         </ChartCard>
       </div>
