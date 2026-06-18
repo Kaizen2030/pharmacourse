@@ -4,12 +4,13 @@ import { supabase } from "../../lib/supabaseClient"
 import { useAuth } from "../../context/AuthContext"
 import {
   BookOpen, Home, LogOut, Plus, Edit2, Trash2, Eye, EyeOff,
-  Save, GripVertical, AlertCircle, RefreshCw, FlaskConical, Users, Award, ExternalLink, Video, Building2, Tags
+  Save, GripVertical, AlertCircle, RefreshCw, FlaskConical, Users, Award, ExternalLink, Video, Building2, Tags, BarChart3
 } from "lucide-react"
 import Pagination from "../../components/Pagination"
 import BlogContentRenderer from "../../components/BlogContentRenderer"
 import MarkdownContent from "../../components/MarkdownContent"
 import "./AdminDashboard.css"
+import WebsiteAnalyticsTab from "./AdminAnalyticsTab"
 import { DEFAULT_CERTIFICATE_SETTINGS, normalizeCertificateSettings } from "../../lib/certificateSettings"
 import {
   createEmptyBlogSection,
@@ -200,6 +201,13 @@ export default function AdminDashboard() {
             <RefreshCw size={20} />
             <span>Leaderboard</span>
           </button>
+          <button
+            className={`menu-item ${activeTab === "analytics" ? "active" : ""}`}
+            onClick={() => setActiveTab("analytics")}
+          >
+            <BarChart3 size={20} />
+            <span>Analytics</span>
+          </button>
           {isSuperAdmin && (
             <button
               className={`menu-item ${activeTab === "team-plans" ? "active" : ""}`}
@@ -265,6 +273,7 @@ export default function AdminDashboard() {
         {activeTab === "blog-categories" && <BlogCategoriesTab />}
         {activeTab === "testimonials" && <TestimonialsTab />}
         {activeTab === "leaderboard" && <LeaderboardTab />}
+        {activeTab === "analytics" && <WebsiteAnalyticsTab />}
         {isSuperAdmin && activeTab === "team-plans" && <TeamPlansTab />}
         {activeTab === "homepage" && <HomepageTab />}
         {activeTab === "quizzes" && <QuizManagementTab />}

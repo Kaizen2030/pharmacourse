@@ -1,6 +1,7 @@
 import { useEffect } from "react"
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom"
 import { AuthProvider } from "./context/AuthContext"
+import WebsiteAnalyticsTracker from "./components/WebsiteAnalyticsTracker"
 import Footer from "./components/Footer"
 import Navbar from "./components/Navbar"
 import PatientLayout from "./components/PatientLayout"
@@ -104,6 +105,7 @@ function AppShell() {
   return (
     <>
       <MediaProtection />
+      <WebsiteAnalyticsTracker />
       {!isPatientRoute && !isFlyerRoute && !isActivationRoute ? <Navbar /> : null}
       <Routes>
         <Route path="/" element={<Home />} />
