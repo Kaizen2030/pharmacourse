@@ -35,6 +35,63 @@ function getDeviceCategory() {
   return "desktop"
 }
 
+function getBrowserLocale() {
+  if (typeof window === "undefined") return ""
+
+  const candidates = [
+    window.navigator?.language,
+    ...(Array.isArray(window.navigator?.languages) ? window.navigator.languages : []),
+  ]
+
+  return candidates.find((value) => String(value || "").trim()) || ""
+}
+
+function getBrowserLanguage() {
+  const locale = String(getBrowserLocale() || "").trim()
+  if (!locale) return ""
+  return locale.split("-")[0]?.toLowerCase() || ""
+}
+
+function getBrowserTimeZone() {
+  if (typeof Intl === "undefined") return ""
+
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || ""
+  } catch {
+    return ""
+  }
+}
+
+function getLocaleCountryHint(locale) {
+  const normalized = String(locale || "").trim()
+  if (!normalized) return ""
+
+  const parts = normalized.split(/[-_]/).map((part) => part.trim()).filter(Boolean)
+  if (parts.length < 2) return ""
+
+  const region = parts.find((part) => /^[A-Za-z]{2}$/.test(part) || /^\d{3}$/.test(part))
+  return region ? region.toUpperCase() : ""
+}
+
+function getGeoSignals() {
+  const locale = getBrowserLocale()
+  const language = getBrowserLanguage()
+  const timeZone = getBrowserTimeZone()
+  const countryHint = getLocaleCountryHint(locale)
+  const languages = typeof window !== "undefined" && Array.isArray(window.navigator?.languages)
+    ? window.navigator.languages.slice(0, 3).filter(Boolean)
+    : []
+
+  return {
+    locale: locale || "",
+    language: language || "",
+    country_hint: countryHint || "",
+    time_zone: timeZone || "",
+    languages,
+    source: "browser",
+  }
+}
+
 function getRouteGroup(pathname) {
   const path = String(pathname || "/")
 
@@ -95,6 +152,10 @@ export async function recordWebsiteEvent({ eventName, pathname, title, referrer,
     viewport_height: window.innerHeight || null,
     metadata: {
       ...metadata,
+      geo: {
+        ...getGeoSignals(),
+        ...(metadata && typeof metadata.geo === "object" ? metadata.geo : {}),
+      },
       search,
       route_group: getRouteGroup(pathname),
       url: window.location.href,
@@ -107,4 +168,3 @@ export async function recordWebsiteEvent({ eventName, pathname, title, referrer,
     // Analytics should never block the page experience.
   }
 }
-

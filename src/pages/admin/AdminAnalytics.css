@@ -186,6 +186,10 @@
   grid-template-columns: 1fr 1fr;
 }
 
+.analytics-grid-single {
+  grid-template-columns: 1fr;
+}
+
 .analytics-card {
   border-radius: 1rem;
   border: 1px solid var(--gray-300);
@@ -517,6 +521,13 @@
   font-size: 0.92rem;
 }
 
+.analytics-geo-note {
+  margin: 1rem 0 0;
+  color: var(--gray-500);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
 .analytics-loading.compact {
   padding-top: 0.25rem;
 }
@@ -546,6 +557,7 @@
   .analytics-metrics-grid,
   .analytics-grid-main,
   .analytics-grid-secondary,
+  .analytics-grid-single,
   .analytics-business-grid,
   .analytics-split-copy {
     grid-template-columns: 1fr;

@@ -156,6 +156,16 @@ function countBy(list, iteratee) {
   }, new Map())
 }
 
+function getGeoMetadata(event) {
+  const geo = event?.metadata?.geo
+  return geo && typeof geo === "object" ? geo : {}
+}
+
+function cleanGeoLabel(value, fallback = "Unknown") {
+  const normalized = String(value || "").trim()
+  return normalized || fallback
+}
+
 function toSeries(events, days) {
   const today = new Date()
   const start = new Date(today)
@@ -543,6 +553,42 @@ export default function WebsiteAnalyticsTab() {
       .slice(0, 5)
   }, [pageViewEvents])
 
+  const geoCountryBreakdown = useMemo(() => {
+    const map = countBy(pageViewEvents, (event) => {
+      const geo = getGeoMetadata(event)
+      return cleanGeoLabel(geo.country_hint || geo.country || geo.locale, "Unknown")
+    })
+
+    return Array.from(map.entries())
+      .map(([label, value]) => ({ label, value }))
+      .sort((first, second) => second.value - first.value)
+      .slice(0, 6)
+  }, [pageViewEvents])
+
+  const geoTimezoneBreakdown = useMemo(() => {
+    const map = countBy(pageViewEvents, (event) => {
+      const geo = getGeoMetadata(event)
+      return cleanGeoLabel(geo.time_zone || geo.timezone, "Unknown")
+    })
+
+    return Array.from(map.entries())
+      .map(([label, value]) => ({ label, value }))
+      .sort((first, second) => second.value - first.value)
+      .slice(0, 6)
+  }, [pageViewEvents])
+
+  const geoLocaleBreakdown = useMemo(() => {
+    const map = countBy(pageViewEvents, (event) => {
+      const geo = getGeoMetadata(event)
+      return cleanGeoLabel(geo.locale || "Unknown", "Unknown")
+    })
+
+    return Array.from(map.entries())
+      .map(([label, value]) => ({ label, value }))
+      .sort((first, second) => second.value - first.value)
+      .slice(0, 6)
+  }, [pageViewEvents])
+
   const blogPublishedCount = blogs.filter((blog) => blog.is_published).length
   const blogViews = blogs.reduce((sum, blog) => sum + Number(blog.view_count || 0), 0)
   const blogLikes = blogs.reduce((sum, blog) => sum + Number(blog.like_count || 0), 0)
@@ -701,6 +747,32 @@ export default function WebsiteAnalyticsTab() {
               {loading ? <div className="analytics-loading compact">Loading sources...</div> : <TrafficPillList items={referrerBreakdown} />}
             </div>
           </div>
+        </ChartCard>
+      </div>
+
+      <div className="analytics-grid analytics-grid-single">
+        <ChartCard
+          title="Location signals"
+          subtitle="Browser locale and timezone hints captured from visits. This is best-effort geography, not IP-based geolocation."
+          action={<span className="analytics-chip">{formatFull(geoCountryBreakdown.length)} country hints</span>}
+        >
+          <div className="analytics-dual-stack">
+            <div>
+              <h4>Country hints</h4>
+              {loading ? <div className="analytics-loading compact">Loading location data...</div> : <TrafficPillList items={geoCountryBreakdown} />}
+            </div>
+            <div>
+              <h4>Time zones</h4>
+              {loading ? <div className="analytics-loading compact">Loading location data...</div> : <TrafficPillList items={geoTimezoneBreakdown} />}
+            </div>
+          </div>
+          <div style={{ marginTop: "1rem" }}>
+            <h4 style={{ margin: "0 0 0.8rem", fontSize: "0.92rem", color: "var(--gray-900)" }}>Locales</h4>
+            {loading ? <div className="analytics-loading compact">Loading locale data...</div> : <TrafficPillList items={geoLocaleBreakdown} />}
+          </div>
+          <p className="analytics-geo-note">
+            Browser locale hints are useful for spotting audience patterns quickly. If you want real country-by-IP analytics, we can add GeoIP capture later.
+          </p>
         </ChartCard>
       </div>
 
