@@ -106,6 +106,15 @@
   font-weight: 700;
 }
 
+.analytics-warning {
+  padding: 1rem 1.1rem;
+  border-radius: 0.9rem;
+  background: linear-gradient(135deg, #fff7ed 0%, #fffbeb 100%);
+  border: 1px solid #fdba74;
+  color: #9a3412;
+  font-weight: 700;
+}
+
 .analytics-metrics-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -560,4 +569,3 @@
     font-size: 0.72rem;
   }
 }
-

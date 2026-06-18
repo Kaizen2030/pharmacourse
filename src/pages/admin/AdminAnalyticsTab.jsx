@@ -100,6 +100,24 @@ function formatAgo(value) {
   return `${Math.floor(hours / 24)}d ago`
 }
 
+function isMissingTableError(error) {
+  const message = String(error?.message || "").toLowerCase()
+  return (
+    error?.status === 404 ||
+    message.includes("could not find the table") ||
+    (message.includes("relation") && message.includes("does not exist"))
+  )
+}
+
+async function loadOptionalQuery(queryPromise) {
+  const result = await queryPromise
+  if (result?.error && isMissingTableError(result.error)) {
+    return { data: [], error: null, missing: true }
+  }
+
+  return { ...result, missing: false }
+}
+
 function normalizePath(path) {
   const raw = String(path || "/").split("?")[0] || "/"
   if (raw === "/") return "/"
@@ -327,6 +345,15 @@ export default function WebsiteAnalyticsTab() {
   const [period, setPeriod] = useState(30)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [portalDataWarning, setPortalDataWarning] = useState("")
+  const [patientTablesAvailable, setPatientTablesAvailable] = useState(() => {
+    if (typeof window === "undefined") return true
+    try {
+      return window.localStorage.getItem("pharmacourse.analytics.patientTablesAvailable") !== "false"
+    } catch {
+      return true
+    }
+  })
   const [events, setEvents] = useState([])
   const [blogs, setBlogs] = useState([])
   const [courses, setCourses] = useState([])
@@ -341,6 +368,7 @@ export default function WebsiteAnalyticsTab() {
   const loadAnalytics = useCallback(async () => {
     setLoading(true)
     setError("")
+    setPortalDataWarning("")
 
     const since = new Date()
     since.setDate(since.getDate() - (period - 1))
@@ -355,9 +383,6 @@ export default function WebsiteAnalyticsTab() {
       certificatesResult,
       workshopsResult,
       teamPlansResult,
-      prescriptionsResult,
-      appointmentsResult,
-      deliveriesResult,
     ] = await Promise.all([
       supabase.rpc("get_website_events", { days: period }),
       supabase.from("blog_posts").select("id, title, slug, view_count, like_count, is_published, created_at, published_at").order("view_count", { ascending: false }),
@@ -366,9 +391,6 @@ export default function WebsiteAnalyticsTab() {
       supabase.from("certificates").select("id, course_id, issued_date"),
       supabase.from("workshops").select("id, title, is_upcoming, created_at, date").order("created_at", { ascending: false }),
       supabase.from("team_plan_enquiries").select("id, status, plan_tier, created_at").gte("created_at", sinceIso),
-      supabase.from("prescription_requests").select("id, status, created_at").gte("created_at", sinceIso),
-      supabase.from("appointments").select("id, status, created_at").gte("created_at", sinceIso),
-      supabase.from("deliveries").select("id, status, created_at").gte("created_at", sinceIso),
     ])
 
     const firstError =
@@ -378,15 +400,46 @@ export default function WebsiteAnalyticsTab() {
       enrollmentsResult.error ||
       certificatesResult.error ||
       workshopsResult.error ||
-      teamPlansResult.error ||
-      prescriptionsResult.error ||
-      appointmentsResult.error ||
-      deliveriesResult.error
+      teamPlansResult.error
 
     if (firstError) {
       setError(firstError.message || "We could not load analytics right now.")
       setLoading(false)
       return
+    }
+
+    let prescriptionsResult = { data: [], error: null, missing: false }
+    let appointmentsResult = { data: [], error: null, missing: false }
+    let deliveriesResult = { data: [], error: null, missing: false }
+
+    if (patientTablesAvailable) {
+      const optionalResults = await Promise.all([
+        loadOptionalQuery(supabase.from("prescription_requests").select("id, status, created_at").gte("created_at", sinceIso)),
+        loadOptionalQuery(supabase.from("appointments").select("id, status, created_at").gte("created_at", sinceIso)),
+        loadOptionalQuery(supabase.from("deliveries").select("id, status, created_at").gte("created_at", sinceIso)),
+      ])
+
+      ;[prescriptionsResult, appointmentsResult, deliveriesResult] = optionalResults
+
+      const optionalError = optionalResults.find((result) => result.error)
+      if (optionalError?.error) {
+        setError(optionalError.error.message || "We could not load analytics right now.")
+        setLoading(false)
+        return
+      }
+
+      const missingAny = optionalResults.some((result) => result.missing)
+      if (missingAny) {
+        setPatientTablesAvailable(false)
+        try {
+          window.localStorage.setItem("pharmacourse.analytics.patientTablesAvailable", "false")
+        } catch {
+          // Ignore storage failures.
+        }
+        setPortalDataWarning("Patient portal tables are not deployed in this Supabase project yet, so those metrics are hidden for now.")
+      }
+    } else {
+      setPortalDataWarning("Patient portal tables are not deployed in this Supabase project yet, so those metrics are hidden for now.")
     }
 
     const eventRows = Array.isArray(eventsResult.data?.events) ? eventsResult.data.events : []
@@ -561,6 +614,12 @@ export default function WebsiteAnalyticsTab() {
 
       {error ? (
         <div className="analytics-error">{error}</div>
+      ) : null}
+
+      {portalDataWarning ? (
+        <div className="analytics-warning">
+          {portalDataWarning}
+        </div>
       ) : null}
 
       <div className="analytics-metrics-grid">
