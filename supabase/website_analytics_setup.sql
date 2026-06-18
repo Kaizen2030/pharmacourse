@@ -92,6 +92,24 @@ revoke all on function public.record_website_event(text, text, text, text, text,
 grant execute on function public.record_website_event(text, text, text, text, text, text, integer, integer, jsonb) to anon;
 grant execute on function public.record_website_event(text, text, text, text, text, text, integer, integer, jsonb) to authenticated;
 
+create or replace function public.get_analytics_schema_state()
+returns jsonb
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select jsonb_build_object(
+    'patient_portal_tables_ready',
+    to_regclass('public.prescription_requests') is not null
+    and to_regclass('public.appointments') is not null
+    and to_regclass('public.deliveries') is not null
+    and to_regclass('public.patient_notifications') is not null
+  );
+$$;
+
+grant execute on function public.get_analytics_schema_state() to authenticated;
+
 create or replace function public.get_website_events(days integer default 30)
 returns jsonb
 language plpgsql

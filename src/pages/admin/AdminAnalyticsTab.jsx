@@ -376,6 +376,7 @@ export default function WebsiteAnalyticsTab() {
     const sinceIso = since.toISOString()
 
     const [
+      schemaResult,
       eventsResult,
       blogsResult,
       coursesResult,
@@ -384,6 +385,7 @@ export default function WebsiteAnalyticsTab() {
       workshopsResult,
       teamPlansResult,
     ] = await Promise.all([
+      supabase.rpc("get_analytics_schema_state"),
       supabase.rpc("get_website_events", { days: period }),
       supabase.from("blog_posts").select("id, title, slug, view_count, like_count, is_published, created_at, published_at").order("view_count", { ascending: false }),
       supabase.from("courses").select("id, title, created_at, cpd_hours").order("created_at", { ascending: false }),
@@ -394,6 +396,7 @@ export default function WebsiteAnalyticsTab() {
     ])
 
     const firstError =
+      schemaResult.error ||
       eventsResult.error ||
       blogsResult.error ||
       coursesResult.error ||
@@ -408,11 +411,14 @@ export default function WebsiteAnalyticsTab() {
       return
     }
 
+    const schemaState = schemaResult.data || {}
+    const schemaReady = Boolean(schemaState.patient_portal_tables_ready)
+
     let prescriptionsResult = { data: [], error: null, missing: false }
     let appointmentsResult = { data: [], error: null, missing: false }
     let deliveriesResult = { data: [], error: null, missing: false }
 
-    if (patientTablesAvailable) {
+    if (schemaReady && patientTablesAvailable) {
       const optionalResults = await Promise.all([
         loadOptionalQuery(supabase.from("prescription_requests").select("id, status, created_at").gte("created_at", sinceIso)),
         loadOptionalQuery(supabase.from("appointments").select("id, status, created_at").gte("created_at", sinceIso)),
@@ -439,6 +445,9 @@ export default function WebsiteAnalyticsTab() {
         setPortalDataWarning("Patient portal tables are not deployed in this Supabase project yet, so those metrics are hidden for now.")
       }
     } else {
+      if (!schemaReady) {
+        setPatientTablesAvailable(false)
+      }
       setPortalDataWarning("Patient portal tables are not deployed in this Supabase project yet, so those metrics are hidden for now.")
     }
 
