@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { Download, Share2, Smartphone, X } from "lucide-react"
+import { Download, Smartphone, X } from "lucide-react"
 
 const DISMISS_KEY = "patientPortalInstallPromptDismissedAt"
 const DISMISS_WINDOW_MS = 1000 * 60 * 60 * 24 * 3
@@ -16,6 +16,11 @@ export default function PatientInstallPrompt() {
   const [isInstalling, setIsInstalling] = useState(false)
 
   const isIos = useMemo(() => /iphone|ipad|ipod/i.test(window.navigator.userAgent || ""), [])
+  const isAndroid = useMemo(() => /android/i.test(window.navigator.userAgent || ""), [])
+  const isMobile = useMemo(
+    () => Boolean(window.matchMedia?.("(max-width: 768px)")?.matches || isIos || isAndroid),
+    [isAndroid, isIos],
+  )
 
   useEffect(() => {
     const standalone =
@@ -28,7 +33,7 @@ export default function PatientInstallPrompt() {
       return
     }
 
-    if (isIos) {
+    if (isMobile) {
       setIsVisible(true)
     }
 
@@ -51,7 +56,7 @@ export default function PatientInstallPrompt() {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt)
       window.removeEventListener("appinstalled", handleAppInstalled)
     }
-  }, [isIos])
+  }, [isMobile])
 
   async function handleInstall() {
     if (!deferredPrompt) {
@@ -96,10 +101,9 @@ export default function PatientInstallPrompt() {
 
       <div className="patient-install-copy">
         <div className="patient-install-kicker">Install on your phone</div>
-        <h2>Use this portal like an app</h2>
+        <h2>Install the patient portal like an app</h2>
         <p>
-          Add the RemedacarePOS patient portal to your home screen for faster access to prescriptions, appointments,
-          delivery updates, and pharmacy messages.
+          Add the RemedacarePOS patient portal to your home screen so it opens from an icon like a real app.
         </p>
       </div>
 
@@ -107,24 +111,89 @@ export default function PatientInstallPrompt() {
         <div className="patient-install-actions">
           <button type="button" className="patient-button" onClick={handleInstall} disabled={isInstalling}>
             <Download />
-            <span>{isInstalling ? "Preparing install..." : "Install patient portal"}</span>
+            <span>{isInstalling ? "Preparing install..." : "Install patient portal app"}</span>
           </button>
           <button type="button" className="patient-button-secondary" onClick={handleDismiss}>
             Not now
           </button>
         </div>
-      ) : isIos ? (
-        <div className="patient-install-ios">
-          <div className="patient-install-ios-row">
-            <Share2 />
-            <span>Tap Share in Safari</span>
-          </div>
-          <div className="patient-install-ios-row">
-            <Download />
-            <span>Then choose Add to Home Screen</span>
-          </div>
-        </div>
       ) : null}
+
+      <div className="patient-install-steps" aria-label="Install steps">
+        {isAndroid ? (
+          <>
+            <div className="patient-install-step">
+              <span className="patient-install-step-badge">1</span>
+              <div>
+                <strong>Open the portal in Chrome</strong>
+                <span>Use Chrome on Android so the install option appears correctly.</span>
+              </div>
+            </div>
+            <div className="patient-install-step">
+              <span className="patient-install-step-badge">2</span>
+              <div>
+                <strong>Tap the menu</strong>
+                <span>Choose <em>Install app</em> or <em>Add to Home screen</em> from the browser menu.</span>
+              </div>
+            </div>
+            <div className="patient-install-step">
+              <span className="patient-install-step-badge">3</span>
+              <div>
+                <strong>Open it from your home screen</strong>
+                <span>The portal will reopen like a dedicated app with its own icon.</span>
+              </div>
+            </div>
+          </>
+        ) : isIos ? (
+          <>
+            <div className="patient-install-step">
+              <span className="patient-install-step-badge">1</span>
+              <div>
+                <strong>Open in Safari</strong>
+                <span>iPhone installs work from Safari, not from in-app browsers.</span>
+              </div>
+            </div>
+            <div className="patient-install-step">
+              <span className="patient-install-step-badge">2</span>
+              <div>
+                <strong>Tap Share</strong>
+                <span>Use the Share icon at the bottom of Safari.</span>
+              </div>
+            </div>
+            <div className="patient-install-step">
+              <span className="patient-install-step-badge">3</span>
+              <div>
+                <strong>Add to Home Screen</strong>
+                <span>Choose <em>Add to Home Screen</em> to create the app icon.</span>
+              </div>
+            </div>
+          </>
+        ) : isMobile ? (
+          <>
+            <div className="patient-install-step">
+              <span className="patient-install-step-badge">1</span>
+              <div>
+                <strong>Open the portal in your browser</strong>
+                <span>Use the phone browser, not an in-app view, for best results.</span>
+              </div>
+            </div>
+            <div className="patient-install-step">
+              <span className="patient-install-step-badge">2</span>
+              <div>
+                <strong>Use the install or share menu</strong>
+                <span>Look for <em>Install app</em> on Android or <em>Add to Home Screen</em> on iPhone.</span>
+              </div>
+            </div>
+            <div className="patient-install-step">
+              <span className="patient-install-step-badge">3</span>
+              <div>
+                <strong>Launch like a native app</strong>
+                <span>The portal opens from the home screen icon with a full-screen app feel.</span>
+              </div>
+            </div>
+          </>
+        ) : null}
+      </div>
     </section>
   )
 }

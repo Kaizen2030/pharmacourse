@@ -2419,7 +2419,7 @@ export default function PatientPortal() {
                       <ArrowRight size={16} />
                     </Link>
                   ) : (
-                    <a href="#patient-directory" className="patient-portal-hero-button primary">
+                    <a href="#pharmacy-directory" className="patient-portal-hero-button primary">
                       Browse pharmacies
                       <ArrowRight size={16} />
                     </a>
@@ -2555,7 +2555,7 @@ export default function PatientPortal() {
         </section>
 
         {(!hasActivePharmacy || !portalError) && (
-          <section className="patient-portal-content" id="patient-directory">
+          <section className="patient-portal-content" id="pharmacy-directory">
             <div className="patient-portal-shell">
               <aside className="patient-portal-sidebar">
                 <div className="patient-portal-sidebar-card">
