@@ -1300,9 +1300,6 @@ function buildBranchLocationLabel(row = {}, branchLocationParam = "") {
 
   if (pieces.length) return pieces.join(", ")
 
-  const address = String(row?.address || "").trim()
-  if (address) return address
-
   return branchLocationParam
 }
 
@@ -1331,22 +1328,12 @@ export default function PatientLayout() {
 
       const primaryResult = await pharmacyosClient
         .from("pharmacies")
-        .select("id, name, location, address, town, subcounty, county")
+        .select("id, name, location, town, subcounty, county")
         .eq("id", pharmacyId)
         .maybeSingle()
 
-      if (primaryResult.error && String(primaryResult.error.message || "").toLowerCase().includes("location")) {
-        const fallbackResult = await pharmacyosClient
-          .from("pharmacies")
-          .select("id, name, address, town, subcounty, county")
-          .eq("id", pharmacyId)
-          .maybeSingle()
-        data = fallbackResult.data
-        error = fallbackResult.error
-      } else {
-        data = primaryResult.data
-        error = primaryResult.error
-      }
+      data = primaryResult.data
+      error = primaryResult.error
 
       if (ignore) {
         return
