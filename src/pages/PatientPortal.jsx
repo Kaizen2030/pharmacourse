@@ -1,2041 +1,176 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { Link, useNavigate, useSearchParams } from "react-router-dom"
+import { useState } from "react"
 import {
-  ArrowRight,
-  Building2,
-  CalendarDays,
-  ClipboardList,
-  Bell,
-  Download,
-  HeartPulse,
-  Home,
-  Menu,
-  PackageSearch,
-  ShieldCheck,
-  Smartphone,
-  X,
-  Truck,
+  Home, Pill, CalendarDays, HeartPulse, Truck, Bell,
+  Plus, Trash2, Loader2, Search, Menu, X, ChevronRight,
+  PhoneCall, Video, Building2, Image, Award, ShieldCheck,
+  Smartphone, Zap, ClipboardList, PackageSearch,
 } from "lucide-react"
-import PatientInstallPrompt from "../components/PatientInstallPrompt"
-import { pharmacyPortalSupabase as supabase } from "../lib/pharmacyPortalSupabase"
-import SEO from "../components/SEO"
-import { usePatientPortalAuth } from "../hooks/usePatientPortalAuth"
-import { fetchCurrentPatientPortalMatches } from "../lib/patientPortalUpdates"
-import { buildPatientRouteUrl } from "../lib/patientPortalRoutes"
-import "./PatientPortal.css"
-
-const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || "0x4AAAAAADQ4Srgs_Q53E-3H"
-let turnstileScriptPromise = null
-
-const PORTAL_TABS = [
-  { id: "prescription", label: "Prescription Request", icon: ClipboardList, tone: "green" },
-  { id: "appointment", label: "Book Appointment", icon: CalendarDays, tone: "blue" },
-  { id: "maternal", label: "Maternal Care", icon: HeartPulse, tone: "rose" },
-  { id: "delivery", label: "Delivery Request", icon: Truck, tone: "amber" },
-  { id: "updates", label: "Check Updates", icon: Bell, tone: "ink" },
-]
-
-const PORTAL_FEATURES = [
-  {
-    title: "Branch routing",
-    description: "Choose the right pharmacy or branch before you submit anything.",
-    icon: Building2,
-    tone: "green",
-  },
-  {
-    title: "Prescription requests",
-    description: "Send a refill request or upload a photo of your prescription.",
-    icon: ClipboardList,
-    tone: "blue",
-  },
-  {
-    title: "Appointments",
-    description: "Book a callback, a video consultation, or an in-person visit.",
-    icon: CalendarDays,
-    tone: "amber",
-  },
-  {
-    title: "Follow-up tracking",
-    description: "Check updates, delivery progress, and branch replies in one place.",
-    icon: PackageSearch,
-    tone: "rose",
-  },
-  {
-    title: "Install on phone",
-    description: "Add the portal to your home screen like a native app.",
-    icon: Smartphone,
-    tone: "cyan",
-  },
-  {
-    title: "Secure updates",
-    description: "See private replies and branch messages as they happen.",
-    icon: ShieldCheck,
-    tone: "ink",
-  },
-]
-
-const PHONE_PREVIEW_STATS = [
-  { label: "Prescriptions", value: "3", icon: "💊" },
-  { label: "Appointments", value: "2", icon: "📅" },
-  { label: "Deliveries", value: "1", icon: "🚚" },
-  { label: "Notifications", value: "5", icon: "🔔" },
-]
-
-const PHONE_PREVIEW_QUICK_ACTIONS = [
-  { title: "Request Prescription", description: "Send a refill or upload prescription", emoji: "💊", bgColor: "#ecfdf5", iconColor: "#059669" },
-  { title: "Book Appointment", description: "Call or video consultation", emoji: "📅", bgColor: "#eff6ff", iconColor: "#2563eb" },
-  { title: "Maternal Care", description: "ANC registration & follow-up", emoji: "❤️", bgColor: "#fff1f2", iconColor: "#e11d48" },
-  { title: "Request Delivery", description: "Medicines delivered to your door", emoji: "🚚", bgColor: "#fffbeb", iconColor: "#d97706" },
-]
-
-const PHONE_PREVIEW_ACTIVITIES = [
-  { title: "Metformin 500mg", statusLabel: "Under Review", statusClass: "status-pending", time: "2 hours ago", emoji: "💊", bg: "#fffbeb", color: "#d97706" },
-  { title: "Video Consultation", statusLabel: "Confirmed", statusClass: "status-confirmed", time: "Tomorrow, 10:00 AM", emoji: "🎥", bg: "#eff6ff", color: "#2563eb" },
-  { title: "Delivery #1234", statusLabel: "On the Way", statusClass: "status-dispatched", time: "Today, 3:30 PM", emoji: "🚚", bg: "#ecfdf5", color: "#059669" },
-]
-
-const PHONE_PREVIEW_FEATURES = [
-  { icon: "🏢", title: "Branch Routing", description: "Pick your pharmacy branch" },
-  { icon: "📋", title: "Prescriptions", description: "Refill requests with photos" },
-  { icon: "📅", title: "Appointments", description: "Calls or video consults" },
-  { icon: "📦", title: "Live Tracking", description: "Follow your order live" },
-]
-
-const PHONE_PREVIEW_TRUST_BADGES = [
-  "🛡️ Secure & Private",
-  "📱 Mobile-Friendly",
-  "🏆 Branch-Linked",
-]
-
-const PORTAL_TRUST_POINTS = [
-  "Mobile-first and PWA ready",
-  "Branch-linked requests",
-  "Brand colors preserved",
-]
-
-const APPOINTMENT_OPTIONS = [
-  { value: "video_consultation", label: "Video consultation" },
-  { value: "phone_call", label: "Phone call" },
-  { value: "pickup", label: "In-person pickup" },
-]
-
-const DIRECTORY_BATCH_SIZES = {
-  mains: 12,
-  branches: 18,
-}
-
-const PATIENT_RESPONSE_ACTIONS = {
-  accept_alternative: {
-    label: "Accept Alternative",
-    shortLabel: "Accepted alternative",
-    helper: "Tell the pharmacist you are okay with the substitute and ready for the next step.",
-    successMessage: "Your acceptance has been sent to the pharmacy.",
-    tone: "success",
-  },
-  request_callback: {
-    label: "Request Pharmacist Call",
-    shortLabel: "Requested pharmacist call",
-    helper: "Ask the pharmacist to call you before you decide on the substitute.",
-    successMessage: "Your callback request has been sent to the pharmacy.",
-    tone: "info",
-  },
-  ask_another_option: {
-    label: "Ask for Another Option",
-    shortLabel: "Asked for another option",
-    helper: "Let the pharmacy know this substitute is not the right fit and you need another option.",
-    requiresNotes: true,
-    successMessage: "Your request for another option has been sent to the pharmacy.",
-    tone: "warning",
-  },
-  cancel_request: {
-    label: "Cancel Request",
-    shortLabel: "Asked to cancel request",
-    helper: "Tell the pharmacy to stop preparing this request.",
-    successMessage: "Your cancellation request has been sent to the pharmacy.",
-    requiresNotes: true,
-    tone: "danger",
-  },
-}
-
-const FULFILLMENT_ACTIONS = {
-  pickup: {
-    label: "I Will Pick Up at Pharmacy",
-    shortLabel: "Pickup selected",
-    helper: "Tell the pharmacy you will collect the medicine at the branch.",
-    successMessage: "Pickup confirmed. The pharmacy will keep your order ready for collection.",
-    tone: "info",
-  },
-  delivery_requested: {
-    label: "Request Delivery",
-    shortLabel: "Delivery requested",
-    helper: "Ask the pharmacy to arrange delivery for this prescription.",
-    successMessage: "Your delivery request has been sent to the pharmacy.",
-    requiresAddress: true,
-    tone: "warning",
-  },
-}
-
-function loadTurnstileScript() {
-  if (typeof window === "undefined") return Promise.resolve()
-  if (window.turnstile) return Promise.resolve()
-  if (turnstileScriptPromise) return turnstileScriptPromise
-
-  turnstileScriptPromise = new Promise((resolve, reject) => {
-    const existing = document.querySelector('script[data-turnstile-script="true"]')
-
-    if (existing) {
-      existing.addEventListener("load", () => resolve(), { once: true })
-      existing.addEventListener("error", () => reject(new Error("Unable to load security check.")), { once: true })
-      return
-    }
-
-    const script = document.createElement("script")
-    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
-    script.async = true
-    script.defer = true
-    script.dataset.turnstileScript = "true"
-    script.onload = () => resolve()
-    script.onerror = () => reject(new Error("Unable to load security check."))
-    document.head.appendChild(script)
-  })
-
-  return turnstileScriptPromise
-}
-
-function TurnstileWidget({ formId, resetSignal, onVerify, onExpire }) {
-  const [loadError, setLoadError] = useState("")
-  const [widgetReady, setWidgetReady] = useState(false)
-  const containerId = `turnstile-${formId}`
-  const widgetIdRef = useRef(null)
-  const renderTimeoutRef = useRef(null)
-  const solvedRef = useRef(false)
-
-  useEffect(() => {
-    let cancelled = false
-
-    async function renderWidget() {
-      if (!TURNSTILE_SITE_KEY) {
-        setLoadError("Security check is not configured right now. Please try again later.")
-        return
-      }
-
-      setLoadError("")
-      setWidgetReady(false)
-      solvedRef.current = false
-
-      try {
-        await loadTurnstileScript()
-        if (cancelled || !window.turnstile) return
-
-        const container = document.getElementById(containerId)
-        if (!container) return
-
-        container.innerHTML = ""
-        widgetIdRef.current = window.turnstile.render(container, {
-          sitekey: TURNSTILE_SITE_KEY,
-          theme: "light",
-          callback: (token) => {
-            if (renderTimeoutRef.current) {
-              window.clearTimeout(renderTimeoutRef.current)
-            }
-            solvedRef.current = true
-            onVerify(token)
-            setWidgetReady(true)
-          },
-          "expired-callback": () => {
-            solvedRef.current = false
-            onExpire()
-            setWidgetReady(false)
-          },
-          "error-callback": () => {
-            solvedRef.current = false
-            onExpire()
-            setLoadError("Security check failed. Please refresh and try again.")
-            setWidgetReady(false)
-          },
-        })
-
-        renderTimeoutRef.current = window.setTimeout(() => {
-          if (!cancelled && !solvedRef.current) {
-            setLoadError("Security check is taking too long. Please refresh it and try again.")
-          }
-        }, 12000)
-      } catch (error) {
-        setLoadError(error?.message || "Unable to load security check.")
-      }
-    }
-
-    renderWidget()
-
-    return () => {
-      cancelled = true
-      if (renderTimeoutRef.current) {
-        window.clearTimeout(renderTimeoutRef.current)
-      }
-    }
-  }, [containerId, onExpire, onVerify, resetSignal])
-
-  function handleResetWidget() {
-    setLoadError("")
-    setWidgetReady(false)
-    solvedRef.current = false
-    onExpire()
-
-    if (window.turnstile && widgetIdRef.current !== null) {
-      window.turnstile.reset(widgetIdRef.current)
-      return
-    }
-
-    setLoadError("Security check refreshed. Please wait a moment and try again.")
-  }
-
-  return (
-    <div className="patient-portal-turnstile-wrap">
-      <div id={containerId} className="patient-portal-turnstile" />
-      {widgetReady && !loadError ? (
-        <div className="patient-portal-turnstile-note">Security check complete. You can submit now.</div>
-      ) : null}
-      {loadError ? (
-        <div className="patient-portal-turnstile-error">
-          <span>{loadError}</span>
-          <button type="button" className="patient-portal-turnstile-reset" onClick={handleResetWidget}>
-            Refresh security check
-          </button>
-        </div>
-      ) : null}
-    </div>
-  )
-}
-
-function createEmptyPrescription() {
-  return {
-    patientName: "",
-    patientPhone: "",
-    patientEmail: "",
-    conditionNotes: "",
-    requestedDrugs: [""],
-  }
-}
-
-function createEmptyAppointment() {
-  return {
-    patientName: "",
-    patientPhone: "",
-    patientEmail: "",
-    appointmentType: "phone_call",
-    slotDatetime: defaultSlotValue(),
-    patientNotes: "",
-    conditionSummary: "",
-  }
-}
-
-function createEmptyDelivery() {
-  return {
-    patientName: "",
-    patientPhone: "",
-    patientEmail: "",
-    patientAddress: "",
-    patientLocationLat: "",
-    patientLocationLng: "",
-    riderName: "",
-    riderPhone: "",
-    items: [
-      { drug_name: "", qty: "1", price: "" },
-    ],
-  }
-}
-
-function defaultSlotValue() {
-  const date = new Date()
-  date.setHours(date.getHours() + 2, 0, 0, 0)
-  const offset = date.getTimezoneOffset()
-  const local = new Date(date.getTime() - (offset * 60000))
-  return local.toISOString().slice(0, 16)
-}
-
-function todayDateValue() {
-  const date = new Date()
-  const offset = date.getTimezoneOffset()
-  const local = new Date(date.getTime() - (offset * 60000))
-  return local.toISOString().slice(0, 10)
-}
-
-function normalizePhone(value) {
-  return String(value || "").trim().replace(/\s+/g, "")
-}
-
-function formatDateTime(value) {
-  if (!value) return "-"
-  return new Date(value).toLocaleString("en-GB", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  })
-}
-
-function timeAgo(value) {
-  if (!value) return "just now"
-  const seconds = Math.max(1, Math.floor((Date.now() - new Date(value).getTime()) / 1000))
-  if (seconds < 60) return `${seconds}s ago`
-  const minutes = Math.floor(seconds / 60)
-  if (minutes < 60) return `${minutes}m ago`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}h ago`
-  const days = Math.floor(hours / 24)
-  return `${days}d ago`
-}
-
-function getStatusTone(status) {
-  const normalized = String(status || "").toLowerCase()
-  if (["approved", "confirmed"].includes(normalized)) return "success"
-  if (["declined", "cancelled"].includes(normalized)) return "danger"
-  if (["dispensed", "delivered", "completed"].includes(normalized)) return "muted"
-  if (["dispatched", "in_progress", "packed"].includes(normalized)) return "info"
-  return "warning"
-}
-
-function formatAppointmentType(value) {
-  if (!value) return "Appointment"
-  return String(value)
-    .split("_")
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ")
-}
-
-function formatTokenLabel(value, fallback = "Pending") {
-  if (!value) return fallback
-  return String(value)
-    .split("_")
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ")
-}
-
-function getPatientResponseMeta(action) {
-  if (!action) return null
-  const config = PATIENT_RESPONSE_ACTIONS[action]
-  if (!config) {
-    return {
-      label: formatTokenLabel(action, "Patient responded"),
-      shortLabel: formatTokenLabel(action, "Patient responded"),
-      helper: "The pharmacy has received the patient's reply.",
-      tone: "info",
-    }
-  }
-  return config
-}
-
-function buildPatientResponseSummary(item) {
-  const responseMeta = getPatientResponseMeta(item.patient_response_action)
-  if (!responseMeta) return ""
-  const note = item.patient_response_notes ? `: ${item.patient_response_notes}` : ""
-  return `Your response: ${responseMeta.shortLabel || responseMeta.label}${note}`
-}
-
-function getFulfillmentMeta(choice) {
-  return FULFILLMENT_ACTIONS[choice] || null
-}
-
-function buildFulfillmentSummary(item) {
-  const fulfillmentMeta = getFulfillmentMeta(item.patient_fulfillment_choice)
-  if (!fulfillmentMeta) return ""
-
-  const parts = [fulfillmentMeta.shortLabel || fulfillmentMeta.label]
-  if (item.patient_fulfillment_address) {
-    parts.push(`Address: ${item.patient_fulfillment_address}`)
-  }
-  if (item.patient_fulfillment_notes) {
-    parts.push(`Note: ${item.patient_fulfillment_notes}`)
-  }
-  if (item.linked_delivery_status) {
-    parts.push(`Delivery: ${formatTokenLabel(item.linked_delivery_status)}`)
-  }
-
-  return parts.join(" · ")
-}
-
-function normalizePortalActionLink(value) {
-  const raw = String(value || "").trim()
-  if (!raw) return ""
-
-  if (/^(https?:\/\/|tel:|mailto:)/i.test(raw)) {
-    return raw
-  }
-
-  if (/^\+?[0-9][0-9\s()-]{6,}$/.test(raw)) {
-    const normalized = raw.replace(/[^\d+]/g, "")
-    return normalized ? `tel:${normalized}` : ""
-  }
-
-  if (/^www\./i.test(raw)) {
-    return `https://${raw}`
-  }
-
-  return `https://${raw}`
-}
-
-function buildTrackingFeed({ requests = [], appointments = [], deliveries = [], notifications = [] }) {
-  return [
-    ...requests.map((item) => ({
-      id: `request-${item.id}`,
-      requestId: item.id,
-      typeKey: "request",
-      type: "Prescription request",
-      title: item.drug_requested || "Prescription request",
-      status: item.status || "pending",
-      statusLabel: formatTokenLabel(item.status),
-      activityAt: item.patient_fulfillment_at || item.patient_response_at || item.updated_at || item.created_at,
-      pharmacistNotes: item.pharmacist_notes || "",
-      patientResponseAction: item.patient_response_action || "",
-      patientResponseNotes: item.patient_response_notes || "",
-      patientResponseAt: item.patient_response_at || "",
-      patientFulfillmentChoice: item.patient_fulfillment_choice || "",
-      patientFulfillmentNotes: item.patient_fulfillment_notes || "",
-      patientFulfillmentAddress: item.patient_fulfillment_address || "",
-      patientFulfillmentAt: item.patient_fulfillment_at || "",
-      linkedDeliveryId: item.linked_delivery_id || "",
-      linkedDeliveryStatus: item.linked_delivery_status || "",
-      canRespond: item.status === "alternative_offered" && !item.patient_response_action,
-      canChooseFulfillment: !item.patient_fulfillment_choice
-        && !item.linked_delivery_id
-        && (
-          item.status === "approved"
-          || item.status === "dispensed"
-          || item.patient_response_action === "accept_alternative"
-        ),
-      summary: [
-        item.condition_notes,
-        item.pharmacist_notes ? `Pharmacist update: ${item.pharmacist_notes}` : "",
-        buildPatientResponseSummary(item),
-        buildFulfillmentSummary(item),
-      ].filter(Boolean).join(" · ") || "Waiting for pharmacist review.",
-      createdAt: item.created_at,
-    })),
-    ...appointments.map((item) => ({
-      id: `appointment-${item.id}`,
-      typeKey: "appointment",
-      type: "Appointment",
-      title: formatAppointmentType(item.appointment_type),
-      status: item.status || "pending",
-      statusLabel: formatTokenLabel(item.status),
-      activityAt: item.updated_at || item.created_at,
-      pharmacistResponse: item.pharmacist_response || "",
-      videoLink: item.video_link || "",
-      actionLink: normalizePortalActionLink(item.video_link || ""),
-      summary: [
-        item.condition_summary || item.patient_notes || "",
-        item.pharmacist_response ? `Pharmacist note: ${item.pharmacist_response}` : "",
-        item.video_link ? "Join or call link ready" : "",
-      ].filter(Boolean).join(" Â· ") || formatDateTime(item.slot_datetime),
-      createdAt: item.created_at,
-    })),
-    ...deliveries.map((item) => ({
-      id: `delivery-${item.id}`,
-      typeKey: "delivery",
-      type: "Delivery",
-      title: item.patient_address || "Delivery request",
-      status: item.status || "pending",
-      statusLabel: formatTokenLabel(item.status),
-      activityAt: item.created_at,
-      deliveryAddress: item.patient_address || "",
-      deliveryItems: Array.isArray(item.items) ? item.items : [],
-      deliveryPartnerType: item.delivery_partner_type || "",
-      deliveryPartnerName: item.rider_name || "",
-      deliveryPartnerPhone: item.rider_phone || "",
-      deliveryEtaMinutes: item.estimated_delivery_minutes || "",
-      summary: [
-        Array.isArray(item.items) && item.items.length
-          ? item.items.map((row) => `${row.drug_name || "Drug"} x${row.qty || 1}`).join(", ")
-          : "Awaiting packing details.",
-        item.delivery_partner_type || item.rider_name
-          ? `Delivery partner: ${[item.delivery_partner_type, item.rider_name].filter(Boolean).join(" - ")}${item.rider_phone ? ` (${item.rider_phone})` : ""}`
-          : "",
-        item.estimated_delivery_minutes ? `ETA: ${item.estimated_delivery_minutes} min` : "",
-      ].filter(Boolean).join(" · "),
-      createdAt: item.created_at,
-    })),
-    ...notifications.map((item) => ({
-      id: `notification-${item.id}`,
-      typeKey: "notification",
-      type: "Update",
-      title: formatTokenLabel(item.type, "Notification"),
-      status: item.read ? "read" : "new",
-      statusLabel: item.read ? "Read" : "New",
-      activityAt: item.created_at,
-      summary: item.message || "Pharmacy update",
-      createdAt: item.created_at,
-    })),
-  ].sort((a, b) => new Date(b.activityAt || b.createdAt || 0) - new Date(a.activityAt || a.createdAt || 0))
-}
-
-function buildGlobalTrackingMatches(matches = []) {
-  return matches
-    .map((match) => {
-      const feed = buildTrackingFeed({
-        requests: Array.isArray(match?.requests) ? match.requests : [],
-        appointments: Array.isArray(match?.appointments) ? match.appointments : [],
-        deliveries: Array.isArray(match?.deliveries) ? match.deliveries : [],
-        notifications: Array.isArray(match?.notifications) ? match.notifications : [],
-      })
-
-      return {
-        pharmacyId: match?.pharmacy_id || "",
-        pharmacyName: match?.pharmacy_name || "Pharmacy",
-        pharmacyLocation: match?.pharmacy_location || "Location not provided",
-        lastActivityAt: match?.last_activity_at || feed[0]?.activityAt || feed[0]?.createdAt || "",
-        feed,
-      }
-    })
-    .filter((match) => match.pharmacyId && match.feed.length > 0)
-    .sort((first, second) => new Date(second.lastActivityAt || 0) - new Date(first.lastActivityAt || 0))
-}
-
-function normalizeTrackingPayload(payload) {
-  return {
-    requests: Array.isArray(payload?.requests) ? payload.requests : [],
-    appointments: Array.isArray(payload?.appointments) ? payload.appointments : [],
-    deliveries: Array.isArray(payload?.deliveries) ? payload.deliveries : [],
-    notifications: Array.isArray(payload?.notifications) ? payload.notifications : [],
-  }
-}
-
-function createEmptyMaternal() {
-  return {
-    patientName: "",
-    patientPhone: "",
-    patientEmail: "",
-    idNumber: "",
-    lmpDate: "",
-    gravida: "1",
-    parity: "0",
-    village: "",
-    ward: "",
-    notes: "",
-  }
-}
-
-function getTrackingRequestProducts(item) {
-  const fulfillmentRows = Array.isArray(item?.fulfillment_items) ? item.fulfillment_items : []
-  const fulfillmentProducts = fulfillmentRows
-    .map((row) => row?.drug_name || row?.requestedDrug || row?.requested_drug || "")
-    .filter(Boolean)
-
-  if (fulfillmentProducts.length) {
-    return [...new Set(fulfillmentProducts)]
-  }
-
-  return String(item?.drug_requested || "")
-    .split(",")
-    .map((value) => value.trim())
-    .filter(Boolean)
-}
-
-function buildHistoryEntry(id, label, body, at, tone = "info") {
-  return { id, label, body, at, tone }
-}
-
-function getMatchingNotifications(notifications = [], referenceIds = []) {
-  const validIds = new Set(referenceIds.map((value) => String(value || "").trim()).filter(Boolean))
-  if (!validIds.size) return []
-  return notifications.filter((item) => validIds.has(String(item?.reference_id || "").trim()))
-}
-
-function buildTrackingCards(payload) {
-  const { requests = [], appointments = [], deliveries = [], notifications = [] } = normalizeTrackingPayload(payload)
-  const deliveryByRequestId = new Map(
-    deliveries
-      .filter((item) => item?.prescription_request_id)
-      .map((item) => [String(item.prescription_request_id), item]),
-  )
-
-  const requestCards = requests.map((item) => {
-    const linkedDelivery = deliveryByRequestId.get(String(item.id)) || null
-    const products = getTrackingRequestProducts(item)
-    const relatedNotifications = getMatchingNotifications(notifications, [item.id, linkedDelivery?.id])
-    const history = [
-      buildHistoryEntry(`request-${item.id}-submitted`, "Request submitted", item.condition_notes || "Your prescription request reached the branch for review.", item.created_at, "warning"),
-      item.status && item.status !== "pending"
-        ? buildHistoryEntry(`request-${item.id}-status`, formatTokenLabel(item.status), item.pharmacist_notes || "The pharmacist updated this request.", item.updated_at || item.created_at, getStatusTone(item.status))
-        : null,
-      item.patient_response_action
-        ? buildHistoryEntry(`request-${item.id}-response`, formatTokenLabel(item.patient_response_action, "Patient response"), item.patient_response_notes || "You replied to the pharmacist.", item.patient_response_at || item.updated_at, "info")
-        : null,
-      item.patient_fulfillment_choice
-        ? buildHistoryEntry(`request-${item.id}-fulfillment`, formatTokenLabel(item.patient_fulfillment_choice), [item.patient_fulfillment_address ? `Address: ${item.patient_fulfillment_address}` : "", item.patient_fulfillment_notes || ""].filter(Boolean).join(" · ") || "You chose how this order should be fulfilled.", item.patient_fulfillment_at || item.updated_at, "info")
-        : null,
-      linkedDelivery
-        ? buildHistoryEntry(
-            `request-${item.id}-delivery`,
-            `Delivery ${formatTokenLabel(linkedDelivery.status)}`,
-            [
-              Array.isArray(linkedDelivery.items) && linkedDelivery.items.length ? linkedDelivery.items.map((row) => `${row.drug_name || "Drug"} x${row.qty || 1}`).join(", ") : "",
-              linkedDelivery.delivery_partner_type || linkedDelivery.rider_name ? `Partner: ${[linkedDelivery.delivery_partner_type, linkedDelivery.rider_name].filter(Boolean).join(" - ")}${linkedDelivery.rider_phone ? ` (${linkedDelivery.rider_phone})` : ""}` : "",
-              linkedDelivery.estimated_delivery_minutes ? `ETA ${linkedDelivery.estimated_delivery_minutes} min` : "",
-            ].filter(Boolean).join(" · ") || "The branch is moving this order through delivery.",
-            linkedDelivery.delivered_at || linkedDelivery.created_at,
-            getStatusTone(linkedDelivery.status),
-          )
-        : null,
-      ...relatedNotifications.map((note) => buildHistoryEntry(`request-${item.id}-note-${note.id}`, formatTokenLabel(note.type, "Update"), note.message || "Branch update", note.created_at, note.read ? "muted" : "info")),
-    ].filter(Boolean).sort((a, b) => new Date(b.at || 0) - new Date(a.at || 0))
-
-    const currentStatus = linkedDelivery?.status || item.linked_delivery_status || item.status || "pending"
-
-    return {
-      id: `request-${item.id}`,
-      requestId: item.id,
-      typeKey: "request",
-      type: "Prescription request",
-      title: products.length > 1 ? `${products[0]} +${products.length - 1} more` : (products[0] || "Prescription request"),
-      badgeCount: products.length,
-      products,
-      status: currentStatus,
-      statusLabel: formatTokenLabel(currentStatus),
-      activityAt: history[0]?.at || item.updated_at || item.created_at,
-      pharmacistNotes: item.pharmacist_notes || "",
-      patientResponseAction: item.patient_response_action || "",
-      patientResponseNotes: item.patient_response_notes || "",
-      patientResponseAt: item.patient_response_at || "",
-      patientFulfillmentChoice: item.patient_fulfillment_choice || "",
-      patientFulfillmentNotes: item.patient_fulfillment_notes || "",
-      patientFulfillmentAddress: item.patient_fulfillment_address || "",
-      patientFulfillmentAt: item.patient_fulfillment_at || "",
-      linkedDeliveryId: linkedDelivery?.id || item.linked_delivery_id || "",
-      linkedDeliveryStatus: linkedDelivery?.status || item.linked_delivery_status || "",
-      canRespond: item.status === "alternative_offered" && !item.patient_response_action,
-      canChooseFulfillment: !item.patient_fulfillment_choice && !(linkedDelivery?.id || item.linked_delivery_id) && (item.status === "approved" || item.status === "dispensed" || item.patient_response_action === "accept_alternative"),
-      deliveryAddress: linkedDelivery?.patient_address || "",
-      deliveryItems: Array.isArray(linkedDelivery?.items) ? linkedDelivery.items : [],
-      deliveryPartnerType: linkedDelivery?.delivery_partner_type || "",
-      deliveryPartnerName: linkedDelivery?.rider_name || "",
-      deliveryPartnerPhone: linkedDelivery?.rider_phone || "",
-      deliveryEtaMinutes: linkedDelivery?.estimated_delivery_minutes || "",
-      summary: history[0]?.body || item.condition_notes || "Waiting for pharmacist review.",
-      createdAt: item.created_at,
-      history,
-      notificationCount: relatedNotifications.length,
-    }
-  })
-
-  const appointmentCards = appointments.map((item) => {
-    const relatedNotifications = getMatchingNotifications(notifications, [item.id])
-    const history = [
-      buildHistoryEntry(`appointment-${item.id}-booked`, "Appointment booked", item.condition_summary || item.patient_notes || formatDateTime(item.slot_datetime), item.created_at, "warning"),
-      item.status && item.status !== "pending"
-        ? buildHistoryEntry(`appointment-${item.id}-status`, formatTokenLabel(item.status), item.pharmacist_response || "The pharmacist updated your appointment.", item.updated_at || item.created_at, getStatusTone(item.status))
-        : null,
-      ...relatedNotifications.map((note) => buildHistoryEntry(`appointment-${item.id}-note-${note.id}`, formatTokenLabel(note.type, "Update"), note.message || "Appointment update", note.created_at, note.read ? "muted" : "info")),
-    ].filter(Boolean).sort((a, b) => new Date(b.at || 0) - new Date(a.at || 0))
-
-    return {
-      id: `appointment-${item.id}`,
-      typeKey: "appointment",
-      type: "Appointment",
-      title: formatAppointmentType(item.appointment_type),
-      status: item.status || "pending",
-      statusLabel: formatTokenLabel(item.status),
-      activityAt: history[0]?.at || item.updated_at || item.created_at,
-      pharmacistResponse: item.pharmacist_response || "",
-      videoLink: item.video_link || "",
-      actionLink: normalizePortalActionLink(item.video_link || ""),
-      summary: history[0]?.body || formatDateTime(item.slot_datetime),
-      createdAt: item.created_at,
-      history,
-      notificationCount: relatedNotifications.length,
-    }
-  })
-
-  const deliveryOnlyCards = deliveries
-    .filter((item) => !item?.prescription_request_id || !requests.some((row) => String(row.id) === String(item.prescription_request_id)))
-    .map((item) => {
-      const relatedNotifications = getMatchingNotifications(notifications, [item.id])
-      const history = [
-        buildHistoryEntry(`delivery-${item.id}-created`, "Delivery created", Array.isArray(item.items) && item.items.length ? item.items.map((row) => `${row.drug_name || "Drug"} x${row.qty || 1}`).join(", ") : "Delivery request created.", item.created_at, "warning"),
-        item.status && item.status !== "pending"
-          ? buildHistoryEntry(`delivery-${item.id}-status`, formatTokenLabel(item.status), item.delivery_partner_type || item.rider_name ? `Partner: ${[item.delivery_partner_type, item.rider_name].filter(Boolean).join(" - ")}${item.rider_phone ? ` (${item.rider_phone})` : ""}` : "The branch updated delivery progress.", item.delivered_at || item.created_at, getStatusTone(item.status))
-          : null,
-        ...relatedNotifications.map((note) => buildHistoryEntry(`delivery-${item.id}-note-${note.id}`, formatTokenLabel(note.type, "Update"), note.message || "Delivery update", note.created_at, note.read ? "muted" : "info")),
-      ].filter(Boolean).sort((a, b) => new Date(b.at || 0) - new Date(a.at || 0))
-
-      return {
-        id: `delivery-${item.id}`,
-        typeKey: "delivery",
-        type: "Delivery",
-        title: item.patient_address || "Delivery request",
-        status: item.status || "pending",
-        statusLabel: formatTokenLabel(item.status),
-        activityAt: history[0]?.at || item.created_at,
-        deliveryAddress: item.patient_address || "",
-        deliveryItems: Array.isArray(item.items) ? item.items : [],
-        deliveryPartnerType: item.delivery_partner_type || "",
-        deliveryPartnerName: item.rider_name || "",
-        deliveryPartnerPhone: item.rider_phone || "",
-        deliveryEtaMinutes: item.estimated_delivery_minutes || "",
-        summary: history[0]?.body || "Delivery in progress.",
-        createdAt: item.created_at,
-        history,
-        notificationCount: relatedNotifications.length,
-      }
-    })
-
-  return [...requestCards, ...appointmentCards, ...deliveryOnlyCards]
-    .sort((a, b) => new Date(b.activityAt || b.createdAt || 0) - new Date(a.activityAt || a.createdAt || 0))
-}
-
-function buildGlobalTrackingGroups(matches = []) {
-  return matches
-    .map((match) => {
-      const cards = buildTrackingCards(match)
-      return {
-        pharmacyId: match?.pharmacy_id || "",
-        pharmacyName: match?.pharmacy_name || "Pharmacy",
-        pharmacyLocation: match?.pharmacy_location || "Location not provided",
-        lastActivityAt: match?.last_activity_at || cards[0]?.activityAt || cards[0]?.createdAt || "",
-        cards,
-        feed: [],
-      }
-    })
-    .filter((match) => match.pharmacyId && match.cards.length > 0)
-    .sort((first, second) => new Date(second.lastActivityAt || 0) - new Date(first.lastActivityAt || 0))
-}
-
-function parseLocationMeta(value) {
-  const parts = String(value || "")
-    .split(",")
-    .map((part) => part.trim())
-    .filter(Boolean)
-    .filter((part) => part.toLowerCase() !== "kenya")
-
-  return {
-    county: parts[0] || "",
-    town: parts[1] || "",
-    area: parts.slice(2).join(", "),
-  }
-}
-
-function buildPharmacyOptions(rows = []) {
-  const map = new Map(rows.map((row) => [row.id, row]))
-
-  return rows
-    .map((row) => {
-      const locationValue = row.location || row.address || ""
-      const parsedLocation = parseLocationMeta(locationValue)
-      const county = row.county || parsedLocation.county || ""
-      const subcounty = row.subcounty || ""
-      const town = row.town || parsedLocation.town || ""
-      const area = row.area || parsedLocation.area || ""
-
-      return {
-        ...row,
-        county,
-        subcounty,
-        town,
-        area,
-        isBranch: Boolean(row.parent_pharmacy_id),
-        parentName: row.parent_pharmacy_id ? map.get(row.parent_pharmacy_id)?.name || "Main pharmacy" : "",
-        locationLabel: [area, town, subcounty, county].filter(Boolean).join(", ") || locationValue || "Location not provided",
-      }
-    })
-    .sort((first, second) => {
-      if (first.isBranch !== second.isBranch) return first.isBranch ? 1 : -1
-      return `${first.parentName} ${first.name}`.localeCompare(`${second.parentName} ${second.name}`)
-    })
-}
-
-function mergePharmacyRows(...rowGroups) {
-  const merged = new Map()
-
-  rowGroups.flat().forEach((row) => {
-    if (!row?.id) return
-
-    const key = String(row.id)
-    const current = merged.get(key)
-    const nextRow = current
-      ? {
-          ...current,
-          ...row,
-          location: row.location || current.location || row.address || current.address || "",
-        }
-      : {
-          ...row,
-          location: row.location || row.address || "",
-        }
-
-    merged.set(key, nextRow)
-  })
-
-  return [...merged.values()]
-}
 
 export default function PatientPortal() {
-  const navigate = useNavigate()
-  const [searchParams, setSearchParams] = useSearchParams()
-  const pharmacyId = searchParams.get("pharmacy") || searchParams.get("branch") || ""
-  const requestedTab = String(searchParams.get("tab") || "").trim()
-  const patientLoginPath = useMemo(() => buildPatientRouteUrl("/patient/login", searchParams), [searchParams])
-  const patientRegisterPath = useMemo(() => buildPatientRouteUrl("/patient/register", searchParams), [searchParams])
-  const patientHomePath = useMemo(() => buildPatientRouteUrl("/patient", searchParams), [searchParams])
-  const {
-    loading: patientAuthLoading,
-    isAuthenticated: patientAccountAuthenticated,
-    patientPhone: patientAccountPhone,
-    fullName: patientAccountName,
-  } = usePatientPortalAuth()
-  const [activeTab, setActiveTab] = useState(() => (
-    PORTAL_TABS.some((tab) => tab.id === requestedTab) ? requestedTab : "prescription"
-  ))
-  const [pharmacy, setPharmacy] = useState(null)
-  const [pharmacyOptions, setPharmacyOptions] = useState([])
-  const [portalLoading, setPortalLoading] = useState(true)
-  const [portalError, setPortalError] = useState("")
-  const [directoryError, setDirectoryError] = useState("")
-  const [branchSearch, setBranchSearch] = useState("")
-  const [countyFilter, setCountyFilter] = useState("")
-  const [subcountyFilter, setSubcountyFilter] = useState("")
-  const [townFilter, setTownFilter] = useState("")
-  const [selectedDirectoryMainId, setSelectedDirectoryMainId] = useState("")
-  const [visibleMainCount, setVisibleMainCount] = useState(DIRECTORY_BATCH_SIZES.mains)
-  const [visibleBranchCount, setVisibleBranchCount] = useState(DIRECTORY_BATCH_SIZES.branches)
-  const [prescriptionForm, setPrescriptionForm] = useState(createEmptyPrescription)
-  const [prescriptionFile, setPrescriptionFile] = useState(null)
-  const [appointmentForm, setAppointmentForm] = useState(createEmptyAppointment)
-  const [deliveryForm, setDeliveryForm] = useState(createEmptyDelivery)
-  const [maternalForm, setMaternalForm] = useState(createEmptyMaternal)
-  const [trackerPhone, setTrackerPhone] = useState("")
-  const [trackingFeed, setTrackingFeed] = useState([])
-  const [trackingCards, setTrackingCards] = useState([])
-  const [trackingMatches, setTrackingMatches] = useState([])
-  const [trackingLoading, setTrackingLoading] = useState(false)
-  const [trackingMessage, setTrackingMessage] = useState("")
-  const [trackingActionMessage, setTrackingActionMessage] = useState("")
-  const [trackingActionError, setTrackingActionError] = useState("")
-  const [trackingResponseNotes, setTrackingResponseNotes] = useState({})
-  const [trackingFulfillmentNotes, setTrackingFulfillmentNotes] = useState({})
-  const [trackingDeliveryAddresses, setTrackingDeliveryAddresses] = useState({})
-  const [respondingActionKey, setRespondingActionKey] = useState("")
+  const [activeTab, setActiveTab] = useState("home")
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-
-  useEffect(() => {
-    if (patientAccountPhone) {
-      setTrackerPhone(patientAccountPhone)
-    }
-  }, [patientAccountPhone])
-
-  useEffect(() => {
-    if (PORTAL_TABS.some((tab) => tab.id === requestedTab)) {
-      setActiveTab(requestedTab)
-    }
-  }, [requestedTab])
+  const [searchQuery, setSearchQuery] = useState("")
+  const [searchFocused, setSearchFocused] = useState(false)
+  const [prescriptionForm, setPrescriptionForm] = useState({
+    patientName: "", patientPhone: "", patientEmail: "",
+    conditionNotes: "", requestedDrugs: [""],
+  })
+  const [appointmentForm, setAppointmentForm] = useState({
+    patientName: "", patientPhone: "", patientEmail: "",
+    appointmentType: "phone_call", slotDatetime: "",
+    conditionSummary: "", patientNotes: "",
+  })
+  const [deliveryForm, setDeliveryForm] = useState({
+    patientName: "", patientPhone: "", patientEmail: "", patientAddress: "",
+    items: [{ drug_name: "", qty: "1", price: "" }],
+  })
   const [submitting, setSubmitting] = useState("")
-  const [submitMessage, setSubmitMessage] = useState("")
-  const [submitError, setSubmitError] = useState("")
-  const [turnstileTokens, setTurnstileTokens] = useState({
-    prescription: "",
-    appointment: "",
-    maternal: "",
-    delivery: "",
-    response: "",
-  })
-  const [turnstileResetKeys, setTurnstileResetKeys] = useState({
-    prescription: 0,
-    appointment: 0,
-    maternal: 0,
-    delivery: 0,
-    response: 0,
-  })
-  const maternalLockedName = patientAccountAuthenticated && patientAccountName
-    ? patientAccountName.trim()
-    : ""
-  const maternalLockedPhone = patientAccountAuthenticated && patientAccountPhone
-    ? normalizePhone(patientAccountPhone)
-    : ""
-  const maternalResolvedName = maternalLockedName || maternalForm.patientName
-  const maternalResolvedPhone = maternalLockedPhone || normalizePhone(maternalForm.patientPhone)
+  const [user] = useState({ name: "Jane Mwangi", avatar: "JM" })
 
-  const scrollToPortalTop = useCallback(() => {
-    if (typeof window === "undefined") return
-    window.scrollTo({ top: 0, behavior: "smooth" })
-  }, [])
+  const tabs = [
+    { id: "home", label: "Home", icon: Home },
+    { id: "prescription", label: "Prescriptions", icon: Pill },
+    { id: "appointment", label: "Appointments", icon: CalendarDays },
+    { id: "maternal", label: "Maternal Care", icon: HeartPulse },
+    { id: "delivery", label: "Delivery", icon: Truck },
+    { id: "updates", label: "Updates", icon: Bell },
+  ]
 
-  useEffect(() => {
-    let cancelled = false
+  const quickActions = [
+    { id: "prescription", title: "Request Prescription", description: "Send a refill request or upload prescription", icon: Pill, bgColor: "#ecfdf5", iconColor: "#059669" },
+    { id: "appointment", title: "Book Appointment", description: "Schedule a call or video consultation", icon: CalendarDays, bgColor: "#eff6ff", iconColor: "#2563eb" },
+    { id: "maternal", title: "Maternal Care", description: "ANC registration & pregnancy follow-up", icon: HeartPulse, bgColor: "#fff1f2", iconColor: "#e11d48" },
+    { id: "delivery", title: "Request Delivery", description: "Get medicines delivered to your door", icon: Truck, bgColor: "#fffbeb", iconColor: "#d97706" },
+    { id: "updates", title: "Check Updates", description: "Track your requests & notifications", icon: Bell, bgColor: "#f5f3ff", iconColor: "#7c3aed" },
+  ]
 
-    async function loadPharmacy() {
-      setPortalLoading(true)
-      setPortalError("")
-      setDirectoryError("")
+  const features = [
+    { icon: Building2, title: "Branch Routing", description: "Choose your preferred pharmacy branch" },
+    { icon: ClipboardList, title: "Prescription Requests", description: "Send refill requests with photos" },
+    { icon: CalendarDays, title: "Appointments", description: "Book calls or video consultations" },
+    { icon: PackageSearch, title: "Live Tracking", description: "Follow your order in real-time" },
+    { icon: HeartPulse, title: "Maternal Care", description: "ANC registration & follow-up" },
+    { icon: Truck, title: "Delivery", description: "Get medicines delivered" },
+  ]
 
-      const [rpcResult, tableResult] = await Promise.all([
-        supabase.rpc("public_patient_portal_pharmacies"),
-        supabase
-          .from("pharmacies")
-          .select("id, name, location, parent_pharmacy_id, county, subcounty, town, area"),
-      ])
+  const trustBadges = [
+    { icon: ShieldCheck, label: "Secure & Private" },
+    { icon: Smartphone, label: "Mobile-Friendly" },
+    { icon: Award, label: "Branch-Linked" },
+    { icon: Zap, label: "Real-Time Updates" },
+  ]
 
-      if (cancelled) return
+  const mockActivities = [
+    { id: 1, title: "Metformin 500mg", statusLabel: "Under Review", status: "pending", time: "2 hours ago", icon: Pill, color: "#d97706", bg: "#fffbeb" },
+    { id: 2, title: "Video Consultation", statusLabel: "Confirmed", status: "confirmed", time: "Tomorrow, 10:00 AM", icon: Video, color: "#2563eb", bg: "#eff6ff" },
+    { id: 3, title: "Delivery #1234", statusLabel: "On the Way", status: "dispatched", time: "Today, 3:30 PM", icon: Truck, color: "#059669", bg: "#ecfdf5" },
+  ]
 
-      const rpcRows = Array.isArray(rpcResult.data) ? rpcResult.data : []
-      const tableRows = Array.isArray(tableResult.data) ? tableResult.data : []
-      const rows = mergePharmacyRows(rpcRows, tableRows)
-      const options = buildPharmacyOptions(rows)
-      const rpcFailed = Boolean(rpcResult.error)
-      const tableFailed = Boolean(tableResult.error)
+  const statsCards = [
+    { label: "Active Prescriptions", value: "3", icon: Pill, color: "#059669", bg: "#ecfdf5" },
+    { label: "Upcoming Appointments", value: "2", icon: CalendarDays, color: "#2563eb", bg: "#eff6ff" },
+    { label: "Pending Deliveries", value: "1", icon: Truck, color: "#d97706", bg: "#fffbeb" },
+    { label: "Notifications", value: "5", icon: Bell, color: "#7c3aed", bg: "#f5f3ff" },
+  ]
 
-      if (rpcFailed || tableFailed) {
-        console.warn("Pharmacy directory lookup warning:", rpcResult.error?.message || tableResult.error?.message || "unknown issue")
-      }
-
-      if (options.length === 0) {
-        setDirectoryError("No pharmacies are available in this project yet.")
-        setPharmacyOptions([])
-        setPharmacy(null)
-        if (pharmacyId) {
-          setPortalError("We could not verify that pharmacy right now. Please choose a branch again.")
-        }
-      } else {
-        setPharmacyOptions(options)
-        setDirectoryError("")
-
-        if (!pharmacyId) {
-          setPharmacy(null)
-        } else {
-          const matchedPharmacy = options.find((option) => String(option.id) === String(pharmacyId)) || null
-          setPharmacy(matchedPharmacy)
-          if (!matchedPharmacy) {
-            setPortalError("We could not find that pharmacy or branch. Please choose from the directory below.")
-          }
-        }
-      }
-
-      setPortalLoading(false)
-    }
-
-    loadPharmacy()
-
-    return () => {
-      cancelled = true
-    }
-  }, [pharmacyId])
-
-  const deliveryTotal = useMemo(() => (
-    deliveryForm.items.reduce((sum, item) => {
-      const qty = Number(item.qty || 0)
-      const price = Number(item.price || 0)
-      return sum + ((qty > 0 ? qty : 0) * (price > 0 ? price : 0))
-    }, 0)
-  ), [deliveryForm.items])
-
-  const visiblePharmacyOptions = useMemo(() => {
-    const query = branchSearch.trim().toLowerCase()
-    return pharmacyOptions.filter((option) => {
-      const matchesQuery = !query || (
-        `${option.name} ${option.parentName} ${option.locationLabel} ${option.county} ${option.subcounty || ""} ${option.town} ${option.area}`
-          .toLowerCase()
-          .includes(query)
-      )
-
-      const matchesCounty = !countyFilter || option.county === countyFilter
-      const matchesSubcounty = !subcountyFilter || option.subcounty === subcountyFilter
-      const matchesTown = !townFilter || option.town === townFilter || option.area === townFilter
-
-      return matchesQuery && matchesCounty && matchesSubcounty && matchesTown
-    })
-  }, [branchSearch, countyFilter, subcountyFilter, townFilter, pharmacyOptions])
-
-  const mainPharmacies = useMemo(
-    () => visiblePharmacyOptions.filter((option) => !option.isBranch),
-    [visiblePharmacyOptions]
-  )
-
-  const selectedDirectoryMain = useMemo(
-    () => mainPharmacies.find((option) => option.id === selectedDirectoryMainId) || null,
-    [mainPharmacies, selectedDirectoryMainId]
-  )
-
-  const branchCountsByParent = useMemo(() => (
-    pharmacyOptions.reduce((map, option) => {
-      if (!option.isBranch || !option.parent_pharmacy_id) return map
-      map.set(option.parent_pharmacy_id, (map.get(option.parent_pharmacy_id) || 0) + 1)
-      return map
-    }, new Map())
-  ), [pharmacyOptions])
-
-  const branchPharmacies = useMemo(() => {
-    const query = branchSearch.trim().toLowerCase()
-    const rows = pharmacyOptions.filter((option) => option.isBranch)
-    const scopedRows = selectedDirectoryMainId
-      ? rows.filter((option) => option.parent_pharmacy_id === selectedDirectoryMainId)
-      : rows
-
-    if (!query) return scopedRows
-
-    return scopedRows.filter((option) => (
-      `${option.name} ${option.parentName} ${option.locationLabel} ${option.county} ${option.subcounty || ""} ${option.town} ${option.area}`
-        .toLowerCase()
-        .includes(query)
-    ))
-  }, [branchSearch, pharmacyOptions, selectedDirectoryMainId])
-
-  const visibleMainPharmacies = useMemo(
-    () => mainPharmacies.slice(0, visibleMainCount),
-    [mainPharmacies, visibleMainCount]
-  )
-
-  const visibleBranchPharmacies = useMemo(
-    () => branchPharmacies.slice(0, visibleBranchCount),
-    [branchPharmacies, visibleBranchCount]
-  )
-
-  const groupedVisibleBranches = useMemo(() => {
-    const nearest = []
-    const sameCounty = []
-    const others = []
-
-    visibleBranchPharmacies.forEach((option) => {
-      const matchesTown = townFilter && (option.town === townFilter || option.area === townFilter)
-      const matchesSubcounty = subcountyFilter && option.subcounty === subcountyFilter
-      const matchesCounty = countyFilter && option.county === countyFilter
-      const matchesMainCounty = !countyFilter && !townFilter && selectedDirectoryMain?.county && option.county === selectedDirectoryMain.county
-
-      if (matchesTown) {
-        nearest.push(option)
-        return
-      }
-
-      if (matchesSubcounty) {
-        sameCounty.push(option)
-        return
-      }
-
-      if (matchesCounty || matchesMainCounty) {
-        sameCounty.push(option)
-        return
-      }
-
-      others.push(option)
-    })
-
-    return { nearest, sameCounty, others }
-  }, [countyFilter, selectedDirectoryMain?.county, subcountyFilter, townFilter, visibleBranchPharmacies])
-
-  const branchGroupLabels = useMemo(() => ({
-    nearest: townFilter
-      ? `Nearest branches in ${townFilter}`
-      : subcountyFilter
-        ? `Branches in ${subcountyFilter}`
-      : countyFilter
-        ? `Best matches in ${countyFilter}`
-        : selectedDirectoryMain?.county
-          ? `Branches in ${selectedDirectoryMain.county}`
-          : "Best local matches",
-    sameCounty: countyFilter
-      ? `Other branches outside ${countyFilter}`
-      : subcountyFilter
-        ? `Other branches outside ${subcountyFilter}`
-      : selectedDirectoryMain?.county
-        ? `Other branches outside ${selectedDirectoryMain.county}`
-        : "Other branches",
-    others: "Other branches in this pharmacy",
-  }), [countyFilter, selectedDirectoryMain?.county, subcountyFilter, townFilter])
-
-  const countyOptions = useMemo(() => (
-    [...new Set(
-      pharmacyOptions
-        .map((option) => option.county)
-        .filter(Boolean)
-    )].sort((first, second) => first.localeCompare(second))
-  ), [pharmacyOptions])
-
-  const subcountyOptions = useMemo(() => (
-    [...new Set(
-      pharmacyOptions
-        .filter((option) => {
-          if (!countyFilter || option.county === countyFilter) {
-            if (!selectedDirectoryMainId) return true
-            return !option.isBranch || option.parent_pharmacy_id === selectedDirectoryMainId || option.id === selectedDirectoryMainId
-          }
-          return false
-        })
-        .map((option) => option.subcounty)
-        .filter(Boolean)
-    )].sort((first, second) => first.localeCompare(second))
-  ), [countyFilter, pharmacyOptions, selectedDirectoryMainId])
-
-  const townOptions = useMemo(() => (
-    [...new Set(
-      pharmacyOptions
-        .filter((option) => {
-          if ((!countyFilter || option.county === countyFilter) && (!subcountyFilter || option.subcounty === subcountyFilter)) {
-            if (!selectedDirectoryMainId) return true
-            return !option.isBranch || option.parent_pharmacy_id === selectedDirectoryMainId || option.id === selectedDirectoryMainId
-          }
-          return false
-        })
-        .flatMap((option) => [option.town, option.area])
-        .filter(Boolean)
-    )].sort((first, second) => first.localeCompare(second))
-  ), [countyFilter, subcountyFilter, pharmacyOptions, selectedDirectoryMainId])
-
-  const hasActivePharmacy = Boolean(pharmacyId && pharmacy)
-  const activePortalTab = useMemo(
-    () => PORTAL_TABS.find((tab) => tab.id === activeTab) || PORTAL_TABS[0],
-    [activeTab],
-  )
-
-  useEffect(() => {
-    setVisibleMainCount(DIRECTORY_BATCH_SIZES.mains)
-    setVisibleBranchCount(DIRECTORY_BATCH_SIZES.branches)
-  }, [branchSearch, countyFilter, subcountyFilter, townFilter])
-
-  useEffect(() => {
-    if (selectedDirectoryMainId && !mainPharmacies.some((option) => option.id === selectedDirectoryMainId)) {
-      setSelectedDirectoryMainId(mainPharmacies[0]?.id || "")
-      return
-    }
-
-    if (!selectedDirectoryMainId && mainPharmacies.length === 1) {
-      setSelectedDirectoryMainId(mainPharmacies[0].id)
-    }
-  }, [mainPharmacies, selectedDirectoryMainId])
-
-  useEffect(() => {
-    if (!hasActivePharmacy) {
-      setIsMobileMenuOpen(false)
-    }
-  }, [hasActivePharmacy])
-
-  const selectPortalTab = useCallback((tabId) => {
-    setActiveTab(tabId)
-    setSubmitMessage("")
-    setSubmitError("")
-    setIsMobileMenuOpen(false)
-
-    if (typeof window !== "undefined" && window.innerWidth < 980) {
-      window.scrollTo({ top: 0, behavior: "smooth" })
-    }
-  }, [])
-
-  const closeMobileMenu = useCallback(() => {
-    setIsMobileMenuOpen(false)
-  }, [])
-
-  function updatePrescription(field, value) {
-    setPrescriptionForm((prev) => ({ ...prev, [field]: value }))
+  function handleQuickAction(actionId) {
+    setActiveTab(actionId)
   }
 
-  function updateAppointment(field, value) {
-    setAppointmentForm((prev) => ({ ...prev, [field]: value }))
-  }
-
-  function updateRequestedDrug(index, value) {
-    setPrescriptionForm((prev) => ({
-      ...prev,
-      requestedDrugs: prev.requestedDrugs.map((item, itemIndex) => (
-        itemIndex === index ? value : item
-      )),
-    }))
-  }
-
-  function addRequestedDrug() {
-    setPrescriptionForm((prev) => ({
-      ...prev,
-      requestedDrugs: [...prev.requestedDrugs, ""],
-    }))
-  }
-
-  function removeRequestedDrug(index) {
-    setPrescriptionForm((prev) => ({
-      ...prev,
-      requestedDrugs: prev.requestedDrugs.filter((_, itemIndex) => itemIndex !== index),
-    }))
-  }
-
-  function updateDelivery(field, value) {
-    setDeliveryForm((prev) => ({ ...prev, [field]: value }))
-  }
-
-  function updateMaternal(field, value) {
-    setMaternalForm((prev) => ({ ...prev, [field]: value }))
-  }
-
-  function updateDeliveryItem(index, field, value) {
-    setDeliveryForm((prev) => ({
-      ...prev,
-      items: prev.items.map((item, itemIndex) => (
-        itemIndex === index ? { ...item, [field]: value } : item
-      )),
-    }))
-  }
-
-  function addDeliveryItem() {
-    setDeliveryForm((prev) => ({
-      ...prev,
-      items: [...prev.items, { drug_name: "", qty: "1", price: "" }],
-    }))
-  }
-
-  function removeDeliveryItem(index) {
-    setDeliveryForm((prev) => ({
-      ...prev,
-      items: prev.items.filter((_, itemIndex) => itemIndex !== index),
-    }))
-  }
-
-  function handleSelectPharmacy(option) {
-    navigate(
-      `/patient?pharmacy=${encodeURIComponent(option.id)}&branch_name=${encodeURIComponent(option.name || "")}&branch_location=${encodeURIComponent(option.locationLabel || option.location || "")}`,
-    )
-    setPortalError("")
-    setSubmitError("")
-    setSubmitMessage("")
-    setTrackingMessage("")
-    setTrackingActionMessage("")
-    setTrackingActionError("")
-    window.scrollTo({ top: 0, behavior: "smooth" })
-  }
-
-  function clearSelectedPharmacy() {
-    setSearchParams({})
-    setPharmacy(null)
-    setPortalError("")
-    setSubmitError("")
-    setSubmitMessage("")
-    setTrackingFeed([])
-    setTrackingMessage("")
-    setTrackingActionMessage("")
-    setTrackingActionError("")
-    setBranchSearch("")
-    setCountyFilter("")
-    setSubcountyFilter("")
-    setTownFilter("")
-    setSelectedDirectoryMainId("")
-    window.scrollTo({ top: 0, behavior: "smooth" })
-  }
-
-  function clearDirectoryFilters() {
-    setBranchSearch("")
-    setCountyFilter("")
-    setSubcountyFilter("")
-    setTownFilter("")
-  }
-
-  function browseMainPharmacy(option) {
-    setSelectedDirectoryMainId(option.id)
-    window.scrollTo({ top: 260, behavior: "smooth" })
-  }
-
-  async function uploadPrescriptionImage() {
-    if (!prescriptionFile) return ""
-
-    const extension = prescriptionFile.name.includes(".")
-      ? prescriptionFile.name.split(".").pop()
-      : "jpg"
-    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${extension}`
-    const filePath = `${pharmacyId}/${fileName}`
-
-    const { error } = await supabase.storage
-      .from("prescription-photos")
-      .upload(filePath, prescriptionFile, { upsert: false })
-
-    if (error) throw error
-
-    const { data } = supabase.storage
-      .from("prescription-photos")
-      .getPublicUrl(filePath)
-
-    return data?.publicUrl || ""
-  }
-
-  function setTurnstileToken(formId, token) {
-    setTurnstileTokens((prev) => ({ ...prev, [formId]: token || "" }))
-  }
-
-  function resetTurnstile(formId) {
-    setTurnstileTokens((prev) => ({ ...prev, [formId]: "" }))
-    setTurnstileResetKeys((prev) => ({ ...prev, [formId]: prev[formId] + 1 }))
-  }
-
-  async function submitPortalRequest(submissionType, payload, formId) {
-    const turnstileToken = turnstileTokens[formId]
-
-    if (!TURNSTILE_SITE_KEY) {
-      throw new Error("Security check is not configured right now. Please try again later.")
-    }
-
-    if (!turnstileToken) {
-      throw new Error("Complete the security check before submitting.")
-    }
-
-    const { data, error } = await supabase.functions.invoke("patient-portal-submit", {
-      body: {
-        submissionType,
-        turnstileToken,
-        payload,
-      },
-    })
-
-    if (error) {
-      const responseStatus = error?.context?.status || 0
-      if (error?.context && typeof error.context.json === "function") {
-        const errorBody = await error.context.json().catch(() => null)
-        const backendMessage = errorBody?.error || error.message || "Unable to send your request right now."
-
-        if (responseStatus === 403 || /security check failed/i.test(backendMessage)) {
-          resetTurnstile(formId)
-          throw new Error("Security check expired or failed. Please complete it again, then submit immediately.")
-        }
-
-        throw new Error(backendMessage)
-      }
-
-      if (responseStatus === 403) {
-        resetTurnstile(formId)
-        throw new Error("Security check expired or failed. Please complete it again, then submit immediately.")
-      }
-
-      throw error
-    }
-    if (data?.error) throw new Error(data.error)
-
-    resetTurnstile(formId)
-    return data
-  }
-
-  async function submitPortalResponse(requestId, responseAction) {
-    const turnstileToken = turnstileTokens.response
-    const responseMeta = getPatientResponseMeta(responseAction)
-    const responseNotes = String(trackingResponseNotes[requestId] || "").trim()
-
-    if (!TURNSTILE_SITE_KEY) {
-      throw new Error("Security check is not configured right now. Please try again later.")
-    }
-
-    if (!turnstileToken) {
-      throw new Error("Complete the security check before replying to the pharmacist.")
-    }
-
-    if (responseMeta?.requiresNotes && !responseNotes) {
-      throw new Error("Add a short note so the pharmacist understands what you need.")
-    }
-
-    const { data, error } = await supabase.functions.invoke("patient-portal-respond", {
-      body: {
-        requestId,
-        patientPhone: normalizePhone(trackerPhone),
-        responseAction,
-        responseNotes: responseNotes || null,
-        turnstileToken,
-      },
-    })
-
-    if (error) throw error
-    if (data?.error) throw new Error(data.error)
-
-    resetTurnstile("response")
-    setTrackingResponseNotes((prev) => ({ ...prev, [requestId]: "" }))
-    return data
-  }
-
-  async function submitPortalFulfillment(requestId, fulfillmentChoice) {
-    const turnstileToken = turnstileTokens.response
-    const fulfillmentMeta = getFulfillmentMeta(fulfillmentChoice)
-    const fulfillmentNotes = String(trackingFulfillmentNotes[requestId] || "").trim()
-    const fulfillmentAddress = String(trackingDeliveryAddresses[requestId] || "").trim()
-
-    if (!TURNSTILE_SITE_KEY) {
-      throw new Error("Security check is not configured right now. Please try again later.")
-    }
-
-    if (!turnstileToken) {
-      throw new Error("Complete the security check before replying to the pharmacist.")
-    }
-
-    if (fulfillmentMeta?.requiresAddress && !fulfillmentAddress) {
-      throw new Error("Add your delivery address before requesting delivery.")
-    }
-
-    const { data, error } = await supabase.functions.invoke("patient-portal-fulfillment", {
-      body: {
-        requestId,
-        patientPhone: normalizePhone(trackerPhone),
-        fulfillmentChoice,
-        fulfillmentNotes: fulfillmentNotes || null,
-        fulfillmentAddress: fulfillmentChoice === "delivery_requested" ? fulfillmentAddress : null,
-        turnstileToken,
-      },
-    })
-
-    if (error) throw error
-    if (data?.error) throw new Error(data.error)
-
-    resetTurnstile("response")
-    setTrackingFulfillmentNotes((prev) => ({ ...prev, [requestId]: "" }))
-    setTrackingDeliveryAddresses((prev) => ({ ...prev, [requestId]: "" }))
-    return data
-  }
-
-  const handlePrescriptionVerify = useCallback((token) => setTurnstileToken("prescription", token), [])
-  const handlePrescriptionExpire = useCallback(() => setTurnstileToken("prescription", ""), [])
-  const handleAppointmentVerify = useCallback((token) => setTurnstileToken("appointment", token), [])
-  const handleAppointmentExpire = useCallback(() => setTurnstileToken("appointment", ""), [])
-  const handleMaternalVerify = useCallback((token) => setTurnstileToken("maternal", token), [])
-  const handleMaternalExpire = useCallback(() => setTurnstileToken("maternal", ""), [])
-  const handleDeliveryVerify = useCallback((token) => setTurnstileToken("delivery", token), [])
-  const handleDeliveryExpire = useCallback(() => setTurnstileToken("delivery", ""), [])
-  const handleResponseVerify = useCallback((token) => setTurnstileToken("response", token), [])
-  const handleResponseExpire = useCallback(() => setTurnstileToken("response", ""), [])
-
-  async function handlePrescriptionSubmit(event) {
-    event.preventDefault()
-    setSubmitting("prescription")
-    setSubmitMessage("")
-    setSubmitError("")
-
-    try {
-      const patientName = prescriptionForm.patientName.trim()
-      const patientPhone = normalizePhone(prescriptionForm.patientPhone)
-      const patientEmail = prescriptionForm.patientEmail.trim().toLowerCase()
-      const conditionNotes = prescriptionForm.conditionNotes.trim()
-      const requestedDrugs = prescriptionForm.requestedDrugs
-        .map((item) => String(item || "").trim())
-        .filter(Boolean)
-      const drugRequested = requestedDrugs.join(", ")
-
-      if (!patientName || !patientPhone || !conditionNotes) {
-        throw new Error("Name, phone number, and condition details are required.")
-      }
-
-      const prescriptionImageUrl = await uploadPrescriptionImage()
-
-      await submitPortalRequest("prescription", {
-        pharmacy_id: pharmacyId,
-        branch_id: pharmacyId,
-        patient_name: patientName,
-        patient_phone: patientPhone,
-        patient_email: patientEmail || null,
-        condition_notes: conditionNotes,
-        drug_requested: drugRequested || null,
-        prescription_image_url: prescriptionImageUrl || null,
-      }, "prescription")
-
-      setPrescriptionForm(createEmptyPrescription())
-      setPrescriptionFile(null)
-      setTrackerPhone(patientPhone)
-      setSubmitMessage("Your prescription request has been sent to the pharmacy. They will review it shortly.")
-      setActiveTab("updates")
-      await fetchTrackingFeed(patientPhone, { showEmptySuccess: true })
-    } catch (error) {
-      setSubmitError(error?.message || "Unable to send your prescription request right now.")
-    } finally {
-      setSubmitting("")
-    }
-  }
-
-  async function handleAppointmentSubmit(event) {
-    event.preventDefault()
-    setSubmitting("appointment")
-    setSubmitMessage("")
-    setSubmitError("")
-
-    try {
-      const patientName = appointmentForm.patientName.trim()
-      const patientPhone = normalizePhone(appointmentForm.patientPhone)
-      const patientEmail = appointmentForm.patientEmail.trim().toLowerCase()
-      const conditionSummary = appointmentForm.conditionSummary.trim()
-
-      if (!patientName || !patientPhone || !conditionSummary || !appointmentForm.slotDatetime) {
-        throw new Error("Name, phone number, appointment time, and condition summary are required.")
-      }
-
-      await submitPortalRequest("appointment", {
-        pharmacy_id: pharmacyId,
-        patient_name: patientName,
-        patient_phone: patientPhone,
-        patient_email: patientEmail || null,
-        appointment_type: appointmentForm.appointmentType,
-        slot_datetime: new Date(appointmentForm.slotDatetime).toISOString(),
-        status: "pending",
-        patient_notes: appointmentForm.patientNotes.trim() || null,
-        condition_summary: conditionSummary,
-      }, "appointment")
-
-      setAppointmentForm(createEmptyAppointment())
-      setTrackerPhone(patientPhone)
-      setSubmitMessage("Your appointment request has been sent. The pharmacy will confirm the slot soon.")
-      setActiveTab("updates")
-      await fetchTrackingFeed(patientPhone, { showEmptySuccess: true })
-    } catch (error) {
-      setSubmitError(error?.message || "Unable to book that appointment right now.")
-    } finally {
-      setSubmitting("")
-    }
-  }
-
-  async function handleMaternalSubmit(event) {
-    event.preventDefault()
-    setSubmitting("maternal")
-    setSubmitMessage("")
-    setSubmitError("")
-
-    try {
-      const patientName = maternalResolvedName.trim()
-      const patientPhone = maternalResolvedPhone.trim()
-      const patientEmail = maternalForm.patientEmail.trim().toLowerCase()
-      const lmpDate = String(maternalForm.lmpDate || "").trim()
-      const todayValue = todayDateValue()
-
-      if (!patientName || !patientPhone || !lmpDate) {
-        throw new Error("Full name, phone number, and last menstrual period date are required.")
-      }
-
-      if (lmpDate > todayValue) {
-        throw new Error(`Last menstrual period date cannot be after ${todayValue}.`)
-      }
-
-      const result = await submitPortalRequest("maternal", {
-        pharmacy_id: pharmacyId,
-        full_name: patientName,
-        patient_phone: patientPhone,
-        patient_email: patientEmail || null,
-        id_number: maternalForm.idNumber.trim() || null,
-        lmp_date: lmpDate,
-        gravida: Number(maternalForm.gravida || 1),
-        parity: Number(maternalForm.parity || 0),
-        village: maternalForm.village.trim() || null,
-        ward: maternalForm.ward.trim() || null,
-        notes: maternalForm.notes.trim() || null,
-      }, "maternal")
-
-      setMaternalForm(createEmptyMaternal())
-      setTrackerPhone(patientPhone)
-      setSubmitMessage(
-        result?.alreadyRegistered
-          ? "This branch already has an active maternal care record for this phone number. The maternal team will continue follow-up from the POS maternal screen."
-          : "Your maternal care request has been sent to the branch. The maternal team will follow up for ANC planning, review, and next steps."
-      )
-
-      if (patientAccountAuthenticated) {
-        setActiveTab("updates")
-        await fetchTrackingFeed(patientPhone, { showEmptySuccess: true })
-      }
-    } catch (error) {
-      setSubmitError(error?.message || "Unable to send your maternal care request right now.")
-    } finally {
-      setSubmitting("")
-    }
-  }
-
-  async function handleDeliverySubmit(event) {
-    event.preventDefault()
-    setSubmitting("delivery")
-    setSubmitMessage("")
-    setSubmitError("")
-
-    try {
-      const patientName = deliveryForm.patientName.trim()
-      const patientPhone = normalizePhone(deliveryForm.patientPhone)
-      const patientEmail = deliveryForm.patientEmail.trim().toLowerCase()
-      const patientAddress = deliveryForm.patientAddress.trim()
-      const items = deliveryForm.items
-        .map((item) => ({
-          drug_name: item.drug_name.trim(),
-          qty: Math.max(1, Number(item.qty || 1)),
-          price: Number(item.price || 0),
-        }))
-        .filter((item) => item.drug_name)
-
-      if (!patientName || !patientPhone || !patientAddress || items.length === 0) {
-        throw new Error("Name, phone number, delivery address, and at least one item are required.")
-      }
-
-      await submitPortalRequest("delivery", {
-        pharmacy_id: pharmacyId,
-        patient_name: patientName,
-        patient_phone: patientPhone,
-        patient_email: patientEmail || null,
-        patient_address: patientAddress,
-        patient_location_lat: deliveryForm.patientLocationLat ? Number(deliveryForm.patientLocationLat) : null,
-        patient_location_lng: deliveryForm.patientLocationLng ? Number(deliveryForm.patientLocationLng) : null,
-        items,
-        total_kes: items.reduce((sum, item) => sum + (item.qty * item.price), 0),
-        rider_name: deliveryForm.riderName.trim() || null,
-        rider_phone: normalizePhone(deliveryForm.riderPhone) || null,
-      }, "delivery")
-
-      setDeliveryForm(createEmptyDelivery())
-      setTrackerPhone(patientPhone)
-      setSubmitMessage("Your delivery request has been received. The pharmacy will update you when it is packed.")
-      setActiveTab("updates")
-      await fetchTrackingFeed(patientPhone, { showEmptySuccess: true })
-    } catch (error) {
-      setSubmitError(error?.message || "Unable to create the delivery request right now.")
-    } finally {
-      setSubmitting("")
-    }
-  }
-
-  async function handleAlternativeResponse(item, responseAction) {
-    const responseMeta = getPatientResponseMeta(responseAction)
-    if (!item?.requestId || !responseMeta) return
-
-    setRespondingActionKey(`${item.requestId}-${responseAction}`)
-    setTrackingActionMessage("")
-    setTrackingActionError("")
-
-    try {
-      const data = await submitPortalResponse(item.requestId, responseAction)
-      await fetchTrackingFeed(trackerPhone)
-      setTrackingActionMessage(data?.message || responseMeta.successMessage || "Your response has been sent to the pharmacy.")
-    } catch (error) {
-      setTrackingActionError(error?.message || "Unable to send your response right now.")
-    } finally {
-      setRespondingActionKey("")
-    }
-  }
-
-  async function handleFulfillmentChoice(item, fulfillmentChoice) {
-    const fulfillmentMeta = getFulfillmentMeta(fulfillmentChoice)
-    if (!item?.requestId || !fulfillmentMeta) return
-
-    setRespondingActionKey(`${item.requestId}-${fulfillmentChoice}`)
-    setTrackingActionMessage("")
-    setTrackingActionError("")
-
-    try {
-      const data = await submitPortalFulfillment(item.requestId, fulfillmentChoice)
-      await fetchTrackingFeed(trackerPhone)
-      setTrackingActionMessage(data?.message || fulfillmentMeta.successMessage || "Your preference has been sent to the pharmacy.")
-    } catch (error) {
-      setTrackingActionError(error?.message || "Unable to send your pickup or delivery choice right now.")
-    } finally {
-      setRespondingActionKey("")
-    }
-  }
-
-  async function fetchTrackingFeed(phoneOverride, options = {}) {
-    const phone = normalizePhone((patientAccountPhone || phoneOverride) ?? trackerPhone)
-
-    if (!patientAccountAuthenticated) {
-      setTrackingMessage("Sign in to your patient account to view private updates and notifications.")
-      setTrackingFeed([])
-      setTrackingCards([])
-      setTrackingMatches([])
-      return
-    }
-
-    if (!phone) {
-      setTrackingMessage("Your patient account does not have a linked phone number yet.")
-      setTrackingFeed([])
-      setTrackingCards([])
-      setTrackingMatches([])
-      return
-    }
-
-    setTrackingLoading(true)
-    setTrackingMessage("")
-    setTrackingActionMessage("")
-    setTrackingActionError("")
-    setTrackingFeed([])
-    setTrackingCards([])
-    setTrackingMatches([])
-
-    try {
-      if (pharmacyId) {
-        const { data, error } = await supabase.rpc("public_patient_portal_updates", {
-          target_pharmacy_id: pharmacyId,
-          target_phone: phone,
-        })
-
-        if (error) throw error
-
-        const normalized = normalizeTrackingPayload(data)
-        const cards = buildTrackingCards(normalized)
-
-          setTrackingFeed([])
-          setTrackingCards(cards)
-          if (!cards.length) {
-            setTrackingMessage(options.showEmptySuccess
-              ? "Your request was submitted. Updates will appear here once the pharmacy reviews it."
-              : "No records were found for your signed-in patient account at this pharmacy yet.")
-          }
-      } else {
-        const { data, error } = await fetchCurrentPatientPortalMatches({ phone })
-        if (error) throw error
-        const matches = buildGlobalTrackingGroups(Array.isArray(data?.matches) ? data.matches : [])
-        setTrackingMatches(matches)
-
-        if (!matches.length) {
-          setTrackingMessage("No records were found for your signed-in patient account yet.")
-        } else if (matches.length === 1) {
-          setTrackingMessage("We found your latest update. Open the pharmacy below if you want to continue there.")
-        } else {
-          setTrackingMessage(`We found updates in ${matches.length} pharmacy locations. Choose the right one below.`)
-        }
-      }
-    } catch (error) {
-      setTrackingFeed([])
-      setTrackingCards([])
-      setTrackingMatches([])
-      setTrackingMessage(error?.message || "Unable to load updates right now.")
-    } finally {
-      setTrackingLoading(false)
-    }
-  }
-
-  function openTrackedPharmacy(match) {
-    if (!match?.pharmacyId) return
-    navigate(
-      `/patient/track?pharmacy=${encodeURIComponent(match.pharmacyId)}&branch_name=${encodeURIComponent(match.pharmacyName || "")}&branch_location=${encodeURIComponent(match.pharmacyLocation || "")}`,
-    )
-    setTrackingMessage("")
-    window.scrollTo({ top: 0, behavior: "smooth" })
-  }
-
-  function renderFeedback() {
-    if (!submitMessage && !submitError) return null
-
+  function renderHomeScreen() {
     return (
-      <div className={`patient-portal-feedback ${submitError ? "error" : "success"}`}>
-        {submitError || submitMessage}
-      </div>
-    )
-  }
-
-  function renderDeliveryDetailsBox(item) {
-    if (item.typeKey !== "delivery") return null
-
-    const detailLines = []
-    if (item.deliveryAddress) detailLines.push(`Address: ${item.deliveryAddress}`)
-    if (item.deliveryItems?.length) {
-      detailLines.push(`Items: ${item.deliveryItems.map((row) => `${row.drug_name || "Drug"} x${row.qty || 1}`).join(", ")}`)
-    }
-
-    const partnerLabel = [item.deliveryPartnerType, item.deliveryPartnerName].filter(Boolean).join(" - ")
-    if (partnerLabel) {
-      detailLines.push(`Delivery partner: ${partnerLabel}${item.deliveryPartnerPhone ? ` (${item.deliveryPartnerPhone})` : ""}`)
-    }
-
-    if (item.deliveryEtaMinutes) {
-      detailLines.push(`Estimated arrival: about ${item.deliveryEtaMinutes} minutes`)
-    }
-
-    if (!detailLines.length) return null
-
-    return (
-      <div className="patient-portal-response-box info">
-        <strong>Delivery details</strong>
-        {detailLines.map((line) => (
-          <span key={line}>{line}</span>
-        ))}
-      </div>
-    )
-  }
-
-  function renderPatientResponseBox(item) {
-    const responseMeta = getPatientResponseMeta(item.patientResponseAction)
-    if (!responseMeta) return null
-
-    return (
-      <div className={`patient-portal-response-box ${responseMeta.tone || "info"}`}>
-        <strong>{responseMeta.shortLabel || responseMeta.label}</strong>
-        <span>{responseMeta.helper}</span>
-        {item.patientResponseNotes && (
-          <div className="patient-portal-response-note">Your note: {item.patientResponseNotes}</div>
-        )}
-        {item.patientResponseAt && (
-          <div className="patient-portal-response-time">
-            Sent {formatDateTime(item.patientResponseAt)} · {timeAgo(item.patientResponseAt)}
-          </div>
-        )}
-      </div>
-    )
-  }
-
-  function renderFulfillmentChoiceBox(item) {
-    const fulfillmentMeta = getFulfillmentMeta(item.patientFulfillmentChoice)
-    if (!fulfillmentMeta) return null
-
-    return (
-      <div className={`patient-portal-response-box ${fulfillmentMeta.tone || "info"}`}>
-        <strong>{fulfillmentMeta.shortLabel || fulfillmentMeta.label}</strong>
-        <span>{fulfillmentMeta.helper}</span>
-        {item.patientFulfillmentAddress && (
-          <div className="patient-portal-response-note">Address: {item.patientFulfillmentAddress}</div>
-        )}
-        {item.patientFulfillmentNotes && (
-          <div className="patient-portal-response-note">Your note: {item.patientFulfillmentNotes}</div>
-        )}
-        {item.linkedDeliveryStatus && (
-          <div className="patient-portal-response-note">Delivery status: {formatTokenLabel(item.linkedDeliveryStatus)}</div>
-        )}
-        {item.patientFulfillmentAt && (
-          <div className="patient-portal-response-time">
-            Sent {formatDateTime(item.patientFulfillmentAt)} · {timeAgo(item.patientFulfillmentAt)}
-          </div>
-        )}
-      </div>
-    )
-  }
-
-  function renderAppointmentActionBox(item) {
-    if (item.typeKey !== "appointment") return null
-    if (!item.pharmacistResponse && !item.actionLink) return null
-
-    return (
-      <div className="patient-portal-response-box info">
-        <strong>Appointment details</strong>
-        <span>
-          {item.pharmacistResponse || "The pharmacist has shared the next step for your appointment."}
-        </span>
-        {item.actionLink && (
-          <a
-            className="btn btn-outline patient-portal-inline-action"
-            href={item.actionLink}
-            target="_blank"
-            rel="noreferrer"
-          >
-            {item.status === "confirmed" ? "Open appointment link" : "Open call details"}
-          </a>
-        )}
-      </div>
-    )
-  }
-
-  function renderTrackingHistory(item) {
-    if (!Array.isArray(item.history) || !item.history.length) return null
-
-    return (
-      <div className="patient-portal-card-history">
-        {item.history.map((entry) => (
-          <div key={entry.id} className={`patient-portal-card-history-row ${entry.tone || "info"}`}>
-            <div className="patient-portal-card-history-top">
-              <strong>{entry.label}</strong>
-              <span>{formatDateTime(entry.at)} · {timeAgo(entry.at)}</span>
-            </div>
-            <div className="patient-portal-card-history-text">{entry.body}</div>
-          </div>
-        ))}
-      </div>
-    )
-  }
-
-  function renderTrackingCard(item, { allowActions = true } = {}) {
-    return (
-      <details key={item.id} className="patient-portal-track-card" open={Boolean(allowActions && (item.canRespond || item.canChooseFulfillment))}>
-        <summary className="patient-portal-track-card-summary">
-          <div className="patient-portal-update-top">
-            <span className="patient-portal-update-type">{item.type}</span>
-            <span className={`patient-portal-status ${getStatusTone(item.status)}`}>{item.statusLabel || formatTokenLabel(item.status)}</span>
-          </div>
-          <div className="patient-portal-track-card-main">
+      <div className="portal-home">
+        <div className="portal-welcome">
+          <div className="portal-welcome-content">
             <div>
-              <div className="patient-portal-update-title">{item.title}</div>
-              <div className="patient-portal-update-text">{item.summary}</div>
+              <span className="portal-greeting">Good morning 👋</span>
+              <h1 className="portal-welcome-title">{user.name}</h1>
+              <p className="portal-welcome-sub">Your health journey starts here</p>
             </div>
-            <div className="patient-portal-track-card-meta">
-              {item.badgeCount ? <span>{item.badgeCount} {item.badgeCount === 1 ? "product" : "products"}</span> : null}
-              {item.notificationCount ? <span>{item.notificationCount} updates</span> : null}
-              <span>{timeAgo(item.activityAt || item.createdAt)}</span>
-            </div>
+            <span className="portal-avatar">{user.avatar}</span>
           </div>
-        </summary>
+          <div className="portal-stats-grid">
+            {statsCards.map((stat) => (
+              <div key={stat.label} className="portal-stat-card">
+                <div className="portal-stat-icon">
+                  <stat.icon size={18} />
+                </div>
+                <div className="portal-stat-info">
+                  <span className="portal-stat-value">{stat.value}</span>
+                  <span className="portal-stat-label">{stat.label}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
 
-        <div className="patient-portal-track-card-body">
-          {item.products?.length ? (
-            <div className="patient-portal-choice-location-row" style={{ marginBottom: "0.85rem" }}>
-              {item.products.map((product) => (
-                <span key={`${item.id}-${product}`} className="patient-portal-choice-chip">{product}</span>
-              ))}
+        <div className="portal-section">
+          <div className="portal-section-header">
+            <h2 className="portal-section-title">Quick Actions</h2>
+            <span className="portal-section-badge">6 services</span>
+          </div>
+          <div className="portal-quick-grid">
+            {quickActions.map((action) => (
+              <button key={action.id} className="portal-quick-card" onClick={() => handleQuickAction(action.id)}>
+                <div className="portal-quick-icon" style={{ background: action.bgColor, color: action.iconColor }}>
+                  <action.icon size={22} />
+                </div>
+                <div className="portal-quick-content">
+                  <h3 className="portal-quick-title">{action.title}</h3>
+                  <p className="portal-quick-desc">{action.description}</p>
+                </div>
+                <ChevronRight size={16} className="portal-quick-arrow" />
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="portal-section">
+          <div className="portal-section-header">
+            <h2 className="portal-section-title">Recent Activity</h2>
+            <button className="portal-link-btn">View All</button>
+          </div>
+          <div className="portal-activity-list">
+            {mockActivities.map((activity) => (
+              <div key={activity.id} className="portal-activity-item">
+                <div className="portal-activity-icon" style={{ background: activity.bg, color: activity.color }}>
+                  <activity.icon size={16} />
+                </div>
+                <div className="portal-activity-content">
+                  <div className="portal-activity-top">
+                    <span className="portal-activity-title">{activity.title}</span>
+                    <span className={`portal-activity-status portal-status-${activity.status}`}>{activity.statusLabel}</span>
+                  </div>
+                  <span className="portal-activity-time">{activity.time}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="portal-section">
+          <div className="portal-section-header">
+            <h2 className="portal-section-title">Everything You Need</h2>
+            <span className="portal-section-badge">All in one place</span>
+          </div>
+          <div className="portal-features-grid">
+            {features.map((feature) => (
+              <div key={feature.title} className="portal-feature-card">
+                <div className="portal-feature-icon"><feature.icon size={20} /></div>
+                <h4 className="portal-feature-title">{feature.title}</h4>
+                <p className="portal-feature-desc">{feature.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="portal-trust-section">
+          {trustBadges.map((badge) => (
+            <div key={badge.label} className="portal-trust-badge">
+              <badge.icon size={16} className="portal-trust-icon" />
+              <span>{badge.label}</span>
             </div>
-          ) : null}
-          {renderAppointmentActionBox(item)}
-          {renderDeliveryDetailsBox(item)}
-          {renderPatientResponseBox(item)}
-          {renderFulfillmentChoiceBox(item)}
-          {allowActions ? renderRequestResponseActions(item) : null}
-          {allowActions ? renderFulfillmentActions(item) : null}
-          {renderTrackingHistory(item)}
-        </div>
-      </details>
-    )
-  }
-
-  function renderRequestResponseActions(item) {
-    if (!item?.canRespond) return null
-
-    return (
-      <div className="patient-portal-response-actions">
-        <div className="patient-portal-response-head">
-          <strong>Choose your next step</strong>
-          <span>The pharmacist has offered a substitute. Reply here so they know how to continue.</span>
-        </div>
-
-        <textarea
-          rows="3"
-          value={trackingResponseNotes[item.requestId] || ""}
-          onChange={(event) => setTrackingResponseNotes((prev) => ({ ...prev, [item.requestId]: event.target.value }))}
-          placeholder="Add any extra note for the pharmacist (optional unless you need another option or want to cancel)."
-        />
-
-        <div className="patient-portal-response-button-row">
-          {Object.entries(PATIENT_RESPONSE_ACTIONS).map(([action, config]) => {
-            const actionKey = `${item.requestId}-${action}`
-            return (
-              <button
-                key={action}
-                type="button"
-                className={`btn ${action === "cancel_request" ? "btn-outline" : "btn-primary"} patient-response-btn ${config.tone || "info"}`}
-                onClick={() => handleAlternativeResponse(item, action)}
-                disabled={respondingActionKey === actionKey}
-              >
-                {respondingActionKey === actionKey ? "Sending..." : config.label}
-              </button>
-            )
-          })}
-        </div>
-      </div>
-    )
-  }
-
-  function renderFulfillmentActions(item) {
-    if (!item?.canChooseFulfillment) return null
-
-    return (
-      <div className="patient-portal-response-actions">
-        <div className="patient-portal-response-head">
-          <strong>How would you like to receive this order?</strong>
-          <span>Choose pickup if you will collect the medicine yourself, or request delivery so the pharmacy can arrange dispatch.</span>
-        </div>
-
-        <input
-          className="form-input"
-          value={trackingDeliveryAddresses[item.requestId] || ""}
-          onChange={(event) => setTrackingDeliveryAddresses((prev) => ({ ...prev, [item.requestId]: event.target.value }))}
-          placeholder="Delivery address for this order (required only for delivery)"
-        />
-
-        <textarea
-          rows="3"
-          value={trackingFulfillmentNotes[item.requestId] || ""}
-          onChange={(event) => setTrackingFulfillmentNotes((prev) => ({ ...prev, [item.requestId]: event.target.value }))}
-          placeholder="Add any note for pickup or delivery (optional)."
-        />
-
-        <div className="patient-portal-response-button-row">
-          {Object.entries(FULFILLMENT_ACTIONS).map(([choice, config]) => {
-            const actionKey = `${item.requestId}-${choice}`
-            return (
-              <button
-                key={choice}
-                type="button"
-                className={`btn ${choice === "pickup" ? "btn-outline" : "btn-primary"} patient-response-btn ${config.tone || "info"}`}
-                onClick={() => handleFulfillmentChoice(item, choice)}
-                disabled={respondingActionKey === actionKey}
-              >
-                {respondingActionKey === actionKey ? "Sending..." : config.label}
-              </button>
-            )
-          })}
+          ))}
         </div>
       </div>
     )
@@ -2043,1065 +178,468 @@ export default function PatientPortal() {
 
   function renderPrescriptionForm() {
     return (
-      <form className="patient-portal-form" onSubmit={handlePrescriptionSubmit}>
-        <div className="patient-portal-grid">
-          <div className="form-group">
-            <label className="form-label">Full Name</label>
-            <input className="form-input" value={prescriptionForm.patientName} onChange={(event) => updatePrescription("patientName", event.target.value)} placeholder="Your full name" />
+      <div className="portal-form-page">
+        <div className="portal-form-header">
+          <h2 className="portal-form-title">Request a Prescription</h2>
+          <p className="portal-form-sub">Tell us what you need and we'll prepare it for you</p>
+        </div>
+        <form className="portal-form" onSubmit={(e) => e.preventDefault()}>
+          <div className="portal-form-group">
+            <label className="portal-label">Full Name</label>
+            <input className="portal-input" value={prescriptionForm.patientName}
+              onChange={(e) => setPrescriptionForm({ ...prescriptionForm, patientName: e.target.value })}
+              placeholder="Enter your full name" />
           </div>
-          <div className="form-group">
-            <label className="form-label">Phone Number</label>
-            <input className="form-input" value={prescriptionForm.patientPhone} onChange={(event) => updatePrescription("patientPhone", event.target.value)} placeholder="e.g. 07..." />
-          </div>
-          <div className="form-group patient-portal-span-full">
-            <label className="form-label">Email Address (optional)</label>
-            <input className="form-input" type="email" value={prescriptionForm.patientEmail} onChange={(event) => updatePrescription("patientEmail", event.target.value)} placeholder="For email updates" />
-          </div>
-          <div className="form-group patient-portal-span-full">
-            <label className="form-label">What are you suffering from?</label>
-            <textarea rows="5" value={prescriptionForm.conditionNotes} onChange={(event) => updatePrescription("conditionNotes", event.target.value)} placeholder="Describe your symptoms or condition briefly." />
-          </div>
-          <div className="form-group patient-portal-span-full">
-            <div className="patient-portal-section-head compact">
-              <div>
-                <label className="form-label">Drugs Needed</label>
-                <p>Add one or more medicines if you know their names.</p>
-              </div>
-              <button type="button" className="btn btn-outline" onClick={addRequestedDrug}>Add Drug</button>
+          <div className="portal-form-row">
+            <div className="portal-form-group">
+              <label className="portal-label">Phone Number</label>
+              <input className="portal-input" value={prescriptionForm.patientPhone}
+                onChange={(e) => setPrescriptionForm({ ...prescriptionForm, patientPhone: e.target.value })}
+                placeholder="07XXXXXXXX" />
             </div>
-            <div className="patient-portal-items-list compact">
+            <div className="portal-form-group">
+              <label className="portal-label">Email (optional)</label>
+              <input className="portal-input" type="email" value={prescriptionForm.patientEmail}
+                onChange={(e) => setPrescriptionForm({ ...prescriptionForm, patientEmail: e.target.value })}
+                placeholder="you@example.com" />
+            </div>
+          </div>
+          <div className="portal-form-group">
+            <label className="portal-label">What are you suffering from?</label>
+            <textarea className="portal-textarea" rows={4} value={prescriptionForm.conditionNotes}
+              onChange={(e) => setPrescriptionForm({ ...prescriptionForm, conditionNotes: e.target.value })}
+              placeholder="Describe your symptoms or condition briefly..." />
+          </div>
+          <div className="portal-form-group">
+            <div className="portal-form-label-row">
+              <label className="portal-label">Medicines Needed</label>
+              <button type="button" className="portal-add-btn"
+                onClick={() => setPrescriptionForm({ ...prescriptionForm, requestedDrugs: [...prescriptionForm.requestedDrugs, ""] })}>
+                <Plus size={14} /> Add Drug
+              </button>
+            </div>
+            <div className="portal-drug-list">
               {prescriptionForm.requestedDrugs.map((drug, index) => (
-                <div className="patient-portal-item-row compact" key={`rx-drug-${index}`}>
-                  <input
-                    className="form-input"
-                    value={drug}
-                    onChange={(event) => updateRequestedDrug(index, event.target.value)}
-                    placeholder={`Drug ${index + 1}`}
-                  />
-                  <button
-                    type="button"
-                    className="patient-portal-remove"
-                    onClick={() => removeRequestedDrug(index)}
-                    disabled={prescriptionForm.requestedDrugs.length === 1}
-                  >
-                    Remove
-                  </button>
+                <div key={index} className="portal-drug-item">
+                  <input className="portal-input" value={drug}
+                    onChange={(e) => {
+                      const newDrugs = [...prescriptionForm.requestedDrugs]
+                      newDrugs[index] = e.target.value
+                      setPrescriptionForm({ ...prescriptionForm, requestedDrugs: newDrugs })
+                    }}
+                    placeholder={`Medicine ${index + 1}`} />
+                  {prescriptionForm.requestedDrugs.length > 1 && (
+                    <button type="button" className="portal-remove-btn"
+                      onClick={() => setPrescriptionForm({ ...prescriptionForm, requestedDrugs: prescriptionForm.requestedDrugs.filter((_, i) => i !== index) })}>
+                      <Trash2 size={14} />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
           </div>
-          <div className="form-group">
-            <label className="form-label">Upload Prescription Photo</label>
-            <input className="form-input" type="file" accept="image/*" onChange={(event) => setPrescriptionFile(event.target.files?.[0] || null)} />
+          <div className="portal-form-group">
+            <label className="portal-label">Upload Prescription (optional)</label>
+            <div className="portal-upload-zone">
+              <Image size={28} className="portal-upload-icon" />
+              <p className="portal-upload-text">Click to upload or drag and drop</p>
+              <p className="portal-upload-sub">JPG, PNG, or PDF (max 10MB)</p>
+            </div>
           </div>
-        </div>
-        <TurnstileWidget
-          formId="prescription"
-          resetSignal={turnstileResetKeys.prescription}
-          onVerify={handlePrescriptionVerify}
-          onExpire={handlePrescriptionExpire}
-        />
-        <button type="submit" className="btn btn-primary patient-portal-submit" disabled={submitting === "prescription"}>
-          {submitting === "prescription" ? "Sending request..." : "Send Prescription Request"}
-        </button>
-      </form>
+          <button type="submit" className="portal-submit-btn" disabled={submitting === "prescription"}>
+            {submitting === "prescription" ? (<><Loader2 size={18} className="portal-spinner" /> Submitting...</>) : "Submit Prescription Request"}
+          </button>
+        </form>
+      </div>
     )
   }
 
   function renderAppointmentForm() {
+    const appointmentTypes = [
+      { value: "phone_call", label: "Phone Call", icon: PhoneCall },
+      { value: "video_consultation", label: "Video Consultation", icon: Video },
+      { value: "pickup", label: "In-Person Pickup", icon: Building2 },
+    ]
     return (
-      <form className="patient-portal-form" onSubmit={handleAppointmentSubmit}>
-        <div className="patient-portal-grid">
-          <div className="form-group">
-            <label className="form-label">Full Name</label>
-            <input className="form-input" value={appointmentForm.patientName} onChange={(event) => updateAppointment("patientName", event.target.value)} placeholder="Your full name" />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Phone Number</label>
-            <input className="form-input" value={appointmentForm.patientPhone} onChange={(event) => updateAppointment("patientPhone", event.target.value)} placeholder="e.g. 07..." />
-          </div>
-          <div className="form-group patient-portal-span-full">
-            <label className="form-label">Email Address (optional)</label>
-            <input className="form-input" type="email" value={appointmentForm.patientEmail} onChange={(event) => updateAppointment("patientEmail", event.target.value)} placeholder="For email updates" />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Appointment Type</label>
-            <select value={appointmentForm.appointmentType} onChange={(event) => updateAppointment("appointmentType", event.target.value)}>
-              {APPOINTMENT_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>{option.label}</option>
-              ))}
-            </select>
-          </div>
-          <div className="form-group">
-            <label className="form-label">Preferred Time</label>
-            <input className="form-input" type="datetime-local" value={appointmentForm.slotDatetime} onChange={(event) => updateAppointment("slotDatetime", event.target.value)} />
-          </div>
-          <div className="form-group patient-portal-span-full">
-            <label className="form-label">Condition Summary</label>
-            <textarea rows="4" value={appointmentForm.conditionSummary} onChange={(event) => updateAppointment("conditionSummary", event.target.value)} placeholder="What would you like to discuss with the pharmacist?" />
-          </div>
-          <div className="form-group patient-portal-span-full">
-            <label className="form-label">Extra Notes</label>
-            <textarea rows="4" value={appointmentForm.patientNotes} onChange={(event) => updateAppointment("patientNotes", event.target.value)} placeholder="Any extra details, allergies, or preferred contact instructions." />
-          </div>
+      <div className="portal-form-page">
+        <div className="portal-form-header">
+          <h2 className="portal-form-title">Book an Appointment</h2>
+          <p className="portal-form-sub">Choose how you'd like to connect with the pharmacist</p>
         </div>
-        <TurnstileWidget
-          formId="appointment"
-          resetSignal={turnstileResetKeys.appointment}
-          onVerify={handleAppointmentVerify}
-          onExpire={handleAppointmentExpire}
-        />
-        <button type="submit" className="btn btn-primary patient-portal-submit" disabled={submitting === "appointment"}>
-          {submitting === "appointment" ? "Booking appointment..." : "Book Appointment"}
-        </button>
-      </form>
+        <form className="portal-form" onSubmit={(e) => e.preventDefault()}>
+          <div className="portal-form-group">
+            <label className="portal-label">Full Name</label>
+            <input className="portal-input" value={appointmentForm.patientName}
+              onChange={(e) => setAppointmentForm({ ...appointmentForm, patientName: e.target.value })}
+              placeholder="Enter your full name" />
+          </div>
+          <div className="portal-form-row">
+            <div className="portal-form-group">
+              <label className="portal-label">Phone Number</label>
+              <input className="portal-input" value={appointmentForm.patientPhone}
+                onChange={(e) => setAppointmentForm({ ...appointmentForm, patientPhone: e.target.value })}
+                placeholder="07XXXXXXXX" />
+            </div>
+            <div className="portal-form-group">
+              <label className="portal-label">Email (optional)</label>
+              <input className="portal-input" type="email" value={appointmentForm.patientEmail}
+                onChange={(e) => setAppointmentForm({ ...appointmentForm, patientEmail: e.target.value })}
+                placeholder="you@example.com" />
+            </div>
+          </div>
+          <div className="portal-form-group">
+            <label className="portal-label">Appointment Type</label>
+            <div className="portal-radio-grid">
+              {appointmentTypes.map((type) => (
+                <label key={type.value} className={`portal-radio-card ${appointmentForm.appointmentType === type.value ? "selected" : ""}`}>
+                  <input type="radio" name="appointmentType" value={type.value}
+                    checked={appointmentForm.appointmentType === type.value}
+                    onChange={(e) => setAppointmentForm({ ...appointmentForm, appointmentType: e.target.value })} />
+                  <div className="portal-radio-content">
+                    <div className="portal-radio-icon"><type.icon size={20} /></div>
+                    <span className="portal-radio-label">{type.label}</span>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+          <div className="portal-form-group">
+            <label className="portal-label">Preferred Date & Time</label>
+            <input className="portal-input" type="datetime-local" value={appointmentForm.slotDatetime}
+              onChange={(e) => setAppointmentForm({ ...appointmentForm, slotDatetime: e.target.value })} />
+          </div>
+          <div className="portal-form-group">
+            <label className="portal-label">What would you like to discuss?</label>
+            <textarea className="portal-textarea" rows={4} value={appointmentForm.conditionSummary}
+              onChange={(e) => setAppointmentForm({ ...appointmentForm, conditionSummary: e.target.value })}
+              placeholder="Describe what you'd like to discuss with the pharmacist..." />
+          </div>
+          <button type="submit" className="portal-submit-btn">Book Appointment</button>
+        </form>
+      </div>
     )
   }
 
   function renderMaternalForm() {
     return (
-      <form className="patient-portal-form" onSubmit={handleMaternalSubmit}>
-        {patientAccountAuthenticated && (maternalLockedName || maternalLockedPhone) ? (
-          <div className="patient-portal-feedback info" style={{ marginBottom: "1rem" }}>
-            Signed in as <strong>{maternalLockedName || patientAccountName || "Patient account"}</strong>
-            {maternalLockedPhone ? ` on ${maternalLockedPhone}` : ""}. This maternal request will use your patient portal account details directly.
-          </div>
-        ) : null}
-        <div className="patient-portal-grid">
-          <div className="form-group">
-            <label className="form-label">Full Name</label>
-            <input
-              className="form-input"
-              value={maternalResolvedName}
-              onChange={(event) => updateMaternal("patientName", event.target.value)}
-              placeholder="Mother's full name"
-              disabled={Boolean(maternalLockedName)}
-            />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Phone Number</label>
-            <input
-              className="form-input"
-              value={maternalLockedPhone || maternalForm.patientPhone}
-              onChange={(event) => updateMaternal("patientPhone", event.target.value)}
-              placeholder="e.g. 07..."
-              disabled={Boolean(maternalLockedPhone)}
-            />
-          </div>
-          <div className="form-group patient-portal-span-full">
-            <label className="form-label">Email Address (optional)</label>
-            <input className="form-input" type="email" value={maternalForm.patientEmail} onChange={(event) => updateMaternal("patientEmail", event.target.value)} placeholder="For email updates" />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Last Menstrual Period</label>
-            <input className="form-input" type="date" max={todayDateValue()} value={maternalForm.lmpDate} onChange={(event) => updateMaternal("lmpDate", event.target.value)} />
-          </div>
-          <div className="form-group">
-            <label className="form-label">National ID (optional)</label>
-            <input className="form-input" value={maternalForm.idNumber} onChange={(event) => updateMaternal("idNumber", event.target.value)} placeholder="ID number if available" />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Gravida</label>
-            <input className="form-input" type="number" min="0" value={maternalForm.gravida} onChange={(event) => updateMaternal("gravida", event.target.value)} placeholder="Total pregnancies" />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Parity</label>
-            <input className="form-input" type="number" min="0" value={maternalForm.parity} onChange={(event) => updateMaternal("parity", event.target.value)} placeholder="Births after viability" />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Village (optional)</label>
-            <input className="form-input" value={maternalForm.village} onChange={(event) => updateMaternal("village", event.target.value)} placeholder="Village or estate" />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Ward (optional)</label>
-            <input className="form-input" value={maternalForm.ward} onChange={(event) => updateMaternal("ward", event.target.value)} placeholder="Ward or town" />
-          </div>
-          <div className="form-group patient-portal-span-full">
-            <label className="form-label">Current Concerns or Notes</label>
-            <textarea rows="4" value={maternalForm.notes} onChange={(event) => updateMaternal("notes", event.target.value)} placeholder="Share ANC concerns, missed visits, danger signs, or any follow-up note for the branch." />
-          </div>
+      <div className="portal-form-page">
+        <div className="portal-form-header">
+          <h2 className="portal-form-title">Maternal Care Registration</h2>
+          <p className="portal-form-sub">Register for ANC and pregnancy follow-up</p>
         </div>
-        <TurnstileWidget
-          formId="maternal"
-          resetSignal={turnstileResetKeys.maternal}
-          onVerify={handleMaternalVerify}
-          onExpire={handleMaternalExpire}
-        />
-        <button type="submit" className="btn btn-primary patient-portal-submit" disabled={submitting === "maternal"}>
-          {submitting === "maternal" ? "Sending maternal request..." : "Send Maternal Care Request"}
-        </button>
-      </form>
+        <form className="portal-form" onSubmit={(e) => e.preventDefault()}>
+          <div className="portal-form-row">
+            <div className="portal-form-group">
+              <label className="portal-label">Full Name</label>
+              <input className="portal-input" placeholder="Mother's full name" />
+            </div>
+            <div className="portal-form-group">
+              <label className="portal-label">Phone Number</label>
+              <input className="portal-input" placeholder="07XXXXXXXX" />
+            </div>
+          </div>
+          <div className="portal-form-row">
+            <div className="portal-form-group">
+              <label className="portal-label">Last Menstrual Period (LMP)</label>
+              <input className="portal-input" type="date" />
+            </div>
+            <div className="portal-form-group">
+              <label className="portal-label">Gravida / Parity</label>
+              <input className="portal-input" placeholder="e.g. G2 P1" />
+            </div>
+          </div>
+          <div className="portal-form-group">
+            <label className="portal-label">Current Concerns or Notes</label>
+            <textarea className="portal-textarea" rows={4} placeholder="Share any pregnancy concerns or follow-up needs..." />
+          </div>
+          <button type="submit" className="portal-submit-btn">Send Maternal Care Request</button>
+        </form>
+      </div>
     )
   }
 
   function renderDeliveryForm() {
     return (
-      <form className="patient-portal-form" onSubmit={handleDeliverySubmit}>
-        <div className="patient-portal-grid">
-          <div className="form-group">
-            <label className="form-label">Full Name</label>
-            <input className="form-input" value={deliveryForm.patientName} onChange={(event) => updateDelivery("patientName", event.target.value)} placeholder="Your full name" />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Phone Number</label>
-            <input className="form-input" value={deliveryForm.patientPhone} onChange={(event) => updateDelivery("patientPhone", event.target.value)} placeholder="e.g. 07..." />
-          </div>
-          <div className="form-group patient-portal-span-full">
-            <label className="form-label">Email Address (optional)</label>
-            <input className="form-input" type="email" value={deliveryForm.patientEmail} onChange={(event) => updateDelivery("patientEmail", event.target.value)} placeholder="For email updates" />
-          </div>
-          <div className="form-group patient-portal-span-full">
-            <label className="form-label">Delivery Address</label>
-            <textarea rows="3" value={deliveryForm.patientAddress} onChange={(event) => updateDelivery("patientAddress", event.target.value)} placeholder="Estate, building, floor, landmark, and any rider notes." />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Latitude</label>
-            <input className="form-input" value={deliveryForm.patientLocationLat} onChange={(event) => updateDelivery("patientLocationLat", event.target.value)} placeholder="Optional" />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Longitude</label>
-            <input className="form-input" value={deliveryForm.patientLocationLng} onChange={(event) => updateDelivery("patientLocationLng", event.target.value)} placeholder="Optional" />
-          </div>
+      <div className="portal-form-page">
+        <div className="portal-form-header">
+          <h2 className="portal-form-title">Request Delivery</h2>
+          <p className="portal-form-sub">Get your medicines delivered to your door</p>
         </div>
-
-        <div className="patient-portal-items-card">
-          <div className="patient-portal-section-head">
-            <div>
-              <h3>Items Needed</h3>
-              <p>Add one or more items for delivery.</p>
+        <form className="portal-form" onSubmit={(e) => e.preventDefault()}>
+          <div className="portal-form-row">
+            <div className="portal-form-group">
+              <label className="portal-label">Full Name</label>
+              <input className="portal-input" value={deliveryForm.patientName}
+                onChange={(e) => setDeliveryForm({ ...deliveryForm, patientName: e.target.value })}
+                placeholder="Your full name" />
             </div>
-            <button type="button" className="btn btn-outline" onClick={addDeliveryItem}>Add Item</button>
-          </div>
-
-          <div className="patient-portal-items-list">
-            {deliveryForm.items.map((item, index) => (
-              <div className="patient-portal-item-row" key={`item-${index}`}>
-                <input className="form-input" value={item.drug_name} onChange={(event) => updateDeliveryItem(index, "drug_name", event.target.value)} placeholder="Drug name" />
-                <input className="form-input" type="number" min="1" value={item.qty} onChange={(event) => updateDeliveryItem(index, "qty", event.target.value)} placeholder="Qty" />
-                <input className="form-input" type="number" min="0" value={item.price} onChange={(event) => updateDeliveryItem(index, "price", event.target.value)} placeholder="Price (KES)" />
-                <button type="button" className="patient-portal-remove" onClick={() => removeDeliveryItem(index)} disabled={deliveryForm.items.length === 1}>
-                  Remove
-                </button>
-              </div>
-            ))}
-          </div>
-
-          <div className="patient-portal-total">Estimated total: <strong>KES {deliveryTotal.toLocaleString()}</strong></div>
-        </div>
-        <TurnstileWidget
-          formId="delivery"
-          resetSignal={turnstileResetKeys.delivery}
-          onVerify={handleDeliveryVerify}
-          onExpire={handleDeliveryExpire}
-        />
-
-        <button type="submit" className="btn btn-primary patient-portal-submit" disabled={submitting === "delivery"}>
-          {submitting === "delivery" ? "Sending delivery request..." : "Send Delivery Request"}
-        </button>
-      </form>
-    )
-  }
-
-  function renderUpdatesPanel() {
-    const hasActionableRequest = trackingCards.some((item) => item.canRespond || item.canChooseFulfillment)
-
-    return (
-      <div className="patient-portal-updates">
-        {patientAuthLoading ? <div className="patient-portal-track-message">Loading your patient account...</div> : null}
-
-        {!patientAuthLoading && !patientAccountAuthenticated ? (
-          <div className="patient-portal-feedback info">
-            Sign in to your patient account before opening updates and notifications.
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", marginTop: "0.85rem" }}>
-              <Link to={patientLoginPath} className="btn btn-primary">
-                Sign In
-              </Link>
-              <Link to={patientRegisterPath} className="btn btn-outline">
-                Create Account
-              </Link>
+            <div className="portal-form-group">
+              <label className="portal-label">Phone Number</label>
+              <input className="portal-input" value={deliveryForm.patientPhone}
+                onChange={(e) => setDeliveryForm({ ...deliveryForm, patientPhone: e.target.value })}
+                placeholder="07XXXXXXXX" />
             </div>
           </div>
-        ) : null}
-
-        {!patientAuthLoading && patientAccountAuthenticated ? (
-          <div className="patient-portal-feedback success">
-            Signed in as <strong>{patientAccountName || "Patient account"}</strong>{patientAccountPhone ? ` on ${patientAccountPhone}` : ""}.
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", marginTop: "0.85rem" }}>
-              <button type="button" className="btn btn-primary" onClick={() => fetchTrackingFeed()} disabled={trackingLoading}>
-                {trackingLoading ? "Refreshing..." : "Refresh My Updates"}
+          <div className="portal-form-group">
+            <label className="portal-label">Delivery Address</label>
+            <textarea className="portal-textarea" rows={3} value={deliveryForm.patientAddress}
+              onChange={(e) => setDeliveryForm({ ...deliveryForm, patientAddress: e.target.value })}
+              placeholder="Estate, building, floor, landmark, and any rider notes..." />
+          </div>
+          <div className="portal-form-group">
+            <div className="portal-form-label-row">
+              <label className="portal-label">Items Needed</label>
+              <button type="button" className="portal-add-btn"
+                onClick={() => setDeliveryForm({ ...deliveryForm, items: [...deliveryForm.items, { drug_name: "", qty: "1", price: "" }] })}>
+                <Plus size={14} /> Add Item
               </button>
             </div>
-          </div>
-        ) : null}
-
-        {trackingMessage && <div className="patient-portal-track-message">{trackingMessage}</div>}
-        {trackingActionMessage && <div className="patient-portal-feedback success">{trackingActionMessage}</div>}
-        {trackingActionError && <div className="patient-portal-feedback error">{trackingActionError}</div>}
-
-        {patientAccountAuthenticated && hasActionableRequest && (
-          <div className="patient-portal-response-gate">
-            <div className="patient-portal-response-head">
-              <strong>Reply to the pharmacist</strong>
-              <span>Complete the security check once, then choose how you want the pharmacy to continue.</span>
-            </div>
-            <TurnstileWidget
-              formId="response"
-              resetSignal={turnstileResetKeys.response}
-              onVerify={handleResponseVerify}
-              onExpire={handleResponseExpire}
-            />
-          </div>
-        )}
-
-        {trackingCards.length > 0 && (
-          <div className="patient-portal-track-message">
-            Recent history is grouped per order or appointment. Open a card to see the full update trail for that item.
-          </div>
-        )}
-
-        {trackingCards.length > 0 && (
-          <div className="patient-portal-timeline">
-            {trackingCards.map((item) => renderTrackingCard(item))}
-          </div>
-        )}
-
-        {trackingFeed.length > 0 && (
-          <div className="patient-portal-timeline">
-            {trackingFeed.map((item) => (
-              <div key={item.id} className="patient-portal-update-card">
-                <div className="patient-portal-update-top">
-                  <span className="patient-portal-update-type">{item.type}</span>
-                  <span className={`patient-portal-status ${getStatusTone(item.status)}`}>{item.statusLabel || formatTokenLabel(item.status)}</span>
+            <div className="portal-drug-list">
+              {deliveryForm.items.map((item, index) => (
+                <div key={index} className="portal-drug-item">
+                  <input className="portal-input" value={item.drug_name}
+                    onChange={(e) => {
+                      const newItems = [...deliveryForm.items]
+                      newItems[index].drug_name = e.target.value
+                      setDeliveryForm({ ...deliveryForm, items: newItems })
+                    }}
+                    placeholder="Drug name" />
+                  <input className="portal-input portal-delivery-qty" type="number" min="1" value={item.qty}
+                    onChange={(e) => {
+                      const newItems = [...deliveryForm.items]
+                      newItems[index].qty = e.target.value
+                      setDeliveryForm({ ...deliveryForm, items: newItems })
+                    }} placeholder="Qty" />
+                  {deliveryForm.items.length > 1 && (
+                    <button type="button" className="portal-remove-btn"
+                      onClick={() => setDeliveryForm({ ...deliveryForm, items: deliveryForm.items.filter((_, i) => i !== index) })}>
+                      <Trash2 size={14} />
+                    </button>
+                  )}
                 </div>
-                <div className="patient-portal-update-title">{item.title}</div>
-                <div className="patient-portal-update-text">{item.summary}</div>
-                {renderAppointmentActionBox(item)}
-                {renderDeliveryDetailsBox(item)}
-                {renderPatientResponseBox(item)}
-                {renderFulfillmentChoiceBox(item)}
-                {renderRequestResponseActions(item)}
-                {renderFulfillmentActions(item)}
-                <div className="patient-portal-update-time">{formatDateTime(item.activityAt || item.createdAt)} · {timeAgo(item.activityAt || item.createdAt)}</div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        )}
+          <button type="submit" className="portal-submit-btn">Send Delivery Request</button>
+        </form>
       </div>
     )
   }
 
-  function renderGlobalUpdatesFinder() {
+  function renderUpdatesScreen() {
     return (
-      <div className="patient-portal-global-updates">
-        <div className="patient-portal-panel-head">
-          <div>
-            <h2>Already Submitted a Request?</h2>
-            <p>Your signed-in patient account can find updates even if you forgot the branch you selected earlier.</p>
-          </div>
+      <div className="portal-form-page">
+        <div className="portal-form-header">
+          <h2 className="portal-form-title">Your Updates</h2>
+          <p className="portal-form-sub">Track all your requests and notifications</p>
         </div>
-
-        {patientAuthLoading ? <div className="patient-portal-track-message">Loading your patient account...</div> : null}
-
-        {!patientAuthLoading && !patientAccountAuthenticated ? (
-          <div className="patient-portal-feedback info">
-            Sign in to your patient account before searching for updates across pharmacies.
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", marginTop: "0.85rem" }}>
-              <Link to={patientLoginPath} className="btn btn-primary">
-                Sign In
-              </Link>
-              <Link to={patientRegisterPath} className="btn btn-outline">
-                Create Account
-              </Link>
-            </div>
-          </div>
-        ) : null}
-
-        {!patientAuthLoading && patientAccountAuthenticated ? (
-          <div className="patient-portal-feedback success">
-            Signed in as <strong>{patientAccountName || "Patient account"}</strong>{patientAccountPhone ? ` on ${patientAccountPhone}` : ""}.
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", marginTop: "0.85rem" }}>
-              <button type="button" className="btn btn-primary" onClick={() => fetchTrackingFeed()} disabled={trackingLoading}>
-                {trackingLoading ? "Refreshing..." : "Find My Updates"}
-              </button>
-            </div>
-          </div>
-        ) : null}
-
-        {trackingMessage && <div className="patient-portal-track-message">{trackingMessage}</div>}
-
-        {trackingMatches.length > 0 && (
-          <div className="patient-portal-global-groups">
-            {trackingMatches.map((match) => (
-              <div key={match.pharmacyId} className="patient-portal-global-group">
-                <div className="patient-portal-global-group-head">
-                  <div>
-                    <h3>{match.pharmacyName}</h3>
-                    <p>{match.pharmacyLocation}</p>
-                    <p className="patient-portal-directory-summary">{match.cards.length} grouped items. Open a card to see that order or appointment history.</p>
-                  </div>
-                  <button type="button" className="btn btn-outline" onClick={() => openTrackedPharmacy(match)}>
-                    Open this pharmacy
-                  </button>
-                </div>
-
-                <div className="patient-portal-timeline">
-                  {match.cards.map((item) => renderTrackingCard({ ...item, id: `${match.pharmacyId}-${item.id}` }, { allowActions: false }))}
-                </div>
-
-                <div className="patient-portal-timeline" style={{ display: "none" }}>
-                  {match.feed.map((item) => (
-                    <div key={`${match.pharmacyId}-${item.id}`} className="patient-portal-update-card">
-                      <div className="patient-portal-update-top">
-                        <span className="patient-portal-update-type">{item.type}</span>
-                        <span className={`patient-portal-status ${getStatusTone(item.status)}`}>{item.statusLabel || formatTokenLabel(item.status)}</span>
-                      </div>
-                      <div className="patient-portal-update-title">{item.title}</div>
-                      <div className="patient-portal-update-text">{item.summary}</div>
-                      {renderAppointmentActionBox(item)}
-                      {renderDeliveryDetailsBox(item)}
-                      {renderPatientResponseBox(item)}
-                      {renderFulfillmentChoiceBox(item)}
-                      <div className="patient-portal-update-time">{formatDateTime(item.activityAt || item.createdAt)} · {timeAgo(item.activityAt || item.createdAt)}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        <div className="portal-empty-state">
+          <Bell size={48} className="portal-empty-icon" />
+          <h3 className="portal-empty-title">No updates yet</h3>
+          <p className="portal-empty-desc">Your requests and notifications will appear here</p>
+        </div>
       </div>
     )
   }
 
-  if (portalLoading) {
-    return <div className="patient-portal-loading">Loading patient portal...</div>
+  function renderContent() {
+    switch (activeTab) {
+      case "home": return renderHomeScreen()
+      case "prescription": return renderPrescriptionForm()
+      case "appointment": return renderAppointmentForm()
+      case "maternal": return renderMaternalForm()
+      case "delivery": return renderDeliveryForm()
+      case "updates": return renderUpdatesScreen()
+      default: return renderHomeScreen()
+    }
   }
 
   return (
-    <>
-      <SEO
-        title={pharmacy?.name ? `${pharmacy.name} Patient Portal | PharmaCourse` : "Find a Pharmacy | PharmaCourse"}
-        description="Choose your pharmacy branch, send prescription requests, book appointments, request deliveries, and install the patient portal like an app."
-        path="/patient-portal"
-      />
-
-      <div className="patient-portal-page">
-        <section className="patient-portal-hero">
-          <div className="patient-portal-hero-inner">
-            <div className="patient-portal-hero-grid">
-              <div className="patient-portal-hero-copy">
-                <div className="patient-portal-badge">Patient self-service</div>
-                <h1>{hasActivePharmacy ? `${pharmacy?.name || "Your pharmacy"} on the web` : "A patient portal that feels like a pharmacy app"}</h1>
-                <p>
-                  {hasActivePharmacy
-                    ? "Send a request, book a follow-up, request delivery, and track branch replies from one secure portal built for mobile first use."
-                    : "Choose the pharmacy or branch nearest to you, then continue with prescriptions, appointments, delivery requests, and private updates from one responsive portal."}
-                </p>
-
-                <div className="patient-portal-hero-actions">
-                  {hasActivePharmacy ? (
-                    <Link to={patientHomePath} className="patient-portal-hero-button primary">
-                      Open patient portal
-                      <ArrowRight size={16} />
-                    </Link>
-                  ) : (
-                    <a href="#pharmacy-directory" className="patient-portal-hero-button primary">
-                      Browse pharmacies
-                      <ArrowRight size={16} />
-                    </a>
-                  )}
-                  <Link to={patientLoginPath} className="patient-portal-hero-button secondary">
-                    Sign in
-                  </Link>
-                  <Link to={patientRegisterPath} className="patient-portal-hero-button ghost">
-                    Create profile
-                  </Link>
-                </div>
-
-                <div className="patient-portal-trust-row" aria-label="Patient portal highlights">
-                  {PORTAL_TRUST_POINTS.map((point) => (
-                    <span key={point} className="patient-portal-trust-pill">
-                      <ShieldCheck size={14} />
-                      {point}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="patient-portal-branch-card">
-                  {hasActivePharmacy ? (
-                    <>
-                      <div>
-                        <strong>{pharmacy.name}</strong>
-                        <span>{pharmacy.locationLabel || pharmacy.location || "Location not provided"}</span>
-                      </div>
-                      {pharmacy.parentName ? (
-                        <div>
-                          <strong>Main Pharmacy</strong>
-                          <span>{pharmacy.parentName}</span>
-                        </div>
-                      ) : null}
-                    </>
-                  ) : (
-                    <>
-                      <div>
-                        <strong>Find your branch</strong>
-                        <span>Search by pharmacy name, county, town, or area to connect the right location.</span>
-                      </div>
-                      <div>
-                        <strong>Install like an app</strong>
-                        <span>Add the portal to your home screen for faster access on mobile.</span>
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                <PatientInstallPrompt />
-              </div>
-
-              <div className="patient-portal-hero-preview">
-                <div className="patient-portal-phone-frame">
-                  <div className="patient-portal-phone-notch" />
-                  <div className="patient-portal-phone-shell">
-                    <div className="patient-portal-phone-screen">
-                      <header className="patient-portal-phone-header">
-                        <div className="patient-portal-phone-header-inner">
-                          <div className="patient-portal-phone-brand">
-                            <span className="patient-portal-menu-icon">☰</span>
-                            <span className="patient-portal-logo">Pharma<span className="patient-portal-logo-highlight">Course</span></span>
-                          </div>
-                          <div className="patient-portal-phone-header-actions">
-                            <span className="patient-portal-bell-wrap">
-                              <Bell size={14} />
-                              <span className="patient-portal-bell-dot">3</span>
-                            </span>
-                            <span className="patient-portal-avatar-sm">JM</span>
-                          </div>
-                        </div>
-                        <div className="patient-portal-search-bar">
-                          <div className="patient-portal-search-wrap">
-                            <span className="patient-portal-search-icon">🔍</span>
-                            <input className="patient-portal-search-input" readOnly placeholder="Search medicines, appointments..." />
-                          </div>
-                        </div>
-                      </header>
-
-                      <div className="patient-portal-phone-scroll">
-                        <div className="patient-portal-welcome">
-                          <div className="patient-portal-welcome-top">
-                            <div>
-                              <div className="patient-portal-greeting">Good morning 👋</div>
-                              <div className="patient-portal-welcome-title">Jane Mwangi</div>
-                              <div className="patient-portal-welcome-sub">Your health journey starts here</div>
-                            </div>
-                            <div className="patient-portal-avatar">JM</div>
-                          </div>
-
-                          <div className="patient-portal-stats-grid">
-                            {PHONE_PREVIEW_STATS.map((stat) => (
-                              <div key={stat.label} className="patient-portal-stat-card">
-                                <div className="patient-portal-stat-icon">{stat.icon}</div>
-                                <div>
-                                  <div className="patient-portal-stat-value">{stat.value}</div>
-                                  <div className="patient-portal-stat-label">{stat.label}</div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        <section className="patient-portal-section">
-                          <div className="patient-portal-section-header">
-                            <h2 className="patient-portal-section-title">Quick Actions</h2>
-                            <span className="patient-portal-section-badge">4 services</span>
-                          </div>
-                          <div className="patient-portal-quick-grid">
-                            {PHONE_PREVIEW_QUICK_ACTIONS.map((action) => (
-                              <div key={action.title} className="patient-portal-quick-card">
-                                <div className="patient-portal-quick-icon" style={{ background: action.bgColor, color: action.iconColor }}>
-                                  {action.emoji}
-                                </div>
-                                <div>
-                                  <p className="patient-portal-quick-title">{action.title}</p>
-                                  <p className="patient-portal-quick-desc">{action.description}</p>
-                                </div>
-                                <span className="patient-portal-quick-arrow">›</span>
-                              </div>
-                            ))}
-                          </div>
-                        </section>
-
-                        <section className="patient-portal-section">
-                          <div className="patient-portal-section-header">
-                            <h2 className="patient-portal-section-title">Recent Activity</h2>
-                            <span className="patient-portal-section-badge patient-portal-section-link">View All</span>
-                          </div>
-                          <div className="patient-portal-activity-list">
-                            {PHONE_PREVIEW_ACTIVITIES.map((activity) => (
-                              <div key={activity.title} className="patient-portal-activity-item">
-                                <div className="patient-portal-activity-icon" style={{ background: activity.bg, color: activity.color }}>
-                                  {activity.emoji}
-                                </div>
-                                <div style={{ flex: 1 }}>
-                                  <div className="patient-portal-activity-top">
-                                    <span className="patient-portal-activity-title">{activity.title}</span>
-                                    <span className={`patient-portal-activity-status ${activity.statusClass}`}>{activity.statusLabel}</span>
-                                  </div>
-                                  <div className="patient-portal-activity-time">{activity.time}</div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </section>
-
-                        <section className="patient-portal-section">
-                          <div className="patient-portal-section-header">
-                            <h2 className="patient-portal-section-title">Everything You Need</h2>
-                          </div>
-                          <div className="patient-portal-features-grid">
-                            {PHONE_PREVIEW_FEATURES.map((feature) => (
-                              <div key={feature.title} className="patient-portal-feature-card">
-                                <div className="patient-portal-feature-icon">{feature.icon}</div>
-                                <p className="patient-portal-feature-title">{feature.title}</p>
-                                <p className="patient-portal-feature-desc">{feature.description}</p>
-                              </div>
-                            ))}
-                          </div>
-                        </section>
-
-                        <div className="patient-portal-trust-section">
-                          {PHONE_PREVIEW_TRUST_BADGES.map((badge) => (
-                            <span key={badge} className="patient-portal-trust-badge">{badge}</span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="patient-portal-phone-bottom-nav">
-                      {[
-                        { label: "Home", icon: Home },
-                        { label: "Rx", icon: Pill },
-                        { label: "Appts", icon: CalendarDays },
-                        { label: "Maternal", icon: HeartPulse },
-                      ].map(({ label, icon: Icon }, index) => (
-                        <span key={label} className={`patient-portal-phone-tab${index === 0 ? " active" : ""}`}>
-                          <Icon size={14} />
-                          {label}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="patient-portal-preview-stack">
-                  <div className="patient-portal-preview-card">
-                    <span className="patient-portal-preview-kicker">Desktop ready</span>
-                    <strong>Clean on larger screens too</strong>
-                    <p>The same portal expands into a two-column layout for branch search, request forms, and updates.</p>
-                  </div>
-                  <div className="patient-portal-preview-card accent">
-                    <span className="patient-portal-preview-kicker">PWA support</span>
-                    <strong>Install on your phone</strong>
-                    <p>Add it to the home screen to reopen it like an app with less friction.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {(portalError || directoryError) && <div className="patient-portal-feedback error">{portalError || directoryError}</div>}
-          </div>
-        </section>
-
-        {(!hasActivePharmacy || !portalError) && (
-          <section className="patient-portal-content" id="pharmacy-directory">
-            <div className={`patient-portal-shell ${hasActivePharmacy ? "has-active-pharmacy" : ""}`}>
-              <aside className="patient-portal-sidebar">
-                <div className="patient-portal-sidebar-card">
-                  {hasActivePharmacy ? (
-                    <>
-                      <h2>What do you need?</h2>
-                      <p>Choose one option below. The pharmacy will receive it in RemedacarePOS instantly.</p>
-                      <div className="patient-portal-tab-list">
-                        {PORTAL_TABS.map((tab) => (
-                          <button
-                            key={tab.id}
-                            type="button"
-                            className={`patient-portal-tab tone-${tab.tone} ${activeTab === tab.id ? "active" : ""}`}
-                            onClick={() => selectPortalTab(tab.id)}
-                          >
-                            <span className="patient-portal-tab-icon">
-                              <tab.icon size={16} />
-                            </span>
-                            <span className="patient-portal-tab-copy">{tab.label}</span>
-                          </button>
-                        ))}
-                      </div>
-                      <button type="button" className="btn btn-outline patient-portal-switch-btn" onClick={clearSelectedPharmacy}>
-                        Choose a different pharmacy
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <h2>Choose a pharmacy first</h2>
-                      <p>Search by pharmacy name, branch, county, town, or area to find the right location.</p>
-                      <input
-                        className="form-input patient-portal-search"
-                        value={branchSearch}
-                        onChange={(event) => setBranchSearch(event.target.value)}
-                        placeholder="Search pharmacy, branch, county, or area"
-                      />
-                      <div className="patient-portal-filter-stack">
-                        <select value={countyFilter} onChange={(event) => {
-                          setCountyFilter(event.target.value)
-                          setSubcountyFilter("")
-                          setTownFilter("")
-                        }}>
-                          <option value="">All counties</option>
-                          {countyOptions.map((option) => (
-                            <option key={option} value={option}>{option}</option>
-                          ))}
-                        </select>
-                        <select value={subcountyFilter} onChange={(event) => {
-                          setSubcountyFilter(event.target.value)
-                          setTownFilter("")
-                        }}>
-                          <option value="">All subcounties</option>
-                          {subcountyOptions.map((option) => (
-                            <option key={option} value={option}>{option}</option>
-                          ))}
-                        </select>
-                        <select value={townFilter} onChange={(event) => setTownFilter(event.target.value)}>
-                          <option value="">All towns / areas</option>
-                          {townOptions.map((option) => (
-                            <option key={option} value={option}>{option}</option>
-                          ))}
-                        </select>
-                        {(branchSearch || countyFilter || subcountyFilter || townFilter) && (
-                          <button type="button" className="btn btn-outline patient-portal-filter-clear" onClick={clearDirectoryFilters}>
-                            Clear filters
-                          </button>
-                        )}
-                      </div>
-                      <div className="patient-portal-sidebar-note">
-                        Share this one link with patients:
-                        <strong> pharmacourse.co.ke/patient</strong>
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                <div className="patient-portal-sidebar-card muted">
-                  <h3>Emergency note</h3>
-                  <p>
-                    For chest pain, severe bleeding, difficulty breathing, stroke symptoms, or collapse, go to the nearest hospital or call emergency services immediately.
-                  </p>
-                </div>
-              </aside>
-
-              <main className="patient-portal-main">
-                <div className="patient-portal-panel">
-                  {!hasActivePharmacy ? (
-                    <>
-                      <div className="patient-portal-panel-head">
-                        <div>
-                          <h2>Select Your Pharmacy or Branch</h2>
-                          <p>Patients should first choose the main pharmacy, then pick the exact branch nearest to them.</p>
-                        </div>
-                      </div>
-
-                      {visiblePharmacyOptions.length === 0 ? (
-                        <div className="patient-portal-empty">
-                          No pharmacies matched that search yet.
-                        </div>
-                      ) : (
-                        <div className="patient-portal-directory">
-                          {renderGlobalUpdatesFinder()}
-                          <div className="patient-portal-directory-summary">
-                            Showing {visiblePharmacyOptions.length.toLocaleString()} matching locations
-                            {countyFilter ? ` in ${countyFilter}` : ""}
-                            {subcountyFilter ? ` · ${subcountyFilter}` : ""}
-                            {townFilter ? ` · ${townFilter}` : ""}
-                          </div>
-                          {mainPharmacies.length > 0 && (
-                            <div className="patient-portal-directory-section">
-                              <div className="patient-portal-directory-head">
-                                <h3>1. Choose Main Pharmacy</h3>
-                                <span>{mainPharmacies.length}</span>
-                              </div>
-                              <div className="patient-portal-card-rail">
-                                {visibleMainPharmacies.map((option) => (
-                                  <div
-                                    key={option.id}
-                                    className={`patient-portal-choice-card directory-main-card ${selectedDirectoryMainId === option.id ? "selected" : ""}`}
-                                  >
-                                    <div className="patient-portal-choice-top">
-                                      <span className="patient-portal-choice-badge">Main</span>
-                                      <span className="patient-portal-choice-count">
-                                        {branchCountsByParent.get(option.id) || 0} branches
-                                      </span>
-                                    </div>
-                                    <div className="patient-portal-choice-title">{option.name}</div>
-                                    <div className="patient-portal-choice-location-row">
-                                      {option.county && <span className="patient-portal-choice-chip">{option.county}</span>}
-                                      {option.subcounty && <span className="patient-portal-choice-chip">{option.subcounty}</span>}
-                                      {option.town && <span className="patient-portal-choice-chip">{option.town}</span>}
-                                    </div>
-                                    <div className="patient-portal-choice-meta">{option.locationLabel}</div>
-                                    <div className="patient-portal-choice-actions">
-                                      <button type="button" className="btn btn-primary" onClick={() => browseMainPharmacy(option)}>
-                                        {selectedDirectoryMainId === option.id ? "Browsing branches" : "Browse branches"}
-                                      </button>
-                                      <button type="button" className="btn btn-outline" onClick={() => handleSelectPharmacy(option)}>
-                                        Use main pharmacy
-                                      </button>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                              {mainPharmacies.length > visibleMainPharmacies.length && (
-                                <button
-                                  type="button"
-                                  className="btn btn-outline patient-portal-load-more"
-                                  onClick={() => setVisibleMainCount((count) => count + DIRECTORY_BATCH_SIZES.mains)}
-                                >
-                                  Show {Math.min(DIRECTORY_BATCH_SIZES.mains, mainPharmacies.length - visibleMainPharmacies.length)} more main pharmacies
-                                </button>
-                              )}
-                            </div>
-                          )}
-
-                          {branchPharmacies.length > 0 && (
-                            <div className="patient-portal-directory-section">
-                              <div className="patient-portal-directory-head">
-                                <div>
-                                  <h3>2. Choose Branch</h3>
-                                  {selectedDirectoryMain ? (
-                                    <p>
-                                      Showing branches for <strong>{selectedDirectoryMain.name}</strong>.
-                                    </p>
-                                  ) : (
-                                    <p>Pick a main pharmacy above to narrow branches faster.</p>
-                                  )}
-                                </div>
-                                <span>{branchPharmacies.length}</span>
-                              </div>
-                              {groupedVisibleBranches.nearest.length > 0 && (
-                                <div className="patient-portal-branch-group">
-                                  <div className="patient-portal-branch-group-head">
-                                    <h4>{branchGroupLabels.nearest}</h4>
-                                    <span>{groupedVisibleBranches.nearest.length}</span>
-                                  </div>
-                                  <div className="patient-portal-card-rail">
-                                    {groupedVisibleBranches.nearest.map((option) => (
-                                      <button key={option.id} type="button" className="patient-portal-choice-card branch" onClick={() => handleSelectPharmacy(option)}>
-                                        <div className="patient-portal-choice-top">
-                                          <span className="patient-portal-choice-badge branch">Branch</span>
-                                        </div>
-                                        <div className="patient-portal-choice-title">{option.name}</div>
-                                        <div className="patient-portal-choice-parent">{option.parentName}</div>
-                                        <div className="patient-portal-choice-location-row">
-                                          {option.county && <span className="patient-portal-choice-chip">{option.county}</span>}
-                                          {option.subcounty && <span className="patient-portal-choice-chip">{option.subcounty}</span>}
-                                          {option.town && <span className="patient-portal-choice-chip">{option.town}</span>}
-                                        </div>
-                                        <div className="patient-portal-choice-meta">{option.locationLabel}</div>
-                                        <div className="patient-portal-choice-action">Choose this branch</div>
-                                      </button>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                              {groupedVisibleBranches.sameCounty.length > 0 && (
-                                <div className="patient-portal-branch-group">
-                                  <div className="patient-portal-branch-group-head">
-                                    <h4>{groupedVisibleBranches.nearest.length > 0 ? branchGroupLabels.sameCounty : branchGroupLabels.nearest}</h4>
-                                    <span>{groupedVisibleBranches.sameCounty.length}</span>
-                                  </div>
-                                  <div className="patient-portal-card-rail">
-                                    {groupedVisibleBranches.sameCounty.map((option) => (
-                                      <button key={option.id} type="button" className="patient-portal-choice-card branch" onClick={() => handleSelectPharmacy(option)}>
-                                        <div className="patient-portal-choice-top">
-                                          <span className="patient-portal-choice-badge branch">Branch</span>
-                                        </div>
-                                        <div className="patient-portal-choice-title">{option.name}</div>
-                                        <div className="patient-portal-choice-parent">{option.parentName}</div>
-                                        <div className="patient-portal-choice-location-row">
-                                          {option.county && <span className="patient-portal-choice-chip">{option.county}</span>}
-                                          {option.subcounty && <span className="patient-portal-choice-chip">{option.subcounty}</span>}
-                                          {option.town && <span className="patient-portal-choice-chip">{option.town}</span>}
-                                        </div>
-                                        <div className="patient-portal-choice-meta">{option.locationLabel}</div>
-                                        <div className="patient-portal-choice-action">Choose this branch</div>
-                                      </button>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                              {groupedVisibleBranches.others.length > 0 && (
-                                <div className="patient-portal-branch-group">
-                                  <div className="patient-portal-branch-group-head">
-                                    <h4>{branchGroupLabels.others}</h4>
-                                    <span>{groupedVisibleBranches.others.length}</span>
-                                  </div>
-                                  <div className="patient-portal-card-rail">
-                                    {groupedVisibleBranches.others.map((option) => (
-                                      <button key={option.id} type="button" className="patient-portal-choice-card branch" onClick={() => handleSelectPharmacy(option)}>
-                                        <div className="patient-portal-choice-top">
-                                          <span className="patient-portal-choice-badge branch">Branch</span>
-                                        </div>
-                                        <div className="patient-portal-choice-title">{option.name}</div>
-                                        <div className="patient-portal-choice-parent">{option.parentName}</div>
-                                        <div className="patient-portal-choice-location-row">
-                                          {option.county && <span className="patient-portal-choice-chip">{option.county}</span>}
-                                          {option.subcounty && <span className="patient-portal-choice-chip">{option.subcounty}</span>}
-                                          {option.town && <span className="patient-portal-choice-chip">{option.town}</span>}
-                                        </div>
-                                        <div className="patient-portal-choice-meta">{option.locationLabel}</div>
-                                        <div className="patient-portal-choice-action">Choose this branch</div>
-                                      </button>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                              {branchPharmacies.length > visibleBranchPharmacies.length && (
-                                <button
-                                  type="button"
-                                  className="btn btn-outline patient-portal-load-more"
-                                  onClick={() => setVisibleBranchCount((count) => count + DIRECTORY_BATCH_SIZES.branches)}
-                                >
-                                  Show {Math.min(DIRECTORY_BATCH_SIZES.branches, branchPharmacies.length - visibleBranchPharmacies.length)} more branches
-                                </button>
-                              )}
-                            </div>
-                          )}
-
-                          {selectedDirectoryMain && branchPharmacies.length === 0 && (
-                            <div className="patient-portal-empty">
-                              No matching branches were found for <strong>{selectedDirectoryMain.name}</strong> with the current filters.
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <div className="patient-portal-panel-head">
-                        <div>
-                          <h2>{activePortalTab.label}</h2>
-                          <p>
-                            {activeTab === "prescription" && "Tell the pharmacist what you are suffering from and upload a prescription if you have one."}
-                            {activeTab === "appointment" && "Book a pharmacist callback, video consultation, or pickup discussion."}
-                            {activeTab === "maternal" && "Register a pregnancy, share ANC details, and send maternal follow-up requests to the branch maternal desk."}
-                            {activeTab === "delivery" && "Request medicine delivery and share the items plus your address."}
-                            {activeTab === "updates" && "Check the current status of your submissions from your signed-in patient account."}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="patient-portal-mobile-toolbar">
-                        <div className="patient-portal-mobile-toolbar-copy">
-                          <span className="patient-portal-mobile-toolbar-kicker">Current pharmacy</span>
-                          <strong>{pharmacy?.name || "Selected pharmacy"}</strong>
-                          <p>{pharmacy?.locationLabel || pharmacy?.location || "Branch-linked patient portal"}</p>
-                        </div>
-                        <button type="button" className="patient-portal-mobile-menu-button" onClick={() => setIsMobileMenuOpen(true)}>
-                          <Menu size={16} />
-                          Menu
-                        </button>
-                      </div>
-
-                      {renderFeedback()}
-                      {activeTab === "prescription" && renderPrescriptionForm()}
-                      {activeTab === "appointment" && renderAppointmentForm()}
-                      {activeTab === "maternal" && renderMaternalForm()}
-                      {activeTab === "delivery" && renderDeliveryForm()}
-                      {activeTab === "updates" && renderUpdatesPanel()}
-                    </>
-                  )}
-                </div>
-              </main>
-            </div>
-          </section>
-        )}
-
-        {hasActivePharmacy ? (
-          <nav className="patient-portal-mobile-nav" aria-label="Patient portal mobile navigation">
-            <button type="button" className="patient-portal-mobile-nav-home" onClick={scrollToPortalTop}>
-              <Home size={16} />
-              <span>Home</span>
+    <div className="portal-container">
+      <header className="portal-header">
+        <div className="portal-header-inner">
+          <div className="portal-brand">
+            <button className="portal-menu-toggle" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+              {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
-            {PORTAL_TABS.map((tab) => {
-              const Icon = tab.icon
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  className={`patient-portal-mobile-nav-item ${activeTab === tab.id ? "active" : ""}`}
-                  onClick={() => selectPortalTab(tab.id)}
-                >
-                  <Icon size={16} />
-                  <span>{tab.label.split(" ")[0]}</span>
-                </button>
-              )
-            })}
-          </nav>
-        ) : null}
-
-        {hasActivePharmacy && isMobileMenuOpen ? (
-          <div className="patient-portal-menu-overlay" role="presentation" onClick={closeMobileMenu}>
-            <div
-              className="patient-portal-menu-sheet"
-              role="dialog"
-              aria-modal="true"
-              aria-label="Patient portal menu"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <div className="patient-portal-menu-head">
-                <div>
-                  <span className="patient-portal-menu-kicker">Patient portal menu</span>
-                  <strong>{pharmacy?.name || "Selected pharmacy"}</strong>
-                  <p>{pharmacy?.locationLabel || pharmacy?.location || "Choose a section or switch pharmacy"}</p>
-                </div>
-                <button type="button" className="patient-portal-menu-close" onClick={closeMobileMenu} aria-label="Close menu">
-                  <X size={16} />
-                </button>
-              </div>
-
-              <div className="patient-portal-tab-list compact">
-                {PORTAL_TABS.map((tab) => {
-                  const Icon = tab.icon
-                  return (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      className={`patient-portal-tab compact ${activeTab === tab.id ? "active" : ""}`}
-                      onClick={() => selectPortalTab(tab.id)}
-                    >
-                      <Icon size={16} />
-                      <span>{tab.label}</span>
-                    </button>
-                  )
-                })}
-              </div>
-
-              <button type="button" className="btn btn-outline patient-portal-switch-btn" onClick={clearSelectedPharmacy}>
-                Choose a different pharmacy
-              </button>
-
-              <div className="patient-portal-sidebar-note">
-                Share this one link with patients:
-                <strong> pharmacourse.co.ke/patient</strong>
-              </div>
-
-              <div className="patient-portal-sidebar-card muted">
-                <h3>Emergency note</h3>
-                <p>
-                  For chest pain, severe bleeding, difficulty breathing, stroke symptoms, or collapse, go to the nearest hospital or call emergency services immediately.
-                </p>
-              </div>
+            <div className="portal-logo">
+              <span className="portal-logo-icon">💊</span>
+              <span>Pharma<span className="portal-logo-highlight">Course</span></span>
             </div>
           </div>
-        ) : null}
-      </div>
-    </>
+          <nav className={`portal-nav ${isMobileMenuOpen ? "open" : ""}`}>
+            {tabs.map((tab) => (
+              <button key={tab.id} className={`portal-nav-item ${activeTab === tab.id ? "active" : ""}`}
+                onClick={() => { setActiveTab(tab.id); setIsMobileMenuOpen(false) }}>
+                <tab.icon size={18} /><span>{tab.label}</span>
+              </button>
+            ))}
+          </nav>
+          <div className="portal-header-actions">
+            <button className="portal-notification-btn">
+              <Bell size={20} /><span className="portal-notification-dot">3</span>
+            </button>
+            <span className="portal-avatar-sm">{user.avatar}</span>
+          </div>
+        </div>
+        <div className="portal-search-bar">
+          <div className="portal-search-wrapper">
+            <Search size={18} className="portal-search-icon" />
+            <input className="portal-search-input" placeholder="Search for medicines, appointments, or pharmacy..."
+              value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => setSearchFocused(true)} onBlur={() => setSearchFocused(false)} />
+            {searchFocused && (
+              <div className="portal-search-suggestions">
+                <div className="portal-search-suggestion">Metformin 500mg</div>
+                <div className="portal-search-suggestion">Blood pressure check</div>
+                <div className="portal-search-suggestion">Delivery tracking</div>
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <main className="portal-main">
+        <div className="portal-content">{renderContent()}</div>
+      </main>
+
+      <nav className="portal-bottom-nav">
+        {tabs.slice(0, 4).map((tab) => (
+          <button key={tab.id} className={`portal-bottom-nav-item ${activeTab === tab.id ? "active" : ""}`} onClick={() => setActiveTab(tab.id)}>
+            <tab.icon size={20} /><span>{tab.label}</span>
+          </button>
+        ))}
+      </nav>
+
+      <style>{`
+        .portal-container { min-height: 100vh; background: linear-gradient(180deg, #f0faf6 0%, #e6f2ed 100%); font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #163329; }
+        .portal-header { background: rgba(255,255,255,0.95); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(15,110,86,0.08); position: sticky; top: 0; z-index: 50; }
+        .portal-header-inner { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; max-width: 1200px; margin: 0 auto; position: relative; }
+        .portal-brand { display: flex; align-items: center; gap: 0.75rem; }
+        .portal-menu-toggle { background: none; border: none; color: #163329; cursor: pointer; padding: 0.25rem; display: none; }
+        .portal-logo { display: flex; align-items: center; gap: 0.5rem; font-weight: 800; font-size: 1.1rem; }
+        .portal-logo-icon { font-size: 1.4rem; }
+        .portal-logo-highlight { color: #0f6e56; }
+        .portal-nav { display: flex; align-items: center; gap: 0.25rem; }
+        .portal-nav-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.85rem; border-radius: 12px; border: none; background: transparent; color: #5f746b; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.2s ease; }
+        .portal-nav-item:hover { background: rgba(15,110,86,0.06); color: #163329; }
+        .portal-nav-item.active { background: rgba(15,110,86,0.1); color: #0f6e56; }
+        .portal-header-actions { display: flex; align-items: center; gap: 0.75rem; }
+        .portal-notification-btn { position: relative; background: none; border: none; color: #5f746b; cursor: pointer; padding: 0.35rem; border-radius: 10px; }
+        .portal-notification-dot { position: absolute; top: -2px; right: -2px; width: 18px; height: 18px; border-radius: 50%; background: #ef4444; color: white; font-size: 0.6rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+        .portal-avatar-sm { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg,#0f6e56,#0d5d49); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; }
+        .portal-search-bar { padding: 0.5rem 1rem 0.75rem; max-width: 1200px; margin: 0 auto; }
+        .portal-search-wrapper { position: relative; }
+        .portal-search-icon { position: absolute; left: 0.85rem; top: 50%; transform: translateY(-50%); color: #8fa8a0; }
+        .portal-search-input { width: 100%; padding: 0.6rem 1rem 0.6rem 2.8rem; border-radius: 14px; border: 1.5px solid rgba(15,110,86,0.12); background: rgba(255,255,255,0.9); font-size: 0.9rem; color: #163329; outline: none; box-sizing: border-box; }
+        .portal-search-input:focus { border-color: #0f6e56; box-shadow: 0 0 0 4px rgba(15,110,86,0.08); }
+        .portal-search-suggestions { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: white; border-radius: 12px; border: 1px solid rgba(15,110,86,0.08); box-shadow: 0 12px 40px rgba(15,42,32,0.08); overflow: hidden; z-index: 20; }
+        .portal-search-suggestion { padding: 0.6rem 1rem; cursor: pointer; font-size: 0.85rem; color: #24463a; }
+        .portal-search-suggestion:hover { background: rgba(15,110,86,0.04); }
+        .portal-main { padding: 1rem; max-width: 1200px; margin: 0 auto; }
+        .portal-content { display: flex; flex-direction: column; gap: 1.5rem; }
+        .portal-welcome { background: linear-gradient(135deg,#0f6e56,#0d5d49); border-radius: 20px; padding: 1.5rem; color: white; }
+        .portal-welcome-content { display: flex; justify-content: space-between; align-items: flex-start; }
+        .portal-greeting { font-size: 0.85rem; opacity: 0.8; }
+        .portal-welcome-title { font-size: 1.6rem; font-weight: 800; margin: 0.2rem 0 0.1rem; letter-spacing: -0.02em; }
+        .portal-welcome-sub { font-size: 0.95rem; opacity: 0.75; margin: 0; }
+        .portal-avatar { width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,0.2); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.2rem; border: 2px solid rgba(255,255,255,0.3); }
+        .portal-stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 0.75rem; margin-top: 1rem; }
+        .portal-stat-card { background: rgba(255,255,255,0.12); border-radius: 14px; padding: 0.75rem; display: flex; align-items: center; gap: 0.6rem; }
+        .portal-stat-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.15); color: white; }
+        .portal-stat-info { display: flex; flex-direction: column; }
+        .portal-stat-value { font-size: 1.1rem; font-weight: 800; }
+        .portal-stat-label { font-size: 0.65rem; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.04em; }
+        .portal-section { background: white; border-radius: 16px; padding: 1.25rem; box-shadow: 0 2px 12px rgba(15,42,32,0.04); border: 1px solid rgba(15,110,86,0.06); }
+        .portal-section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .portal-section-title { font-size: 1.05rem; font-weight: 700; margin: 0; }
+        .portal-section-badge { font-size: 0.7rem; padding: 0.2rem 0.6rem; border-radius: 20px; background: rgba(15,110,86,0.08); color: #0f6e56; font-weight: 600; }
+        .portal-link-btn { background: none; border: none; color: #0f6e56; font-weight: 600; font-size: 0.85rem; cursor: pointer; }
+        .portal-quick-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(200px,1fr)); gap: 0.75rem; }
+        .portal-quick-card { display: flex; align-items: center; gap: 0.75rem; padding: 0.85rem; border-radius: 14px; border: 1px solid rgba(15,110,86,0.06); background: white; cursor: pointer; transition: all 0.2s ease; text-align: left; width: 100%; }
+        .portal-quick-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(15,42,32,0.06); border-color: rgba(15,110,86,0.12); }
+        .portal-quick-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .portal-quick-content { flex: 1; min-width: 0; }
+        .portal-quick-title { font-size: 0.85rem; font-weight: 700; margin: 0; }
+        .portal-quick-desc { font-size: 0.75rem; color: #5f746b; margin: 0.1rem 0 0; }
+        .portal-quick-arrow { color: #b0c4bb; flex-shrink: 0; }
+        .portal-activity-list { display: flex; flex-direction: column; gap: 0.5rem; }
+        .portal-activity-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0.75rem; border-radius: 12px; background: rgba(248,252,250,0.8); }
+        .portal-activity-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .portal-activity-content { flex: 1; min-width: 0; }
+        .portal-activity-top { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+        .portal-activity-title { font-weight: 600; font-size: 0.85rem; }
+        .portal-activity-status { font-size: 0.65rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 20px; flex-shrink: 0; }
+        .portal-status-pending { background: #fef3c7; color: #92400e; }
+        .portal-status-confirmed { background: #d1fae5; color: #065f46; }
+        .portal-status-dispatched { background: #dbeafe; color: #1e40af; }
+        .portal-activity-time { font-size: 0.7rem; color: #8fa8a0; }
+        .portal-features-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(160px,1fr)); gap: 0.75rem; }
+        .portal-feature-card { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 1rem; border-radius: 14px; border: 1px solid rgba(15,110,86,0.04); background: rgba(248,252,250,0.6); }
+        .portal-feature-icon { width: 40px; height: 40px; border-radius: 12px; background: rgba(15,110,86,0.08); color: #0f6e56; display: flex; align-items: center; justify-content: center; margin-bottom: 0.5rem; }
+        .portal-feature-title { font-size: 0.8rem; font-weight: 700; margin: 0; }
+        .portal-feature-desc { font-size: 0.7rem; color: #5f746b; margin: 0.2rem 0 0; line-height: 1.4; }
+        .portal-trust-section { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; padding: 0.5rem 0; }
+        .portal-trust-badge { display: flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.8rem; border-radius: 20px; background: rgba(15,110,86,0.04); color: #24463a; font-size: 0.75rem; font-weight: 500; }
+        .portal-trust-icon { color: #0f6e56; }
+        .portal-form-page { background: white; border-radius: 16px; padding: 1.5rem; box-shadow: 0 2px 12px rgba(15,42,32,0.04); border: 1px solid rgba(15,110,86,0.06); }
+        .portal-form-header { margin-bottom: 1.5rem; }
+        .portal-form-title { font-size: 1.25rem; font-weight: 800; margin: 0; }
+        .portal-form-sub { font-size: 0.9rem; color: #5f746b; margin: 0.2rem 0 0; }
+        .portal-form { display: flex; flex-direction: column; gap: 1rem; }
+        .portal-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .portal-form-group { display: flex; flex-direction: column; gap: 0.3rem; }
+        .portal-form-label-row { display: flex; justify-content: space-between; align-items: center; }
+        .portal-label { font-size: 0.8rem; font-weight: 700; color: #24463a; }
+        .portal-input, .portal-textarea { padding: 0.6rem 0.85rem; border-radius: 10px; border: 1.5px solid rgba(15,110,86,0.1); font-size: 0.9rem; color: #163329; background: white; outline: none; width: 100%; box-sizing: border-box; font-family: inherit; }
+        .portal-input:focus, .portal-textarea:focus { border-color: #0f6e56; box-shadow: 0 0 0 4px rgba(15,110,86,0.06); }
+        .portal-textarea { resize: vertical; }
+        .portal-radio-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 0.5rem; }
+        .portal-radio-card { padding: 0.75rem; border-radius: 12px; border: 2px solid rgba(15,110,86,0.08); background: white; cursor: pointer; text-align: center; }
+        .portal-radio-card.selected { border-color: #0f6e56; background: rgba(15,110,86,0.04); }
+        .portal-radio-card input { display: none; }
+        .portal-radio-content { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
+        .portal-radio-icon { width: 36px; height: 36px; border-radius: 10px; background: rgba(15,110,86,0.06); color: #0f6e56; display: flex; align-items: center; justify-content: center; }
+        .portal-radio-label { font-size: 0.75rem; font-weight: 600; color: #24463a; }
+        .portal-add-btn { display: flex; align-items: center; gap: 0.3rem; padding: 0.3rem 0.7rem; border-radius: 8px; border: 1px solid rgba(15,110,86,0.15); background: transparent; color: #0f6e56; font-weight: 600; font-size: 0.75rem; cursor: pointer; }
+        .portal-drug-list { display: flex; flex-direction: column; gap: 0.5rem; }
+        .portal-drug-item { display: flex; gap: 0.5rem; align-items: center; }
+        .portal-drug-item .portal-input { flex: 1; }
+        .portal-remove-btn { padding: 0.3rem 0.5rem; border-radius: 8px; border: 1px solid rgba(239,68,68,0.15); background: transparent; color: #ef4444; cursor: pointer; display: flex; align-items: center; }
+        .portal-upload-zone { border: 2px dashed rgba(15,110,86,0.2); border-radius: 14px; padding: 1.5rem; text-align: center; background: rgba(248,252,250,0.6); }
+        .portal-upload-icon { color: #0f6e56; margin-bottom: 0.5rem; }
+        .portal-upload-text { font-weight: 600; margin: 0; }
+        .portal-upload-sub { font-size: 0.75rem; color: #5f746b; margin: 0.2rem 0 0; }
+        .portal-submit-btn { padding: 0.75rem 1.5rem; border-radius: 12px; border: none; background: linear-gradient(135deg,#0f6e56,#0d5d49); color: white; font-weight: 700; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-top: 0.5rem; }
+        .portal-submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .portal-spinner { animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .portal-delivery-qty { max-width: 70px; }
+        .portal-empty-state { text-align: center; padding: 2rem; }
+        .portal-empty-icon { color: #b0c4bb; margin-bottom: 0.5rem; }
+        .portal-empty-title { font-size: 1rem; font-weight: 700; margin: 0; }
+        .portal-empty-desc { font-size: 0.85rem; color: #5f746b; margin: 0.2rem 0 0; }
+        .portal-bottom-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(12px); border-top: 1px solid rgba(15,110,86,0.06); padding: 0.4rem 0.5rem 0.6rem; justify-content: space-around; z-index: 40; }
+        .portal-bottom-nav-item { display: flex; flex-direction: column; align-items: center; gap: 0.1rem; background: none; border: none; color: #8fa8a0; font-size: 0.6rem; font-weight: 600; cursor: pointer; padding: 0.2rem 0.5rem; }
+        .portal-bottom-nav-item.active { color: #0f6e56; }
+        @media (max-width: 768px) {
+          .portal-menu-toggle { display: block; }
+          .portal-nav { display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; flex-direction: column; padding: 0.5rem; border-bottom: 1px solid rgba(15,110,86,0.06); box-shadow: 0 12px 40px rgba(15,42,32,0.06); }
+          .portal-nav.open { display: flex; }
+          .portal-nav-item { width: 100%; padding: 0.6rem 0.85rem; }
+          .portal-stats-grid { grid-template-columns: repeat(2,1fr); }
+          .portal-quick-grid { grid-template-columns: 1fr; }
+          .portal-form-row { grid-template-columns: 1fr; }
+          .portal-radio-grid { grid-template-columns: 1fr; }
+          .portal-features-grid { grid-template-columns: repeat(2,1fr); }
+          .portal-bottom-nav { display: flex; }
+          .portal-main { padding-bottom: 4.5rem; }
+        }
+        @media (max-width: 480px) {
+          .portal-welcome-title { font-size: 1.2rem; }
+          .portal-features-grid { grid-template-columns: 1fr; }
+        }
+      `}</style>
+    </div>
   )
 }

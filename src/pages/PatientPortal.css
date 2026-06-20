@@ -1,2924 +1,645 @@
-.patient-portal-page {
-  min-height: 100vh;
-  position: relative;
-  overflow: hidden;
-  color: #163329;
-  background:
-    radial-gradient(circle at top left, rgba(15, 110, 86, 0.16), transparent 26%),
-    radial-gradient(circle at right 12%, rgba(26, 107, 181, 0.08), transparent 18%),
-    linear-gradient(180deg, #f6fbf8 0%, #edf5f0 100%);
-}
-
-.patient-portal-page::before,
-.patient-portal-page::after {
-  content: "";
-  position: absolute;
-  inset: auto;
-  pointer-events: none;
-  border-radius: 999px;
-  filter: blur(10px);
-  opacity: 0.65;
-}
-
-.patient-portal-page::before {
-  width: 22rem;
-  height: 22rem;
-  top: 2rem;
-  right: -8rem;
-  background: rgba(15, 110, 86, 0.08);
-}
-
-.patient-portal-page::after {
-  width: 16rem;
-  height: 16rem;
-  left: -5rem;
-  bottom: 18rem;
-  background: rgba(26, 107, 181, 0.08);
-}
-
-.patient-portal-hero {
-  position: relative;
-  padding: clamp(1.2rem, 3vw, 2rem) 0 1rem;
-}
-
-.patient-portal-hero-inner {
-  width: min(1180px, calc(100% - 1rem));
-  margin: 0 auto;
-  padding: clamp(1.2rem, 3.5vw, 2.4rem);
-  border-radius: 30px;
-  border: 1px solid rgba(15, 110, 86, 0.14);
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(240, 249, 245, 0.95)),
-    radial-gradient(circle at top right, rgba(15, 110, 86, 0.08), transparent 32%);
-  box-shadow: 0 28px 70px rgba(15, 42, 32, 0.12);
-  position: relative;
-  z-index: 1;
-}
-
-.patient-portal-hero-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(300px, 0.95fr);
-  gap: 1.35rem;
-  align-items: center;
-}
-
-.patient-portal-hero-copy {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.patient-portal-badge {
-  display: inline-flex;
-  align-items: center;
-  width: fit-content;
-  padding: 0.42rem 0.82rem;
-  border-radius: 999px;
-  background: rgba(15, 110, 86, 0.1);
-  color: var(--green);
-  font-size: 0.76rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.patient-portal-hero h1 {
-  margin: 0;
-  max-width: 11ch;
-  font-size: clamp(2.4rem, 5vw, 4.4rem);
-  line-height: 0.96;
-  letter-spacing: -0.04em;
-}
-
-.patient-portal-hero p {
-  margin: 0;
-  max-width: 760px;
-  color: var(--text-500);
-  font-size: 1.02rem;
-  line-height: 1.65;
-}
-
-.patient-portal-hero-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-.patient-portal-hero-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.8rem 1.05rem;
-  border-radius: 999px;
-  border: 1px solid transparent;
-  font-weight: 800;
-  text-decoration: none;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
-}
-
-.patient-portal-hero-button:hover {
-  transform: translateY(-1px);
-}
-
-.patient-portal-hero-button.primary {
-  color: #fff;
-  background: linear-gradient(135deg, #0f6e56, #0d5d49);
-  box-shadow: 0 14px 28px rgba(15, 110, 86, 0.24);
-}
-
-.patient-portal-hero-button.secondary {
-  color: var(--green);
-  background: rgba(255, 255, 255, 0.95);
-  border-color: rgba(15, 110, 86, 0.16);
-}
-
-.patient-portal-hero-button.ghost {
-  color: #24463a;
-  background: rgba(15, 110, 86, 0.06);
-  border-color: rgba(15, 110, 86, 0.1);
-}
-
-.patient-portal-trust-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-}
-
-.patient-portal-trust-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.55rem 0.8rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.82);
-  border: 1px solid rgba(15, 110, 86, 0.1);
-  color: #24463a;
-  font-size: 0.88rem;
-  font-weight: 700;
-  box-shadow: 0 10px 24px rgba(15, 42, 32, 0.05);
-}
-
-.patient-portal-branch-card {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 0.95rem;
-  padding: 1rem 1.05rem;
-  border-radius: 22px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(241, 249, 246, 0.92));
-  border: 1px solid rgba(15, 110, 86, 0.12);
-  box-shadow: 0 12px 28px rgba(15, 42, 32, 0.05);
-}
-
-.patient-portal-branch-card strong,
-.patient-portal-section-head h3,
-.patient-portal-panel-head h2,
-.patient-portal-sidebar-card h2,
-.patient-portal-sidebar-card h3,
-.patient-portal-update-title,
-.patient-portal-preview-card strong,
-.patient-portal-phone-name {
-  display: block;
-  color: var(--text-900);
-}
-
-.patient-portal-branch-card span,
-.patient-portal-section-head p,
-.patient-portal-panel-head p,
-.patient-portal-sidebar-card p,
-.patient-portal-update-text,
-.patient-portal-update-time,
-.patient-portal-total,
-.patient-portal-preview-card p,
-.patient-portal-phone-meta,
-.patient-portal-phone-hero p,
-.patient-portal-phone-tile span {
-  color: var(--text-500);
-}
-
-.patient-portal-hero-preview {
-  display: grid;
-  gap: 0.95rem;
-  align-self: stretch;
-}
-
-.patient-portal-phone-frame {
-  position: relative;
-  border-radius: 34px;
-  border: 6px solid #17231f;
-  background: #f0faf6;
-  overflow: hidden;
-  box-shadow: 0 24px 60px rgba(15, 42, 32, 0.16);
-}
-
-.patient-portal-phone-notch {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  z-index: 2;
-  width: 72px;
-  height: 12px;
-  border-radius: 0 0 10px 10px;
-  background: #17231f;
-  transform: translateX(-50%);
-}
-
-.patient-portal-phone-shell {
-  display: flex;
-  min-height: 100%;
-  flex-direction: column;
-  padding-top: 12px;
-  overflow: hidden;
-}
-
-.patient-portal-phone-screen {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  flex: 1 1 auto;
-  background: linear-gradient(180deg, #f0faf6 0%, #e6f2ed 100%);
-  color: #163329;
-}
-
-.patient-portal-phone-header {
-  background: rgba(255, 255, 255, 0.95);
-  position: sticky;
-  top: 0;
-  z-index: 15;
-  padding-top: 28px;
-}
-
-.patient-portal-phone-header-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.8rem;
-  padding: 0.6rem 0.9rem;
-}
-
-.patient-portal-phone-brand {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.patient-portal-menu-icon {
-  font-size: 1.2rem;
-}
-
-.patient-portal-logo {
-  font-weight: 800;
-  font-size: 1rem;
-}
-
-.patient-portal-logo-highlight {
-  color: #0f6e56;
-}
-
-.patient-portal-phone-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-
-.patient-portal-bell-wrap {
-  position: relative;
-  font-size: 1.1rem;
-  display: inline-flex;
-  align-items: center;
-}
-
-.patient-portal-bell-dot {
-  position: absolute;
-  top: -4px;
-  right: -6px;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: #ef4444;
-  color: white;
-  font-size: 0.55rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.patient-portal-avatar-sm {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #0f6e56, #0d5d49);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 0.7rem;
-}
-
-.patient-portal-search-bar {
-  padding: 0.4rem 0.9rem 0.6rem;
-}
-
-.patient-portal-search-wrap {
-  position: relative;
-}
-
-.patient-portal-search-icon {
-  position: absolute;
-  left: 0.7rem;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 0.9rem;
-  opacity: 0.5;
-}
-
-.patient-portal-search-input {
-  width: 100%;
-  padding: 0.55rem 0.85rem 0.55rem 2.4rem;
-  border-radius: 12px;
-  border: 1.5px solid rgba(15, 110, 86, 0.12);
-  background: rgba(255, 255, 255, 0.9);
-  font-size: 0.8rem;
-}
-
-.patient-portal-phone-scroll {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  padding-bottom: 70px;
-}
-
-.patient-portal-welcome {
-  background: linear-gradient(135deg, #0f6e56, #0d5d49);
-  border-radius: 18px;
-  padding: 1.1rem;
-  color: white;
-}
-
-.patient-portal-welcome-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-}
-
-.patient-portal-greeting {
-  font-size: 0.75rem;
-  opacity: 0.8;
-}
-
-.patient-portal-welcome-title {
-  font-size: 1.25rem;
-  font-weight: 800;
-  margin: 0.15rem 0 0.05rem;
-}
-
-.patient-portal-welcome-sub {
-  font-size: 0.8rem;
-  opacity: 0.75;
-  margin: 0;
-}
-
-.patient-portal-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 1rem;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-}
-
-.patient-portal-stats-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.5rem;
-  margin-top: 0.85rem;
-}
-
-.patient-portal-stat-card {
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
-  padding: 0.55rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.patient-portal-stat-icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.15);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.85rem;
-}
-
-.patient-portal-stat-value {
-  font-size: 0.95rem;
-  font-weight: 800;
-  line-height: 1.1;
-}
-
-.patient-portal-stat-label {
-  font-size: 0.55rem;
-  opacity: 0.8;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.patient-portal-section {
-  background: white;
-  border-radius: 14px;
-  padding: 1rem;
-  box-shadow: 0 2px 12px rgba(15, 42, 32, 0.04);
-  border: 1px solid rgba(15, 110, 86, 0.06);
-}
-
-.patient-portal-section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.75rem;
-}
-
-.patient-portal-section-title {
-  font-size: 0.95rem;
-  font-weight: 700;
-  margin: 0;
-}
-
-.patient-portal-section-badge {
-  font-size: 0.6rem;
-  padding: 0.15rem 0.5rem;
-  border-radius: 20px;
-  background: rgba(15, 110, 86, 0.08);
-  color: #0f6e56;
-  font-weight: 600;
-}
-
-.patient-portal-section-link {
-  cursor: pointer;
-  color: #0f6e56;
-}
-
-.patient-portal-quick-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-}
-
-.patient-portal-quick-card {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.7rem;
-  border-radius: 12px;
-  border: 1px solid rgba(15, 110, 86, 0.06);
-}
-
-.patient-portal-quick-icon {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.05rem;
-  flex-shrink: 0;
-}
-
-.patient-portal-quick-title {
-  font-size: 0.78rem;
-  font-weight: 700;
-  margin: 0;
-}
-
-.patient-portal-quick-desc {
-  font-size: 0.66rem;
-  color: #5f746b;
-  margin: 0.1rem 0 0;
-}
-
-.patient-portal-quick-arrow {
-  margin-left: auto;
-  color: #b0c4bb;
-}
-
-.patient-portal-activity-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-}
-
-.patient-portal-activity-item {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.55rem 0.6rem;
-  border-radius: 10px;
-  background: rgba(248, 252, 250, 0.8);
-}
-
-.patient-portal-activity-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.9rem;
-  flex-shrink: 0;
-}
-
-.patient-portal-activity-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.patient-portal-activity-title {
-  font-weight: 600;
-  font-size: 0.75rem;
-}
-
-.patient-portal-activity-status {
-  font-size: 0.58rem;
-  font-weight: 600;
-  padding: 0.1rem 0.4rem;
-  border-radius: 20px;
-  flex-shrink: 0;
-}
-
-.status-pending {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.status-confirmed {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.status-dispatched {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.patient-portal-activity-time {
-  font-size: 0.62rem;
-  color: #8fa8a0;
-}
-
-.patient-portal-features-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.6rem;
-}
-
-.patient-portal-feature-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 0.8rem;
-  border-radius: 12px;
-  background: rgba(248, 252, 250, 0.6);
-}
-
-.patient-portal-feature-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  background: rgba(15, 110, 86, 0.08);
-  color: #0f6e56;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 0.4rem;
-  font-size: 0.95rem;
-}
-
-.patient-portal-feature-title {
-  font-size: 0.72rem;
-  font-weight: 700;
-  margin: 0;
-}
-
-.patient-portal-feature-desc {
-  font-size: 0.62rem;
-  color: #5f746b;
-  margin: 0.15rem 0 0;
-  line-height: 1.3;
-}
-
-.patient-portal-trust-section {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.3rem 0 0.8rem;
-}
-
-.patient-portal-trust-badge {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.25rem 0.6rem;
-  border-radius: 20px;
-  background: rgba(15, 110, 86, 0.04);
-  font-size: 0.65rem;
-  font-weight: 500;
-}
-
-.patient-portal-phone-bottom-nav {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.25rem;
-  margin: 0.3rem 0.85rem 0.9rem;
-  padding: 0.3rem;
-  border-radius: 999px;
-  border: 1px solid rgba(15, 110, 86, 0.08);
-  background: rgba(255, 255, 255, 0.96);
-}
-
-.patient-portal-phone-tab {
-  height: 2rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.12rem;
-  border-radius: 999px;
-  color: #7f9189;
-  font-size: 0.62rem;
-  font-weight: 800;
-}
-
-.patient-portal-phone-tab.active {
-  background: #0f6e56;
-  color: #fff;
-}
-
-.patient-portal-preview-stack {
-  display: grid;
-  gap: 0.85rem;
-}
-
-.patient-portal-phone-kicker {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  margin-bottom: 0.15rem;
-  color: #0f6e56;
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.patient-portal-phone-name {
-  font-size: 1rem;
-  font-weight: 800;
-  line-height: 1.2;
-}
-
-.patient-portal-phone-meta {
-  font-size: 0.8rem;
-  line-height: 1.45;
-}
-
-.patient-portal-phone-powered {
-  flex-shrink: 0;
-  align-self: flex-start;
-  padding: 0.3rem 0.6rem;
-  border-radius: 999px;
-  background: rgba(15, 110, 86, 0.1);
-  color: #0f6e56;
-  font-size: 0.68rem;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.patient-portal-phone-content {
-  display: grid;
-  gap: 0.85rem;
-  padding: 0.95rem;
-}
-
-.patient-portal-phone-hero {
-  display: grid;
-  gap: 0.35rem;
-  padding: 0.95rem;
-  border-radius: 22px;
-  border: 1px solid rgba(15, 110, 86, 0.1);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(239, 248, 244, 0.95));
-  box-shadow: 0 12px 28px rgba(15, 42, 32, 0.05);
-}
-
-.patient-portal-phone-hero h2 {
-  margin: 0.25rem 0 0;
-  font-size: 1.05rem;
-  line-height: 1.15;
-}
-
-.patient-portal-phone-hero p {
-  margin: 0;
-  font-size: 0.88rem;
-  line-height: 1.55;
-}
-
-.patient-portal-phone-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.65rem;
-}
-
-.patient-portal-phone-tile {
-  display: grid;
-  gap: 0.35rem;
-  padding: 0.82rem;
-  border-radius: 18px;
-  border: 1px solid rgba(15, 110, 86, 0.1);
-  background: rgba(255, 255, 255, 0.97);
-  box-shadow: 0 10px 24px rgba(15, 42, 32, 0.04);
-}
-
-.patient-portal-phone-tiles {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.65rem;
-}
-
-.patient-portal-phone-icon {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 10px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(15, 110, 86, 0.1);
-  color: #0f6e56;
-}
-
-.patient-portal-phone-tile strong {
-  font-size: 0.88rem;
-}
-
-.patient-portal-phone-tile span {
-  font-size: 0.78rem;
-  line-height: 1.45;
-}
-
-.patient-portal-phone-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.8rem;
-  padding: 0 0.1rem;
-  color: #24463a;
-  font-size: 0.82rem;
-  font-weight: 800;
-}
-
-.patient-portal-phone-footer-copy,
-.patient-portal-phone-footer-action {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.patient-portal-phone-footer-action {
-  color: #0f6e56;
-}
-
-.patient-portal-phone-bottom-nav {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.25rem;
-  margin: 0.3rem 0.85rem 0.9rem;
-  padding: 0.3rem;
-  border-radius: 999px;
-  border: 1px solid rgba(15, 110, 86, 0.08);
-  background: rgba(255, 255, 255, 0.96);
-}
-
-.patient-portal-phone-tab {
-  height: 2rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.12rem;
-  border-radius: 999px;
-  color: #7f9189;
-  font-size: 0.62rem;
-  font-weight: 800;
-}
-
-.patient-portal-phone-tab.active {
-  background: #0f6e56;
-  color: #fff;
-}
-
-.patient-portal-preview-stack {
-  display: grid;
-  gap: 0.85rem;
-}
-
-.patient-portal-preview-card {
-  display: grid;
-  gap: 0.35rem;
-  padding: 1rem 1.05rem;
-  border-radius: 22px;
-  border: 1px solid rgba(15, 110, 86, 0.1);
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 12px 28px rgba(15, 42, 32, 0.05);
-}
-
-.patient-portal-preview-card.accent {
-  border-color: rgba(15, 110, 86, 0.14);
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.98), rgba(15, 110, 86, 0.05));
-}
-
-.patient-portal-preview-kicker {
-  color: #0f6e56;
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.patient-portal-preview-card strong {
-  font-size: 1rem;
-}
-
-.patient-portal-preview-card p {
-  margin: 0;
-  font-size: 0.9rem;
-  line-height: 1.55;
-}
-
-.patient-install-card {
-  display: grid;
-  gap: 0.95rem;
-  margin-top: 0.15rem;
-  padding: 1rem;
-  border-radius: 22px;
-  border: 1px solid rgba(15, 110, 86, 0.14);
-  background:
-    radial-gradient(circle at top right, rgba(15, 110, 86, 0.08), transparent 30%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(239, 248, 244, 0.95));
-  box-shadow: 0 14px 30px rgba(15, 42, 32, 0.06);
-}
-
-.patient-install-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.8rem;
-}
-
-.patient-install-icon,
-.patient-install-close {
-  width: 42px;
-  height: 42px;
-  border-radius: 16px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.patient-install-icon {
-  background: rgba(15, 110, 86, 0.1);
-  color: #0f6e56;
-}
-
-.patient-install-icon svg,
-.patient-install-close svg {
-  width: 18px;
-  height: 18px;
-}
-
-.patient-install-close {
-  border: 1px solid rgba(15, 110, 86, 0.1);
-  background: rgba(255, 255, 255, 0.9);
-  color: #6b7f76;
-  cursor: pointer;
-}
-
-.patient-install-copy h2 {
-  margin: 0.2rem 0 0.3rem;
-  color: #163329;
-  font-size: 1rem;
-}
-
-.patient-install-copy p,
-.patient-install-ios-row span {
-  color: #5f746b;
-  font-size: 0.9rem;
-  line-height: 1.55;
-}
-
-.patient-install-kicker {
-  color: #0f6e56;
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.patient-install-actions {
-  display: grid;
-  gap: 0.65rem;
-}
-
-.patient-install-actions .patient-button,
-.patient-install-actions .patient-button-secondary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.55rem;
-}
-
-.patient-install-actions .patient-button svg,
-.patient-install-ios-row svg {
-  width: 18px;
-  height: 18px;
-}
-
-.patient-install-steps {
-  display: grid;
-  gap: 0.65rem;
-}
-
-.patient-install-step {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 0.7rem;
-  align-items: start;
-  padding: 0.85rem 0.9rem;
-  border-radius: 16px;
-  border: 1px solid rgba(15, 110, 86, 0.12);
-  background: rgba(255, 255, 255, 0.86);
-}
-
-.patient-install-step-badge {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(15, 110, 86, 0.1);
-  color: #0f6e56;
-  font-size: 0.82rem;
-  font-weight: 800;
-  flex-shrink: 0;
-}
-
-.patient-install-step strong {
-  display: block;
-  color: #163329;
-  font-size: 0.92rem;
-  line-height: 1.35;
-}
-
-.patient-install-step span {
-  display: block;
-  margin-top: 0.2rem;
-  color: #5f746b;
-  font-size: 0.86rem;
-  line-height: 1.5;
-}
-
-.patient-install-step em {
-  font-style: normal;
-  font-weight: 800;
-  color: #24463a;
-}
-
-.patient-install-ios {
-  display: grid;
-  gap: 0.65rem;
-}
-
-.patient-install-ios-row {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  padding: 0.75rem 0.85rem;
-  border-radius: 16px;
-  background: rgba(15, 110, 86, 0.06);
-  color: #24463a;
-}
-
-.patient-portal-turnstile-wrap {
-  margin-top: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-}
-
-.patient-portal-turnstile {
-  min-height: 66px;
-}
-
-.patient-portal-turnstile-note {
-  color: var(--text-500);
-  font-size: 0.9rem;
-}
-
-.patient-portal-turnstile-error {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  color: #b42318;
-  font-size: 0.9rem;
-}
-
-.patient-portal-turnstile-reset {
-  align-self: flex-start;
-  border: 0;
-  background: transparent;
-  color: var(--green);
-  cursor: pointer;
-  font-weight: 700;
-  padding: 0;
-}
-
-.patient-portal-content {
-  padding: 0 1rem 3rem;
-  position: relative;
-  z-index: 1;
-}
-
-.patient-portal-shell {
-  width: min(1180px, calc(100% - 1rem));
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 320px minmax(0, 1fr);
-  gap: 1.25rem;
-  align-items: start;
-}
-
-.patient-portal-sidebar {
-  position: sticky;
-  top: 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.patient-portal-sidebar-card,
-.patient-portal-panel,
-.patient-portal-items-card,
-.patient-portal-update-card {
-  border: 1px solid rgba(223, 232, 227, 0.95);
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 16px 38px rgba(15, 42, 32, 0.06);
-}
-
-.patient-portal-sidebar-card {
-  padding: 1.15rem;
-}
-
-.patient-portal-sidebar-card.muted {
-  background: rgba(255, 251, 235, 0.88);
-  border-color: rgba(245, 158, 11, 0.24);
-}
-
-.patient-portal-search {
-  margin-top: 1rem;
-}
-
-.patient-portal-filter-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-top: 0.9rem;
-}
-
-.patient-portal-filter-clear {
-  width: 100%;
-}
-
-.patient-portal-sidebar-note {
-  margin-top: 1rem;
-  padding: 0.9rem 1rem;
-  border-radius: 16px;
-  background: rgba(15, 110, 86, 0.08);
-  color: var(--text-700);
-  font-size: 0.9rem;
-  line-height: 1.6;
-}
-
-.patient-portal-switch-btn {
-  width: 100%;
-  margin-top: 1rem;
-}
-
-.patient-portal-tab-list {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.7rem;
-  margin-top: 1rem;
-}
-
-.patient-portal-tab {
-  min-height: 5rem;
-  display: grid;
-  align-content: start;
-  gap: 0.55rem;
-  text-align: left;
-  border: 1px solid rgba(15, 110, 86, 0.12);
-  border-radius: 18px;
-  background: rgba(248, 252, 250, 0.96);
-  padding: 0.9rem;
-  color: var(--text-700);
-  font-weight: 700;
-  cursor: pointer;
-  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
-  box-shadow: 0 10px 24px rgba(15, 42, 32, 0.04);
-}
-
-.patient-portal-tab:hover {
-  transform: translateY(-1px);
-  border-color: rgba(15, 110, 86, 0.24);
-  box-shadow: 0 14px 28px rgba(15, 42, 32, 0.08);
-}
-
-.patient-portal-tab.active {
-  transform: translateY(-1px);
-  border-color: rgba(15, 110, 86, 0.34);
-  box-shadow: 0 16px 32px rgba(15, 42, 32, 0.12);
-  color: var(--green);
-}
-
-.patient-portal-tab.tone-green {
-  background: linear-gradient(160deg, rgba(15, 110, 86, 0.1), rgba(255, 255, 255, 0.98));
-}
-
-.patient-portal-tab.tone-blue {
-  background: linear-gradient(160deg, rgba(26, 107, 181, 0.1), rgba(255, 255, 255, 0.98));
-}
-
-.patient-portal-tab.tone-rose {
-  background: linear-gradient(160deg, rgba(190, 24, 93, 0.1), rgba(255, 255, 255, 0.98));
-}
-
-.patient-portal-tab.tone-amber {
-  background: linear-gradient(160deg, rgba(217, 119, 6, 0.1), rgba(255, 255, 255, 0.98));
-}
-
-.patient-portal-tab.tone-ink {
-  background: linear-gradient(160deg, rgba(36, 70, 58, 0.1), rgba(255, 255, 255, 0.98));
-}
-
-.patient-portal-tab-icon {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #0f6e56;
-  background: rgba(255, 255, 255, 0.72);
-}
-
-.patient-portal-tab-copy {
-  display: block;
-  font-size: 0.82rem;
-  line-height: 1.3;
-}
-
-.patient-portal-main {
-  min-width: 0;
-}
-
-.patient-portal-panel {
-  padding: clamp(1.15rem, 3vw, 2rem);
-}
-
-.patient-portal-panel-head {
-  margin-bottom: 1rem;
-}
-
-.patient-portal-empty {
-  padding: 1.2rem;
-  border-radius: 14px;
-  background: rgba(248, 252, 250, 0.96);
-  border: 1px dashed rgba(15, 110, 86, 0.2);
-  color: var(--text-500);
-}
-
-.patient-portal-directory {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.patient-portal-global-updates,
-.patient-portal-global-group {
-  padding: 1.1rem 1.2rem;
-  border-radius: 14px;
-  background: rgba(248, 252, 250, 0.96);
-  border: 1px solid rgba(15, 110, 86, 0.12);
-}
-
-.patient-portal-global-groups {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.patient-portal-global-group-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 1rem;
-  margin-bottom: 0.9rem;
-}
-
-.patient-portal-global-group-head h3 {
-  color: var(--text-900);
-}
-
-.patient-portal-global-group-head p {
-  color: var(--text-500);
-  margin-top: 0.25rem;
-}
-
-.patient-portal-directory-summary {
-  color: var(--text-500);
-  font-size: 0.95rem;
-}
-
-.patient-portal-directory-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.9rem;
-}
-
-.patient-portal-branch-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-}
-
-.patient-portal-branch-group + .patient-portal-branch-group {
-  margin-top: 0.4rem;
-}
-
-.patient-portal-branch-group-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-}
-
-.patient-portal-branch-group-head h4 {
-  color: var(--text-900);
-  font-size: 0.98rem;
-}
-
-.patient-portal-branch-group-head span {
-  min-width: 32px;
-  height: 32px;
-  border-radius: 999px;
-  background: rgba(26, 107, 181, 0.08);
-  color: var(--blue);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-}
-
-.patient-portal-directory-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-}
-
-.patient-portal-directory-head h3 {
-  color: var(--text-900);
-}
-
-.patient-portal-directory-head p {
-  color: var(--text-500);
-  margin-top: 0.25rem;
-}
-
-.patient-portal-directory-head span {
-  min-width: 34px;
-  height: 34px;
-  border-radius: 999px;
-  background: rgba(15, 110, 86, 0.08);
-  color: var(--green);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-}
-
-.patient-portal-card-rail {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(250px, 300px);
-  gap: 1rem;
-  overflow-x: auto;
-  padding-bottom: 0.35rem;
-  scroll-snap-type: x proximity;
-  scrollbar-width: thin;
-}
-
-.patient-portal-card-rail::-webkit-scrollbar {
-  height: 10px;
-}
-
-.patient-portal-card-rail::-webkit-scrollbar-thumb {
-  background: rgba(15, 110, 86, 0.18);
-  border-radius: 999px;
-}
-
-.patient-portal-choice-card {
-  text-align: left;
-  border: 1px solid rgba(15, 110, 86, 0.14);
-  border-radius: 14px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 251, 247, 0.98));
-  padding: 1rem;
-  cursor: pointer;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
-  box-shadow: 0 12px 30px rgba(15, 42, 32, 0.05);
-  scroll-snap-align: start;
-}
-
-.patient-portal-choice-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(15, 110, 86, 0.3);
-  box-shadow: 0 18px 36px rgba(15, 42, 32, 0.09);
-}
-
-.patient-portal-choice-card.branch {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 250, 255, 0.98));
-}
-
-.patient-portal-choice-card.selected {
-  border-color: rgba(15, 110, 86, 0.36);
-  box-shadow: 0 18px 36px rgba(15, 42, 32, 0.1);
-}
-
-.patient-portal-choice-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.9rem;
-}
-
-.patient-portal-choice-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.32rem 0.62rem;
-  border-radius: 999px;
-  background: rgba(15, 110, 86, 0.1);
-  color: var(--green);
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.patient-portal-choice-badge.branch {
-  background: rgba(26, 107, 181, 0.1);
-  color: var(--blue);
-}
-
-.patient-portal-choice-count {
-  color: var(--text-500);
-  font-size: 0.8rem;
-  font-weight: 700;
-}
-
-.patient-portal-choice-title {
-  color: var(--text-900);
-  font-size: 1.05rem;
-  font-weight: 800;
-  margin-bottom: 0.3rem;
-}
-
-.patient-portal-choice-parent {
-  color: var(--green);
-  font-size: 0.86rem;
-  font-weight: 700;
-  margin-bottom: 0.35rem;
-}
-
-.patient-portal-choice-location-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem;
-  margin-bottom: 0.55rem;
-}
-
-.patient-portal-choice-chip {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.3rem 0.62rem;
-  border-radius: 999px;
-  background: rgba(15, 110, 86, 0.08);
-  color: var(--green);
-  font-size: 0.74rem;
-  font-weight: 700;
-}
-
-.patient-portal-choice-meta {
-  color: var(--text-500);
-  font-size: 0.92rem;
-}
-
-.patient-portal-choice-action {
-  margin-top: 0.95rem;
-  color: var(--green);
-  font-size: 0.86rem;
-  font-weight: 800;
-}
-
-.patient-portal-choice-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.65rem;
-  margin-top: 0.95rem;
-}
-
-.patient-portal-choice-actions .btn {
-  flex: 1 1 150px;
-}
-
-.patient-portal-load-more {
-  width: fit-content;
-}
-
-.patient-portal-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
-.patient-portal-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
-}
-
-.patient-portal-span-full {
-  grid-column: 1 / -1;
-}
-
-.patient-portal-feedback {
-  margin-bottom: 1rem;
-  padding: 0.95rem 1rem;
-  border-radius: 18px;
-  font-size: 0.92rem;
-  font-weight: 600;
-}
-
-.patient-portal-feedback.success {
-  background: rgba(22, 163, 74, 0.1);
-  border: 1px solid rgba(22, 163, 74, 0.16);
-  color: #166534;
-}
-
-.patient-portal-feedback.error {
-  background: rgba(220, 38, 38, 0.08);
-  border: 1px solid rgba(220, 38, 38, 0.14);
-  color: #b91c1c;
-}
-
-.patient-portal-submit {
-  width: fit-content;
-}
-
-.patient-portal-items-card {
-  padding: 1rem;
-}
-
-.patient-portal-section-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.patient-portal-section-head.compact {
-  margin-bottom: 0.8rem;
-}
-
-.patient-portal-section-head.compact p {
-  color: var(--text-500);
-  margin-top: 0.2rem;
-  font-size: 0.9rem;
-}
-
-.patient-portal-items-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-}
-
-.patient-portal-items-list.compact {
-  gap: 0.65rem;
-}
-
-.patient-portal-item-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1.5fr) 100px 140px 100px;
-  gap: 0.75rem;
-  align-items: center;
-}
-
-.patient-portal-item-row.compact {
-  grid-template-columns: minmax(0, 1fr) 100px;
-}
-
-.patient-portal-remove {
-  border: 1px solid rgba(220, 38, 38, 0.16);
-  border-radius: 14px;
-  background: rgba(220, 38, 38, 0.06);
-  color: #b91c1c;
-  padding: 0.82rem 0.75rem;
-  cursor: pointer;
-  font-weight: 700;
-}
-
-.patient-portal-track-bar {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.8rem;
-  margin-bottom: 1rem;
-}
-
-.patient-portal-track-message {
-  margin-bottom: 1rem;
-  color: var(--text-500);
-}
-
-.patient-portal-timeline {
-  display: flex;
-  flex-direction: column;
-  gap: 0.9rem;
-}
-
-.patient-portal-update-card {
-  padding: 1rem 1.05rem;
-}
-
-.patient-portal-track-card {
-  border: 1px solid rgba(223, 232, 227, 0.95);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: var(--shadow-sm);
-}
-
-.patient-portal-track-card[open] {
-  border-color: rgba(15, 110, 86, 0.2);
-  box-shadow: 0 14px 28px rgba(15, 42, 32, 0.08);
-}
-
-.patient-portal-track-card-summary {
-  list-style: none;
-  cursor: pointer;
-  padding: 1rem 1.05rem;
-}
-
-.patient-portal-track-card-summary::-webkit-details-marker {
-  display: none;
-}
-
-.patient-portal-track-card-main {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  align-items: flex-start;
-}
-
-.patient-portal-track-card-meta {
-  display: grid;
-  gap: 0.2rem;
-  text-align: right;
-  color: var(--text-500);
-  font-size: 0.82rem;
-  flex-shrink: 0;
-}
-
-.patient-portal-track-card-body {
-  padding: 0 1.05rem 1rem;
-}
-
-.patient-portal-card-history {
-  display: grid;
-  gap: 0.7rem;
-  margin-top: 0.9rem;
-}
-
-.patient-portal-card-history-row {
-  padding: 0.85rem 0.9rem;
-  border-radius: 14px;
-  border: 1px solid rgba(223, 232, 227, 0.95);
-  background: rgba(248, 252, 250, 0.96);
-}
-
-.patient-portal-card-history-row.info {
-  border-color: rgba(191, 219, 254, 0.95);
-  background: rgba(239, 246, 255, 0.82);
-}
-
-.patient-portal-card-history-row.warning {
-  border-color: rgba(253, 230, 138, 0.9);
-  background: rgba(255, 251, 235, 0.92);
-}
-
-.patient-portal-card-history-row.success {
-  border-color: rgba(167, 243, 208, 0.95);
-  background: rgba(236, 253, 245, 0.88);
-}
-
-.patient-portal-card-history-row.danger {
-  border-color: rgba(254, 202, 202, 0.95);
-  background: rgba(254, 242, 242, 0.92);
-}
-
-.patient-portal-card-history-row.muted {
-  border-color: rgba(229, 231, 235, 0.95);
-  background: rgba(249, 250, 251, 0.92);
-}
-
-.patient-portal-card-history-top {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.8rem;
-  align-items: flex-start;
-}
-
-.patient-portal-card-history-top strong {
-  color: var(--text-900);
-}
-
-.patient-portal-card-history-top span {
-  color: var(--text-500);
-  font-size: 0.8rem;
-  flex-shrink: 0;
-}
-
-.patient-portal-card-history-text {
-  margin-top: 0.3rem;
-  color: var(--text-700);
-  line-height: 1.5;
-}
-
-.patient-portal-update-top {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  align-items: center;
-  margin-bottom: 0.5rem;
-}
-
-.patient-portal-update-type {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.3rem 0.65rem;
-  border-radius: 999px;
-  background: rgba(15, 110, 86, 0.08);
-  color: var(--green);
-  font-size: 0.74rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.patient-portal-status {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 88px;
-  padding: 0.35rem 0.7rem;
-  border-radius: 999px;
-  font-size: 0.76rem;
-  font-weight: 800;
-  text-transform: capitalize;
-}
-
-.patient-portal-status.success {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.patient-portal-status.warning {
-  background: #fffbeb;
-  color: #b45309;
-}
-
-.patient-portal-status.danger {
-  background: #fef2f2;
-  color: #b91c1c;
-}
-
-.patient-portal-status.info {
-  background: #eff6ff;
-  color: #1d4ed8;
-}
-
-.patient-portal-status.muted {
-  background: #f3f4f6;
-  color: #374151;
-}
-
-.patient-portal-update-title {
-  font-weight: 800;
-  margin-bottom: 0.3rem;
-}
-
-.patient-portal-response-gate {
-  margin-bottom: 1rem;
-  padding: 1rem 1.05rem;
-  border-radius: 14px;
-  background: rgba(248, 252, 250, 0.96);
-  border: 1px solid rgba(15, 110, 86, 0.12);
-}
-
-.patient-portal-response-head {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  margin-bottom: 0.8rem;
-}
-
-.patient-portal-response-head strong {
-  color: var(--text-900);
-}
-
-.patient-progress-card {
-  gap: 0.85rem;
-}
-
-.patient-progress-chip-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.55rem;
-}
-
-.patient-progress-chip {
-  display: inline-flex;
-  align-items: center;
-  min-height: 32px;
-  padding: 0.35rem 0.72rem;
-  border-radius: 999px;
-  background: rgba(15, 110, 86, 0.08);
-  color: var(--green);
-  font-size: 0.82rem;
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-.patient-progress-chip-muted {
-  background: rgba(17, 35, 29, 0.06);
-  color: var(--text-500);
-}
-
-.patient-progress-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.7rem;
-}
-
-.patient-progress-notice-panel {
-  display: grid;
-  gap: 0.75rem;
-  padding: 0.95rem 1rem;
-  border-radius: 14px;
-  border: 0.5px solid rgba(215, 225, 220, 0.9);
-  background: rgba(248, 252, 250, 0.96);
-}
-
-.patient-progress-notice-head,
-.patient-progress-event-top,
-.patient-detail-head,
-.patient-detail-head-actions {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.9rem;
-}
-
-.patient-progress-notice-head strong,
-.patient-detail-card-title,
-.patient-detail-title {
-  color: var(--text-900);
-}
-
-.patient-progress-notice-head span,
-.patient-progress-event-top span {
-  color: var(--text-500);
-  font-size: 0.85rem;
-}
-
-.patient-progress-notice-list,
-.patient-progress-event-list {
-  display: grid;
-  gap: 0.75rem;
-}
-
-.patient-progress-notice-row,
-.patient-progress-event {
-  padding: 0.9rem 0.95rem;
-  border-radius: 14px;
-  border: 0.5px solid rgba(223, 232, 227, 0.95);
-  background: rgba(255, 255, 255, 0.92);
-}
-
-.patient-detail-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 80;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 1rem;
-}
-
-.patient-detail-backdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(17, 35, 29, 0.42);
-  backdrop-filter: blur(6px);
-}
-
-.patient-detail-sheet {
-  position: relative;
-  width: min(760px, 100%);
-  max-height: min(90vh, 860px);
-  overflow: auto;
-  border-radius: 22px;
-  border: 1px solid rgba(223, 232, 227, 0.95);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(245, 250, 247, 0.98));
-  box-shadow: 0 30px 65px rgba(15, 42, 32, 0.22);
-  padding: 1.15rem;
-}
-
-.patient-detail-title {
-  margin-top: 0.25rem;
-  font-size: clamp(1.2rem, 3vw, 1.7rem);
-}
-
-.patient-detail-close {
-  width: 40px;
-  height: 40px;
-  border: 1px solid rgba(15, 110, 86, 0.12);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.92);
-  color: var(--text-700);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.patient-detail-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.9rem;
-  margin-top: 1rem;
-}
-
-.patient-detail-card {
-  display: grid;
-  gap: 0.65rem;
-  padding: 1rem;
-  border-radius: 16px;
-  border: 0.5px solid rgba(223, 232, 227, 0.95);
-  background: rgba(255, 255, 255, 0.92);
-}
-
-.patient-detail-card-title {
-  font-size: 1rem;
-  font-weight: 800;
-}
-
-.patient-progress-event {
-  display: grid;
-  grid-template-columns: 14px minmax(0, 1fr);
-  gap: 0.8rem;
-  align-items: start;
-}
-
-.patient-progress-event-dot {
-  width: 14px;
-  height: 14px;
-  border-radius: 999px;
-  background: rgba(15, 110, 86, 0.18);
-  margin-top: 0.2rem;
-}
-
-.patient-progress-event-dot.patient-status-approved {
-  background: rgba(15, 110, 86, 0.84);
-}
-
-.patient-progress-event-dot.patient-status-dispensed,
-.patient-progress-event-dot.patient-status-ready {
-  background: rgba(37, 99, 235, 0.82);
-}
-
-.patient-progress-event-dot.patient-status-rejected,
-.patient-progress-event-dot.patient-status-cancelled {
-  background: rgba(220, 38, 38, 0.82);
-}
-
-.patient-progress-event-dot.patient-status-packed,
-.patient-progress-event-dot.patient-status-dispatched,
-.patient-progress-event-dot.patient-status-delivered {
-  background: rgba(245, 158, 11, 0.88);
-}
-
-.patient-progress-event p {
-  color: var(--text-500);
-  font-size: 0.92rem;
-  line-height: 1.5;
-  margin-top: 0.2rem;
-}
-
-@media (max-width: 720px) {
-  .patient-detail-overlay {
-    padding: 0.75rem;
-  }
-
-  .patient-detail-sheet {
-    padding: 1rem;
-    border-radius: 18px;
-  }
-
-  .patient-detail-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .patient-detail-head,
-  .patient-detail-head-actions,
-  .patient-progress-notice-head,
-  .patient-progress-event-top {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .patient-portal-track-card-main,
-  .patient-portal-card-history-top {
-    flex-direction: column;
-  }
-
-  .patient-portal-track-card-meta {
-    text-align: left;
-  }
-}
-
-.patient-portal-response-head span {
-  color: var(--text-500);
-  font-size: 0.92rem;
-}
-
-.patient-portal-response-box {
-  margin-top: 0.8rem;
-  padding: 0.85rem 0.95rem;
-  border-radius: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  font-size: 0.92rem;
-}
-
-.patient-portal-response-box.success {
-  background: #ecfdf5;
-  border: 1px solid #a7f3d0;
-  color: #166534;
-}
-
-.patient-portal-response-box.info {
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-  color: #1d4ed8;
-}
-
-.patient-portal-response-box.warning {
-  background: #fff7ed;
-  border: 1px solid #fed7aa;
-  color: #c2410c;
-}
-
-.patient-portal-response-box.danger {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #b91c1c;
-}
-
-.patient-portal-response-note,
-.patient-portal-response-time {
-  font-size: 0.88rem;
-}
-
-.patient-portal-response-actions {
-  margin-top: 0.8rem;
-  padding-top: 0.9rem;
-  border-top: 1px solid rgba(15, 110, 86, 0.1);
-}
-
-.patient-portal-inline-action {
-  align-self: flex-start;
-  margin-top: 0.45rem;
-}
-
-.patient-portal-response-actions textarea {
-  width: 100%;
-  min-height: 88px;
-  box-sizing: border-box;
-  margin-top: 0.7rem;
-  padding: 0.9rem 1rem;
-  border-radius: 16px;
-  border: 1px solid rgba(208, 213, 221, 0.95);
-  resize: vertical;
-  font-family: inherit;
-  font-size: 0.95rem;
-}
-
-.patient-portal-response-actions .form-input {
-  margin-top: 0.7rem;
-}
-
-.patient-portal-response-button-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.7rem;
-  margin-top: 0.85rem;
-}
-
-.patient-response-btn {
-  flex: 1 1 220px;
-}
-
-.patient-response-btn.info {
-  background: linear-gradient(135deg, #eff6ff, #dbeafe);
-  color: #1d4ed8;
-  border: 1px solid #bfdbfe;
-}
-
-.patient-response-btn.warning {
-  background: linear-gradient(135deg, #fff7ed, #ffedd5);
-  color: #c2410c;
-  border: 1px solid #fed7aa;
-}
-
-.patient-response-btn.danger {
-  background: linear-gradient(135deg, #fff1f2, #ffe4e6);
-  color: #be123c;
-  border: 1px solid #fda4af;
-}
-
-.patient-portal-loading {
-  min-height: 100vh;
-  display: grid;
-  place-items: center;
-  color: var(--text-500);
-  font-size: 1rem;
-}
-
-.patient-portal-mobile-nav {
-  display: none;
-}
-
-.patient-portal-mobile-toolbar {
-  display: none;
-}
-
-.patient-portal-menu-overlay {
-  display: none;
-}
-
-@media (max-width: 980px) {
-  .patient-portal-hero-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .patient-portal-hero h1 {
-    max-width: none;
-  }
-
-  .patient-portal-phone-frame {
-    max-width: 560px;
-    justify-self: center;
-  }
-
-  .patient-portal-preview-stack {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .patient-portal-shell {
-    grid-template-columns: 1fr;
-  }
-
-  .patient-portal-sidebar {
-    position: static;
-  }
-}
-
-@media (max-width: 720px) {
-  .patient-portal-content,
-  .patient-portal-hero {
-    padding-left: 0.75rem;
-    padding-right: 0.75rem;
-  }
-
-  .patient-portal-hero-inner {
-    padding: 1rem;
-  }
-
-  .patient-portal-hero h1 {
-    font-size: clamp(1.8rem, 8vw, 2.5rem);
-  }
-
-  .patient-portal-hero-actions {
-    flex-direction: column;
-  }
-
-  .patient-portal-trust-row {
-    flex-direction: column;
-  }
-
-  .patient-portal-preview-stack {
-    grid-template-columns: 1fr;
-  }
-
-  .patient-portal-hero-button,
-  .patient-portal-trust-pill {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .patient-portal-phone-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .patient-portal-phone-footer {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .patient-portal-branch-card,
-  .patient-portal-sidebar-card,
-  .patient-portal-panel,
-  .patient-portal-items-card,
-  .patient-portal-update-card {
-    padding: 1rem;
-  }
-
-  .patient-portal-grid,
-  .patient-portal-item-row,
-  .patient-portal-track-bar {
-    grid-template-columns: 1fr;
-  }
-
-  .patient-portal-section-head {
-    flex-direction: column;
-  }
-
-  .patient-portal-shell {
-    width: min(1180px, calc(100% - 0.75rem));
-  }
-
-  .patient-portal-submit,
-  .patient-portal-track-bar .btn,
-  .patient-portal-load-more,
-  .patient-portal-global-group-head .btn,
-  .patient-portal-choice-actions .btn {
-    width: 100%;
-  }
-
-  .patient-portal-global-group-head {
-    flex-direction: column;
-  }
-
-  .patient-portal-card-rail {
-    grid-auto-columns: minmax(240px, 86vw);
-  }
-
-  .patient-portal-choice-actions {
-    flex-direction: column;
-  }
-
-  .patient-portal-choice-action {
-    margin-top: 0.75rem;
-  }
-}
-
-/* Portal homepage polish override */
-.patient-portal-page {
-  background: linear-gradient(180deg, #f3faf7 0%, #eef6f1 100%);
-}
-
-.patient-portal-hero {
-  padding: clamp(1.5rem, 4vw, 2.75rem) 0 1rem;
-}
-
-.patient-portal-hero-inner {
-  width: min(1180px, calc(100% - 1rem));
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.95fr);
-  gap: 2rem;
-  align-items: center;
-  padding: clamp(1.35rem, 3.5vw, 2.4rem);
-  border-radius: 30px;
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(240, 249, 245, 0.95)),
-    radial-gradient(circle at top right, rgba(15, 110, 86, 0.08), transparent 32%);
-  border: 1px solid rgba(15, 110, 86, 0.14);
-  box-shadow: 0 28px 70px rgba(15, 42, 32, 0.12);
-}
-
-.patient-portal-hero-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  min-width: 0;
-}
-
-.patient-portal-badge {
-  margin-bottom: 0;
-}
-
-.patient-portal-hero h1 {
-  margin: 0;
-  max-width: 12ch;
-  font-size: clamp(2.4rem, 5vw, 4.2rem);
-  line-height: 0.96;
-  letter-spacing: -0.05em;
-}
-
-.patient-portal-hero p {
-  max-width: 620px;
-  margin: 0;
-  color: #5f746b;
-  font-size: 1.02rem;
-  line-height: 1.65;
-}
-
-.patient-portal-hero-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-.patient-portal-hero-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.8rem 1.05rem;
-  border-radius: 999px;
-  border: 1px solid transparent;
-  font-weight: 800;
-  text-decoration: none;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
-}
-
-.patient-portal-hero-button:hover {
-  transform: translateY(-1px);
-}
-
-.patient-portal-hero-button.primary {
-  color: #fff;
-  background: linear-gradient(135deg, #0f6e56, #0d5d49);
-  box-shadow: 0 14px 28px rgba(15, 110, 86, 0.24);
-}
-
-.patient-portal-hero-button.secondary {
-  color: #0f6e56;
-  background: rgba(255, 255, 255, 0.95);
-  border-color: rgba(15, 110, 86, 0.16);
-}
-
-.patient-portal-hero-button.ghost {
-  color: #24463a;
-  background: rgba(15, 110, 86, 0.06);
-  border-color: rgba(15, 110, 86, 0.1);
-}
-
-.patient-portal-trust-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.55rem;
-}
-
-.patient-portal-trust-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.55rem 0.8rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.82);
-  border: 1px solid rgba(15, 110, 86, 0.1);
-  color: #24463a;
-  font-size: 0.88rem;
-  font-weight: 700;
-  box-shadow: 0 10px 24px rgba(15, 42, 32, 0.05);
-}
-
-.patient-portal-branch-card {
-  margin-top: 0;
-  border-radius: 14px;
-  background: rgba(15, 110, 86, 0.06);
-  border: 1px solid rgba(15, 110, 86, 0.12);
-  box-shadow: none;
-}
-
-.patient-portal-hero-preview {
-  display: grid;
-  gap: 0.85rem;
-}
-
-.patient-portal-phone-frame {
-  border-radius: 24px;
-  border: 6px solid #17231f;
-  background: #17231f;
-  box-shadow: 0 24px 60px rgba(15, 42, 32, 0.16);
-  animation: patient-portal-float 7.5s ease-in-out infinite;
-}
-
-.patient-portal-phone-shell {
-  padding-top: 12px;
-  background: linear-gradient(180deg, #fff 0%, #f3faf7 100%);
-}
-
-.patient-portal-phone-topbar {
-  background: rgba(255, 255, 255, 0.96);
-  border-bottom: 1px solid rgba(15, 110, 86, 0.08);
-}
-
-.patient-portal-phone-content {
-  display: grid;
-  gap: 0.85rem;
-  padding: 0.95rem;
-}
-
-.patient-portal-phone-hero {
-  display: grid;
-  gap: 0.35rem;
-  padding: 0.95rem;
-  border-radius: 22px;
-  border: 1px solid rgba(15, 110, 86, 0.1);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(239, 248, 244, 0.95));
-  box-shadow: 0 12px 28px rgba(15, 42, 32, 0.05);
-}
-
-.patient-portal-phone-hero h2 {
-  margin: 0.2rem 0 0;
-  font-size: 1.05rem;
-  line-height: 1.15;
-  color: #163329;
-}
-
-.patient-portal-phone-hero p {
-  margin: 0;
-  font-size: 0.88rem;
-  line-height: 1.55;
-  color: #5f746b;
-}
-
-.patient-portal-phone-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.65rem;
-}
-
-.patient-portal-phone-tile {
-  display: grid;
-  gap: 0.35rem;
-  padding: 0.82rem;
-  border-radius: 18px;
-  border: 1px solid rgba(15, 110, 86, 0.1);
-  background: rgba(255, 255, 255, 0.97);
-  box-shadow: 0 10px 24px rgba(15, 42, 32, 0.04);
-}
-
-.patient-portal-phone-icon {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 10px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(15, 110, 86, 0.1);
-  color: #0f6e56;
-}
-
-.patient-portal-phone-tile strong {
-  font-size: 0.88rem;
-  color: #163329;
-}
-
-.patient-portal-phone-tile span {
-  font-size: 0.78rem;
-  line-height: 1.45;
-  color: #5f746b;
-}
-
-.patient-portal-phone-tile.tone-green {
-  background: linear-gradient(160deg, rgba(15, 110, 86, 0.14), rgba(255, 255, 255, 0.98));
-  border-color: rgba(15, 110, 86, 0.18);
-}
-
-.patient-portal-phone-tile.tone-blue {
-  background: linear-gradient(160deg, rgba(26, 107, 181, 0.14), rgba(255, 255, 255, 0.98));
-  border-color: rgba(26, 107, 181, 0.18);
-}
-
-.patient-portal-phone-tile.tone-amber {
-  background: linear-gradient(160deg, rgba(217, 119, 6, 0.14), rgba(255, 255, 255, 0.98));
-  border-color: rgba(217, 119, 6, 0.18);
-}
-
-.patient-portal-phone-tile.tone-rose {
-  background: linear-gradient(160deg, rgba(190, 24, 93, 0.12), rgba(255, 255, 255, 0.98));
-  border-color: rgba(190, 24, 93, 0.16);
-}
-
-.patient-portal-phone-tile.tone-cyan {
-  background: linear-gradient(160deg, rgba(6, 182, 212, 0.14), rgba(255, 255, 255, 0.98));
-  border-color: rgba(6, 182, 212, 0.18);
-}
-
-.patient-portal-phone-tile.tone-ink {
-  background: linear-gradient(160deg, rgba(36, 70, 58, 0.14), rgba(255, 255, 255, 0.98));
-  border-color: rgba(36, 70, 58, 0.16);
-}
-
-.patient-portal-phone-install-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.85rem;
-  padding: 0.92rem 0.95rem;
-  border-radius: 18px;
-  border: 1px solid rgba(15, 110, 86, 0.12);
-  background: linear-gradient(135deg, rgba(15, 110, 86, 0.12), rgba(255, 255, 255, 0.96));
-}
-
-.patient-portal-phone-install-banner strong {
-  display: block;
-  color: #163329;
-  font-size: 0.9rem;
-  line-height: 1.35;
-}
-
-.patient-portal-phone-install-banner p {
-  margin: 0.15rem 0 0;
-  color: #5f746b;
-  font-size: 0.76rem;
-  line-height: 1.4;
-}
-
-.patient-portal-phone-install-kicker {
-  color: #0f6e56;
-  font-size: 0.66rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.patient-portal-phone-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.8rem;
-  padding: 0 0.1rem;
-  color: #24463a;
-  font-size: 0.82rem;
-  font-weight: 800;
-}
-
-.patient-portal-phone-footer-copy,
-.patient-portal-phone-footer-action {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.patient-portal-phone-footer-action {
-  color: #0f6e56;
-}
-
-.patient-portal-phone-bottom-nav {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.25rem;
-  margin: 0.3rem 0.85rem 0.9rem;
-  padding: 0.3rem;
-  border-radius: 999px;
-  border: 1px solid rgba(15, 110, 86, 0.08);
-  background: rgba(255, 255, 255, 0.96);
-}
-
-.patient-portal-phone-tab {
-  height: 2rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.12rem;
-  border-radius: 999px;
-  color: #7f9189;
-  font-size: 0.62rem;
-  font-weight: 800;
-}
-
-.patient-portal-phone-tab.active {
-  background: #0f6e56;
-  color: #fff;
-}
-
-.patient-portal-preview-stack {
-  display: grid;
-  gap: 0.85rem;
-}
-
-.patient-portal-preview-card {
-  display: grid;
-  gap: 0.35rem;
-  padding: 1rem 1.05rem;
-  border-radius: 22px;
-  border: 1px solid rgba(15, 110, 86, 0.1);
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 12px 28px rgba(15, 42, 32, 0.05);
-}
-
-.patient-portal-preview-card.accent {
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.98), rgba(15, 110, 86, 0.05));
-}
-
-.patient-portal-preview-kicker {
-  color: #0f6e56;
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.patient-portal-preview-card strong {
-  font-size: 1rem;
-  color: #163329;
-}
-
-.patient-portal-preview-card p {
-  margin: 0;
-  font-size: 0.9rem;
-  line-height: 1.55;
-  color: #5f746b;
-}
-
-@keyframes patient-portal-float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-
-  50% {
-    transform: translateY(-6px);
-  }
-}
-
-.patient-portal-content {
-  padding: clamp(1.25rem, 3vw, 2rem) clamp(1rem, 4vw, 2rem) clamp(3rem, 6vw, 5rem);
-}
-
-.patient-portal-shell {
-  width: min(1180px, 100%);
-  gap: 1.5rem;
-}
-
-.patient-portal-sidebar-card,
-.patient-portal-panel,
-.patient-portal-items-card,
-.patient-portal-update-card {
-  border-radius: 22px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(246, 251, 248, 0.97));
-  border: 1px solid rgba(15, 110, 86, 0.08);
-  box-shadow: 0 14px 34px rgba(15, 42, 32, 0.07);
-}
-
-.patient-portal-card-rail {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 0.85rem;
-}
-
-.patient-portal-choice-card {
-  border-radius: 20px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(244, 250, 246, 0.98));
-}
-
-@media (max-width: 980px) {
-  .patient-portal-hero-inner {
-    grid-template-columns: 1fr;
-  }
-
-  .patient-portal-shell {
-    grid-template-columns: 1fr;
-  }
-
-  .patient-portal-sidebar {
-    position: static;
-  }
-
-  .has-active-pharmacy .patient-portal-sidebar {
-    display: none;
-  }
-}
-
-@media (max-width: 720px) {
-  .patient-portal-hero {
-    padding: 1rem 0.85rem 0;
-  }
-
-  .patient-portal-hero-inner {
-    width: min(1180px, calc(100% - 0.75rem));
-    padding: 1.25rem;
-    border-radius: 18px;
-  }
-
-  .patient-portal-hero h1 {
-    font-size: clamp(1.8rem, 7vw, 2.4rem);
-  }
-
-  .patient-portal-hero-actions,
-  .patient-portal-trust-row {
-    flex-direction: column;
-  }
-
-  .patient-portal-hero-button,
-  .patient-portal-trust-pill {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .patient-portal-phone-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .patient-portal-preview-stack {
-    grid-template-columns: 1fr;
-  }
-
-  .patient-portal-content {
-    padding: 1rem 0.85rem 3rem;
-  }
-
-  .patient-portal-panel {
-    padding: 1rem;
-    border-radius: 14px;
-  }
-
-  .patient-portal-card-rail {
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(82%, 250px);
-    overflow-x: auto;
-    padding-bottom: 0.25rem;
-  }
-
-  .patient-portal-content {
-    padding-bottom: calc(5.8rem + env(safe-area-inset-bottom));
-  }
-
-  .patient-portal-mobile-nav {
-    position: fixed;
-    left: 0.65rem;
-    right: 0.65rem;
-    bottom: calc(0.65rem + env(safe-area-inset-bottom));
-    z-index: 60;
-    display: grid;
-    grid-template-columns: 1fr repeat(5, minmax(0, 1fr));
-    gap: 0.25rem;
-    padding: 0.45rem;
-    border-radius: 20px;
-    border: 1px solid rgba(15, 110, 86, 0.12);
-    background: rgba(255, 255, 255, 0.94);
-    backdrop-filter: blur(16px);
-    box-shadow: 0 18px 42px rgba(15, 42, 32, 0.16);
-  }
-
-  .patient-portal-mobile-nav-home,
-  .patient-portal-mobile-nav-item {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.2rem;
-    min-height: 3.35rem;
-    padding: 0.45rem 0.35rem;
-    border-radius: 16px;
-    border: 1px solid transparent;
-    background: transparent;
-    color: #7f9189;
-    font-size: 0.6rem;
-    font-weight: 800;
-    letter-spacing: 0.01em;
-    cursor: pointer;
-  }
-
-  .patient-portal-mobile-nav-home {
-    background: rgba(15, 110, 86, 0.06);
-    color: #0f6e56;
-  }
-
-  .patient-portal-mobile-nav-item.active {
-    background: rgba(15, 110, 86, 0.11);
-    color: #0f6e56;
-  }
-
-  .patient-portal-mobile-nav-home svg,
-  .patient-portal-mobile-nav-item svg {
-    flex-shrink: 0;
-  }
-
-  .patient-portal-mobile-toolbar {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-    padding: 0.95rem 1rem;
-    border-radius: 18px;
-    border: 1px solid rgba(15, 110, 86, 0.12);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(241, 249, 246, 0.96));
-    box-shadow: 0 12px 28px rgba(15, 42, 32, 0.05);
-  }
-
-  .patient-portal-mobile-toolbar-copy {
-    min-width: 0;
-    display: grid;
-    gap: 0.15rem;
-  }
-
-  .patient-portal-mobile-toolbar-kicker {
-    color: #0f6e56;
-    font-size: 0.68rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .patient-portal-mobile-toolbar-copy strong {
-    color: #163329;
-    font-size: 0.96rem;
-  }
-
-  .patient-portal-mobile-toolbar-copy p {
-    margin: 0;
-    color: #5f746b;
-    font-size: 0.85rem;
-    line-height: 1.45;
-  }
-
-  .patient-portal-mobile-menu-button {
-    flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.7rem 0.9rem;
-    border-radius: 14px;
-    border: 1px solid rgba(15, 110, 86, 0.14);
-    background: rgba(15, 110, 86, 0.08);
-    color: #0f6e56;
-    font-weight: 800;
-    cursor: pointer;
-  }
-
-  .patient-portal-menu-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 70;
-    display: grid;
-    align-items: end;
-    background: rgba(12, 26, 21, 0.44);
-    backdrop-filter: blur(6px);
-    padding: 0.75rem;
-  }
-
-  .patient-portal-menu-sheet {
-    display: grid;
-    gap: 0.85rem;
-    max-height: min(78vh, 640px);
-    overflow: auto;
-    padding: 1rem;
-    border-radius: 24px;
-    border: 1px solid rgba(15, 110, 86, 0.14);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(239, 248, 244, 0.98));
-    box-shadow: 0 24px 60px rgba(15, 42, 32, 0.22);
-  }
-
-  .patient-portal-menu-head {
-    display: flex;
-    justify-content: space-between;
-    gap: 0.85rem;
-    align-items: flex-start;
-  }
-
-  .patient-portal-menu-kicker {
-    display: inline-flex;
-    margin-bottom: 0.15rem;
-    color: #0f6e56;
-    font-size: 0.68rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .patient-portal-menu-head strong {
-    display: block;
-    color: #163329;
-    font-size: 1rem;
-  }
-
-  .patient-portal-menu-head p {
-    margin: 0.2rem 0 0;
-    color: #5f746b;
-    font-size: 0.86rem;
-    line-height: 1.5;
-  }
-
-  .patient-portal-menu-close {
-    width: 40px;
-    height: 40px;
-    flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 14px;
-    border: 1px solid rgba(15, 110, 86, 0.12);
-    background: rgba(255, 255, 255, 0.94);
-    color: #5f746b;
-    cursor: pointer;
-  }
-
-  .patient-portal-tab-list.compact {
-    margin-top: 0;
-    gap: 0.5rem;
-  }
-
-  .patient-portal-tab.compact {
-    display: inline-flex;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 0.55rem;
-    padding: 0.8rem 0.9rem;
-    min-height: 3rem;
-  }
-
-  .patient-portal-tab.compact span {
-    display: inline-block;
-    text-align: left;
-  }
-
-  .patient-portal-menu-sheet .patient-portal-switch-btn,
-  .patient-portal-menu-sheet .patient-portal-sidebar-note,
-  .patient-portal-menu-sheet .patient-portal-sidebar-card.muted {
-    margin-top: 0;
-  }
-}
-
-@media (max-width: 480px) {
-  .patient-portal-phone-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .patient-portal-card-rail {
-    grid-auto-columns: minmax(86%, 250px);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .patient-portal-phone-frame {
-    animation: none;
-  }
+import { useState } from "react"
+import {
+  Home, Pill, CalendarDays, HeartPulse, Truck, Bell,
+  Plus, Trash2, Loader2, Search, Menu, X, ChevronRight,
+  PhoneCall, Video, Building2, Image, Award, ShieldCheck,
+  Smartphone, Zap, ClipboardList, PackageSearch,
+} from "lucide-react"
+
+export default function PatientPortal() {
+  const [activeTab, setActiveTab] = useState("home")
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [searchFocused, setSearchFocused] = useState(false)
+  const [prescriptionForm, setPrescriptionForm] = useState({
+    patientName: "", patientPhone: "", patientEmail: "",
+    conditionNotes: "", requestedDrugs: [""],
+  })
+  const [appointmentForm, setAppointmentForm] = useState({
+    patientName: "", patientPhone: "", patientEmail: "",
+    appointmentType: "phone_call", slotDatetime: "",
+    conditionSummary: "", patientNotes: "",
+  })
+  const [deliveryForm, setDeliveryForm] = useState({
+    patientName: "", patientPhone: "", patientEmail: "", patientAddress: "",
+    items: [{ drug_name: "", qty: "1", price: "" }],
+  })
+  const [submitting, setSubmitting] = useState("")
+  const [user] = useState({ name: "Jane Mwangi", avatar: "JM" })
+
+  const tabs = [
+    { id: "home", label: "Home", icon: Home },
+    { id: "prescription", label: "Prescriptions", icon: Pill },
+    { id: "appointment", label: "Appointments", icon: CalendarDays },
+    { id: "maternal", label: "Maternal Care", icon: HeartPulse },
+    { id: "delivery", label: "Delivery", icon: Truck },
+    { id: "updates", label: "Updates", icon: Bell },
+  ]
+
+  const quickActions = [
+    { id: "prescription", title: "Request Prescription", description: "Send a refill request or upload prescription", icon: Pill, bgColor: "#ecfdf5", iconColor: "#059669" },
+    { id: "appointment", title: "Book Appointment", description: "Schedule a call or video consultation", icon: CalendarDays, bgColor: "#eff6ff", iconColor: "#2563eb" },
+    { id: "maternal", title: "Maternal Care", description: "ANC registration & pregnancy follow-up", icon: HeartPulse, bgColor: "#fff1f2", iconColor: "#e11d48" },
+    { id: "delivery", title: "Request Delivery", description: "Get medicines delivered to your door", icon: Truck, bgColor: "#fffbeb", iconColor: "#d97706" },
+    { id: "updates", title: "Check Updates", description: "Track your requests & notifications", icon: Bell, bgColor: "#f5f3ff", iconColor: "#7c3aed" },
+  ]
+
+  const features = [
+    { icon: Building2, title: "Branch Routing", description: "Choose your preferred pharmacy branch" },
+    { icon: ClipboardList, title: "Prescription Requests", description: "Send refill requests with photos" },
+    { icon: CalendarDays, title: "Appointments", description: "Book calls or video consultations" },
+    { icon: PackageSearch, title: "Live Tracking", description: "Follow your order in real-time" },
+    { icon: HeartPulse, title: "Maternal Care", description: "ANC registration & follow-up" },
+    { icon: Truck, title: "Delivery", description: "Get medicines delivered" },
+  ]
+
+  const trustBadges = [
+    { icon: ShieldCheck, label: "Secure & Private" },
+    { icon: Smartphone, label: "Mobile-Friendly" },
+    { icon: Award, label: "Branch-Linked" },
+    { icon: Zap, label: "Real-Time Updates" },
+  ]
+
+  const mockActivities = [
+    { id: 1, title: "Metformin 500mg", statusLabel: "Under Review", status: "pending", time: "2 hours ago", icon: Pill, color: "#d97706", bg: "#fffbeb" },
+    { id: 2, title: "Video Consultation", statusLabel: "Confirmed", status: "confirmed", time: "Tomorrow, 10:00 AM", icon: Video, color: "#2563eb", bg: "#eff6ff" },
+    { id: 3, title: "Delivery #1234", statusLabel: "On the Way", status: "dispatched", time: "Today, 3:30 PM", icon: Truck, color: "#059669", bg: "#ecfdf5" },
+  ]
+
+  const statsCards = [
+    { label: "Active Prescriptions", value: "3", icon: Pill, color: "#059669", bg: "#ecfdf5" },
+    { label: "Upcoming Appointments", value: "2", icon: CalendarDays, color: "#2563eb", bg: "#eff6ff" },
+    { label: "Pending Deliveries", value: "1", icon: Truck, color: "#d97706", bg: "#fffbeb" },
+    { label: "Notifications", value: "5", icon: Bell, color: "#7c3aed", bg: "#f5f3ff" },
+  ]
+
+  function handleQuickAction(actionId) {
+    setActiveTab(actionId)
+  }
+
+  function renderHomeScreen() {
+    return (
+      <div className="portal-home">
+        <div className="portal-welcome">
+          <div className="portal-welcome-content">
+            <div>
+              <span className="portal-greeting">Good morning 👋</span>
+              <h1 className="portal-welcome-title">{user.name}</h1>
+              <p className="portal-welcome-sub">Your health journey starts here</p>
+            </div>
+            <span className="portal-avatar">{user.avatar}</span>
+          </div>
+          <div className="portal-stats-grid">
+            {statsCards.map((stat) => (
+              <div key={stat.label} className="portal-stat-card">
+                <div className="portal-stat-icon">
+                  <stat.icon size={18} />
+                </div>
+                <div className="portal-stat-info">
+                  <span className="portal-stat-value">{stat.value}</span>
+                  <span className="portal-stat-label">{stat.label}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="portal-section">
+          <div className="portal-section-header">
+            <h2 className="portal-section-title">Quick Actions</h2>
+            <span className="portal-section-badge">6 services</span>
+          </div>
+          <div className="portal-quick-grid">
+            {quickActions.map((action) => (
+              <button key={action.id} className="portal-quick-card" onClick={() => handleQuickAction(action.id)}>
+                <div className="portal-quick-icon" style={{ background: action.bgColor, color: action.iconColor }}>
+                  <action.icon size={22} />
+                </div>
+                <div className="portal-quick-content">
+                  <h3 className="portal-quick-title">{action.title}</h3>
+                  <p className="portal-quick-desc">{action.description}</p>
+                </div>
+                <ChevronRight size={16} className="portal-quick-arrow" />
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="portal-section">
+          <div className="portal-section-header">
+            <h2 className="portal-section-title">Recent Activity</h2>
+            <button className="portal-link-btn">View All</button>
+          </div>
+          <div className="portal-activity-list">
+            {mockActivities.map((activity) => (
+              <div key={activity.id} className="portal-activity-item">
+                <div className="portal-activity-icon" style={{ background: activity.bg, color: activity.color }}>
+                  <activity.icon size={16} />
+                </div>
+                <div className="portal-activity-content">
+                  <div className="portal-activity-top">
+                    <span className="portal-activity-title">{activity.title}</span>
+                    <span className={`portal-activity-status portal-status-${activity.status}`}>{activity.statusLabel}</span>
+                  </div>
+                  <span className="portal-activity-time">{activity.time}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="portal-section">
+          <div className="portal-section-header">
+            <h2 className="portal-section-title">Everything You Need</h2>
+            <span className="portal-section-badge">All in one place</span>
+          </div>
+          <div className="portal-features-grid">
+            {features.map((feature) => (
+              <div key={feature.title} className="portal-feature-card">
+                <div className="portal-feature-icon"><feature.icon size={20} /></div>
+                <h4 className="portal-feature-title">{feature.title}</h4>
+                <p className="portal-feature-desc">{feature.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="portal-trust-section">
+          {trustBadges.map((badge) => (
+            <div key={badge.label} className="portal-trust-badge">
+              <badge.icon size={16} className="portal-trust-icon" />
+              <span>{badge.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  function renderPrescriptionForm() {
+    return (
+      <div className="portal-form-page">
+        <div className="portal-form-header">
+          <h2 className="portal-form-title">Request a Prescription</h2>
+          <p className="portal-form-sub">Tell us what you need and we'll prepare it for you</p>
+        </div>
+        <form className="portal-form" onSubmit={(e) => e.preventDefault()}>
+          <div className="portal-form-group">
+            <label className="portal-label">Full Name</label>
+            <input className="portal-input" value={prescriptionForm.patientName}
+              onChange={(e) => setPrescriptionForm({ ...prescriptionForm, patientName: e.target.value })}
+              placeholder="Enter your full name" />
+          </div>
+          <div className="portal-form-row">
+            <div className="portal-form-group">
+              <label className="portal-label">Phone Number</label>
+              <input className="portal-input" value={prescriptionForm.patientPhone}
+                onChange={(e) => setPrescriptionForm({ ...prescriptionForm, patientPhone: e.target.value })}
+                placeholder="07XXXXXXXX" />
+            </div>
+            <div className="portal-form-group">
+              <label className="portal-label">Email (optional)</label>
+              <input className="portal-input" type="email" value={prescriptionForm.patientEmail}
+                onChange={(e) => setPrescriptionForm({ ...prescriptionForm, patientEmail: e.target.value })}
+                placeholder="you@example.com" />
+            </div>
+          </div>
+          <div className="portal-form-group">
+            <label className="portal-label">What are you suffering from?</label>
+            <textarea className="portal-textarea" rows={4} value={prescriptionForm.conditionNotes}
+              onChange={(e) => setPrescriptionForm({ ...prescriptionForm, conditionNotes: e.target.value })}
+              placeholder="Describe your symptoms or condition briefly..." />
+          </div>
+          <div className="portal-form-group">
+            <div className="portal-form-label-row">
+              <label className="portal-label">Medicines Needed</label>
+              <button type="button" className="portal-add-btn"
+                onClick={() => setPrescriptionForm({ ...prescriptionForm, requestedDrugs: [...prescriptionForm.requestedDrugs, ""] })}>
+                <Plus size={14} /> Add Drug
+              </button>
+            </div>
+            <div className="portal-drug-list">
+              {prescriptionForm.requestedDrugs.map((drug, index) => (
+                <div key={index} className="portal-drug-item">
+                  <input className="portal-input" value={drug}
+                    onChange={(e) => {
+                      const newDrugs = [...prescriptionForm.requestedDrugs]
+                      newDrugs[index] = e.target.value
+                      setPrescriptionForm({ ...prescriptionForm, requestedDrugs: newDrugs })
+                    }}
+                    placeholder={`Medicine ${index + 1}`} />
+                  {prescriptionForm.requestedDrugs.length > 1 && (
+                    <button type="button" className="portal-remove-btn"
+                      onClick={() => setPrescriptionForm({ ...prescriptionForm, requestedDrugs: prescriptionForm.requestedDrugs.filter((_, i) => i !== index) })}>
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="portal-form-group">
+            <label className="portal-label">Upload Prescription (optional)</label>
+            <div className="portal-upload-zone">
+              <Image size={28} className="portal-upload-icon" />
+              <p className="portal-upload-text">Click to upload or drag and drop</p>
+              <p className="portal-upload-sub">JPG, PNG, or PDF (max 10MB)</p>
+            </div>
+          </div>
+          <button type="submit" className="portal-submit-btn" disabled={submitting === "prescription"}>
+            {submitting === "prescription" ? (<><Loader2 size={18} className="portal-spinner" /> Submitting...</>) : "Submit Prescription Request"}
+          </button>
+        </form>
+      </div>
+    )
+  }
+
+  function renderAppointmentForm() {
+    const appointmentTypes = [
+      { value: "phone_call", label: "Phone Call", icon: PhoneCall },
+      { value: "video_consultation", label: "Video Consultation", icon: Video },
+      { value: "pickup", label: "In-Person Pickup", icon: Building2 },
+    ]
+    return (
+      <div className="portal-form-page">
+        <div className="portal-form-header">
+          <h2 className="portal-form-title">Book an Appointment</h2>
+          <p className="portal-form-sub">Choose how you'd like to connect with the pharmacist</p>
+        </div>
+        <form className="portal-form" onSubmit={(e) => e.preventDefault()}>
+          <div className="portal-form-group">
+            <label className="portal-label">Full Name</label>
+            <input className="portal-input" value={appointmentForm.patientName}
+              onChange={(e) => setAppointmentForm({ ...appointmentForm, patientName: e.target.value })}
+              placeholder="Enter your full name" />
+          </div>
+          <div className="portal-form-row">
+            <div className="portal-form-group">
+              <label className="portal-label">Phone Number</label>
+              <input className="portal-input" value={appointmentForm.patientPhone}
+                onChange={(e) => setAppointmentForm({ ...appointmentForm, patientPhone: e.target.value })}
+                placeholder="07XXXXXXXX" />
+            </div>
+            <div className="portal-form-group">
+              <label className="portal-label">Email (optional)</label>
+              <input className="portal-input" type="email" value={appointmentForm.patientEmail}
+                onChange={(e) => setAppointmentForm({ ...appointmentForm, patientEmail: e.target.value })}
+                placeholder="you@example.com" />
+            </div>
+          </div>
+          <div className="portal-form-group">
+            <label className="portal-label">Appointment Type</label>
+            <div className="portal-radio-grid">
+              {appointmentTypes.map((type) => (
+                <label key={type.value} className={`portal-radio-card ${appointmentForm.appointmentType === type.value ? "selected" : ""}`}>
+                  <input type="radio" name="appointmentType" value={type.value}
+                    checked={appointmentForm.appointmentType === type.value}
+                    onChange={(e) => setAppointmentForm({ ...appointmentForm, appointmentType: e.target.value })} />
+                  <div className="portal-radio-content">
+                    <div className="portal-radio-icon"><type.icon size={20} /></div>
+                    <span className="portal-radio-label">{type.label}</span>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+          <div className="portal-form-group">
+            <label className="portal-label">Preferred Date & Time</label>
+            <input className="portal-input" type="datetime-local" value={appointmentForm.slotDatetime}
+              onChange={(e) => setAppointmentForm({ ...appointmentForm, slotDatetime: e.target.value })} />
+          </div>
+          <div className="portal-form-group">
+            <label className="portal-label">What would you like to discuss?</label>
+            <textarea className="portal-textarea" rows={4} value={appointmentForm.conditionSummary}
+              onChange={(e) => setAppointmentForm({ ...appointmentForm, conditionSummary: e.target.value })}
+              placeholder="Describe what you'd like to discuss with the pharmacist..." />
+          </div>
+          <button type="submit" className="portal-submit-btn">Book Appointment</button>
+        </form>
+      </div>
+    )
+  }
+
+  function renderMaternalForm() {
+    return (
+      <div className="portal-form-page">
+        <div className="portal-form-header">
+          <h2 className="portal-form-title">Maternal Care Registration</h2>
+          <p className="portal-form-sub">Register for ANC and pregnancy follow-up</p>
+        </div>
+        <form className="portal-form" onSubmit={(e) => e.preventDefault()}>
+          <div className="portal-form-row">
+            <div className="portal-form-group">
+              <label className="portal-label">Full Name</label>
+              <input className="portal-input" placeholder="Mother's full name" />
+            </div>
+            <div className="portal-form-group">
+              <label className="portal-label">Phone Number</label>
+              <input className="portal-input" placeholder="07XXXXXXXX" />
+            </div>
+          </div>
+          <div className="portal-form-row">
+            <div className="portal-form-group">
+              <label className="portal-label">Last Menstrual Period (LMP)</label>
+              <input className="portal-input" type="date" />
+            </div>
+            <div className="portal-form-group">
+              <label className="portal-label">Gravida / Parity</label>
+              <input className="portal-input" placeholder="e.g. G2 P1" />
+            </div>
+          </div>
+          <div className="portal-form-group">
+            <label className="portal-label">Current Concerns or Notes</label>
+            <textarea className="portal-textarea" rows={4} placeholder="Share any pregnancy concerns or follow-up needs..." />
+          </div>
+          <button type="submit" className="portal-submit-btn">Send Maternal Care Request</button>
+        </form>
+      </div>
+    )
+  }
+
+  function renderDeliveryForm() {
+    return (
+      <div className="portal-form-page">
+        <div className="portal-form-header">
+          <h2 className="portal-form-title">Request Delivery</h2>
+          <p className="portal-form-sub">Get your medicines delivered to your door</p>
+        </div>
+        <form className="portal-form" onSubmit={(e) => e.preventDefault()}>
+          <div className="portal-form-row">
+            <div className="portal-form-group">
+              <label className="portal-label">Full Name</label>
+              <input className="portal-input" value={deliveryForm.patientName}
+                onChange={(e) => setDeliveryForm({ ...deliveryForm, patientName: e.target.value })}
+                placeholder="Your full name" />
+            </div>
+            <div className="portal-form-group">
+              <label className="portal-label">Phone Number</label>
+              <input className="portal-input" value={deliveryForm.patientPhone}
+                onChange={(e) => setDeliveryForm({ ...deliveryForm, patientPhone: e.target.value })}
+                placeholder="07XXXXXXXX" />
+            </div>
+          </div>
+          <div className="portal-form-group">
+            <label className="portal-label">Delivery Address</label>
+            <textarea className="portal-textarea" rows={3} value={deliveryForm.patientAddress}
+              onChange={(e) => setDeliveryForm({ ...deliveryForm, patientAddress: e.target.value })}
+              placeholder="Estate, building, floor, landmark, and any rider notes..." />
+          </div>
+          <div className="portal-form-group">
+            <div className="portal-form-label-row">
+              <label className="portal-label">Items Needed</label>
+              <button type="button" className="portal-add-btn"
+                onClick={() => setDeliveryForm({ ...deliveryForm, items: [...deliveryForm.items, { drug_name: "", qty: "1", price: "" }] })}>
+                <Plus size={14} /> Add Item
+              </button>
+            </div>
+            <div className="portal-drug-list">
+              {deliveryForm.items.map((item, index) => (
+                <div key={index} className="portal-drug-item">
+                  <input className="portal-input" value={item.drug_name}
+                    onChange={(e) => {
+                      const newItems = [...deliveryForm.items]
+                      newItems[index].drug_name = e.target.value
+                      setDeliveryForm({ ...deliveryForm, items: newItems })
+                    }}
+                    placeholder="Drug name" />
+                  <input className="portal-input portal-delivery-qty" type="number" min="1" value={item.qty}
+                    onChange={(e) => {
+                      const newItems = [...deliveryForm.items]
+                      newItems[index].qty = e.target.value
+                      setDeliveryForm({ ...deliveryForm, items: newItems })
+                    }} placeholder="Qty" />
+                  {deliveryForm.items.length > 1 && (
+                    <button type="button" className="portal-remove-btn"
+                      onClick={() => setDeliveryForm({ ...deliveryForm, items: deliveryForm.items.filter((_, i) => i !== index) })}>
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+          <button type="submit" className="portal-submit-btn">Send Delivery Request</button>
+        </form>
+      </div>
+    )
+  }
+
+  function renderUpdatesScreen() {
+    return (
+      <div className="portal-form-page">
+        <div className="portal-form-header">
+          <h2 className="portal-form-title">Your Updates</h2>
+          <p className="portal-form-sub">Track all your requests and notifications</p>
+        </div>
+        <div className="portal-empty-state">
+          <Bell size={48} className="portal-empty-icon" />
+          <h3 className="portal-empty-title">No updates yet</h3>
+          <p className="portal-empty-desc">Your requests and notifications will appear here</p>
+        </div>
+      </div>
+    )
+  }
+
+  function renderContent() {
+    switch (activeTab) {
+      case "home": return renderHomeScreen()
+      case "prescription": return renderPrescriptionForm()
+      case "appointment": return renderAppointmentForm()
+      case "maternal": return renderMaternalForm()
+      case "delivery": return renderDeliveryForm()
+      case "updates": return renderUpdatesScreen()
+      default: return renderHomeScreen()
+    }
+  }
+
+  return (
+    <div className="portal-container">
+      <header className="portal-header">
+        <div className="portal-header-inner">
+          <div className="portal-brand">
+            <button className="portal-menu-toggle" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+              {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+            </button>
+            <div className="portal-logo">
+              <span className="portal-logo-icon">💊</span>
+              <span>Pharma<span className="portal-logo-highlight">Course</span></span>
+            </div>
+          </div>
+          <nav className={`portal-nav ${isMobileMenuOpen ? "open" : ""}`}>
+            {tabs.map((tab) => (
+              <button key={tab.id} className={`portal-nav-item ${activeTab === tab.id ? "active" : ""}`}
+                onClick={() => { setActiveTab(tab.id); setIsMobileMenuOpen(false) }}>
+                <tab.icon size={18} /><span>{tab.label}</span>
+              </button>
+            ))}
+          </nav>
+          <div className="portal-header-actions">
+            <button className="portal-notification-btn">
+              <Bell size={20} /><span className="portal-notification-dot">3</span>
+            </button>
+            <span className="portal-avatar-sm">{user.avatar}</span>
+          </div>
+        </div>
+        <div className="portal-search-bar">
+          <div className="portal-search-wrapper">
+            <Search size={18} className="portal-search-icon" />
+            <input className="portal-search-input" placeholder="Search for medicines, appointments, or pharmacy..."
+              value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => setSearchFocused(true)} onBlur={() => setSearchFocused(false)} />
+            {searchFocused && (
+              <div className="portal-search-suggestions">
+                <div className="portal-search-suggestion">Metformin 500mg</div>
+                <div className="portal-search-suggestion">Blood pressure check</div>
+                <div className="portal-search-suggestion">Delivery tracking</div>
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <main className="portal-main">
+        <div className="portal-content">{renderContent()}</div>
+      </main>
+
+      <nav className="portal-bottom-nav">
+        {tabs.slice(0, 4).map((tab) => (
+          <button key={tab.id} className={`portal-bottom-nav-item ${activeTab === tab.id ? "active" : ""}`} onClick={() => setActiveTab(tab.id)}>
+            <tab.icon size={20} /><span>{tab.label}</span>
+          </button>
+        ))}
+      </nav>
+
+      <style>{`
+        .portal-container { min-height: 100vh; background: linear-gradient(180deg, #f0faf6 0%, #e6f2ed 100%); font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #163329; }
+        .portal-header { background: rgba(255,255,255,0.95); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(15,110,86,0.08); position: sticky; top: 0; z-index: 50; }
+        .portal-header-inner { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; max-width: 1200px; margin: 0 auto; position: relative; }
+        .portal-brand { display: flex; align-items: center; gap: 0.75rem; }
+        .portal-menu-toggle { background: none; border: none; color: #163329; cursor: pointer; padding: 0.25rem; display: none; }
+        .portal-logo { display: flex; align-items: center; gap: 0.5rem; font-weight: 800; font-size: 1.1rem; }
+        .portal-logo-icon { font-size: 1.4rem; }
+        .portal-logo-highlight { color: #0f6e56; }
+        .portal-nav { display: flex; align-items: center; gap: 0.25rem; }
+        .portal-nav-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.85rem; border-radius: 12px; border: none; background: transparent; color: #5f746b; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.2s ease; }
+        .portal-nav-item:hover { background: rgba(15,110,86,0.06); color: #163329; }
+        .portal-nav-item.active { background: rgba(15,110,86,0.1); color: #0f6e56; }
+        .portal-header-actions { display: flex; align-items: center; gap: 0.75rem; }
+        .portal-notification-btn { position: relative; background: none; border: none; color: #5f746b; cursor: pointer; padding: 0.35rem; border-radius: 10px; }
+        .portal-notification-dot { position: absolute; top: -2px; right: -2px; width: 18px; height: 18px; border-radius: 50%; background: #ef4444; color: white; font-size: 0.6rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+        .portal-avatar-sm { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg,#0f6e56,#0d5d49); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; }
+        .portal-search-bar { padding: 0.5rem 1rem 0.75rem; max-width: 1200px; margin: 0 auto; }
+        .portal-search-wrapper { position: relative; }
+        .portal-search-icon { position: absolute; left: 0.85rem; top: 50%; transform: translateY(-50%); color: #8fa8a0; }
+        .portal-search-input { width: 100%; padding: 0.6rem 1rem 0.6rem 2.8rem; border-radius: 14px; border: 1.5px solid rgba(15,110,86,0.12); background: rgba(255,255,255,0.9); font-size: 0.9rem; color: #163329; outline: none; box-sizing: border-box; }
+        .portal-search-input:focus { border-color: #0f6e56; box-shadow: 0 0 0 4px rgba(15,110,86,0.08); }
+        .portal-search-suggestions { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: white; border-radius: 12px; border: 1px solid rgba(15,110,86,0.08); box-shadow: 0 12px 40px rgba(15,42,32,0.08); overflow: hidden; z-index: 20; }
+        .portal-search-suggestion { padding: 0.6rem 1rem; cursor: pointer; font-size: 0.85rem; color: #24463a; }
+        .portal-search-suggestion:hover { background: rgba(15,110,86,0.04); }
+        .portal-main { padding: 1rem; max-width: 1200px; margin: 0 auto; }
+        .portal-content { display: flex; flex-direction: column; gap: 1.5rem; }
+        .portal-welcome { background: linear-gradient(135deg,#0f6e56,#0d5d49); border-radius: 20px; padding: 1.5rem; color: white; }
+        .portal-welcome-content { display: flex; justify-content: space-between; align-items: flex-start; }
+        .portal-greeting { font-size: 0.85rem; opacity: 0.8; }
+        .portal-welcome-title { font-size: 1.6rem; font-weight: 800; margin: 0.2rem 0 0.1rem; letter-spacing: -0.02em; }
+        .portal-welcome-sub { font-size: 0.95rem; opacity: 0.75; margin: 0; }
+        .portal-avatar { width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,0.2); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.2rem; border: 2px solid rgba(255,255,255,0.3); }
+        .portal-stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 0.75rem; margin-top: 1rem; }
+        .portal-stat-card { background: rgba(255,255,255,0.12); border-radius: 14px; padding: 0.75rem; display: flex; align-items: center; gap: 0.6rem; }
+        .portal-stat-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.15); color: white; }
+        .portal-stat-info { display: flex; flex-direction: column; }
+        .portal-stat-value { font-size: 1.1rem; font-weight: 800; }
+        .portal-stat-label { font-size: 0.65rem; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.04em; }
+        .portal-section { background: white; border-radius: 16px; padding: 1.25rem; box-shadow: 0 2px 12px rgba(15,42,32,0.04); border: 1px solid rgba(15,110,86,0.06); }
+        .portal-section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .portal-section-title { font-size: 1.05rem; font-weight: 700; margin: 0; }
+        .portal-section-badge { font-size: 0.7rem; padding: 0.2rem 0.6rem; border-radius: 20px; background: rgba(15,110,86,0.08); color: #0f6e56; font-weight: 600; }
+        .portal-link-btn { background: none; border: none; color: #0f6e56; font-weight: 600; font-size: 0.85rem; cursor: pointer; }
+        .portal-quick-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(200px,1fr)); gap: 0.75rem; }
+        .portal-quick-card { display: flex; align-items: center; gap: 0.75rem; padding: 0.85rem; border-radius: 14px; border: 1px solid rgba(15,110,86,0.06); background: white; cursor: pointer; transition: all 0.2s ease; text-align: left; width: 100%; }
+        .portal-quick-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(15,42,32,0.06); border-color: rgba(15,110,86,0.12); }
+        .portal-quick-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .portal-quick-content { flex: 1; min-width: 0; }
+        .portal-quick-title { font-size: 0.85rem; font-weight: 700; margin: 0; }
+        .portal-quick-desc { font-size: 0.75rem; color: #5f746b; margin: 0.1rem 0 0; }
+        .portal-quick-arrow { color: #b0c4bb; flex-shrink: 0; }
+        .portal-activity-list { display: flex; flex-direction: column; gap: 0.5rem; }
+        .portal-activity-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0.75rem; border-radius: 12px; background: rgba(248,252,250,0.8); }
+        .portal-activity-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .portal-activity-content { flex: 1; min-width: 0; }
+        .portal-activity-top { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+        .portal-activity-title { font-weight: 600; font-size: 0.85rem; }
+        .portal-activity-status { font-size: 0.65rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 20px; flex-shrink: 0; }
+        .portal-status-pending { background: #fef3c7; color: #92400e; }
+        .portal-status-confirmed { background: #d1fae5; color: #065f46; }
+        .portal-status-dispatched { background: #dbeafe; color: #1e40af; }
+        .portal-activity-time { font-size: 0.7rem; color: #8fa8a0; }
+        .portal-features-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(160px,1fr)); gap: 0.75rem; }
+        .portal-feature-card { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 1rem; border-radius: 14px; border: 1px solid rgba(15,110,86,0.04); background: rgba(248,252,250,0.6); }
+        .portal-feature-icon { width: 40px; height: 40px; border-radius: 12px; background: rgba(15,110,86,0.08); color: #0f6e56; display: flex; align-items: center; justify-content: center; margin-bottom: 0.5rem; }
+        .portal-feature-title { font-size: 0.8rem; font-weight: 700; margin: 0; }
+        .portal-feature-desc { font-size: 0.7rem; color: #5f746b; margin: 0.2rem 0 0; line-height: 1.4; }
+        .portal-trust-section { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; padding: 0.5rem 0; }
+        .portal-trust-badge { display: flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.8rem; border-radius: 20px; background: rgba(15,110,86,0.04); color: #24463a; font-size: 0.75rem; font-weight: 500; }
+        .portal-trust-icon { color: #0f6e56; }
+        .portal-form-page { background: white; border-radius: 16px; padding: 1.5rem; box-shadow: 0 2px 12px rgba(15,42,32,0.04); border: 1px solid rgba(15,110,86,0.06); }
+        .portal-form-header { margin-bottom: 1.5rem; }
+        .portal-form-title { font-size: 1.25rem; font-weight: 800; margin: 0; }
+        .portal-form-sub { font-size: 0.9rem; color: #5f746b; margin: 0.2rem 0 0; }
+        .portal-form { display: flex; flex-direction: column; gap: 1rem; }
+        .portal-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .portal-form-group { display: flex; flex-direction: column; gap: 0.3rem; }
+        .portal-form-label-row { display: flex; justify-content: space-between; align-items: center; }
+        .portal-label { font-size: 0.8rem; font-weight: 700; color: #24463a; }
+        .portal-input, .portal-textarea { padding: 0.6rem 0.85rem; border-radius: 10px; border: 1.5px solid rgba(15,110,86,0.1); font-size: 0.9rem; color: #163329; background: white; outline: none; width: 100%; box-sizing: border-box; font-family: inherit; }
+        .portal-input:focus, .portal-textarea:focus { border-color: #0f6e56; box-shadow: 0 0 0 4px rgba(15,110,86,0.06); }
+        .portal-textarea { resize: vertical; }
+        .portal-radio-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 0.5rem; }
+        .portal-radio-card { padding: 0.75rem; border-radius: 12px; border: 2px solid rgba(15,110,86,0.08); background: white; cursor: pointer; text-align: center; }
+        .portal-radio-card.selected { border-color: #0f6e56; background: rgba(15,110,86,0.04); }
+        .portal-radio-card input { display: none; }
+        .portal-radio-content { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
+        .portal-radio-icon { width: 36px; height: 36px; border-radius: 10px; background: rgba(15,110,86,0.06); color: #0f6e56; display: flex; align-items: center; justify-content: center; }
+        .portal-radio-label { font-size: 0.75rem; font-weight: 600; color: #24463a; }
+        .portal-add-btn { display: flex; align-items: center; gap: 0.3rem; padding: 0.3rem 0.7rem; border-radius: 8px; border: 1px solid rgba(15,110,86,0.15); background: transparent; color: #0f6e56; font-weight: 600; font-size: 0.75rem; cursor: pointer; }
+        .portal-drug-list { display: flex; flex-direction: column; gap: 0.5rem; }
+        .portal-drug-item { display: flex; gap: 0.5rem; align-items: center; }
+        .portal-drug-item .portal-input { flex: 1; }
+        .portal-remove-btn { padding: 0.3rem 0.5rem; border-radius: 8px; border: 1px solid rgba(239,68,68,0.15); background: transparent; color: #ef4444; cursor: pointer; display: flex; align-items: center; }
+        .portal-upload-zone { border: 2px dashed rgba(15,110,86,0.2); border-radius: 14px; padding: 1.5rem; text-align: center; background: rgba(248,252,250,0.6); }
+        .portal-upload-icon { color: #0f6e56; margin-bottom: 0.5rem; }
+        .portal-upload-text { font-weight: 600; margin: 0; }
+        .portal-upload-sub { font-size: 0.75rem; color: #5f746b; margin: 0.2rem 0 0; }
+        .portal-submit-btn { padding: 0.75rem 1.5rem; border-radius: 12px; border: none; background: linear-gradient(135deg,#0f6e56,#0d5d49); color: white; font-weight: 700; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-top: 0.5rem; }
+        .portal-submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .portal-spinner { animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .portal-delivery-qty { max-width: 70px; }
+        .portal-empty-state { text-align: center; padding: 2rem; }
+        .portal-empty-icon { color: #b0c4bb; margin-bottom: 0.5rem; }
+        .portal-empty-title { font-size: 1rem; font-weight: 700; margin: 0; }
+        .portal-empty-desc { font-size: 0.85rem; color: #5f746b; margin: 0.2rem 0 0; }
+        .portal-bottom-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(12px); border-top: 1px solid rgba(15,110,86,0.06); padding: 0.4rem 0.5rem 0.6rem; justify-content: space-around; z-index: 40; }
+        .portal-bottom-nav-item { display: flex; flex-direction: column; align-items: center; gap: 0.1rem; background: none; border: none; color: #8fa8a0; font-size: 0.6rem; font-weight: 600; cursor: pointer; padding: 0.2rem 0.5rem; }
+        .portal-bottom-nav-item.active { color: #0f6e56; }
+        @media (max-width: 768px) {
+          .portal-menu-toggle { display: block; }
+          .portal-nav { display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; flex-direction: column; padding: 0.5rem; border-bottom: 1px solid rgba(15,110,86,0.06); box-shadow: 0 12px 40px rgba(15,42,32,0.06); }
+          .portal-nav.open { display: flex; }
+          .portal-nav-item { width: 100%; padding: 0.6rem 0.85rem; }
+          .portal-stats-grid { grid-template-columns: repeat(2,1fr); }
+          .portal-quick-grid { grid-template-columns: 1fr; }
+          .portal-form-row { grid-template-columns: 1fr; }
+          .portal-radio-grid { grid-template-columns: 1fr; }
+          .portal-features-grid { grid-template-columns: repeat(2,1fr); }
+          .portal-bottom-nav { display: flex; }
+          .portal-main { padding-bottom: 4.5rem; }
+        }
+        @media (max-width: 480px) {
+          .portal-welcome-title { font-size: 1.2rem; }
+          .portal-features-grid { grid-template-columns: 1fr; }
+        }
+      `}</style>
+    </div>
+  )
 }
