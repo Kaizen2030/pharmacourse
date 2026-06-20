@@ -28,11 +28,11 @@ const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || "0x4AAAAAA
 let turnstileScriptPromise = null
 
 const PORTAL_TABS = [
-  { id: "prescription", label: "Prescription Request", icon: ClipboardList },
-  { id: "appointment", label: "Book Appointment", icon: CalendarDays },
-  { id: "maternal", label: "Maternal Care", icon: HeartPulse },
-  { id: "delivery", label: "Delivery Request", icon: Truck },
-  { id: "updates", label: "Check Updates", icon: Bell },
+  { id: "prescription", label: "Prescription Request", icon: ClipboardList, tone: "green" },
+  { id: "appointment", label: "Book Appointment", icon: CalendarDays, tone: "blue" },
+  { id: "maternal", label: "Maternal Care", icon: HeartPulse, tone: "rose" },
+  { id: "delivery", label: "Delivery Request", icon: Truck, tone: "amber" },
+  { id: "updates", label: "Check Updates", icon: Bell, tone: "ink" },
 ]
 
 const PORTAL_FEATURES = [
@@ -880,6 +880,7 @@ export default function PatientPortal() {
   const [trackingFulfillmentNotes, setTrackingFulfillmentNotes] = useState({})
   const [trackingDeliveryAddresses, setTrackingDeliveryAddresses] = useState({})
   const [respondingActionKey, setRespondingActionKey] = useState("")
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     if (patientAccountPhone) {
@@ -2629,10 +2630,13 @@ export default function PatientPortal() {
                           <button
                             key={tab.id}
                             type="button"
-                            className={`patient-portal-tab ${activeTab === tab.id ? "active" : ""}`}
+                            className={`patient-portal-tab tone-${tab.tone} ${activeTab === tab.id ? "active" : ""}`}
                             onClick={() => selectPortalTab(tab.id)}
                           >
-                            {tab.label}
+                            <span className="patient-portal-tab-icon">
+                              <tab.icon size={16} />
+                            </span>
+                            <span className="patient-portal-tab-copy">{tab.label}</span>
                           </button>
                         ))}
                       </div>
