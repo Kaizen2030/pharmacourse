@@ -18,6 +18,7 @@ import {
   Plus,
   Search,
   ShieldCheck,
+  Smartphone,
   Truck,
   Trash2,
   Video,
