@@ -1446,6 +1446,16 @@
         }
 
         @media (max-width: 768px) {
+          .portal-header-inner {
+            align-items: flex-start;
+            gap: 0.65rem;
+          }
+
+          .portal-brand {
+            width: 100%;
+            justify-content: space-between;
+          }
+
           .portal-menu-toggle {
             display: inline-flex;
           }
@@ -1474,6 +1484,32 @@
             width: 100%;
           }
 
+          .portal-header-actions {
+            width: 100%;
+            justify-content: flex-end;
+            gap: 0.5rem;
+          }
+
+          .portal-login-link {
+            min-height: 2.1rem;
+            padding-inline: 0.75rem;
+            font-size: 0.76rem;
+          }
+
+          .portal-search-bar {
+            padding-top: 0.2rem;
+            padding-bottom: 0.7rem;
+          }
+
+          .portal-search-input {
+            border-radius: 14px;
+            font-size: 0.9rem;
+          }
+
+          .portal-search-suggestions {
+            border-radius: 12px;
+          }
+
           .portal-stats-grid,
           .portal-features-grid,
           .portal-directory-card-grid,
@@ -1497,6 +1533,44 @@
           .portal-preview-tile,
           .portal-stat-card {
             padding: 0.72rem;
+          }
+
+          .portal-section-header {
+            align-items: flex-start;
+            gap: 0.4rem;
+          }
+
+          .portal-section-title {
+            font-size: 1rem;
+          }
+
+          .portal-directory-grid {
+            gap: 0.75rem;
+          }
+
+          .portal-directory-card,
+          .portal-directory-panel,
+          .portal-directory-emergency {
+            border-radius: 18px;
+          }
+
+          .portal-directory-card-grid,
+          .portal-directory-branch-grid {
+            gap: 0.65rem;
+          }
+
+          .portal-directory-pharmacy-card,
+          .portal-directory-branch-card {
+            padding: 0.85rem;
+          }
+
+          .portal-directory-actions {
+            flex-direction: column;
+          }
+
+          .portal-directory-button,
+          .portal-directory-link {
+            width: 100%;
           }
 
           .portal-preview-footer {
@@ -1548,6 +1622,19 @@
           .portal-directory-button,
           .portal-directory-link {
             min-height: 2.85rem;
+          }
+
+          .portal-directory-form {
+            gap: 0.6rem;
+          }
+
+          .portal-directory-field span {
+            font-size: 0.74rem;
+          }
+
+          .portal-directory-summary,
+          .portal-directory-subtitle {
+            font-size: 0.84rem;
           }
 
           .portal-preview-shell {
