@@ -1208,6 +1208,18 @@ export function PatientPortalStyles() {
         line-height: 1.45;
       }
 
+      .patient-track-select-prompt {
+        display: grid;
+        gap: 1rem;
+        min-height: 180px;
+        place-items: center;
+        text-align: center;
+      }
+
+      .patient-track-select-prompt .patient-empty-state {
+        margin: 0;
+      }
+
       .patient-track-section-hidden {
         display: none;
       }
@@ -1697,7 +1709,7 @@ export default function PatientLayout() {
             {branchLocation ? <div className="patient-topbar-meta">{branchLocation}</div> : null}
           </div>
 
-          <div className="patient-powered">Powered by PharmaCourse</div>
+          <div className="patient-powered">Powered by RemedacarePOS</div>
         </header>
 
         <main className="patient-main">

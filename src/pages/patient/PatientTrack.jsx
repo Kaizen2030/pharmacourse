@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { jsPDF } from "jspdf"
 import { ArrowUpRight, BellRing, CalendarClock, ClipboardList, PackageSearch, Video, X } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
@@ -414,9 +414,8 @@ export default function PatientTrack() {
   const [turnstileToken, setTurnstileToken] = useState("")
   const [turnstileResetKey, setTurnstileResetKey] = useState(0)
   const [selectedRequestId, setSelectedRequestId] = useState("")
-  const [activeTrackSection, setActiveTrackSection] = useState("prescriptions")
+  const [activeTrackSection, setActiveTrackSection] = useState("")
   const [isSwitchModalOpen, setIsSwitchModalOpen] = useState(false)
-  const hasManualSectionChoiceRef = useRef(false)
   const { loading: authLoading, isAuthenticated, patientPhone, fullName, signOut } = usePatientPortalAuth()
   const patientLoginPath = createPatientPath("/patient/login")
   const unreadCount = notifications.filter((notification) => !notification.read).length
@@ -577,14 +576,6 @@ export default function PatientTrack() {
   }, [activeTrackSection, trackSectionCards])
 
   useEffect(() => {
-    if (!latestTrackEvent?.section || hasManualSectionChoiceRef.current) {
-      return
-    }
-
-    setActiveTrackSection(latestTrackEvent.section)
-  }, [latestTrackEvent?.section])
-
-  useEffect(() => {
     if (!isSwitchModalOpen) {
       return undefined
     }
@@ -641,7 +632,7 @@ export default function PatientTrack() {
     let currentY = 18
 
     doc.setFontSize(18)
-    doc.text(branchName || "PharmaCourse", 16, currentY)
+    doc.text(branchName || "RemedacarePOS", 16, currentY)
     currentY += 8
 
     doc.setFontSize(11)
@@ -675,7 +666,7 @@ export default function PatientTrack() {
     doc.text(`Total: ${formatMoney(receipt.total)}`, 16, currentY)
     currentY += 12
     doc.setFontSize(10)
-    doc.text("Issued through PharmaCourse patient portal.", 16, currentY)
+    doc.text("Issued through RemedacarePOS patient portal.", 16, currentY)
 
     doc.save(`${receipt.documentLabel}-${receipt.receiptNumber}.pdf`)
   }
@@ -1004,10 +995,7 @@ export default function PatientTrack() {
                     key={card.id}
                     type="button"
                     className={`patient-track-nav-card${isActive ? " active" : ""}`}
-                    onClick={() => {
-                      hasManualSectionChoiceRef.current = true
-                      setActiveTrackSection(card.id)
-                    }}
+                    onClick={() => setActiveTrackSection(card.id)}
                   >
                     <div className="patient-track-nav-top">
                       <span className="patient-track-nav-icon">
@@ -1023,7 +1011,22 @@ export default function PatientTrack() {
             </div>
           </section>
 
-          <div className="patient-dashboard-grid">
+          {!activeTrackSection ? (
+            <section className="patient-card patient-track-select-prompt">
+              <div className="patient-section-header">
+                <div>
+                  <h2 className="patient-section-title">Select a section to open</h2>
+                  <p className="patient-form-help">Tap one card to see the latest tracking details, notifications, receipts, or appointments.</p>
+                </div>
+              </div>
+              <div className="patient-empty-state">
+                <p className="patient-empty">Your patient updates are ready. Tap a card above to view the section details.</p>
+              </div>
+            </section>
+          ) : null}
+
+          {activeTrackSection ? (
+            <div className="patient-dashboard-grid">
           <section className={`patient-card ${activeTrackSection === "prescriptions" ? "" : "patient-track-section-hidden"}`}>
             <div className="patient-section-header">
               <div>

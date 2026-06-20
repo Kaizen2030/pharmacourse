@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import { FileText, ImagePlus, Plus, ShieldCheck, Trash2 } from "lucide-react"
+import { FileText, ImagePlus, Plus, ShieldCheck, Trash2, LogIn } from "lucide-react"
 import { Link } from "react-router-dom"
 import { useNavigate } from "react-router-dom"
 import { usePatient } from "../../components/PatientLayout"

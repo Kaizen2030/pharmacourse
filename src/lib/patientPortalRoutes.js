@@ -55,9 +55,9 @@ export function getSafePatientRedirectPath(searchParamsLike, fallbackPath = "/pa
   }
 
   try {
-    const resolved = new URL(redirect, "https://pharmacourse.local")
+    const resolved = new URL(redirect, "https://remedacarePOS.local")
 
-    if (resolved.origin !== "https://pharmacourse.local") {
+    if (resolved.origin !== "https://remedacarePOS.local") {
       return fallbackPath
     }
 

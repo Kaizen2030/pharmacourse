@@ -75,7 +75,7 @@ export default function PatientAuthShell({ badge, title, description, children, 
           {branchLocation ? <div className="patient-topbar-meta">{branchLocation}</div> : null}
         </div>
 
-        <div className="patient-powered">Powered by PharmaCourse</div>
+        <div className="patient-powered">Powered by RemedacarePOS</div>
       </header>
 
       <main className="patient-main">

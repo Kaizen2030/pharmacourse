@@ -492,7 +492,7 @@ export default function PatientPortal() {
 
                 <div className="portal-directory-share">
                   <span>Share this one link with patients:</span>
-                  <strong>pharmacourse.co.ke/patient</strong>
+                  <strong>portal.remedacarePOS.app/patient</strong>
                 </div>
               </div>
 
@@ -1189,7 +1189,7 @@ export default function PatientPortal() {
             </button>
             <div className="portal-logo">
               <span className="portal-logo-icon"><Pill size={16} /></span>
-              <span>Pharma<span className="portal-logo-highlight">Course</span></span>
+              <span>RemedacarePOS</span>
             </div>
           </div>
 
