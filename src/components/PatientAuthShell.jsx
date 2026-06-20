@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { Building2 } from "lucide-react"
 import { useSearchParams } from "react-router-dom"
 import { PatientPortalStyles } from "./PatientLayout"
-import { pharmacyosClient } from "../lib/pharmacyosClient"
+import { fetchPatientPortalPharmacyById } from "../lib/patientPortalDirectory"
 import { buildSupabaseAccessBlockedCopy, isSupabaseAccessBlocked } from "../lib/supabaseAccess"
 export default function PatientAuthShell({ badge, title, description, children, footer }) {
   const [searchParams] = useSearchParams()
@@ -35,44 +35,15 @@ export default function PatientAuthShell({ badge, title, description, children, 
       setIsLoading(true)
       setLoadError("")
 
-      const { data, error } = await pharmacyosClient
-        .from("pharmacies")
-        .select("id, name, location, town, subcounty, county")
-        .eq("id", pharmacyId)
-        .maybeSingle()
+      const { data, error } = await fetchPatientPortalPharmacyById(pharmacyId)
 
       if (ignore) {
         return
       }
 
       if (error) {
-        if (isSupabaseAccessBlocked(error)) {
-          const rpcResult = await pharmacyosClient.rpc("public_patient_portal_pharmacies")
-
-          if (ignore) {
-            return
-          }
-
-          if (!rpcResult.error) {
-            const fallbackPharmacy = Array.isArray(rpcResult.data)
-              ? rpcResult.data.find((row) => String(row?.id) === String(pharmacyId))
-              : null
-
-            if (fallbackPharmacy) {
-              setPharmacy(fallbackPharmacy)
-              setLoadError("")
-            } else {
-              setPharmacy(null)
-              setLoadError(error.message || "We could not load the branch details.")
-            }
-          } else {
-            setPharmacy(null)
-            setLoadError(rpcResult.error.message || error.message || "We could not load the branch details.")
-          }
-        } else {
-          setPharmacy(null)
-          setLoadError(error.message || "We could not load the branch details.")
-        }
+        setPharmacy(null)
+        setLoadError(error.message || "We could not load the branch details.")
       } else {
         setPharmacy(data)
       }

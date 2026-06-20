@@ -2,7 +2,7 @@
 import { createContext, createElement, useContext, useEffect, useState } from "react"
 import { Link, NavLink, Outlet, useSearchParams } from "react-router-dom"
 import { Building2, CalendarDays, ClipboardList, House, PackageSearch } from "lucide-react"
-import { pharmacyosClient } from "../lib/pharmacyosClient"
+import { fetchPatientPortalPharmacyById } from "../lib/patientPortalDirectory"
 import { buildSupabaseAccessBlockedCopy, isSupabaseAccessBlocked } from "../lib/supabaseAccess"
 import PatientInstallPrompt from "./PatientInstallPrompt"
 import PatientPortal from "../pages/PatientPortal"
@@ -1365,17 +1365,7 @@ export default function PatientLayout() {
       setIsLoading(true)
       setLoadError("")
 
-      let data = null
-      let error = null
-
-      const primaryResult = await pharmacyosClient
-        .from("pharmacies")
-        .select("id, name, location, town, subcounty, county")
-        .eq("id", pharmacyId)
-        .maybeSingle()
-
-      data = primaryResult.data
-      error = primaryResult.error
+      const { data, error } = await fetchPatientPortalPharmacyById(pharmacyId)
 
       if (ignore) {
         return
@@ -1383,28 +1373,8 @@ export default function PatientLayout() {
 
       if (error) {
         if (isSupabaseAccessBlocked(error)) {
-          const rpcResult = await pharmacyosClient.rpc("public_patient_portal_pharmacies")
-
-          if (ignore) {
-            return
-          }
-
-          if (!rpcResult.error) {
-            const fallbackPharmacy = Array.isArray(rpcResult.data)
-              ? rpcResult.data.find((row) => String(row?.id) === String(pharmacyId))
-              : null
-
-            if (fallbackPharmacy) {
-              setPharmacy(fallbackPharmacy)
-              setLoadError("")
-            } else {
-              setPharmacy(null)
-              setLoadError(error.message || "We could not load the pharmacy details.")
-            }
-          } else {
-            setPharmacy(null)
-            setLoadError(rpcResult.error.message || error.message || "We could not load the pharmacy details.")
-          }
+          setPharmacy(null)
+          setLoadError(error.message || "We could not load the pharmacy details.")
         } else {
           setPharmacy(null)
           setLoadError(error.message || "We could not load the pharmacy details.")

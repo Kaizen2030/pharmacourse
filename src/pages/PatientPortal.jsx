@@ -25,7 +25,7 @@ import {
   Zap,
 } from "lucide-react"
 import { PatientPortalStyles } from "../components/PatientLayout"
-import { pharmacyosClient } from "../lib/pharmacyosClient"
+import { fetchPatientPortalPharmacies } from "../lib/patientPortalDirectory"
 import { buildSupabaseAccessBlockedCopy, isSupabaseAccessBlocked } from "../lib/supabaseAccess"
 import "./PatientPortal.css"
 
@@ -114,42 +114,14 @@ export default function PatientPortal() {
       setPharmaciesLoading(true)
       setPharmaciesError("")
 
-      const { data, error } = await pharmacyosClient
-        .from("pharmacies")
-        .select("id, name, location, parent_pharmacy_id, county, subcounty, town, area")
-        .order("name", { ascending: true })
+      const { data, error } = await fetchPatientPortalPharmacies()
 
       if (ignore) {
         return
       }
 
-      if (error) {
-        if (isSupabaseAccessBlocked(error)) {
-          const rpcResult = await pharmacyosClient.rpc("public_patient_portal_pharmacies")
-
-          if (ignore) {
-            return
-          }
-
-          if (!rpcResult.error) {
-            setPharmacies(Array.isArray(rpcResult.data) ? rpcResult.data : [])
-            setPharmaciesLoading(false)
-            return
-          }
-
-          setPharmacies([])
-          setPharmaciesError(
-            rpcResult.error?.message ||
-              error.message ||
-              "Supabase access is blocked for the patient portal directory.",
-          )
-        } else {
-          setPharmacies([])
-          setPharmaciesError(error.message || "We could not load the pharmacy list.")
-        }
-      } else {
-        setPharmacies(Array.isArray(data) ? data : [])
-      }
+      setPharmacies(Array.isArray(data) ? data : [])
+      setPharmaciesError(error?.message || "")
 
       setPharmaciesLoading(false)
     }
@@ -301,7 +273,7 @@ export default function PatientPortal() {
             <aside className="portal-directory-sidebar">
               <div className="portal-directory-card">
                 <h3>Search by pharmacy, county, town, or area</h3>
-                <p>Use the filters to narrow the list, then jump into the exact branch you want.</p>
+                  <p>Use the filters to narrow the list, then jump into the exact branch you want.</p>
 
                 <div className="portal-directory-form">
                   <label className="portal-directory-field">
@@ -451,7 +423,11 @@ export default function PatientPortal() {
                     </div>
                   ) : (
                     <div className="portal-directory-empty">
-                      No main pharmacies matched your filters yet. Try widening the search.
+                      {pharmaciesLoading
+                        ? "Loading pharmacies from the POS database..."
+                        : pharmaciesError
+                          ? "No pharmacies were returned from the POS project."
+                          : "No main pharmacies matched your filters yet. Try widening the search."}
                     </div>
                   )}
 
@@ -906,6 +882,15 @@ export default function PatientPortal() {
             <span className="portal-avatar-sm">{portalBrand.avatar}</span>
           </div>
         </div>
+
+        {isMobileMenuOpen ? (
+          <button
+            type="button"
+            className="portal-nav-backdrop"
+            aria-label="Close navigation"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+        ) : null}
 
         <div className="portal-search-bar">
           <div className="portal-search-wrapper">
