@@ -1438,22 +1438,24 @@
 
           .portal-section,
           .portal-form-page {
-            padding: 0.9rem;
+            padding: 0.8rem;
           }
 
           .portal-directory-card,
           .portal-directory-panel,
           .portal-directory-emergency {
-            padding: 0.9rem;
+            padding: 0.78rem;
           }
 
           .portal-directory-button,
           .portal-directory-link {
-            min-height: 2.85rem;
+            min-height: 2.45rem;
+            padding: 0.52rem 0.7rem;
+            font-size: 0.8rem;
           }
 
           .portal-directory-action-note {
-            padding: 0.65rem 0.72rem;
+            padding: 0.56rem 0.65rem;
           }
 
           .portal-directory-form {
@@ -1471,6 +1473,107 @@
 
           .portal-features-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.5rem;
+          }
+
+          .portal-quick-grid {
+            gap: 0.45rem;
+          }
+
+          .portal-quick-card {
+            padding: 0.58rem;
+            gap: 0.55rem;
+          }
+
+          .portal-quick-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 12px;
+          }
+
+          .portal-quick-icon svg {
+            width: 18px;
+            height: 18px;
+          }
+
+          .portal-quick-title {
+            font-size: 0.88rem;
+          }
+
+          .portal-quick-desc {
+            font-size: 0.72rem;
+            line-height: 1.35;
+          }
+
+          .portal-feature-card {
+            padding: 0.75rem 0.7rem;
+            gap: 0.45rem;
+          }
+
+          .portal-feature-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 12px;
+          }
+
+          .portal-feature-icon svg {
+            width: 18px;
+            height: 18px;
+          }
+
+          .portal-feature-title {
+            font-size: 0.82rem;
+          }
+
+          .portal-feature-desc {
+            font-size: 0.72rem;
+            line-height: 1.35;
+          }
+
+          .portal-directory-card-grid,
+          .portal-directory-branch-grid {
+            gap: 0.5rem;
+          }
+
+          .portal-directory-pharmacy-card,
+          .portal-directory-branch-card {
+            padding: 0.72rem;
+            gap: 0.5rem;
+          }
+
+          .portal-directory-pharmacy-card h5,
+          .portal-directory-branch-card h5 {
+            font-size: 0.92rem;
+          }
+
+          .portal-directory-pharmacy-card p,
+          .portal-directory-branch-card p {
+            font-size: 0.8rem;
+            line-height: 1.35;
+          }
+
+          .portal-directory-tags {
+            gap: 0.3rem;
+          }
+
+          .portal-directory-tags span,
+          .portal-directory-chip {
+            font-size: 0.62rem;
+          }
+
+          .portal-directory-pagination {
+            margin-top: 0.5rem;
+            padding: 0.56rem 0.62rem;
+          }
+
+          .portal-directory-page-btn {
+            min-height: 2.1rem;
+            padding: 0.35rem 0.65rem;
+            font-size: 0.74rem;
+          }
+
+          .portal-directory-page-count {
+            font-size: 0.74rem;
           }
 
           .portal-switch-banner-copy h2 {
