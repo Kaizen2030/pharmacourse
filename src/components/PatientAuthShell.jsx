@@ -3,6 +3,7 @@ import { Building2 } from "lucide-react"
 import { useSearchParams } from "react-router-dom"
 import { PatientPortalStyles } from "./PatientLayout"
 import { pharmacyosClient } from "../lib/pharmacyosClient"
+import { buildSupabaseAccessBlockedCopy, isSupabaseAccessBlocked } from "../lib/supabaseAccess"
 export default function PatientAuthShell({ badge, title, description, children, footer }) {
   const [searchParams] = useSearchParams()
   const pharmacyId = searchParams.get("pharmacy")?.trim() || ""
@@ -11,6 +12,14 @@ export default function PatientAuthShell({ badge, title, description, children, 
   const [pharmacy, setPharmacy] = useState(null)
   const [isLoading, setIsLoading] = useState(Boolean(pharmacyId))
   const [loadError, setLoadError] = useState("")
+  const isAccessBlocked = isSupabaseAccessBlocked({ message: loadError })
+  const blockedCopy = isAccessBlocked
+    ? buildSupabaseAccessBlockedCopy({
+        sourceLabel: "This patient page",
+        objectLabel: "branch details",
+        error: { message: loadError },
+      })
+    : null
 
   useEffect(() => {
     if (!pharmacyId) {
@@ -37,8 +46,33 @@ export default function PatientAuthShell({ badge, title, description, children, 
       }
 
       if (error) {
-        setPharmacy(null)
-        setLoadError(error.message || "We could not load the branch details.")
+        if (isSupabaseAccessBlocked(error)) {
+          const rpcResult = await pharmacyosClient.rpc("public_patient_portal_pharmacies")
+
+          if (ignore) {
+            return
+          }
+
+          if (!rpcResult.error) {
+            const fallbackPharmacy = Array.isArray(rpcResult.data)
+              ? rpcResult.data.find((row) => String(row?.id) === String(pharmacyId))
+              : null
+
+            if (fallbackPharmacy) {
+              setPharmacy(fallbackPharmacy)
+              setLoadError("")
+            } else {
+              setPharmacy(null)
+              setLoadError(error.message || "We could not load the branch details.")
+            }
+          } else {
+            setPharmacy(null)
+            setLoadError(rpcResult.error.message || error.message || "We could not load the branch details.")
+          }
+        } else {
+          setPharmacy(null)
+          setLoadError(error.message || "We could not load the branch details.")
+        }
       } else {
         setPharmacy(data)
       }
@@ -86,7 +120,8 @@ export default function PatientAuthShell({ badge, title, description, children, 
           <div className="patient-page">
             {loadError ? (
               <div className="patient-message patient-message-error">
-                The branch details could not be refreshed: {loadError}
+                The branch details could not be refreshed{isAccessBlocked ? " because Supabase access is blocked" : ""}: {loadError}
+                {isAccessBlocked && blockedCopy?.hint ? <div>{blockedCopy.hint}</div> : null}
               </div>
             ) : null}
 

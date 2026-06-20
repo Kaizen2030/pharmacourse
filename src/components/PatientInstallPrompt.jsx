@@ -89,7 +89,7 @@ export default function PatientInstallPrompt() {
   }
 
   return (
-    <section className="patient-install-card" aria-label="Install patient portal">
+    <section className="patient-install-card patient-install-card-popover" aria-label="Install patient portal" role="dialog" aria-live="polite">
       <div className="patient-install-head">
         <div className="patient-install-icon">
           <Smartphone />
@@ -100,11 +100,11 @@ export default function PatientInstallPrompt() {
       </div>
 
       <div className="patient-install-copy">
-        <div className="patient-install-kicker">Installable PWA</div>
-        <h2>Install the patient portal from your browser</h2>
+        <div className="patient-install-kicker">Install app</div>
+        <h2>Add the patient portal to your phone</h2>
         <p>
-          This portal is a progressive web app. On supported phones and browsers, install it so it opens from a home
-          screen icon like a real app.
+          This portal is a real progressive web app. On supported phones and browsers, install it so it opens from a
+          home screen icon like a native app.
         </p>
       </div>
 

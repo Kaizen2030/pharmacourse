@@ -30,6 +30,7 @@ import {
 import PatientInstallPrompt from "../components/PatientInstallPrompt"
 import { PatientPortalStyles } from "../components/PatientLayout"
 import { pharmacyosClient } from "../lib/pharmacyosClient"
+import { buildSupabaseAccessBlockedCopy, isSupabaseAccessBlocked } from "../lib/supabaseAccess"
 import "./PatientPortal.css"
 
 export default function PatientPortal() {
@@ -136,8 +137,29 @@ export default function PatientPortal() {
       }
 
       if (error) {
-        setPharmacies([])
-        setPharmaciesError(error.message || "We could not load the pharmacy list.")
+        if (isSupabaseAccessBlocked(error)) {
+          const rpcResult = await pharmacyosClient.rpc("public_patient_portal_pharmacies")
+
+          if (ignore) {
+            return
+          }
+
+          if (!rpcResult.error) {
+            setPharmacies(Array.isArray(rpcResult.data) ? rpcResult.data : [])
+            setPharmaciesLoading(false)
+            return
+          }
+
+          setPharmacies([])
+          setPharmaciesError(
+            rpcResult.error?.message ||
+              error.message ||
+              "Supabase access is blocked for the patient portal directory.",
+          )
+        } else {
+          setPharmacies([])
+          setPharmaciesError(error.message || "We could not load the pharmacy list.")
+        }
       } else {
         setPharmacies(Array.isArray(data) ? data : [])
       }
@@ -234,10 +256,10 @@ export default function PatientPortal() {
     () => [
       { label: "Main pharmacies", value: String(mainPharmacies.length), icon: Building2, color: "#0f6e56", bg: "#e5f4ee" },
       { label: "Branches shown", value: String(branchCards.length), icon: PackageSearch, color: "#1a6bb5", bg: "#e8f1fb" },
-      { label: "Services", value: String(quickActions.length), icon: ClipboardList, color: "#c76a00", bg: "#fff0d9" },
-      { label: "PWA ready", value: "Yes", icon: Smartphone, color: "#7c3aed", bg: "#f3eefe" },
+      { label: "Matching locations", value: String(filteredPharmacies.length), icon: ClipboardList, color: "#c76a00", bg: "#fff0d9" },
+      { label: "Services", value: String(quickActions.length), icon: Smartphone, color: "#7c3aed", bg: "#f3eefe" },
     ],
-    [branchCards.length, mainPharmacies.length, quickActions.length],
+    [branchCards.length, filteredPharmacies.length, mainPharmacies.length, quickActions.length],
   )
 
   const searchSuggestions = useMemo(() => {
@@ -249,12 +271,33 @@ export default function PatientPortal() {
     return [...pharmacySuggestions, "Prescription requests", "Delivery tracking", "Book appointments"].slice(0, 6)
   }, [pharmacies])
 
+  const pharmaciesAccessBlocked = useMemo(() => isSupabaseAccessBlocked(pharmaciesError), [pharmaciesError])
+  const pharmaciesBlockedCopy = useMemo(
+    () =>
+      pharmaciesAccessBlocked
+        ? buildSupabaseAccessBlockedCopy({
+            sourceLabel: "The patient portal",
+            objectLabel: "pharmacies",
+            error: { message: pharmaciesError },
+          })
+        : null,
+    [pharmaciesAccessBlocked, pharmaciesError],
+  )
+
   function buildPatientPath(pathname, pharmacyId) {
     if (!pharmacyId) {
       return pathname
     }
 
     return `${pathname}?pharmacy=${encodeURIComponent(pharmacyId)}`
+  }
+
+  function buildPatientLoginPath(pharmacyId) {
+    if (!pharmacyId) {
+      return "/patient/login"
+    }
+
+    return `/patient/login?pharmacy=${encodeURIComponent(pharmacyId)}`
   }
 
   function handleQuickAction(actionId) {
@@ -283,7 +326,7 @@ export default function PatientPortal() {
               <button type="button" className="portal-btn secondary" onClick={() => setActiveTab("updates")}>
                 Check updates
               </button>
-              <Link to="/patient/login" className="portal-btn ghost">
+              <Link to={buildPatientLoginPath(selectedMainPharmacy?.id || mainPharmacies[0]?.id || "")} className="portal-btn ghost">
                 Sign in
               </Link>
               <button type="button" className="portal-btn ghost" onClick={() => setIsMobileMenuOpen(true)}>
@@ -381,7 +424,11 @@ export default function PatientPortal() {
           <div className="portal-section-header">
             <h2 className="portal-section-title">Choose a pharmacy first</h2>
             <span className="portal-section-badge">
-              {pharmaciesLoading ? "Loading pharmacies..." : `${filteredPharmacies.length} matching locations`}
+              {pharmaciesLoading
+                ? "Loading pharmacies..."
+                : pharmaciesAccessBlocked
+                  ? "Supabase access blocked"
+                  : `${filteredPharmacies.length} matching locations`}
             </span>
           </div>
 
@@ -468,25 +515,41 @@ export default function PatientPortal() {
                   </div>
                   <div className="portal-directory-lookup-card">
                     <span>Signed in as portal visitor.</span>
-                    <Link to={buildPatientPath("/patient/track", selectedMainPharmacy?.id || mainPharmacies[0]?.id || "")} className="portal-directory-button">
+                    <Link to={buildPatientLoginPath(selectedMainPharmacy?.id || mainPharmacies[0]?.id || "")} className="portal-directory-button">
                       Find My Updates
                     </Link>
                   </div>
                 </div>
 
-                {pharmaciesError ? <div className="portal-directory-error">{pharmaciesError}</div> : null}
+                {pharmaciesAccessBlocked && pharmaciesBlockedCopy ? (
+                  <div className="portal-directory-error portal-directory-error-blocked">
+                    <strong>{pharmaciesBlockedCopy.title}</strong>
+                    <p>{pharmaciesBlockedCopy.summary}</p>
+                    <p>{pharmaciesBlockedCopy.hint}</p>
+                    {pharmaciesBlockedCopy.detail ? <p className="portal-directory-error-detail">{pharmaciesBlockedCopy.detail}</p> : null}
+                  </div>
+                ) : pharmaciesError ? (
+                  <div className="portal-directory-error">{pharmaciesError}</div>
+                ) : null}
 
                 <div className="portal-directory-summary">
-                  Showing {filteredPharmacies.length} matching locations
+                  {pharmaciesAccessBlocked
+                    ? "POS pharmacy access is blocked until the Supabase policy or RPC is opened up."
+                    : `Showing ${filteredPharmacies.length} matching locations`}
                 </div>
 
                 <div className="portal-directory-stage">
                   <div className="portal-directory-stage-header">
                     <h4>1. Choose Main Pharmacy</h4>
-                    <span>{mainPharmacies.length}</span>
+                    <span>{pharmaciesAccessBlocked ? "?" : mainPharmacies.length}</span>
                   </div>
 
-                  {mainPharmacies.length ? (
+                  {pharmaciesAccessBlocked ? (
+                    <div className="portal-directory-empty portal-directory-empty-blocked">
+                      We could not list pharmacies from the POS project because Supabase is blocking access. Open the
+                      policy or RPC noted below, then refresh this page.
+                    </div>
+                  ) : mainPharmacies.length ? (
                     <div className="portal-directory-card-grid">
                       {mainPharmacies.map((pharmacy) => {
                         const location = pharmacy?.location || pharmacy?.town || pharmacy?.subcounty || pharmacy?.county || "Kenya"
@@ -506,7 +569,7 @@ export default function PatientPortal() {
                               {pharmacy.town ? <span>{pharmacy.town}</span> : null}
                             </div>
                             <div className="portal-directory-actions">
-                              <Link to={buildPatientPath("/patient", pharmacy.id)} className="portal-directory-button primary">
+                              <Link to={buildPatientLoginPath(pharmacy.id)} className="portal-directory-button primary">
                                 Use main pharmacy
                               </Link>
                               <button
@@ -532,12 +595,16 @@ export default function PatientPortal() {
                       <h4>2. Choose Branch</h4>
                       <p>Pick a main pharmacy above to narrow branches faster.</p>
                     </div>
-                    <span>{branchCards.length}</span>
+                    <span>{pharmaciesAccessBlocked ? "?" : branchCards.length}</span>
                   </div>
 
                   <div className="portal-directory-subtitle">Other branches in this pharmacy</div>
 
-                  {pharmaciesLoading ? (
+                  {pharmaciesAccessBlocked ? (
+                    <div className="portal-directory-empty portal-directory-empty-blocked">
+                      The branch list is hidden until the POS project allows public reads for the patient portal.
+                    </div>
+                  ) : pharmaciesLoading ? (
                     <div className="portal-directory-empty">Loading pharmacies from the POS database...</div>
                   ) : branchCards.length ? (
                     <div className="portal-directory-branch-grid">
@@ -554,7 +621,7 @@ export default function PatientPortal() {
                               {branch.subcounty ? <span>{branch.subcounty}</span> : null}
                               {branch.town ? <span>{branch.town}</span> : null}
                             </div>
-                            <Link to={buildPatientPath("/patient", branch.id)} className="portal-directory-link">
+                            <Link to={buildPatientLoginPath(branch.id)} className="portal-directory-link">
                               Choose this branch
                             </Link>
                           </article>

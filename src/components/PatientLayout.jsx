@@ -3,6 +3,7 @@ import { createContext, createElement, useContext, useEffect, useState } from "r
 import { Link, NavLink, Outlet, useSearchParams } from "react-router-dom"
 import { Building2, CalendarDays, ClipboardList, House, PackageSearch } from "lucide-react"
 import { pharmacyosClient } from "../lib/pharmacyosClient"
+import { buildSupabaseAccessBlockedCopy, isSupabaseAccessBlocked } from "../lib/supabaseAccess"
 import PatientInstallPrompt from "./PatientInstallPrompt"
 import PatientPortal from "../pages/PatientPortal"
 
@@ -176,7 +177,28 @@ export function PatientPortalStyles() {
         background:
           radial-gradient(circle at top right, rgba(15, 110, 86, 0.1), transparent 28%),
           linear-gradient(180deg, rgba(255,255,255,0.98), rgba(239, 248, 244, 0.96));
-        box-shadow: 0 14px 30px rgba(15, 42, 32, 0.07);
+        box-shadow: 0 18px 42px rgba(15, 42, 32, 0.1);
+      }
+
+      .patient-install-card-popover {
+        position: sticky;
+        top: 0.85rem;
+        z-index: 8;
+        overflow: hidden;
+        isolation: isolate;
+        animation: patient-install-pop 180ms ease-out;
+      }
+
+      .patient-install-card-popover::after {
+        content: "";
+        position: absolute;
+        inset: -20% auto auto -12%;
+        width: 8rem;
+        height: 8rem;
+        border-radius: 999px;
+        background: radial-gradient(circle, rgba(15, 110, 86, 0.14), rgba(15, 110, 86, 0));
+        pointer-events: none;
+        z-index: -1;
       }
 
       .patient-install-head {
@@ -256,6 +278,18 @@ export function PatientPortalStyles() {
       .patient-install-ios {
         display: grid;
         gap: 0.65rem;
+      }
+
+      @keyframes patient-install-pop {
+        from {
+          opacity: 0;
+          transform: translateY(10px) scale(0.99);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
       }
 
       .patient-install-ios-row {
@@ -1311,6 +1345,14 @@ export default function PatientLayout() {
   const [pharmacy, setPharmacy] = useState(null)
   const [isLoading, setIsLoading] = useState(Boolean(pharmacyId))
   const [loadError, setLoadError] = useState("")
+  const isAccessBlocked = isSupabaseAccessBlocked({ message: loadError })
+  const blockedCopy = isAccessBlocked
+    ? buildSupabaseAccessBlockedCopy({
+        sourceLabel: "This branch portal",
+        objectLabel: "branch details",
+        error: { message: loadError },
+      })
+    : null
 
   useEffect(() => {
     if (!pharmacyId) {
@@ -1340,8 +1382,33 @@ export default function PatientLayout() {
       }
 
       if (error) {
-        setPharmacy(null)
-        setLoadError(error.message || "We could not load the pharmacy details.")
+        if (isSupabaseAccessBlocked(error)) {
+          const rpcResult = await pharmacyosClient.rpc("public_patient_portal_pharmacies")
+
+          if (ignore) {
+            return
+          }
+
+          if (!rpcResult.error) {
+            const fallbackPharmacy = Array.isArray(rpcResult.data)
+              ? rpcResult.data.find((row) => String(row?.id) === String(pharmacyId))
+              : null
+
+            if (fallbackPharmacy) {
+              setPharmacy(fallbackPharmacy)
+              setLoadError("")
+            } else {
+              setPharmacy(null)
+              setLoadError(error.message || "We could not load the pharmacy details.")
+            }
+          } else {
+            setPharmacy(null)
+            setLoadError(rpcResult.error.message || error.message || "We could not load the pharmacy details.")
+          }
+        } else {
+          setPharmacy(null)
+          setLoadError(error.message || "We could not load the pharmacy details.")
+        }
       } else if (!data) {
         setPharmacy(null)
         setLoadError("This branch is no longer available.")
@@ -1420,9 +1487,12 @@ export default function PatientLayout() {
             <section className="patient-card patient-card-muted">
               <div className="patient-toolbar">
                 <div className="patient-meta-copy">
-                  <span className="patient-kicker">Branch not found</span>
-                  <div className="patient-meta-title">This patient portal link is no longer active.</div>
-                  <p>{loadError}</p>
+                  <span className="patient-kicker">{isAccessBlocked ? "Supabase access blocked" : "Branch not found"}</span>
+                  <div className="patient-meta-title">
+                    {isAccessBlocked ? "The POS project is blocking the branch lookup." : "This patient portal link is no longer active."}
+                  </div>
+                  <p>{isAccessBlocked && blockedCopy ? blockedCopy.summary : loadError}</p>
+                  {isAccessBlocked && blockedCopy?.hint ? <p>{blockedCopy.hint}</p> : null}
                 </div>
                 <Link to="/patient" className="patient-button" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
                   Find another pharmacy
@@ -1433,7 +1503,7 @@ export default function PatientLayout() {
 
           {loadError && pharmacy ? (
             <div className="patient-message patient-message-error">
-              We loaded the portal, but the branch details could not be refreshed: {loadError}
+              We loaded the portal, but the branch details could not be refreshed{isAccessBlocked ? " because Supabase access is blocked" : ""}: {loadError}
             </div>
           ) : null}
 

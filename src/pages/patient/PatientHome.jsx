@@ -3,6 +3,7 @@ import { CalendarPlus2, ChevronRight, ClipboardPlus, HeartPulse, IdCard, LogOut,
 import { Link } from "react-router-dom"
 import { usePatient } from "../../components/PatientLayout"
 import { usePatientPortalAuth } from "../../hooks/usePatientPortalAuth"
+import { fetchPatientPortalUpdates } from "../../lib/patientPortalUpdates"
 import { clearPatientPortalSession, getPatientPortalSession } from "../../lib/patientPortalSession"
 
 function getInitials(value) {
@@ -20,6 +21,7 @@ export default function PatientHome() {
   const [rememberedPatient, setRememberedPatient] = useState(() => getPatientPortalSession(pharmacyId))
   const [feedback, setFeedback] = useState({ type: "", message: "" })
   const [isSigningOut, setIsSigningOut] = useState(false)
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(null)
   const patientLoginPath = createPatientPath("/patient/login")
   const { isAuthenticated, fullName, patientPhone, signOut } = usePatientPortalAuth()
   const displayName = fullName || rememberedPatient?.fullName || "Patient account"
@@ -31,6 +33,44 @@ export default function PatientHome() {
   useEffect(() => {
     setRememberedPatient(getPatientPortalSession(pharmacyId))
   }, [pharmacyId])
+
+  useEffect(() => {
+    let ignore = false
+    const phone = patientPhone || rememberedPatient?.phone || ""
+
+    async function loadUnreadNotifications() {
+      if (!pharmacyId || !phone || (!isAuthenticated && !rememberedPatient)) {
+        setUnreadNotificationCount(null)
+        return
+      }
+
+      const { data, error } = await fetchPatientPortalUpdates({
+        pharmacyId,
+        phone,
+      })
+
+      if (ignore) {
+        return
+      }
+
+      if (error) {
+        setUnreadNotificationCount(0)
+        return
+      }
+
+      const unreadRows = Array.isArray(data?.notifications)
+        ? data.notifications.filter((notification) => !notification?.read)
+        : []
+
+      setUnreadNotificationCount(unreadRows.length)
+    }
+
+    void loadUnreadNotifications()
+
+    return () => {
+      ignore = true
+    }
+  }, [isAuthenticated, pharmacyId, patientPhone, rememberedPatient])
 
   const actions = [
     {
@@ -58,8 +98,13 @@ export default function PatientHome() {
       icon: HeartPulse,
     },
     {
-      title: "Track & Notifications",
-      description: "Track your order and see updates",
+      title: unreadNotificationCount === null ? "Track & Notifications" : `Track & Notifications${unreadNotificationCount ? ` (${unreadNotificationCount})` : ""}`,
+      description:
+        unreadNotificationCount === null
+          ? "Track your order and see updates"
+          : unreadNotificationCount
+            ? `${unreadNotificationCount} unread update${unreadNotificationCount === 1 ? "" : "s"} waiting`
+            : "No unread updates right now",
       to: createPatientPath("/patient/track"),
       icon: ClipboardPlus,
     },
@@ -135,6 +180,10 @@ export default function PatientHome() {
               <div className="patient-stat">
                 <p className="patient-stat-label">Ready for</p>
                 <p className="patient-stat-value">Prescriptions, appointments, and maternal care</p>
+              </div>
+              <div className="patient-stat">
+                <p className="patient-stat-label">Unread updates</p>
+                <p className="patient-stat-value">{unreadNotificationCount === null ? "Checking..." : String(unreadNotificationCount)}</p>
               </div>
             </div>
           </div>
