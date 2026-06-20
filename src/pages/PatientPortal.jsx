@@ -559,6 +559,12 @@ export default function PatientPortal() {
                               >
                                 Use main pharmacy
                               </Link>
+                              {profileDraft ? (
+                                <div className="portal-directory-action-note">
+                                  <strong>Saved profile ready</strong>
+                                  <span>{draftSummary || "Your details can be edited before you submit."}</span>
+                                </div>
+                              ) : null}
                               <button
                                 type="button"
                                 className="portal-directory-button secondary"
@@ -618,6 +624,12 @@ export default function PatientPortal() {
                             >
                               Choose this branch
                             </Link>
+                            {profileDraft ? (
+                              <div className="portal-directory-action-note">
+                                <strong>Saved profile ready</strong>
+                                <span>{draftSummary || "Your details can be edited before you submit."}</span>
+                              </div>
+                            ) : null}
                           </article>
                         )
                       })}

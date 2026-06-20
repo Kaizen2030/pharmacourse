@@ -606,6 +606,27 @@
           gap: 0.5rem;
         }
 
+        .portal-directory-action-note {
+          display: grid;
+          gap: 0.2rem;
+          padding: 0.72rem 0.8rem;
+          border-radius: 14px;
+          border: 1px solid rgba(15, 110, 86, 0.12);
+          background: rgba(15, 110, 86, 0.06);
+        }
+
+        .portal-directory-action-note strong {
+          color: #163329;
+          font-size: 0.84rem;
+          font-weight: 800;
+        }
+
+        .portal-directory-action-note span {
+          color: #5f746b;
+          font-size: 0.82rem;
+          line-height: 1.45;
+        }
+
         .portal-directory-button,
         .portal-directory-link {
           display: inline-flex;
@@ -1356,6 +1377,10 @@
             width: 100%;
           }
 
+          .portal-directory-action-note {
+            width: 100%;
+          }
+
           .portal-main {
             padding-bottom: 5rem;
           }
@@ -1397,6 +1422,10 @@
           .portal-directory-button,
           .portal-directory-link {
             min-height: 2.85rem;
+          }
+
+          .portal-directory-action-note {
+            padding: 0.65rem 0.72rem;
           }
 
           .portal-directory-form {
