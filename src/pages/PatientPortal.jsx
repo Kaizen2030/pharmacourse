@@ -2529,64 +2529,126 @@ export default function PatientPortal() {
                 <div className="patient-portal-phone-frame">
                   <div className="patient-portal-phone-notch" />
                   <div className="patient-portal-phone-shell">
-                    <div className="patient-portal-phone-topbar">
-                      <div>
-                        <div className="patient-portal-phone-kicker">
-                          <Smartphone size={12} />
-                          Branch portal
-                        </div>
-                        <div className="patient-portal-phone-name">{pharmacy?.name || "Choose your pharmacy"}</div>
-                        <div className="patient-portal-phone-meta">{pharmacy?.locationLabel || pharmacy?.location || "One link for prescriptions, bookings, and updates"}</div>
-                      </div>
-                      <div className="patient-portal-phone-powered">RemedacarePOS</div>
-                    </div>
-
-                    <div className="patient-portal-phone-content">
-                      <div className="patient-portal-phone-hero">
-                        <span className="patient-portal-badge">Mobile-first</span>
-                        <h2>Looks and works like a native app</h2>
-                        <p>Fast branch selection, clean request cards, and PWA installation for day-to-day use.</p>
-                      </div>
-
-                      <div className="patient-portal-phone-tiles">
-                        {PORTAL_FEATURES.map(({ title, description, icon: Icon, tone }) => (
-                          <div key={title} className={`patient-portal-phone-tile tone-${tone}`}>
-                            <span className="patient-portal-phone-icon">
-                              <Icon size={16} />
-                            </span>
-                            <strong>{title}</strong>
-                            <span>{description}</span>
+                    <div className="patient-portal-phone-screen">
+                      <header className="patient-portal-phone-header">
+                        <div className="patient-portal-phone-header-inner">
+                          <div className="patient-portal-phone-brand">
+                            <span className="patient-portal-menu-icon">☰</span>
+                            <span className="patient-portal-logo">Pharma<span className="patient-portal-logo-highlight">Course</span></span>
                           </div>
-                        ))}
-                      </div>
-
-                      <div className="patient-portal-phone-install-banner">
-                        <div>
-                          <span className="patient-portal-phone-install-kicker">PWA ready</span>
-                          <strong>Install this portal on your phone</strong>
-                          <p>Open it once, then tap Install or Add to Home Screen for app-style access.</p>
+                          <div className="patient-portal-phone-header-actions">
+                            <span className="patient-portal-bell-wrap">
+                              <Bell size={14} />
+                              <span className="patient-portal-bell-dot">3</span>
+                            </span>
+                            <span className="patient-portal-avatar-sm">JM</span>
+                          </div>
                         </div>
-                        <Download size={18} />
-                      </div>
+                        <div className="patient-portal-search-bar">
+                          <div className="patient-portal-search-wrap">
+                            <span className="patient-portal-search-icon">🔍</span>
+                            <input className="patient-portal-search-input" readOnly placeholder="Search medicines, appointments..." />
+                          </div>
+                        </div>
+                      </header>
 
-                      <div className="patient-portal-phone-footer">
-                        <span className="patient-portal-phone-footer-copy">
-                          <ShieldCheck size={14} />
-                          Secure branch access
-                        </span>
-                        <span className="patient-portal-phone-footer-action">
-                          Open portal
-                          <ArrowRight size={14} />
-                        </span>
+                      <div className="patient-portal-phone-scroll">
+                        <div className="patient-portal-welcome">
+                          <div className="patient-portal-welcome-top">
+                            <div>
+                              <div className="patient-portal-greeting">Good morning 👋</div>
+                              <div className="patient-portal-welcome-title">Jane Mwangi</div>
+                              <div className="patient-portal-welcome-sub">Your health journey starts here</div>
+                            </div>
+                            <div className="patient-portal-avatar">JM</div>
+                          </div>
+
+                          <div className="patient-portal-stats-grid">
+                            {PHONE_PREVIEW_STATS.map((stat) => (
+                              <div key={stat.label} className="patient-portal-stat-card">
+                                <div className="patient-portal-stat-icon">{stat.icon}</div>
+                                <div>
+                                  <div className="patient-portal-stat-value">{stat.value}</div>
+                                  <div className="patient-portal-stat-label">{stat.label}</div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <section className="patient-portal-section">
+                          <div className="patient-portal-section-header">
+                            <h2 className="patient-portal-section-title">Quick Actions</h2>
+                            <span className="patient-portal-section-badge">4 services</span>
+                          </div>
+                          <div className="patient-portal-quick-grid">
+                            {PHONE_PREVIEW_QUICK_ACTIONS.map((action) => (
+                              <div key={action.title} className="patient-portal-quick-card">
+                                <div className="patient-portal-quick-icon" style={{ background: action.bgColor, color: action.iconColor }}>
+                                  {action.emoji}
+                                </div>
+                                <div>
+                                  <p className="patient-portal-quick-title">{action.title}</p>
+                                  <p className="patient-portal-quick-desc">{action.description}</p>
+                                </div>
+                                <span className="patient-portal-quick-arrow">›</span>
+                              </div>
+                            ))}
+                          </div>
+                        </section>
+
+                        <section className="patient-portal-section">
+                          <div className="patient-portal-section-header">
+                            <h2 className="patient-portal-section-title">Recent Activity</h2>
+                            <span className="patient-portal-section-badge patient-portal-section-link">View All</span>
+                          </div>
+                          <div className="patient-portal-activity-list">
+                            {PHONE_PREVIEW_ACTIVITIES.map((activity) => (
+                              <div key={activity.title} className="patient-portal-activity-item">
+                                <div className="patient-portal-activity-icon" style={{ background: activity.bg, color: activity.color }}>
+                                  {activity.emoji}
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                  <div className="patient-portal-activity-top">
+                                    <span className="patient-portal-activity-title">{activity.title}</span>
+                                    <span className={`patient-portal-activity-status ${activity.statusClass}`}>{activity.statusLabel}</span>
+                                  </div>
+                                  <div className="patient-portal-activity-time">{activity.time}</div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </section>
+
+                        <section className="patient-portal-section">
+                          <div className="patient-portal-section-header">
+                            <h2 className="patient-portal-section-title">Everything You Need</h2>
+                          </div>
+                          <div className="patient-portal-features-grid">
+                            {PHONE_PREVIEW_FEATURES.map((feature) => (
+                              <div key={feature.title} className="patient-portal-feature-card">
+                                <div className="patient-portal-feature-icon">{feature.icon}</div>
+                                <p className="patient-portal-feature-title">{feature.title}</p>
+                                <p className="patient-portal-feature-desc">{feature.description}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </section>
+
+                        <div className="patient-portal-trust-section">
+                          {PHONE_PREVIEW_TRUST_BADGES.map((badge) => (
+                            <span key={badge} className="patient-portal-trust-badge">{badge}</span>
+                          ))}
+                        </div>
                       </div>
                     </div>
 
                     <div className="patient-portal-phone-bottom-nav">
                       {[
-                        { label: "Home", icon: Building2 },
-                        { label: "Rx", icon: ClipboardList },
-                        { label: "Book", icon: CalendarDays },
-                        { label: "Track", icon: PackageSearch },
+                        { label: "Home", icon: Home },
+                        { label: "Rx", icon: Pill },
+                        { label: "Appts", icon: CalendarDays },
+                        { label: "Maternal", icon: HeartPulse },
                       ].map(({ label, icon: Icon }, index) => (
                         <span key={label} className={`patient-portal-phone-tab${index === 0 ? " active" : ""}`}>
                           <Icon size={14} />
