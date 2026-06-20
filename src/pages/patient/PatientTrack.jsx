@@ -1,13 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { jsPDF } from "jspdf"
 import { ArrowUpRight, BellRing, CalendarClock, ClipboardList, PackageSearch, Video, X } from "lucide-react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import TurnstileWidget from "../../components/TurnstileWidget"
 import { usePatient } from "../../components/PatientLayout"
 import { usePatientPortalAuth } from "../../hooks/usePatientPortalAuth"
 import { pharmacyosClient } from "../../lib/pharmacyosClient"
 import { fetchPatientPortalUpdates } from "../../lib/patientPortalUpdates"
-import { getPatientPortalSession, savePatientPortalSession } from "../../lib/patientPortalSession"
+import {
+  clearPatientPortalProfileDraft,
+  clearPatientPortalSession,
+  getPatientPortalSession,
+  savePatientPortalSession,
+} from "../../lib/patientPortalSession"
 
 const deliverySteps = ["pending", "packed", "dispatched", "delivered"]
 const TRACK_PAGE_SIZE = 5
@@ -385,6 +390,7 @@ function buildProgressEvents(request, notifications = []) {
 
 export default function PatientTrack() {
   const { pharmacyId, branchName, createPatientPath } = usePatient()
+  const navigate = useNavigate()
   const rememberedSession = getPatientPortalSession(pharmacyId)
   const [notifications, setNotifications] = useState([])
   const [deliveries, setDeliveries] = useState([])
@@ -409,8 +415,9 @@ export default function PatientTrack() {
   const [turnstileResetKey, setTurnstileResetKey] = useState(0)
   const [selectedRequestId, setSelectedRequestId] = useState("")
   const [activeTrackSection, setActiveTrackSection] = useState("prescriptions")
+  const [isSwitchModalOpen, setIsSwitchModalOpen] = useState(false)
   const hasManualSectionChoiceRef = useRef(false)
-  const { loading: authLoading, isAuthenticated, patientPhone, fullName } = usePatientPortalAuth()
+  const { loading: authLoading, isAuthenticated, patientPhone, fullName, signOut } = usePatientPortalAuth()
   const patientLoginPath = createPatientPath("/patient/login")
   const unreadCount = notifications.filter((notification) => !notification.read).length
   const displayName = fullName || rememberedSession?.fullName || ""
@@ -576,12 +583,57 @@ export default function PatientTrack() {
 
     setActiveTrackSection(latestTrackEvent.section)
   }, [latestTrackEvent?.section])
+
+  useEffect(() => {
+    if (!isSwitchModalOpen) {
+      return undefined
+    }
+
+    function handleKeyDown(event) {
+      if (event.key === "Escape") {
+        closeSwitchModal()
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [isSwitchModalOpen])
+
   const handleTurnstileVerify = useCallback((token) => {
     setTurnstileToken(token || "")
   }, [])
   const handleTurnstileExpire = useCallback(() => {
     setTurnstileToken("")
   }, [])
+
+  function openSwitchModal() {
+    setIsSwitchModalOpen(true)
+  }
+
+  function closeSwitchModal() {
+    setIsSwitchModalOpen(false)
+  }
+
+  function handleSwitchBranch() {
+    closeSwitchModal()
+    navigate("/patient-portal")
+  }
+
+  async function handleStartFreshSwitch() {
+    closeSwitchModal()
+    clearPatientPortalSession(pharmacyId)
+    clearPatientPortalProfileDraft()
+
+    try {
+      if (isAuthenticated) {
+        await signOut()
+      }
+    } catch {
+      // If sign-out fails, still continue to branch selection so the user can restart.
+    }
+
+    navigate("/patient-portal")
+  }
 
   function downloadReceipt(receipt) {
     const doc = new jsPDF({ unit: "mm", format: "a4" })
@@ -862,9 +914,14 @@ export default function PatientTrack() {
             <p>{lastUpdated ? `Last updated ${lastUpdated}` : "Auto-refresh every 30s"}</p>
           </div>
           <div className="patient-toolbar-actions">
-            <Link to="/patient-portal" className="patient-button-secondary" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+            <button
+              type="button"
+              className="patient-button-secondary"
+              onClick={openSwitchModal}
+              style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}
+            >
               Change branch
-            </Link>
+            </button>
             <button className="patient-button-secondary" type="button" onClick={() => void loadTrackingData()} disabled={isLoading || !isAuthenticated}>
               {isLoading ? "Refreshing..." : "Refresh"}
             </button>
@@ -875,7 +932,7 @@ export default function PatientTrack() {
           <div>
             <span className="patient-kicker">Branch switch</span>
             <div className="patient-meta-title">Moved to another area?</div>
-            <p>Tap change branch, pick the new pharmacy, then sign in again so future updates go to the right place.</p>
+            <p>Tap change branch, confirm the transfer, then pick the new pharmacy. Your saved profile can follow you and stay editable before you submit it again.</p>
           </div>
           <span className="patient-badge">Open {trackSectionLabel}</span>
         </div>
@@ -1525,6 +1582,48 @@ export default function PatientTrack() {
                 ))}
               </div>
             </section>
+          </div>
+        </div>
+      ) : null}
+
+      {isSwitchModalOpen ? (
+        <div className="patient-switch-modal" role="dialog" aria-modal="true" aria-label="Switch pharmacy confirmation">
+          <button type="button" className="patient-switch-modal-backdrop" onClick={closeSwitchModal} aria-label="Close switch confirmation" />
+          <div className="patient-switch-modal-sheet">
+            <div className="patient-switch-modal-head">
+              <div>
+                <div className="patient-kicker">Branch change</div>
+                <h2 className="patient-section-title" style={{ marginTop: 4 }}>
+                  Switch to a new pharmacy?
+                </h2>
+                <p className="patient-form-help" style={{ marginTop: 6 }}>
+                  We will carry your saved name, phone number, and email to the next branch so you can edit them before you submit. If these details are wrong, choose start fresh instead.
+                </p>
+              </div>
+              <button type="button" className="patient-detail-close" onClick={closeSwitchModal} aria-label="Close switch confirmation">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="patient-switch-modal-summary">
+              <div>
+                <strong>Saved profile</strong>
+                <p>{displayName || "Patient account"}{patientPhone ? ` - ${patientPhone}` : ""}</p>
+              </div>
+              <div>
+                <strong>What happens next</strong>
+                <p>Continue switch to pick a new pharmacy. Start fresh to sign out and register again with a new account.</p>
+              </div>
+            </div>
+
+            <div className="patient-switch-modal-actions">
+              <button type="button" className="patient-button" onClick={handleSwitchBranch}>
+                Continue switch
+              </button>
+              <button type="button" className="patient-button-secondary" onClick={() => void handleStartFreshSwitch()}>
+                Start fresh and sign out
+              </button>
+            </div>
           </div>
         </div>
       ) : null}

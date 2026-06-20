@@ -1363,6 +1363,155 @@ export function PatientPortalStyles() {
         align-items: flex-start;
       }
 
+      .patient-detail-overlay,
+      .patient-switch-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 60;
+        display: grid;
+        place-items: center;
+        padding: 1rem;
+      }
+
+      .patient-detail-backdrop,
+      .patient-switch-modal-backdrop {
+        position: absolute;
+        inset: 0;
+        border: none;
+        background: rgba(14, 32, 25, 0.52);
+        backdrop-filter: blur(8px);
+        cursor: pointer;
+      }
+
+      .patient-detail-sheet,
+      .patient-switch-modal-sheet {
+        position: relative;
+        z-index: 1;
+        width: min(100%, 760px);
+        max-height: min(92dvh, 820px);
+        overflow: auto;
+        padding: 1.1rem;
+        border-radius: 28px;
+        border: 1px solid rgba(15, 110, 86, 0.16);
+        background:
+          radial-gradient(circle at top right, rgba(15, 110, 86, 0.08), transparent 26%),
+          linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(244, 251, 248, 0.98));
+        box-shadow: 0 34px 90px rgba(15, 42, 32, 0.24);
+      }
+
+      .patient-switch-modal-sheet {
+        width: min(100%, 620px);
+      }
+
+      .patient-detail-head,
+      .patient-switch-modal-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+
+      .patient-detail-head-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+      }
+
+      .patient-detail-close {
+        width: 42px;
+        height: 42px;
+        border-radius: 14px;
+        border: 1px solid rgba(15, 110, 86, 0.14);
+        background: rgba(255, 255, 255, 0.9);
+        color: #24463a;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+
+      .patient-detail-grid {
+        display: grid;
+        gap: 0.9rem;
+        margin-bottom: 0.9rem;
+      }
+
+      .patient-detail-card,
+      .patient-switch-modal-summary {
+        display: grid;
+        gap: 0.8rem;
+        padding: 1rem;
+        border-radius: 22px;
+        border: 1px solid rgba(15, 110, 86, 0.12);
+        background: rgba(255, 255, 255, 0.88);
+      }
+
+      .patient-detail-card-title {
+        margin: 0;
+        color: #163329;
+        font-size: 1rem;
+      }
+
+      .patient-progress-event-list {
+        display: grid;
+        gap: 0.7rem;
+      }
+
+      .patient-progress-event {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.8rem;
+        padding: 0.88rem;
+        border-radius: 18px;
+        border: 1px solid rgba(15, 110, 86, 0.1);
+        background: rgba(249, 252, 251, 0.95);
+      }
+
+      .patient-progress-event-dot {
+        width: 12px;
+        height: 12px;
+        margin-top: 0.35rem;
+        border-radius: 999px;
+        background: #c5d6cf;
+        box-shadow: 0 0 0 5px rgba(197, 214, 207, 0.25);
+      }
+
+      .patient-progress-event-dot.patient-status-approved,
+      .patient-progress-event-dot.patient-status-confirmed,
+      .patient-progress-event-dot.patient-status-completed,
+      .patient-progress-event-dot.patient-status-delivered {
+        background: #0f6e56;
+        box-shadow: 0 0 0 5px rgba(15, 110, 86, 0.12);
+      }
+
+      .patient-progress-event-top {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.25rem;
+        color: #163329;
+      }
+
+      .patient-progress-event p,
+      .patient-switch-modal-summary p {
+        margin: 0;
+        color: #5f746b;
+        line-height: 1.55;
+      }
+
+      .patient-switch-modal-summary strong {
+        color: #163329;
+      }
+
+      .patient-switch-modal-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1rem;
+      }
+
       .patient-dashboard-card {
         display: grid;
         gap: 0.85rem;
@@ -1496,11 +1645,40 @@ export function PatientPortalStyles() {
         }
 
         .patient-track-nav-grid {
-          grid-template-columns: 1fr;
+          grid-template-columns: none;
+          grid-auto-flow: column;
+          grid-auto-columns: minmax(112px, 34vw);
+          overflow-x: auto;
+          padding-bottom: 0.15rem;
+          touch-action: pan-x;
+          scroll-snap-type: x proximity;
+          -webkit-overflow-scrolling: touch;
+        }
+
+        .patient-track-nav-card {
+          min-height: 100%;
+          scroll-snap-align: start;
         }
 
         .patient-track-hero-pills {
           gap: 0.45rem;
+        }
+
+        .patient-detail-overlay,
+        .patient-switch-modal {
+          padding: 0.7rem;
+        }
+
+        .patient-detail-sheet,
+        .patient-switch-modal-sheet {
+          max-height: calc(100dvh - 1.4rem);
+          border-radius: 22px;
+          padding: 0.95rem;
+        }
+
+        .patient-detail-head,
+        .patient-switch-modal-head {
+          flex-direction: column;
         }
 
         .patient-avatar {
