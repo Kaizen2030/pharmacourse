@@ -74,6 +74,39 @@ const PORTAL_FEATURES = [
   },
 ]
 
+const PHONE_PREVIEW_STATS = [
+  { label: "Prescriptions", value: "3", icon: "💊" },
+  { label: "Appointments", value: "2", icon: "📅" },
+  { label: "Deliveries", value: "1", icon: "🚚" },
+  { label: "Notifications", value: "5", icon: "🔔" },
+]
+
+const PHONE_PREVIEW_QUICK_ACTIONS = [
+  { title: "Request Prescription", description: "Send a refill or upload prescription", emoji: "💊", bgColor: "#ecfdf5", iconColor: "#059669" },
+  { title: "Book Appointment", description: "Call or video consultation", emoji: "📅", bgColor: "#eff6ff", iconColor: "#2563eb" },
+  { title: "Maternal Care", description: "ANC registration & follow-up", emoji: "❤️", bgColor: "#fff1f2", iconColor: "#e11d48" },
+  { title: "Request Delivery", description: "Medicines delivered to your door", emoji: "🚚", bgColor: "#fffbeb", iconColor: "#d97706" },
+]
+
+const PHONE_PREVIEW_ACTIVITIES = [
+  { title: "Metformin 500mg", statusLabel: "Under Review", statusClass: "status-pending", time: "2 hours ago", emoji: "💊", bg: "#fffbeb", color: "#d97706" },
+  { title: "Video Consultation", statusLabel: "Confirmed", statusClass: "status-confirmed", time: "Tomorrow, 10:00 AM", emoji: "🎥", bg: "#eff6ff", color: "#2563eb" },
+  { title: "Delivery #1234", statusLabel: "On the Way", statusClass: "status-dispatched", time: "Today, 3:30 PM", emoji: "🚚", bg: "#ecfdf5", color: "#059669" },
+]
+
+const PHONE_PREVIEW_FEATURES = [
+  { icon: "🏢", title: "Branch Routing", description: "Pick your pharmacy branch" },
+  { icon: "📋", title: "Prescriptions", description: "Refill requests with photos" },
+  { icon: "📅", title: "Appointments", description: "Calls or video consults" },
+  { icon: "📦", title: "Live Tracking", description: "Follow your order live" },
+]
+
+const PHONE_PREVIEW_TRUST_BADGES = [
+  "🛡️ Secure & Private",
+  "📱 Mobile-Friendly",
+  "🏆 Branch-Linked",
+]
+
 const PORTAL_TRUST_POINTS = [
   "Mobile-first and PWA ready",
   "Branch-linked requests",
