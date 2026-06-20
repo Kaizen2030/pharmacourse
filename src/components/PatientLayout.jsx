@@ -180,13 +180,35 @@ export function PatientPortalStyles() {
         box-shadow: 0 18px 42px rgba(15, 42, 32, 0.1);
       }
 
+      .patient-install-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 80;
+        display: grid;
+        place-items: start center;
+        padding: 1rem;
+      }
+
+      .patient-install-backdrop {
+        position: absolute;
+        inset: 0;
+        border: none;
+        background: rgba(11, 24, 19, 0.55);
+        backdrop-filter: blur(8px);
+        cursor: pointer;
+      }
+
       .patient-install-card-popover {
-        position: sticky;
-        top: 0.85rem;
-        z-index: 8;
+        position: relative;
+        z-index: 1;
+        width: min(100%, 640px);
+        margin-top: 6vh;
+        max-height: min(88dvh, 860px);
+        overflow: auto;
         overflow: hidden;
         isolation: isolate;
-        animation: patient-install-pop 180ms ease-out;
+        animation: patient-install-pop 220ms ease-out;
+        box-shadow: 0 28px 70px rgba(15, 42, 32, 0.26);
       }
 
       .patient-install-card-popover::after {
@@ -283,7 +305,7 @@ export function PatientPortalStyles() {
       @keyframes patient-install-pop {
         from {
           opacity: 0;
-          transform: translateY(10px) scale(0.99);
+          transform: translateY(20px) scale(0.98);
         }
 
         to {
@@ -1662,6 +1684,18 @@ export function PatientPortalStyles() {
 
         .patient-track-hero-pills {
           gap: 0.45rem;
+        }
+
+        .patient-install-modal {
+          padding: 0.7rem;
+          place-items: end center;
+        }
+
+        .patient-install-card-popover {
+          width: min(100%, 560px);
+          margin-top: 0;
+          max-height: calc(100dvh - 1.4rem);
+          border-radius: 22px;
         }
 
         .patient-detail-overlay,

@@ -89,112 +89,116 @@ export default function PatientInstallPrompt() {
   }
 
   return (
-    <section className="patient-install-card patient-install-card-popover" aria-label="Install patient portal" role="dialog" aria-live="polite">
-      <div className="patient-install-head">
-        <div className="patient-install-icon">
-          <Smartphone />
-        </div>
-        <button type="button" className="patient-install-close" onClick={handleDismiss} aria-label="Dismiss install prompt">
-          <X />
-        </button>
-      </div>
+    <div className="patient-install-modal" role="presentation">
+      <button type="button" className="patient-install-backdrop" onClick={handleDismiss} aria-label="Dismiss install prompt" />
 
-      <div className="patient-install-copy">
-        <div className="patient-install-kicker">Install app</div>
-        <h2>Add the patient portal to your phone</h2>
-        <p>
-          This portal is a real progressive web app. On supported phones and browsers, install it so it opens from a
-          home screen icon like a native app.
-        </p>
-      </div>
-
-      {deferredPrompt ? (
-        <div className="patient-install-actions">
-          <button type="button" className="patient-button" onClick={handleInstall} disabled={isInstalling}>
-            <Download />
-            <span>{isInstalling ? "Preparing install..." : "Install patient portal app"}</span>
+      <section className="patient-install-card patient-install-card-popover" aria-label="Install patient portal" role="dialog" aria-modal="true" aria-live="polite">
+        <div className="patient-install-head">
+          <div className="patient-install-icon">
+            <Smartphone />
+          </div>
+          <button type="button" className="patient-install-close" onClick={handleDismiss} aria-label="Dismiss install prompt">
+            <X />
           </button>
+        </div>
+
+        <div className="patient-install-copy">
+          <div className="patient-install-kicker">Installable PWA</div>
+          <h2>Install the patient portal from your browser</h2>
+          <p>
+            This portal is a progressive web app. On supported phones and browsers, install it so it opens from a home
+            screen icon like a real app.
+          </p>
+        </div>
+
+        <div className="patient-install-actions">
+          {deferredPrompt ? (
+            <button type="button" className="patient-button" onClick={handleInstall} disabled={isInstalling}>
+              <Download />
+              <span>{isInstalling ? "Preparing install..." : "Install patient portal app"}</span>
+            </button>
+          ) : null}
           <button type="button" className="patient-button-secondary" onClick={handleDismiss}>
             Not now
           </button>
         </div>
-      ) : null}
 
-      <div className="patient-install-steps" aria-label="Install steps">
-        {isAndroid ? (
-          <>
-            <div className="patient-install-step">
-              <span className="patient-install-step-badge">1</span>
-              <div>
-                <strong>Open the portal in Chrome</strong>
-                <span>Use Chrome on Android so the install option appears correctly.</span>
+        <div className="patient-install-steps" aria-label="Install steps">
+          {isAndroid ? (
+            <>
+              <div className="patient-install-step">
+                <span className="patient-install-step-badge">1</span>
+                <div>
+                  <strong>Open the portal in Chrome</strong>
+                  <span>Use Chrome on Android so the install option appears correctly.</span>
+                </div>
               </div>
-            </div>
-            <div className="patient-install-step">
-              <span className="patient-install-step-badge">2</span>
-              <div>
-                <strong>Tap the menu</strong>
-                <span>Choose <em>Install app</em> or <em>Add to Home screen</em> from the browser menu.</span>
+              <div className="patient-install-step">
+                <span className="patient-install-step-badge">2</span>
+                <div>
+                  <strong>Tap the menu</strong>
+                  <span>Choose <em>Install app</em> or <em>Add to Home screen</em> from the browser menu.</span>
+                </div>
               </div>
-            </div>
-            <div className="patient-install-step">
-              <span className="patient-install-step-badge">3</span>
-              <div>
-                <strong>Open it from your home screen</strong>
-                <span>The portal will reopen like a dedicated app with its own icon.</span>
+              <div className="patient-install-step">
+                <span className="patient-install-step-badge">3</span>
+                <div>
+                  <strong>Open it from your home screen</strong>
+                  <span>The portal will reopen like a dedicated app with its own icon.</span>
+                </div>
               </div>
-            </div>
-          </>
-        ) : isIos ? (
-          <>
-            <div className="patient-install-step">
-              <span className="patient-install-step-badge">1</span>
-              <div>
-                <strong>Open in Safari</strong>
-                <span>iPhone installs work from Safari, not from in-app browsers.</span>
+            </>
+          ) : isIos ? (
+            <>
+              <div className="patient-install-step">
+                <span className="patient-install-step-badge">1</span>
+                <div>
+                  <strong>Open in Safari</strong>
+                  <span>iPhone installs work from Safari, not from in-app browsers.</span>
+                </div>
               </div>
-            </div>
-            <div className="patient-install-step">
-              <span className="patient-install-step-badge">2</span>
-              <div>
-                <strong>Tap Share</strong>
-                <span>Use the Share icon at the bottom of Safari.</span>
+              <div className="patient-install-step">
+                <span className="patient-install-step-badge">2</span>
+                <div>
+                  <strong>Tap Share</strong>
+                  <span>Use the Share icon at the bottom of Safari.</span>
+                </div>
               </div>
-            </div>
-            <div className="patient-install-step">
-              <span className="patient-install-step-badge">3</span>
-              <div>
-                <strong>Add to Home Screen</strong>
-                <span>Choose <em>Add to Home Screen</em> to create the app icon.</span>
+              <div className="patient-install-step">
+                <span className="patient-install-step-badge">3</span>
+                <div>
+                  <strong>Add to Home Screen</strong>
+                  <span>Choose <em>Add to Home Screen</em> to create the app icon.</span>
+                </div>
               </div>
-            </div>
-          </>
-        ) : isMobile ? (
-          <>
-            <div className="patient-install-step">
-              <span className="patient-install-step-badge">1</span>
-              <div>
-                <strong>Open the portal in your browser</strong>
-                <span>Use the phone browser, not an in-app view, for best results.</span>
+            </>
+          ) : isMobile ? (
+            <>
+              <div className="patient-install-step">
+                <span className="patient-install-step-badge">1</span>
+                <div>
+                  <strong>Open the portal in your browser</strong>
+                  <span>Use the phone browser, not an in-app view, for best results.</span>
+                </div>
               </div>
-            </div>
-            <div className="patient-install-step">
-              <span className="patient-install-step-badge">2</span>
-              <div>
-                <strong>Use the install or share menu</strong>
-                <span>Look for <em>Install app</em> on Android or <em>Add to Home Screen</em> on iPhone.</span>
+              <div className="patient-install-step">
+                <span className="patient-install-step-badge">2</span>
+                <div>
+                  <strong>Use the install or share menu</strong>
+                  <span>Look for <em>Install app</em> on Android or <em>Add to Home Screen</em> on iPhone.</span>
+                </div>
               </div>
-            </div>
-            <div className="patient-install-step">
-              <span className="patient-install-step-badge">3</span>
-              <div>
-                <strong>Launch like a native app</strong>
-                <span>The portal opens from the home screen icon with a full-screen app feel.</span>
+              <div className="patient-install-step">
+                <span className="patient-install-step-badge">3</span>
+                <div>
+                  <strong>Launch like a native app</strong>
+                  <span>The portal opens from the home screen icon with a full-screen app feel.</span>
+                </div>
               </div>
-            </div>
-          </>
-        ) : null}
-      </div>
-    </section>
+            </>
+          ) : null}
+        </div>
+      </section>
+    </div>
   )
 }

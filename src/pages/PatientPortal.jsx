@@ -50,6 +50,11 @@ export default function PatientPortal() {
   const [townFilter, setTownFilter] = useState("all")
   const [profileDraft, setProfileDraft] = useState(() => getPatientPortalProfileDraft())
   const isSwitchFlow = searchParams.get("switch") === "1" || Boolean(profileDraft)
+  const [isCompactDirectory, setIsCompactDirectory] = useState(() => {
+    if (typeof window === "undefined") return false
+    return Boolean(window.matchMedia?.("(max-width: 520px)")?.matches)
+  })
+  const [branchPage, setBranchPage] = useState(0)
   const [prescriptionForm, setPrescriptionForm] = useState({
     patientName: "",
     patientPhone: "",
@@ -140,6 +145,28 @@ export default function PatientPortal() {
     }
   }, [])
 
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) {
+      return undefined
+    }
+
+    const mediaQuery = window.matchMedia("(max-width: 520px)")
+
+    function handleChange(event) {
+      setIsCompactDirectory(Boolean(event.matches))
+    }
+
+    setIsCompactDirectory(Boolean(mediaQuery.matches))
+
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", handleChange)
+      return () => mediaQuery.removeEventListener("change", handleChange)
+    }
+
+    mediaQuery.addListener(handleChange)
+    return () => mediaQuery.removeListener(handleChange)
+  }, [])
+
   const pharmacyStats = useMemo(() => {
     const branchCountByParent = new Map()
 
@@ -217,6 +244,17 @@ export default function PatientPortal() {
 
     return branchPharmacies.filter((row) => String(row?.parent_pharmacy_id || "") === String(selectedMainPharmacy.id))
   }, [branchPharmacies, selectedMainPharmacy])
+
+  const branchPageSize = isCompactDirectory ? 4 : Math.max(1, branchCards.length || 1)
+  const branchPageCount = Math.max(1, Math.ceil(branchCards.length / branchPageSize))
+  const visibleBranchCards = useMemo(() => {
+    if (!isCompactDirectory) {
+      return branchCards
+    }
+
+    const startIndex = branchPage * branchPageSize
+    return branchCards.slice(startIndex, startIndex + branchPageSize)
+  }, [branchCards, branchPage, branchPageSize, isCompactDirectory])
 
   const searchSuggestions = useMemo(() => {
     const pharmacySuggestions = pharmacies
@@ -304,6 +342,10 @@ export default function PatientPortal() {
     setActiveTab(actionId)
     setIsMobileMenuOpen(false)
   }
+
+  useEffect(() => {
+    setBranchPage(0)
+  }, [countyFilter, isCompactDirectory, searchQuery, selectedMainPharmacyId, subcountyFilter, townFilter])
 
   async function handleClearSavedDraft() {
     clearPatientPortalProfileDraft()
@@ -604,36 +646,62 @@ export default function PatientPortal() {
                   ) : pharmaciesLoading ? (
                     <div className="portal-directory-empty">Loading pharmacies from the POS database...</div>
                   ) : branchCards.length ? (
-                    <div className="portal-directory-branch-grid">
-                      {branchCards.map((branch) => {
-                        const location = branch?.location || branch?.town || branch?.subcounty || branch?.county || "Kenya"
+                    <>
+                      <div className="portal-directory-branch-grid">
+                        {visibleBranchCards.map((branch) => {
+                          const location = branch?.location || branch?.town || branch?.subcounty || branch?.county || "Kenya"
 
-                        return (
-                          <article key={branch.id} className="portal-directory-branch-card">
-                            <span className="portal-directory-chip branch">BRANCH</span>
-                            <h5>{branch.name}</h5>
-                            <p>{location}</p>
-                            <div className="portal-directory-tags">
-                              {branch.county ? <span>{branch.county}</span> : null}
-                              {branch.subcounty ? <span>{branch.subcounty}</span> : null}
-                              {branch.town ? <span>{branch.town}</span> : null}
-                            </div>
-                            <Link
-                              to={buildPatientLoginPath(branch, buildPatientPath("/patient", branch))}
-                              className="portal-directory-link"
-                            >
-                              Choose this branch
-                            </Link>
-                            {profileDraft ? (
-                              <div className="portal-directory-action-note">
-                                <strong>Saved profile ready</strong>
-                                <span>{draftSummary || "Your details can be edited before you submit."}</span>
+                          return (
+                            <article key={branch.id} className="portal-directory-branch-card">
+                              <span className="portal-directory-chip branch">BRANCH</span>
+                              <h5>{branch.name}</h5>
+                              <p>{location}</p>
+                              <div className="portal-directory-tags">
+                                {branch.county ? <span>{branch.county}</span> : null}
+                                {branch.subcounty ? <span>{branch.subcounty}</span> : null}
+                                {branch.town ? <span>{branch.town}</span> : null}
                               </div>
-                            ) : null}
-                          </article>
-                        )
-                      })}
-                    </div>
+                              <Link
+                                to={buildPatientLoginPath(branch, buildPatientPath("/patient", branch))}
+                                className="portal-directory-link"
+                              >
+                                Choose this branch
+                              </Link>
+                              {profileDraft ? (
+                                <div className="portal-directory-action-note">
+                                  <strong>Saved profile ready</strong>
+                                  <span>{draftSummary || "Your details can be edited before you submit."}</span>
+                                </div>
+                              ) : null}
+                            </article>
+                          )
+                        })}
+                      </div>
+
+                      {isCompactDirectory && branchCards.length > branchPageSize ? (
+                        <div className="portal-directory-pagination" aria-label="Branch list pagination">
+                          <button
+                            type="button"
+                            className="portal-directory-page-btn"
+                            onClick={() => setBranchPage((current) => Math.max(0, current - 1))}
+                            disabled={branchPage <= 0}
+                          >
+                            Previous
+                          </button>
+                          <span className="portal-directory-page-count">
+                            Page {Math.min(branchPage + 1, branchPageCount)} of {branchPageCount}
+                          </span>
+                          <button
+                            type="button"
+                            className="portal-directory-page-btn"
+                            onClick={() => setBranchPage((current) => Math.min(branchPageCount - 1, current + 1))}
+                            disabled={branchPage >= branchPageCount - 1}
+                          >
+                            Next
+                          </button>
+                        </div>
+                      ) : null}
+                    </>
                   ) : (
                     <div className="portal-directory-empty">
                       Pick a main pharmacy above or clear your filters to see the branch cards.
