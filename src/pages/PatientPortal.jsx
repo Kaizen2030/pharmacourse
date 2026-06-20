@@ -6,6 +6,7 @@ import {
   CalendarDays,
   ClipboardList,
   Bell,
+  Download,
   HeartPulse,
   Home,
   Menu,
@@ -39,21 +40,37 @@ const PORTAL_FEATURES = [
     title: "Branch routing",
     description: "Choose the right pharmacy or branch before you submit anything.",
     icon: Building2,
+    tone: "green",
   },
   {
     title: "Prescription requests",
     description: "Send a refill request or upload a photo of your prescription.",
     icon: ClipboardList,
+    tone: "blue",
   },
   {
     title: "Appointments",
     description: "Book a callback, a video consultation, or an in-person visit.",
     icon: CalendarDays,
+    tone: "amber",
   },
   {
     title: "Follow-up tracking",
     description: "Check updates, delivery progress, and branch replies in one place.",
     icon: PackageSearch,
+    tone: "rose",
+  },
+  {
+    title: "Install on phone",
+    description: "Add the portal to your home screen like a native app.",
+    icon: Smartphone,
+    tone: "cyan",
+  },
+  {
+    title: "Secure updates",
+    description: "See private replies and branch messages as they happen.",
+    icon: ShieldCheck,
+    tone: "ink",
   },
 ]
 
@@ -2530,9 +2547,9 @@ export default function PatientPortal() {
                         <p>Fast branch selection, clean request cards, and PWA installation for day-to-day use.</p>
                       </div>
 
-                      <div className="patient-portal-phone-grid">
-                        {PORTAL_FEATURES.map(({ title, description, icon: Icon }) => (
-                          <div key={title} className="patient-portal-phone-tile">
+                      <div className="patient-portal-phone-tiles">
+                        {PORTAL_FEATURES.map(({ title, description, icon: Icon, tone }) => (
+                          <div key={title} className={`patient-portal-phone-tile tone-${tone}`}>
                             <span className="patient-portal-phone-icon">
                               <Icon size={16} />
                             </span>
@@ -2540,6 +2557,15 @@ export default function PatientPortal() {
                             <span>{description}</span>
                           </div>
                         ))}
+                      </div>
+
+                      <div className="patient-portal-phone-install-banner">
+                        <div>
+                          <span className="patient-portal-phone-install-kicker">PWA ready</span>
+                          <strong>Install this portal on your phone</strong>
+                          <p>Open it once, then tap Install or Add to Home Screen for app-style access.</p>
+                        </div>
+                        <Download size={18} />
                       </div>
 
                       <div className="patient-portal-phone-footer">
