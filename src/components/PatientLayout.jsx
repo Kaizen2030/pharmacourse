@@ -1192,6 +1192,94 @@ export function PatientPortalStyles() {
         gap: 1rem;
       }
 
+      .patient-track-switch-card {
+        display: grid;
+        gap: 0.9rem;
+        align-items: center;
+      }
+
+      .patient-track-nav-card {
+        display: grid;
+        gap: 0.95rem;
+      }
+
+      .patient-track-nav-grid {
+        display: grid;
+        gap: 0.75rem;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .patient-track-nav-card {
+        padding: 0.95rem;
+        border-radius: 18px;
+        border: 0.5px solid #e5e7eb;
+        background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(246,251,248,0.98));
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .patient-track-nav-card.active {
+        border-color: rgba(15, 110, 86, 0.32);
+        box-shadow: 0 12px 28px rgba(15, 42, 32, 0.08);
+        transform: translateY(-1px);
+      }
+
+      .patient-track-nav-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.6rem;
+      }
+
+      .patient-track-nav-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 14px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(15, 110, 86, 0.1);
+        color: #0f6e56;
+      }
+
+      .patient-track-nav-count {
+        min-width: 28px;
+        padding: 0.22rem 0.52rem;
+        border-radius: 999px;
+        background: rgba(15, 110, 86, 0.1);
+        color: #0f6e56;
+        font-size: 0.78rem;
+        font-weight: 800;
+        text-align: center;
+      }
+
+      .patient-track-nav-title {
+        margin-top: 0.55rem;
+        color: #163329;
+        font-size: 0.98rem;
+        font-weight: 800;
+      }
+
+      .patient-track-nav-latest {
+        margin-top: 0.2rem;
+        color: #5f746b;
+        font-size: 0.84rem;
+        line-height: 1.45;
+      }
+
+      .patient-track-section-hidden {
+        display: none;
+      }
+
+      .patient-track-section-full {
+        grid-column: 1 / -1;
+      }
+
+      .patient-track-switch-copy {
+        display: grid;
+        gap: 0.35rem;
+      }
+
       .patient-dashboard-card {
         display: grid;
         gap: 0.85rem;
@@ -1300,6 +1388,10 @@ export function PatientPortalStyles() {
           grid-template-columns: repeat(2, minmax(0, 1fr));
           align-items: start;
         }
+
+        .patient-track-nav-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
       }
 
       @media (max-width: 520px) {
@@ -1312,6 +1404,10 @@ export function PatientPortalStyles() {
         }
 
         .patient-mini-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .patient-track-nav-grid {
           grid-template-columns: 1fr;
         }
 

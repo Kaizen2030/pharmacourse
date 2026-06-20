@@ -48,6 +48,15 @@ function formatRelativeTime(value) {
   return `${days}d ago`
 }
 
+function getTimeValue(value) {
+  const timestamp = new Date(value || 0).getTime()
+  return Number.isFinite(timestamp) ? timestamp : 0
+}
+
+function sortNewestFirst(rows = [], getValue = (row) => row?.updated_at || row?.created_at || row?.dispensed_at || row?.slot_datetime || "") {
+  return [...rows].sort((left, right) => getTimeValue(getValue(right)) - getTimeValue(getValue(left)))
+}
+
 function getStatusClass(status) {
   const normalizedStatus = (status || "").toLowerCase().replace(/\s+/g, "-")
 
@@ -399,20 +408,39 @@ export default function PatientTrack() {
   const [turnstileToken, setTurnstileToken] = useState("")
   const [turnstileResetKey, setTurnstileResetKey] = useState(0)
   const [selectedRequestId, setSelectedRequestId] = useState("")
+  const [activeTrackSection, setActiveTrackSection] = useState("prescriptions")
   const { loading: authLoading, isAuthenticated, patientPhone, fullName } = usePatientPortalAuth()
   const patientLoginPath = createPatientPath("/patient/login")
   const unreadCount = notifications.filter((notification) => !notification.read).length
   const displayName = fullName || rememberedSession?.fullName || ""
-  const receiptEntries = buildReceiptEntries(prescriptions)
+  const sortedNotifications = useMemo(() => sortNewestFirst(notifications), [notifications])
+  const sortedDeliveries = useMemo(() => sortNewestFirst(deliveries), [deliveries])
+  const sortedPrescriptions = useMemo(() => sortNewestFirst(prescriptions), [prescriptions])
+  const receiptEntries = useMemo(() => sortNewestFirst(buildReceiptEntries(sortedPrescriptions), (entry) => entry.fulfilledAt), [sortedPrescriptions])
+  const sortedAppointments = useMemo(() => sortNewestFirst(appointments, (appointment) => appointment?.updated_at || appointment?.created_at || appointment?.slot_datetime || ""), [appointments])
+  const sortedBranchNotices = useMemo(
+    () =>
+      sortNewestFirst(
+        notifications.filter((notification) => {
+          const referenceId = String(notification?.reference_id || "").trim()
+          return ![
+            ...sortedPrescriptions.map((request) => String(request?.id || "").trim()),
+            ...sortedDeliveries.map((delivery) => String(delivery?.id || "").trim()),
+            ...sortedAppointments.map((appointment) => String(appointment?.id || "").trim()),
+          ].includes(referenceId)
+        }),
+      ),
+    [notifications, sortedAppointments, sortedDeliveries, sortedPrescriptions],
+  )
   const completedReceiptRequestIds = useMemo(
     () => new Set(receiptEntries.map((entry) => String(entry.id))),
     [receiptEntries],
   )
   const progressCards = useMemo(() => (
-    prescriptions.map((request) => {
+    sortedPrescriptions.map((request) => {
       const drugs = getRequestedDrugs(request)
-      const linkedDelivery = findLinkedDelivery(deliveries, request)
-      const relatedNotifications = getRelatedNotifications(request, notifications, deliveries)
+      const linkedDelivery = findLinkedDelivery(sortedDeliveries, request)
+      const relatedNotifications = getRelatedNotifications(request, sortedNotifications, sortedDeliveries)
 
       return {
         request,
@@ -425,32 +453,69 @@ export default function PatientTrack() {
         lastUpdatedAt: request?.dispensed_at || request?.updated_at || request?.created_at || "",
       }
     })
-  ), [deliveries, notifications, prescriptions])
+  ), [sortedDeliveries, sortedNotifications, sortedPrescriptions])
   const selectedProgressCard = progressCards.find((card) => String(card.request.id) === String(selectedRequestId)) || null
   const selectedRequest = selectedProgressCard?.request || null
   const visibleProgressCards = progressCards.slice(0, visibleCounts.notifications)
   const activeDeliveries = useMemo(
-    () => deliveries.filter((delivery) => !["delivered", "cancelled"].includes(String(delivery?.status || "").trim().toLowerCase())),
-    [deliveries],
+    () => sortedDeliveries.filter((delivery) => !["delivered", "cancelled"].includes(String(delivery?.status || "").trim().toLowerCase())),
+    [sortedDeliveries],
   )
   const visibleDeliveries = activeDeliveries.slice(0, visibleCounts.deliveries)
   const openPrescriptions = useMemo(
-    () => prescriptions.filter((request) => !completedReceiptRequestIds.has(String(request.id))),
-    [completedReceiptRequestIds, prescriptions],
+    () => sortedPrescriptions.filter((request) => !completedReceiptRequestIds.has(String(request.id))),
+    [completedReceiptRequestIds, sortedPrescriptions],
   )
   const visiblePrescriptions = openPrescriptions.slice(0, visibleCounts.prescriptions)
   const visibleReceipts = receiptEntries.slice(0, visibleCounts.receipts)
-  const visibleAppointments = appointments.slice(0, visibleCounts.appointments)
-  const standaloneBranchNotices = useMemo(() => {
-    const linkedReferenceIds = new Set([
-      ...prescriptions.map((request) => String(request?.id || "").trim()),
-      ...deliveries.map((delivery) => String(delivery?.id || "").trim()),
-      ...appointments.map((appointment) => String(appointment?.id || "").trim()),
-    ].filter(Boolean))
-
-    return notifications.filter((notification) => !linkedReferenceIds.has(String(notification?.reference_id || "").trim()))
-  }, [appointments, deliveries, notifications, prescriptions])
+  const visibleAppointments = sortedAppointments.slice(0, visibleCounts.appointments)
+  const standaloneBranchNotices = sortedBranchNotices
   const visibleStandaloneBranchNotices = standaloneBranchNotices.slice(0, visibleCounts.notifications)
+  const trackSectionCards = useMemo(() => {
+    const latestPrescription = progressCards[0]
+    const latestDelivery = activeDeliveries[0]
+    const latestAppointment = sortedAppointments[0]
+    const latestReceipt = receiptEntries[0]
+    const latestNotice = standaloneBranchNotices[0]
+
+    return [
+      {
+        id: "prescriptions",
+        label: "Prescriptions",
+        count: openPrescriptions.length,
+        latest: latestPrescription ? `${latestPrescription.progressState.label} · ${formatRelativeTime(latestPrescription.lastUpdatedAt || latestPrescription.request.created_at)}` : "No active requests",
+        icon: ClipboardList,
+      },
+      {
+        id: "deliveries",
+        label: "Deliveries",
+        count: activeDeliveries.length,
+        latest: latestDelivery ? `${String(latestDelivery.status || "Pending").toLowerCase()} · ${formatRelativeTime(latestDelivery.updated_at || latestDelivery.created_at)}` : "No active deliveries",
+        icon: PackageSearch,
+      },
+      {
+        id: "appointments",
+        label: "Appointments",
+        count: visibleAppointments.length,
+        latest: latestAppointment ? `${formatAppointmentType(latestAppointment.appointment_type)} · ${formatRelativeTime(latestAppointment.slot_datetime || latestAppointment.updated_at || latestAppointment.created_at)}` : "No upcoming bookings",
+        icon: CalendarClock,
+      },
+      {
+        id: "receipts",
+        label: "Receipts",
+        count: receiptEntries.length,
+        latest: latestReceipt ? `${latestReceipt.documentLabel} · ${formatRelativeTime(latestReceipt.fulfilledAt)}` : "No receipts yet",
+        icon: ClipboardList,
+      },
+      {
+        id: "notices",
+        label: "Branch notices",
+        count: standaloneBranchNotices.length,
+        latest: latestNotice ? `${getNotificationTypeLabel(latestNotice.type)} · ${formatRelativeTime(latestNotice.created_at)}` : "No extra notices",
+        icon: BellRing,
+      },
+    ]
+  }, [activeDeliveries, openPrescriptions.length, progressCards, receiptEntries, sortedAppointments, standaloneBranchNotices, visibleAppointments.length])
   const handleTurnstileVerify = useCallback((token) => {
     setTurnstileToken(token || "")
   }, [])
@@ -788,8 +853,62 @@ export default function PatientTrack() {
       </section>
 
       {isAuthenticated && patientPhone ? (
-        <div className="patient-dashboard-grid">
-          <section className="patient-card">
+        <>
+          <section className="patient-card patient-card-muted patient-track-switch-card">
+            <div className="patient-track-switch-copy">
+              <span className="patient-badge">Branch switch</span>
+              <h2 className="patient-section-title">Changed location? Pick a new pharmacy first.</h2>
+              <p className="patient-form-help">
+                Jump back to the pharmacy directory, choose the branch nearest to you, and then sign in again with the same patient account.
+              </p>
+            </div>
+            <div className="patient-toolbar-actions">
+              <Link to="/patient-portal" className="patient-button" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                Change branch
+              </Link>
+              <button className="patient-button-secondary" type="button" onClick={() => void loadTrackingData()} disabled={isLoading || !isAuthenticated}>
+                {isLoading ? "Refreshing..." : "Refresh now"}
+              </button>
+            </div>
+          </section>
+
+          <section className="patient-card patient-track-nav-card">
+            <div className="patient-section-header">
+              <div>
+                <h2 className="patient-section-title">Choose what you want to read</h2>
+                <p className="patient-form-help">Tap one card at a time so the latest response is easy to follow.</p>
+              </div>
+              <span className="patient-badge">{unreadCount ? `${unreadCount} unread` : "All clear"}</span>
+            </div>
+
+            <div className="patient-track-nav-grid">
+              {trackSectionCards.map((card) => {
+                const Icon = card.icon
+                const isActive = activeTrackSection === card.id
+
+                return (
+                  <button
+                    key={card.id}
+                    type="button"
+                    className={`patient-track-nav-card${isActive ? " active" : ""}`}
+                    onClick={() => setActiveTrackSection(card.id)}
+                  >
+                    <div className="patient-track-nav-top">
+                      <span className="patient-track-nav-icon">
+                        <Icon size={18} />
+                      </span>
+                      <span className="patient-track-nav-count">{card.count}</span>
+                    </div>
+                    <div className="patient-track-nav-title">{card.label}</div>
+                    <div className="patient-track-nav-latest">{card.latest}</div>
+                  </button>
+                )
+              })}
+            </div>
+          </section>
+
+          <div className="patient-dashboard-grid">
+          <section className={`patient-card ${activeTrackSection === "prescriptions" ? "" : "patient-track-section-hidden"}`}>
             <div className="patient-section-header">
               <div>
                 <h2 className="patient-section-title">Order progress</h2>
@@ -845,7 +964,7 @@ export default function PatientTrack() {
             )}
           </section>
 
-          <section className="patient-card">
+          <section className={`patient-card patient-track-section-full ${activeTrackSection === "deliveries" ? "" : "patient-track-section-hidden"}`}>
             <div className="patient-section-header">
               <div>
                 <h2 className="patient-section-title">Delivery tracking</h2>
@@ -910,7 +1029,7 @@ export default function PatientTrack() {
             )}
           </section>
 
-          <section className="patient-card">
+          <section className={`patient-card ${activeTrackSection === "prescriptions" ? "" : "patient-track-section-hidden"}`}>
             <div className="patient-section-header">
               <div>
                 <h2 className="patient-section-title">Open prescription requests</h2>
@@ -1087,7 +1206,7 @@ export default function PatientTrack() {
             )}
           </section>
 
-          <section className="patient-card">
+          <section className={`patient-card patient-track-section-full ${activeTrackSection === "receipts" ? "" : "patient-track-section-hidden"}`}>
             <div className="patient-section-header">
               <div>
                 <h2 className="patient-section-title">Completed orders and receipts</h2>
@@ -1139,7 +1258,7 @@ export default function PatientTrack() {
             )}
           </section>
 
-          <section className="patient-card">
+          <section className={`patient-card patient-track-section-full ${activeTrackSection === "notices" ? "" : "patient-track-section-hidden"}`}>
             <div className="patient-section-header">
               <div>
                 <h2 className="patient-section-title">Branch notices</h2>
@@ -1173,7 +1292,7 @@ export default function PatientTrack() {
             )}
           </section>
 
-          <section className="patient-card">
+          <section className={`patient-card patient-track-section-full ${activeTrackSection === "appointments" ? "" : "patient-track-section-hidden"}`}>
             <div className="patient-section-header">
               <div>
                 <h2 className="patient-section-title">Upcoming appointments</h2>
@@ -1278,6 +1397,7 @@ export default function PatientTrack() {
             )}
           </section>
         </div>
+        </>
       ) : null}
 
       {selectedRequest ? (
