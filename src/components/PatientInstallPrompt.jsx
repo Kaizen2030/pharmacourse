@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { Download, Smartphone, X } from "lucide-react"
+import "./PatientInstallPrompt.css"
 
 const DISMISS_KEY = "patientPortalInstallPromptDismissedAt"
 const DISMISS_WINDOW_MS = 1000 * 60 * 60 * 24 * 3

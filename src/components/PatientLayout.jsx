@@ -167,164 +167,6 @@ export function PatientPortalStyles() {
         color: #163329;
       }
 
-      .patient-install-card {
-        display: grid;
-        gap: 0.95rem;
-        margin-bottom: 1rem;
-        padding: 1rem;
-        border-radius: 22px;
-        border: 1px solid rgba(15, 110, 86, 0.14);
-        background:
-          radial-gradient(circle at top right, rgba(15, 110, 86, 0.1), transparent 28%),
-          linear-gradient(180deg, rgba(255,255,255,0.98), rgba(239, 248, 244, 0.96));
-        box-shadow: 0 18px 42px rgba(15, 42, 32, 0.1);
-      }
-
-      .patient-install-modal {
-        position: fixed;
-        inset: 0;
-        z-index: 80;
-        display: grid;
-        place-items: start center;
-        padding: 1rem;
-      }
-
-      .patient-install-backdrop {
-        position: absolute;
-        inset: 0;
-        border: none;
-        background: rgba(11, 24, 19, 0.55);
-        backdrop-filter: blur(8px);
-        cursor: pointer;
-      }
-
-      .patient-install-card-popover {
-        position: relative;
-        z-index: 1;
-        width: min(100%, 640px);
-        margin-top: 6vh;
-        max-height: min(88dvh, 860px);
-        overflow: auto;
-        overflow: hidden;
-        isolation: isolate;
-        animation: patient-install-pop 220ms ease-out;
-        box-shadow: 0 28px 70px rgba(15, 42, 32, 0.26);
-      }
-
-      .patient-install-card-popover::after {
-        content: "";
-        position: absolute;
-        inset: -20% auto auto -12%;
-        width: 8rem;
-        height: 8rem;
-        border-radius: 999px;
-        background: radial-gradient(circle, rgba(15, 110, 86, 0.14), rgba(15, 110, 86, 0));
-        pointer-events: none;
-        z-index: -1;
-      }
-
-      .patient-install-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.8rem;
-      }
-
-      .patient-install-icon,
-      .patient-install-close {
-        width: 42px;
-        height: 42px;
-        border-radius: 16px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .patient-install-icon {
-        background: rgba(15, 110, 86, 0.1);
-        color: #0f6e56;
-      }
-
-      .patient-install-icon svg,
-      .patient-install-close svg {
-        width: 18px;
-        height: 18px;
-      }
-
-      .patient-install-close {
-        border: none;
-        background: rgba(255, 255, 255, 0.8);
-        color: #6b7f76;
-        cursor: pointer;
-      }
-
-      .patient-install-copy h2 {
-        margin: 0.2rem 0 0.35rem;
-        font-size: 1.08rem;
-      }
-
-      .patient-install-copy p,
-      .patient-install-ios-row span {
-        color: #5f746b;
-        font-size: 0.92rem;
-        line-height: 1.55;
-      }
-
-      .patient-install-kicker {
-        color: #0f6e56;
-        font-size: 0.72rem;
-        font-weight: 800;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-      }
-
-      .patient-install-actions {
-        display: grid;
-        gap: 0.65rem;
-      }
-
-      .patient-install-actions .patient-button,
-      .patient-install-actions .patient-button-secondary {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.55rem;
-      }
-
-      .patient-install-actions .patient-button svg,
-      .patient-install-ios-row svg {
-        width: 18px;
-        height: 18px;
-      }
-
-      .patient-install-ios {
-        display: grid;
-        gap: 0.65rem;
-      }
-
-      @keyframes patient-install-pop {
-        from {
-          opacity: 0;
-          transform: translateY(20px) scale(0.98);
-        }
-
-        to {
-          opacity: 1;
-          transform: translateY(0) scale(1);
-        }
-      }
-
-      .patient-install-ios-row {
-        display: flex;
-        align-items: center;
-        gap: 0.65rem;
-        padding: 0.78rem 0.9rem;
-        border-radius: 16px;
-        background: rgba(255, 255, 255, 0.7);
-        border: 1px solid rgba(15, 110, 86, 0.08);
-        color: #0f6e56;
-      }
-
       .patient-page {
         display: grid;
         gap: 1rem;
@@ -1001,7 +843,6 @@ export function PatientPortalStyles() {
       .patient-missing-card,
       .patient-loading-card,
       .patient-branch-lock,
-      .patient-install-card,
       .patient-list-item,
       .patient-radio-card {
         border-radius: 14px;
@@ -1014,7 +855,6 @@ export function PatientPortalStyles() {
 
       .patient-card-muted,
       .patient-branch-lock,
-      .patient-install-card,
       .patient-action-card,
       .patient-list-item {
         background:
@@ -1684,18 +1524,6 @@ export function PatientPortalStyles() {
 
         .patient-track-hero-pills {
           gap: 0.45rem;
-        }
-
-        .patient-install-modal {
-          padding: 0.7rem;
-          place-items: end center;
-        }
-
-        .patient-install-card-popover {
-          width: min(100%, 560px);
-          margin-top: 0;
-          max-height: calc(100dvh - 1.4rem);
-          border-radius: 22px;
         }
 
         .patient-detail-overlay,

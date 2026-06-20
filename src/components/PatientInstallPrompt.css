@@ -1,0 +1,256 @@
+.patient-install-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.patient-install-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  cursor: pointer;
+  background: rgba(17, 35, 29, 0.45);
+  backdrop-filter: blur(3px);
+  animation: patientInstallFade 0.2s ease-out;
+}
+
+.patient-install-card-popover {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 420px;
+  max-height: min(86vh, 640px);
+  overflow-y: auto;
+  background: var(--surface);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: var(--shadow-lg);
+  padding: 1.5rem 1.5rem calc(1.5rem + env(safe-area-inset-bottom, 0px));
+  animation: patientInstallSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (min-width: 640px) {
+  .patient-install-modal {
+    align-items: center;
+  }
+
+  .patient-install-card-popover {
+    border-radius: var(--radius-lg);
+    margin-bottom: 0;
+    animation: patientInstallPopIn 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
+
+.patient-install-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.patient-install-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+  background: var(--green-light);
+  color: var(--green);
+}
+
+.patient-install-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.patient-install-close {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--text-500);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.patient-install-close:hover {
+  background: var(--gray-100);
+  color: var(--text-900);
+}
+
+.patient-install-close svg {
+  width: 18px;
+  height: 18px;
+}
+
+.patient-install-copy {
+  margin-bottom: 1.25rem;
+}
+
+.patient-install-kicker {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--green);
+  background: var(--green-light);
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  margin-bottom: 0.6rem;
+}
+
+.patient-install-copy h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-900);
+  margin-bottom: 0.4rem;
+}
+
+.patient-install-copy p {
+  font-size: 0.875rem;
+  color: var(--text-500);
+  line-height: 1.55;
+}
+
+.patient-install-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
+}
+
+.patient-button,
+.patient-button-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.15s ease;
+}
+
+.patient-button {
+  background: var(--green);
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.patient-button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.patient-button:hover:not(:disabled) {
+  background: var(--green-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
+.patient-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.patient-button-secondary {
+  background: transparent;
+  color: var(--text-500);
+}
+
+.patient-button-secondary:hover {
+  background: var(--gray-100);
+  color: var(--text-900);
+}
+
+.patient-install-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--border);
+}
+
+.patient-install-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.patient-install-step-badge {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--green-mid);
+  color: var(--green-dark);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.patient-install-step div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.patient-install-step strong {
+  font-size: 0.8125rem;
+  color: var(--text-900);
+  font-weight: 700;
+}
+
+.patient-install-step span {
+  font-size: 0.8125rem;
+  color: var(--text-500);
+  line-height: 1.45;
+}
+
+.patient-install-step em {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--text-700);
+}
+
+@keyframes patientInstallFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes patientInstallSlideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes patientInstallPopIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
