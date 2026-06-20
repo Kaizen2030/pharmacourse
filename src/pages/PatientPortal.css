@@ -1624,6 +1624,14 @@
   display: none;
 }
 
+.patient-portal-mobile-toolbar {
+  display: none;
+}
+
+.patient-portal-menu-overlay {
+  display: none;
+}
+
 @media (max-width: 980px) {
   .patient-portal-hero-grid {
     grid-template-columns: 1fr;
@@ -2093,6 +2101,10 @@
   .patient-portal-sidebar {
     position: static;
   }
+
+  .has-active-pharmacy .patient-portal-sidebar {
+    display: none;
+  }
 }
 
 @media (max-width: 720px) {
@@ -2199,6 +2211,151 @@
   .patient-portal-mobile-nav-home svg,
   .patient-portal-mobile-nav-item svg {
     flex-shrink: 0;
+  }
+
+  .patient-portal-mobile-toolbar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    padding: 0.95rem 1rem;
+    border-radius: 18px;
+    border: 1px solid rgba(15, 110, 86, 0.12);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(241, 249, 246, 0.96));
+    box-shadow: 0 12px 28px rgba(15, 42, 32, 0.05);
+  }
+
+  .patient-portal-mobile-toolbar-copy {
+    min-width: 0;
+    display: grid;
+    gap: 0.15rem;
+  }
+
+  .patient-portal-mobile-toolbar-kicker {
+    color: #0f6e56;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .patient-portal-mobile-toolbar-copy strong {
+    color: #163329;
+    font-size: 0.96rem;
+  }
+
+  .patient-portal-mobile-toolbar-copy p {
+    margin: 0;
+    color: #5f746b;
+    font-size: 0.85rem;
+    line-height: 1.45;
+  }
+
+  .patient-portal-mobile-menu-button {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.7rem 0.9rem;
+    border-radius: 14px;
+    border: 1px solid rgba(15, 110, 86, 0.14);
+    background: rgba(15, 110, 86, 0.08);
+    color: #0f6e56;
+    font-weight: 800;
+    cursor: pointer;
+  }
+
+  .patient-portal-menu-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    display: grid;
+    align-items: end;
+    background: rgba(12, 26, 21, 0.44);
+    backdrop-filter: blur(6px);
+    padding: 0.75rem;
+  }
+
+  .patient-portal-menu-sheet {
+    display: grid;
+    gap: 0.85rem;
+    max-height: min(78vh, 640px);
+    overflow: auto;
+    padding: 1rem;
+    border-radius: 24px;
+    border: 1px solid rgba(15, 110, 86, 0.14);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(239, 248, 244, 0.98));
+    box-shadow: 0 24px 60px rgba(15, 42, 32, 0.22);
+  }
+
+  .patient-portal-menu-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.85rem;
+    align-items: flex-start;
+  }
+
+  .patient-portal-menu-kicker {
+    display: inline-flex;
+    margin-bottom: 0.15rem;
+    color: #0f6e56;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .patient-portal-menu-head strong {
+    display: block;
+    color: #163329;
+    font-size: 1rem;
+  }
+
+  .patient-portal-menu-head p {
+    margin: 0.2rem 0 0;
+    color: #5f746b;
+    font-size: 0.86rem;
+    line-height: 1.5;
+  }
+
+  .patient-portal-menu-close {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    border: 1px solid rgba(15, 110, 86, 0.12);
+    background: rgba(255, 255, 255, 0.94);
+    color: #5f746b;
+    cursor: pointer;
+  }
+
+  .patient-portal-tab-list.compact {
+    margin-top: 0;
+    gap: 0.5rem;
+  }
+
+  .patient-portal-tab.compact {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.55rem;
+    padding: 0.8rem 0.9rem;
+    min-height: 3rem;
+  }
+
+  .patient-portal-tab.compact span {
+    display: inline-block;
+    text-align: left;
+  }
+
+  .patient-portal-menu-sheet .patient-portal-switch-btn,
+  .patient-portal-menu-sheet .patient-portal-sidebar-note,
+  .patient-portal-menu-sheet .patient-portal-sidebar-card.muted {
+    margin-top: 0;
   }
 }
 

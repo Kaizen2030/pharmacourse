@@ -8,9 +8,11 @@ import {
   Bell,
   HeartPulse,
   Home,
+  Menu,
   PackageSearch,
   ShieldCheck,
   Smartphone,
+  X,
   Truck,
 } from "lucide-react"
 import PatientInstallPrompt from "../components/PatientInstallPrompt"
@@ -1124,6 +1126,10 @@ export default function PatientPortal() {
   ), [countyFilter, subcountyFilter, pharmacyOptions, selectedDirectoryMainId])
 
   const hasActivePharmacy = Boolean(pharmacyId && pharmacy)
+  const activePortalTab = useMemo(
+    () => PORTAL_TABS.find((tab) => tab.id === activeTab) || PORTAL_TABS[0],
+    [activeTab],
+  )
 
   useEffect(() => {
     setVisibleMainCount(DIRECTORY_BATCH_SIZES.mains)
@@ -1140,6 +1146,27 @@ export default function PatientPortal() {
       setSelectedDirectoryMainId(mainPharmacies[0].id)
     }
   }, [mainPharmacies, selectedDirectoryMainId])
+
+  useEffect(() => {
+    if (!hasActivePharmacy) {
+      setIsMobileMenuOpen(false)
+    }
+  }, [hasActivePharmacy])
+
+  const selectPortalTab = useCallback((tabId) => {
+    setActiveTab(tabId)
+    setSubmitMessage("")
+    setSubmitError("")
+    setIsMobileMenuOpen(false)
+
+    if (typeof window !== "undefined" && window.innerWidth < 980) {
+      window.scrollTo({ top: 0, behavior: "smooth" })
+    }
+  }, [])
+
+  const closeMobileMenu = useCallback(() => {
+    setIsMobileMenuOpen(false)
+  }, [])
 
   function updatePrescription(field, value) {
     setPrescriptionForm((prev) => ({ ...prev, [field]: value }))
@@ -2564,7 +2591,7 @@ export default function PatientPortal() {
 
         {(!hasActivePharmacy || !portalError) && (
           <section className="patient-portal-content" id="pharmacy-directory">
-            <div className="patient-portal-shell">
+            <div className={`patient-portal-shell ${hasActivePharmacy ? "has-active-pharmacy" : ""}`}>
               <aside className="patient-portal-sidebar">
                 <div className="patient-portal-sidebar-card">
                   {hasActivePharmacy ? (
@@ -2577,11 +2604,7 @@ export default function PatientPortal() {
                             key={tab.id}
                             type="button"
                             className={`patient-portal-tab ${activeTab === tab.id ? "active" : ""}`}
-                            onClick={() => {
-                              setActiveTab(tab.id)
-                              setSubmitMessage("")
-                              setSubmitError("")
-                            }}
+                            onClick={() => selectPortalTab(tab.id)}
                           >
                             {tab.label}
                           </button>
@@ -2838,7 +2861,7 @@ export default function PatientPortal() {
                     <>
                       <div className="patient-portal-panel-head">
                         <div>
-                          <h2>{PORTAL_TABS.find((tab) => tab.id === activeTab)?.label}</h2>
+                          <h2>{activePortalTab.label}</h2>
                           <p>
                             {activeTab === "prescription" && "Tell the pharmacist what you are suffering from and upload a prescription if you have one."}
                             {activeTab === "appointment" && "Book a pharmacist callback, video consultation, or pickup discussion."}
@@ -2847,6 +2870,18 @@ export default function PatientPortal() {
                             {activeTab === "updates" && "Check the current status of your submissions from your signed-in patient account."}
                           </p>
                         </div>
+                      </div>
+
+                      <div className="patient-portal-mobile-toolbar">
+                        <div className="patient-portal-mobile-toolbar-copy">
+                          <span className="patient-portal-mobile-toolbar-kicker">Current pharmacy</span>
+                          <strong>{pharmacy?.name || "Selected pharmacy"}</strong>
+                          <p>{pharmacy?.locationLabel || pharmacy?.location || "Branch-linked patient portal"}</p>
+                        </div>
+                        <button type="button" className="patient-portal-mobile-menu-button" onClick={() => setIsMobileMenuOpen(true)}>
+                          <Menu size={16} />
+                          Menu
+                        </button>
                       </div>
 
                       {renderFeedback()}
@@ -2876,12 +2911,7 @@ export default function PatientPortal() {
                   key={tab.id}
                   type="button"
                   className={`patient-portal-mobile-nav-item ${activeTab === tab.id ? "active" : ""}`}
-                  onClick={() => {
-                    setActiveTab(tab.id)
-                    setSubmitMessage("")
-                    setSubmitError("")
-                    scrollToPortalTop()
-                  }}
+                  onClick={() => selectPortalTab(tab.id)}
                 >
                   <Icon size={16} />
                   <span>{tab.label.split(" ")[0]}</span>
@@ -2889,6 +2919,62 @@ export default function PatientPortal() {
               )
             })}
           </nav>
+        ) : null}
+
+        {hasActivePharmacy && isMobileMenuOpen ? (
+          <div className="patient-portal-menu-overlay" role="presentation" onClick={closeMobileMenu}>
+            <div
+              className="patient-portal-menu-sheet"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Patient portal menu"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="patient-portal-menu-head">
+                <div>
+                  <span className="patient-portal-menu-kicker">Patient portal menu</span>
+                  <strong>{pharmacy?.name || "Selected pharmacy"}</strong>
+                  <p>{pharmacy?.locationLabel || pharmacy?.location || "Choose a section or switch pharmacy"}</p>
+                </div>
+                <button type="button" className="patient-portal-menu-close" onClick={closeMobileMenu} aria-label="Close menu">
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="patient-portal-tab-list compact">
+                {PORTAL_TABS.map((tab) => {
+                  const Icon = tab.icon
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      className={`patient-portal-tab compact ${activeTab === tab.id ? "active" : ""}`}
+                      onClick={() => selectPortalTab(tab.id)}
+                    >
+                      <Icon size={16} />
+                      <span>{tab.label}</span>
+                    </button>
+                  )
+                })}
+              </div>
+
+              <button type="button" className="btn btn-outline patient-portal-switch-btn" onClick={clearSelectedPharmacy}>
+                Choose a different pharmacy
+              </button>
+
+              <div className="patient-portal-sidebar-note">
+                Share this one link with patients:
+                <strong> pharmacourse.co.ke/patient</strong>
+              </div>
+
+              <div className="patient-portal-sidebar-card muted">
+                <h3>Emergency note</h3>
+                <p>
+                  For chest pain, severe bleeding, difficulty breathing, stroke symptoms, or collapse, go to the nearest hospital or call emergency services immediately.
+                </p>
+              </div>
+            </div>
+          </div>
         ) : null}
       </div>
     </>
