@@ -763,7 +763,8 @@ function buildPharmacyOptions(rows = []) {
 
   return rows
     .map((row) => {
-      const parsedLocation = parseLocationMeta(row.location || "")
+      const locationValue = row.location || row.address || ""
+      const parsedLocation = parseLocationMeta(locationValue)
       const county = row.county || parsedLocation.county || ""
       const subcounty = row.subcounty || ""
       const town = row.town || parsedLocation.town || ""
@@ -777,13 +778,38 @@ function buildPharmacyOptions(rows = []) {
         area,
         isBranch: Boolean(row.parent_pharmacy_id),
         parentName: row.parent_pharmacy_id ? map.get(row.parent_pharmacy_id)?.name || "Main pharmacy" : "",
-        locationLabel: [area, town, subcounty, county].filter(Boolean).join(", ") || row.location || "Location not provided",
+        locationLabel: [area, town, subcounty, county].filter(Boolean).join(", ") || locationValue || "Location not provided",
       }
     })
     .sort((first, second) => {
       if (first.isBranch !== second.isBranch) return first.isBranch ? 1 : -1
       return `${first.parentName} ${first.name}`.localeCompare(`${second.parentName} ${second.name}`)
     })
+}
+
+function mergePharmacyRows(...rowGroups) {
+  const merged = new Map()
+
+  rowGroups.flat().forEach((row) => {
+    if (!row?.id) return
+
+    const key = String(row.id)
+    const current = merged.get(key)
+    const nextRow = current
+      ? {
+          ...current,
+          ...row,
+          location: row.location || current.location || row.address || current.address || "",
+        }
+      : {
+          ...row,
+          location: row.location || row.address || "",
+        }
+
+    merged.set(key, nextRow)
+  })
+
+  return [...merged.values()]
 }
 
 export default function PatientPortal() {
@@ -878,22 +904,36 @@ export default function PatientPortal() {
       setPortalError("")
       setDirectoryError("")
 
-      const { data, error } = await supabase.rpc("public_patient_portal_pharmacies")
+      const [rpcResult, tableResult] = await Promise.all([
+        supabase.rpc("public_patient_portal_pharmacies"),
+        supabase
+          .from("pharmacies")
+          .select("id, name, location, address, parent_pharmacy_id, county, subcounty, town, area"),
+      ])
 
       if (cancelled) return
 
-      if (error) {
-        console.warn("Pharmacy directory lookup failed:", error.message)
-        setDirectoryError("We could not load the branch directory right now. Please try again in a moment.")
-        setPharmacy(null)
+      const rpcRows = Array.isArray(rpcResult.data) ? rpcResult.data : []
+      const tableRows = Array.isArray(tableResult.data) ? tableResult.data : []
+      const rows = mergePharmacyRows(rpcRows, tableRows)
+      const options = buildPharmacyOptions(rows)
+      const rpcFailed = Boolean(rpcResult.error)
+      const tableFailed = Boolean(tableResult.error)
+
+      if (rpcFailed || tableFailed) {
+        console.warn("Pharmacy directory lookup warning:", rpcResult.error?.message || tableResult.error?.message || "unknown issue")
+      }
+
+      if (options.length === 0) {
+        setDirectoryError("No pharmacies are available in this project yet.")
         setPharmacyOptions([])
+        setPharmacy(null)
         if (pharmacyId) {
           setPortalError("We could not verify that pharmacy right now. Please choose a branch again.")
         }
       } else {
-        const rows = Array.isArray(data) ? data : []
-        const options = buildPharmacyOptions(rows)
         setPharmacyOptions(options)
+        setDirectoryError("")
 
         if (!pharmacyId) {
           setPharmacy(null)
