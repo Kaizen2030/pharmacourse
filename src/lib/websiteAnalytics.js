@@ -1,4 +1,4 @@
-import { pharmacyosClient } from "./pharmacyosClient"
+import { supabase } from "./supabaseClient"
 
 const SESSION_KEY = "pharmacourse.website.session_id"
 const LAST_EVENT_KEY = "pharmacourse.website.last_event"
@@ -354,7 +354,7 @@ export async function recordWebsiteEvent({ eventName, pathname, title, referrer,
   }
 
   try {
-    await pharmacyosClient.rpc("record_website_event", payload)
+    await supabase.rpc("record_website_event", payload)
   } catch {
     // Analytics should never block the page experience.
   }

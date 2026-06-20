@@ -908,7 +908,7 @@ export default function PatientPortal() {
         supabase.rpc("public_patient_portal_pharmacies"),
         supabase
           .from("pharmacies")
-          .select("id, name, location, address, parent_pharmacy_id, county, subcounty, town, area"),
+          .select("id, name, location, parent_pharmacy_id, county, subcounty, town, area"),
       ])
 
       if (cancelled) return
