@@ -45,7 +45,20 @@
           background: transparent;
           color: #163329;
           cursor: pointer;
-          padding: 0.25rem;
+          padding: 0.5rem;
+          width: 2.5rem;
+          height: 2.5rem;
+          flex-shrink: 0;
+          border-radius: 8px;
+          transition: background 0.18s ease;
+        }
+
+        .portal-menu-toggle:hover {
+          background: rgba(15, 110, 86, 0.08);
+        }
+
+        .portal-menu-toggle:active {
+          background: rgba(15, 110, 86, 0.12);
         }
 
         .portal-logo {
@@ -1236,6 +1249,7 @@
 
           .portal-menu-toggle {
             display: inline-flex;
+            margin-right: 0.3rem;
           }
 
           .portal-nav {
