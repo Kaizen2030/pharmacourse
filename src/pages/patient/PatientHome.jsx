@@ -22,13 +22,18 @@ export default function PatientHome() {
   const [feedback, setFeedback] = useState({ type: "", message: "" })
   const [isSigningOut, setIsSigningOut] = useState(false)
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(null)
-  const patientLoginPath = createPatientPath("/patient/login")
   const { isAuthenticated, fullName, patientPhone, signOut } = usePatientPortalAuth()
   const displayName = fullName || rememberedPatient?.fullName || "Patient account"
   const displayPhone = patientPhone || rememberedPatient?.phone || ""
   const hasKnownPatient = Boolean(rememberedPatient || isAuthenticated)
   const patientPortalPath = createPatientPath("/patient-portal")
   const maternalPortalPath = `${patientPortalPath}${patientPortalPath.includes("?") ? "&" : "?"}tab=maternal`
+
+  function buildLoginRedirectPath(targetPathname) {
+    const loginPath = createPatientPath("/patient/login")
+    const targetPath = createPatientPath(targetPathname)
+    return `${loginPath}${loginPath.includes("?") ? "&" : "?"}redirect=${encodeURIComponent(targetPath)}`
+  }
 
   useEffect(() => {
     setRememberedPatient(getPatientPortalSession(pharmacyId))
@@ -39,7 +44,7 @@ export default function PatientHome() {
     const phone = patientPhone || rememberedPatient?.phone || ""
 
     async function loadUnreadNotifications() {
-      if (!pharmacyId || !phone || (!isAuthenticated && !rememberedPatient)) {
+      if (!pharmacyId || !phone || !isAuthenticated) {
         setUnreadNotificationCount(null)
         return
       }
@@ -76,25 +81,25 @@ export default function PatientHome() {
     {
       title: rememberedPatient ? "Update profile" : "Register",
       description: rememberedPatient ? "Need to change details? Open your branch profile form" : "New patient? Create your profile",
-      to: createPatientPath("/patient/register"),
+      to: isAuthenticated ? createPatientPath("/patient/register") : buildLoginRedirectPath("/patient/register"),
       icon: IdCard,
     },
     {
       title: "Request Prescription",
       description: "Upload your prescription or request a refill",
-      to: createPatientPath("/patient/prescription"),
+      to: isAuthenticated ? createPatientPath("/patient/prescription") : buildLoginRedirectPath("/patient/prescription"),
       icon: PillBottle,
     },
     {
       title: "Book Appointment",
       description: "Book a phone call or video consultation",
-      to: createPatientPath("/patient/appointment"),
+      to: isAuthenticated ? createPatientPath("/patient/appointment") : buildLoginRedirectPath("/patient/appointment"),
       icon: CalendarPlus2,
     },
     {
       title: "Maternal Care",
       description: "Register ANC follow-up and maternal outreach support",
-      to: maternalPortalPath,
+      to: isAuthenticated ? maternalPortalPath : buildLoginRedirectPath("/patient/register"),
       icon: HeartPulse,
     },
     {
@@ -105,7 +110,7 @@ export default function PatientHome() {
           : unreadNotificationCount
             ? `${unreadNotificationCount} unread update${unreadNotificationCount === 1 ? "" : "s"} waiting`
             : "No unread updates right now",
-      to: createPatientPath("/patient/track"),
+      to: isAuthenticated ? createPatientPath("/patient/track") : buildLoginRedirectPath("/patient/track"),
       icon: ClipboardPlus,
     },
   ]
@@ -189,7 +194,7 @@ export default function PatientHome() {
           </div>
 
           <div className="patient-actions-grid" style={{ marginBottom: "0.85rem" }}>
-            <Link to={createPatientPath("/patient/prescription")} className="patient-action-card">
+            <Link to={isAuthenticated ? createPatientPath("/patient/prescription") : buildLoginRedirectPath("/patient/prescription")} className="patient-action-card">
               <span className="patient-action-icon">
                 <PillBottle />
               </span>
@@ -202,7 +207,7 @@ export default function PatientHome() {
               </span>
             </Link>
 
-            <Link to={createPatientPath("/patient/appointment")} className="patient-action-card">
+            <Link to={isAuthenticated ? createPatientPath("/patient/appointment") : buildLoginRedirectPath("/patient/appointment")} className="patient-action-card">
               <span className="patient-action-icon">
                 <CalendarPlus2 />
               </span>
@@ -215,7 +220,7 @@ export default function PatientHome() {
               </span>
             </Link>
 
-            <Link to={maternalPortalPath} className="patient-action-card">
+            <Link to={isAuthenticated ? maternalPortalPath : buildLoginRedirectPath("/patient/register")} className="patient-action-card">
               <span className="patient-action-icon">
                 <HeartPulse />
               </span>
@@ -293,7 +298,7 @@ export default function PatientHome() {
           </>
         ) : (
           <div style={{ display: "flex", flexWrap: "wrap", gap: "0.7rem" }}>
-            <Link to={patientLoginPath} className="patient-button" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+            <Link to={buildLoginRedirectPath("/patient")} className="patient-button" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
               Sign in to patient account
             </Link>
             <Link to={createPatientPath("/patient/register")} className="patient-button-secondary" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>

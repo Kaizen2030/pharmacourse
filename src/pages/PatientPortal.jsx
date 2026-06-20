@@ -26,11 +26,13 @@ import {
   Zap,
 } from "lucide-react"
 import { PatientPortalStyles } from "../components/PatientLayout"
+import { usePatientPortalAuth } from "../hooks/usePatientPortalAuth"
 import { fetchPatientPortalPharmacies } from "../lib/patientPortalDirectory"
 import { buildSupabaseAccessBlockedCopy, isSupabaseAccessBlocked } from "../lib/supabaseAccess"
 import "./PatientPortal.css"
 
 export default function PatientPortal() {
+  const { isAuthenticated, loading: authLoading } = usePatientPortalAuth()
   const [activeTab, setActiveTab] = useState("home")
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
@@ -234,20 +236,58 @@ export default function PatientPortal() {
     [pharmaciesAccessBlocked, pharmaciesError],
   )
 
-  function buildPatientPath(pathname, pharmacyId) {
-    if (!pharmacyId) {
-      return pathname
+  function buildPatientPath(pathname, pharmacy, extraParams = {}) {
+    const params = new URLSearchParams()
+    const branch = pharmacy || null
+
+    if (branch?.id) {
+      params.set("pharmacy", String(branch.id))
     }
 
-    return `${pathname}?pharmacy=${encodeURIComponent(pharmacyId)}`
+    const exactBranchName = String(branch?.name || "").trim()
+    if (exactBranchName) {
+      params.set("branch_name", exactBranchName)
+    }
+
+    const exactBranchLocation = String(branch?.location || branch?.town || branch?.subcounty || branch?.county || "").trim()
+    if (exactBranchLocation) {
+      params.set("branch_location", exactBranchLocation)
+    }
+
+    Object.entries(extraParams || {}).forEach(([key, value]) => {
+      const normalizedValue = String(value || "").trim()
+      if (normalizedValue) {
+        params.set(key, normalizedValue)
+      }
+    })
+
+    const query = params.toString()
+    return query ? `${pathname}?${query}` : pathname
   }
 
-  function buildPatientLoginPath(pharmacyId) {
-    if (!pharmacyId) {
-      return "/patient/login"
+  function buildPatientLoginPath(pharmacy, redirectPath = "") {
+    const loginPath = buildPatientPath("/patient/login", pharmacy)
+    if (!redirectPath) {
+      return loginPath
     }
 
-    return `/patient/login?pharmacy=${encodeURIComponent(pharmacyId)}`
+    return `${loginPath}${loginPath.includes("?") ? "&" : "?"}redirect=${encodeURIComponent(redirectPath)}`
+  }
+
+  function getActionRedirectPath(actionId, pharmacy) {
+    const targetPathByAction = {
+      prescription: "/patient/prescription",
+      appointment: "/patient/appointment",
+      maternal: "/patient/register",
+      delivery: "/patient/track",
+      updates: "/patient/track",
+    }
+
+    return buildPatientPath(targetPathByAction[actionId] || "/patient", pharmacy)
+  }
+
+  function getNavigationBranch() {
+    return selectedMainPharmacy || mainPharmacies[0] || branchCards[0] || null
   }
 
   function handleQuickAction(actionId) {
@@ -255,7 +295,41 @@ export default function PatientPortal() {
     setIsMobileMenuOpen(false)
   }
 
+  function renderSignInGate({ actionId, title, description, ctaLabel }) {
+    const branch = getNavigationBranch()
+    const redirectPath = getActionRedirectPath(actionId, branch)
+    const loginPath = buildPatientLoginPath(branch, redirectPath)
+
+    return (
+      <div className="portal-form-page">
+        <div className="portal-form-header">
+          <h2 className="portal-form-title">{title}</h2>
+          <p className="portal-form-sub">{description}</p>
+        </div>
+        <div className="portal-empty-state">
+          <ShieldCheck size={48} className="portal-empty-icon" />
+          <h3 className="portal-empty-title">Sign in required</h3>
+          <p className="portal-empty-desc">
+            {branch
+              ? `We will keep ${branch.name} attached after login so your request reaches the exact branch you chose.`
+              : "Choose a pharmacy from the directory first so your request stays branch-linked after login."}
+          </p>
+          <div className="portal-inline-actions" style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem" }}>
+            <Link to={loginPath} className="portal-directory-button primary">
+              {ctaLabel}
+            </Link>
+            <button type="button" className="portal-directory-button secondary" onClick={() => setActiveTab("home")}>
+              Back to pharmacy search
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   function renderHomeScreen() {
+    const navigationBranch = getNavigationBranch()
+
     return (
       <div className="portal-home">
         <section className="portal-section portal-directory-section">
@@ -352,8 +426,17 @@ export default function PatientPortal() {
                     <p>Your signed-in patient account can find updates even if you forgot the branch you selected earlier.</p>
                   </div>
                   <div className="portal-directory-lookup-card">
-                    <span>Signed in as portal visitor.</span>
-                    <Link to={buildPatientLoginPath(selectedMainPharmacy?.id || mainPharmacies[0]?.id || "")} className="portal-directory-button">
+                    <span>
+                      {authLoading
+                        ? "Checking sign-in..."
+                        : isAuthenticated
+                          ? "Signed in with patient account."
+                          : "Sign in to see private updates."}
+                    </span>
+                    <Link
+                      to={buildPatientLoginPath(navigationBranch, buildPatientPath("/patient/track", navigationBranch))}
+                      className="portal-directory-button"
+                    >
                       Find My Updates
                     </Link>
                   </div>
@@ -407,7 +490,10 @@ export default function PatientPortal() {
                               {pharmacy.town ? <span>{pharmacy.town}</span> : null}
                             </div>
                             <div className="portal-directory-actions">
-                              <Link to={buildPatientLoginPath(pharmacy.id)} className="portal-directory-button primary">
+                              <Link
+                                to={buildPatientLoginPath(pharmacy, buildPatientPath("/patient", pharmacy))}
+                                className="portal-directory-button primary"
+                              >
                                 Use main pharmacy
                               </Link>
                               <button
@@ -463,7 +549,10 @@ export default function PatientPortal() {
                               {branch.subcounty ? <span>{branch.subcounty}</span> : null}
                               {branch.town ? <span>{branch.town}</span> : null}
                             </div>
-                            <Link to={buildPatientLoginPath(branch.id)} className="portal-directory-link">
+                            <Link
+                              to={buildPatientLoginPath(branch, buildPatientPath("/patient", branch))}
+                              className="portal-directory-link"
+                            >
                               Choose this branch
                             </Link>
                           </article>
@@ -549,6 +638,27 @@ export default function PatientPortal() {
   }
 
   function renderPrescriptionForm() {
+    if (authLoading) {
+      return (
+        <div className="portal-form-page">
+          <div className="portal-empty-state">
+            <Loader2 size={44} className="portal-spinner" />
+            <h3 className="portal-empty-title">Checking sign-in</h3>
+            <p className="portal-empty-desc">We are checking whether this browser already has a signed-in patient session.</p>
+          </div>
+        </div>
+      )
+    }
+
+    if (!isAuthenticated) {
+      return renderSignInGate({
+        actionId: "prescription",
+        title: "Request a Prescription",
+        description: "Sign in first so the pharmacy receives a real patient request, not an anonymous demo form.",
+        ctaLabel: "Sign in to request medicine",
+      })
+    }
+
     return (
       <div className="portal-form-page">
         <div className="portal-form-header">
@@ -627,6 +737,27 @@ export default function PatientPortal() {
   }
 
   function renderAppointmentForm() {
+    if (authLoading) {
+      return (
+        <div className="portal-form-page">
+          <div className="portal-empty-state">
+            <Loader2 size={44} className="portal-spinner" />
+            <h3 className="portal-empty-title">Checking sign-in</h3>
+            <p className="portal-empty-desc">We are checking whether this browser already has a signed-in patient session.</p>
+          </div>
+        </div>
+      )
+    }
+
+    if (!isAuthenticated) {
+      return renderSignInGate({
+        actionId: "appointment",
+        title: "Book an Appointment",
+        description: "Sign in first so the booking is attached to the exact branch and your real patient profile.",
+        ctaLabel: "Sign in to book",
+      })
+    }
+
     const appointmentTypes = [
       { value: "phone_call", label: "Phone Call", icon: PhoneCall },
       { value: "video_consultation", label: "Video Consultation", icon: Video },
@@ -694,6 +825,27 @@ export default function PatientPortal() {
   }
 
   function renderMaternalForm() {
+    if (authLoading) {
+      return (
+        <div className="portal-form-page">
+          <div className="portal-empty-state">
+            <Loader2 size={44} className="portal-spinner" />
+            <h3 className="portal-empty-title">Checking sign-in</h3>
+            <p className="portal-empty-desc">We are checking whether this browser already has a signed-in patient session.</p>
+          </div>
+        </div>
+      )
+    }
+
+    if (!isAuthenticated) {
+      return renderSignInGate({
+        actionId: "maternal",
+        title: "Maternal Care Registration",
+        description: "Sign in first so ANC or pregnancy follow-up stays attached to your patient profile and branch.",
+        ctaLabel: "Sign in to continue",
+      })
+    }
+
     return (
       <div className="portal-form-page">
         <div className="portal-form-header">
@@ -737,6 +889,27 @@ export default function PatientPortal() {
   }
 
   function renderDeliveryForm() {
+    if (authLoading) {
+      return (
+        <div className="portal-form-page">
+          <div className="portal-empty-state">
+            <Loader2 size={44} className="portal-spinner" />
+            <h3 className="portal-empty-title">Checking sign-in</h3>
+            <p className="portal-empty-desc">We are checking whether this browser already has a signed-in patient session.</p>
+          </div>
+        </div>
+      )
+    }
+
+    if (!isAuthenticated) {
+      return renderSignInGate({
+        actionId: "delivery",
+        title: "Request Delivery",
+        description: "Sign in first so the delivery request goes to the right branch and patient record.",
+        ctaLabel: "Sign in to request delivery",
+      })
+    }
+
     return (
       <div className="portal-form-page">
         <div className="portal-form-header">
@@ -806,6 +979,27 @@ export default function PatientPortal() {
   }
 
   function renderUpdatesScreen() {
+    if (authLoading) {
+      return (
+        <div className="portal-form-page">
+          <div className="portal-empty-state">
+            <Loader2 size={44} className="portal-spinner" />
+            <h3 className="portal-empty-title">Checking sign-in</h3>
+            <p className="portal-empty-desc">We are checking whether this browser already has a signed-in patient session.</p>
+          </div>
+        </div>
+      )
+    }
+
+    if (!isAuthenticated) {
+      return renderSignInGate({
+        actionId: "updates",
+        title: "Your Updates",
+        description: "Sign in first so tracking and notifications load from your real patient account.",
+        ctaLabel: "Sign in to view updates",
+      })
+    }
+
     return (
       <div className="portal-form-page">
         <div className="portal-form-header">
@@ -874,7 +1068,7 @@ export default function PatientPortal() {
           </nav>
 
           <div className="portal-header-actions">
-            <Link className="portal-login-link" to="/patient/login">
+            <Link className="portal-login-link" to={buildPatientLoginPath(getNavigationBranch())}>
               Sign in
             </Link>
             <button className="portal-notification-btn" type="button" aria-label="Notifications">

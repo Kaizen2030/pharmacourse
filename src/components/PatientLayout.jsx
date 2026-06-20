@@ -1396,12 +1396,32 @@ export default function PatientLayout() {
     }
   }, [pharmacyId])
 
-  function createPatientPath(pathname) {
-    if (!pharmacyId) {
-      return pathname
+  function createPatientPath(pathname, extraParams = {}) {
+    const params = new URLSearchParams()
+
+    if (pharmacyId) {
+      params.set("pharmacy", pharmacyId)
     }
 
-    return `${pathname}?pharmacy=${encodeURIComponent(pharmacyId)}`
+    const exactBranchName = String(branchName || "").trim()
+    if (exactBranchName) {
+      params.set("branch_name", exactBranchName)
+    }
+
+    const exactBranchLocation = String(branchLocation || "").trim()
+    if (exactBranchLocation) {
+      params.set("branch_location", exactBranchLocation)
+    }
+
+    Object.entries(extraParams || {}).forEach(([key, value]) => {
+      const normalizedValue = String(value || "").trim()
+      if (normalizedValue) {
+        params.set(key, normalizedValue)
+      }
+    })
+
+    const query = params.toString()
+    return query ? `${pathname}?${query}` : pathname
   }
 
   if (!pharmacyId) {

@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import SEO from "../../components/SEO"
 import PatientAuthShell from "../../components/PatientAuthShell"
 import { pharmacyosClient } from "../../lib/pharmacyosClient"
-import { buildPatientRouteUrl } from "../../lib/patientPortalRoutes"
+import { buildPatientRouteUrl, getSafePatientRedirectPath } from "../../lib/patientPortalRoutes"
 
 export default function PatientLogin() {
   const navigate = useNavigate()
@@ -18,6 +18,10 @@ export default function PatientLogin() {
   const patientHomePath = useMemo(() => buildPatientRouteUrl("/patient", searchParams), [searchParams])
   const registerPath = useMemo(() => buildPatientRouteUrl("/patient/register", searchParams), [searchParams])
   const forgotPasswordPath = useMemo(() => buildPatientRouteUrl("/patient/forgot-password", searchParams), [searchParams])
+  const redirectPath = useMemo(
+    () => getSafePatientRedirectPath(searchParams, patientHomePath),
+    [patientHomePath, searchParams],
+  )
 
   useEffect(() => {
     const resetStatus = searchParams.get("reset")
@@ -49,7 +53,7 @@ export default function PatientLogin() {
       return
     }
 
-    navigate(patientHomePath)
+    navigate(redirectPath)
   }
 
   const footer = (
