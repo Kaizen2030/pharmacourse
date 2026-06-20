@@ -28,7 +28,7 @@ export default function PatientAuthShell({ badge, title, description, children, 
 
       const { data, error } = await pharmacyosClient
         .from("pharmacies")
-        .select("id, name, location")
+        .select("id, name, address, town, subcounty, county")
         .eq("id", pharmacyId)
         .maybeSingle()
 
@@ -54,7 +54,7 @@ export default function PatientAuthShell({ badge, title, description, children, 
   }, [pharmacyId])
 
   const branchName = pharmacy?.name || branchNameParam || "Patient Portal"
-  const branchLocation = pharmacy?.location || branchLocationParam || ""
+  const branchLocation = pharmacy?.address || pharmacy?.town || pharmacy?.subcounty || pharmacy?.county || branchLocationParam || ""
 
   return (
     <div className="patient-shell">
