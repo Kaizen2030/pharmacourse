@@ -1515,8 +1515,6 @@ export default function PatientTrack() {
               </div>
             )}
           </section>
-        </div>
-        </>
       ) : null}
 
       {selectedRequest ? (
