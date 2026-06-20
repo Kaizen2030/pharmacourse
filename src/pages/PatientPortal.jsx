@@ -5,10 +5,13 @@ import {
   Building2,
   CalendarDays,
   ClipboardList,
+  Bell,
   HeartPulse,
+  Home,
   PackageSearch,
   ShieldCheck,
   Smartphone,
+  Truck,
 } from "lucide-react"
 import PatientInstallPrompt from "../components/PatientInstallPrompt"
 import { pharmacyPortalSupabase as supabase } from "../lib/pharmacyPortalSupabase"
@@ -22,11 +25,11 @@ const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || "0x4AAAAAA
 let turnstileScriptPromise = null
 
 const PORTAL_TABS = [
-  { id: "prescription", label: "Prescription Request" },
-  { id: "appointment", label: "Book Appointment" },
-  { id: "maternal", label: "Maternal Care" },
-  { id: "delivery", label: "Delivery Request" },
-  { id: "updates", label: "Check Updates" },
+  { id: "prescription", label: "Prescription Request", icon: ClipboardList },
+  { id: "appointment", label: "Book Appointment", icon: CalendarDays },
+  { id: "maternal", label: "Maternal Care", icon: HeartPulse },
+  { id: "delivery", label: "Delivery Request", icon: Truck },
+  { id: "updates", label: "Check Updates", icon: Bell },
 ]
 
 const PORTAL_FEATURES = [
@@ -895,6 +898,11 @@ export default function PatientPortal() {
     : ""
   const maternalResolvedName = maternalLockedName || maternalForm.patientName
   const maternalResolvedPhone = maternalLockedPhone || normalizePhone(maternalForm.patientPhone)
+
+  const scrollToPortalTop = useCallback(() => {
+    if (typeof window === "undefined") return
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -2854,6 +2862,34 @@ export default function PatientPortal() {
             </div>
           </section>
         )}
+
+        {hasActivePharmacy ? (
+          <nav className="patient-portal-mobile-nav" aria-label="Patient portal mobile navigation">
+            <button type="button" className="patient-portal-mobile-nav-home" onClick={scrollToPortalTop}>
+              <Home size={16} />
+              <span>Home</span>
+            </button>
+            {PORTAL_TABS.map((tab) => {
+              const Icon = tab.icon
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  className={`patient-portal-mobile-nav-item ${activeTab === tab.id ? "active" : ""}`}
+                  onClick={() => {
+                    setActiveTab(tab.id)
+                    setSubmitMessage("")
+                    setSubmitError("")
+                    scrollToPortalTop()
+                  }}
+                >
+                  <Icon size={16} />
+                  <span>{tab.label.split(" ")[0]}</span>
+                </button>
+              )
+            })}
+          </nav>
+        ) : null}
       </div>
     </>
   )
