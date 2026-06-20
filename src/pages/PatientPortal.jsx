@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { Link } from "react-router-dom"
+import { Link, useSearchParams } from "react-router-dom"
 import {
   Award,
   Bell,
@@ -28,11 +28,13 @@ import {
 import { PatientPortalStyles } from "../components/PatientLayout"
 import { usePatientPortalAuth } from "../hooks/usePatientPortalAuth"
 import { fetchPatientPortalPharmacies } from "../lib/patientPortalDirectory"
+import { clearPatientPortalProfileDraft, getPatientPortalProfileDraft } from "../lib/patientPortalSession"
 import { buildSupabaseAccessBlockedCopy, isSupabaseAccessBlocked } from "../lib/supabaseAccess"
 import "./PatientPortal.css"
 
 export default function PatientPortal() {
-  const { isAuthenticated, loading: authLoading } = usePatientPortalAuth()
+  const { isAuthenticated, loading: authLoading, signOut } = usePatientPortalAuth()
+  const [searchParams] = useSearchParams()
   const [activeTab, setActiveTab] = useState("home")
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
@@ -46,6 +48,8 @@ export default function PatientPortal() {
   const [countyFilter, setCountyFilter] = useState("all")
   const [subcountyFilter, setSubcountyFilter] = useState("all")
   const [townFilter, setTownFilter] = useState("all")
+  const [profileDraft, setProfileDraft] = useState(() => getPatientPortalProfileDraft())
+  const isSwitchFlow = searchParams.get("switch") === "1" || Boolean(profileDraft)
   const [prescriptionForm, setPrescriptionForm] = useState({
     patientName: "",
     patientPhone: "",
@@ -235,6 +239,12 @@ export default function PatientPortal() {
         : null,
     [pharmaciesAccessBlocked, pharmaciesError],
   )
+  const draftSummary = useMemo(() => {
+    if (!profileDraft) return ""
+
+    const parts = [profileDraft.fullName, profileDraft.phone, profileDraft.email].filter(Boolean)
+    return parts.join(" · ")
+  }, [profileDraft])
 
   function buildPatientPath(pathname, pharmacy, extraParams = {}) {
     const params = new URLSearchParams()
@@ -295,6 +305,19 @@ export default function PatientPortal() {
     setIsMobileMenuOpen(false)
   }
 
+  async function handleClearSavedDraft() {
+    clearPatientPortalProfileDraft()
+    setProfileDraft(null)
+
+    if (isAuthenticated) {
+      try {
+        await signOut()
+      } catch {
+        // If the account sign-out fails, still let the patient continue from a clean branch selector.
+      }
+    }
+  }
+
   function renderSignInGate({ actionId, title, description, ctaLabel }) {
     const branch = getNavigationBranch()
     const redirectPath = getActionRedirectPath(actionId, branch)
@@ -332,6 +355,33 @@ export default function PatientPortal() {
 
     return (
       <div className="portal-home">
+        {isSwitchFlow ? (
+          <section className="portal-section portal-switch-banner">
+            <div className="portal-switch-banner-copy">
+              <span className="portal-switch-kicker">Branch switch in progress</span>
+              <h2>Pick the new pharmacy, then we will carry your saved profile forward.</h2>
+              <p>
+                Your details can be edited on the next branch's login or registration screen before you submit anything.
+                If the saved info is wrong, clear it first and start a fresh account.
+              </p>
+            </div>
+            <div className="portal-switch-banner-panel">
+              <div className="portal-switch-banner-label">Saved profile draft</div>
+              <div className="portal-switch-banner-value">{draftSummary || "No saved profile draft found."}</div>
+              <div className="portal-switch-banner-actions">
+                <button type="button" className="portal-directory-button primary" onClick={() => setActiveTab("home")}>
+                  Choose a branch
+                </button>
+                {profileDraft ? (
+                  <button type="button" className="portal-directory-button secondary" onClick={() => void handleClearSavedDraft()}>
+                    Clear saved details
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          </section>
+        ) : null}
+
         <section className="portal-section portal-directory-section">
           <div className="portal-section-header">
             <h2 className="portal-section-title">Choose a pharmacy first</h2>
@@ -441,6 +491,19 @@ export default function PatientPortal() {
                     </Link>
                   </div>
                 </div>
+
+                {profileDraft ? (
+                  <div className="portal-directory-draft">
+                    <div>
+                      <strong>Saved profile ready</strong>
+                      <p>{draftSummary || "Your profile details will carry into the next branch."}</p>
+                    </div>
+                    <p>
+                      This helps the next branch prefill your name, phone number, and email. You can still edit those
+                      details before you submit a new request.
+                    </p>
+                  </div>
+                ) : null}
 
                 {pharmaciesAccessBlocked && pharmaciesBlockedCopy ? (
                   <div className="portal-directory-error portal-directory-error-blocked">

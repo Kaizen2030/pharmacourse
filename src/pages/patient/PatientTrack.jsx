@@ -616,7 +616,7 @@ export default function PatientTrack() {
 
   function handleSwitchBranch() {
     closeSwitchModal()
-    navigate("/patient-portal")
+    navigate("/patient-portal?switch=1")
   }
 
   async function handleStartFreshSwitch() {
@@ -632,7 +632,7 @@ export default function PatientTrack() {
       // If sign-out fails, still continue to branch selection so the user can restart.
     }
 
-    navigate("/patient-portal")
+    navigate("/patient-portal?switch=1")
   }
 
   function downloadReceipt(receipt) {
