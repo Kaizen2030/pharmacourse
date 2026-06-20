@@ -7,12 +7,10 @@ import {
   CalendarDays,
   ChevronRight,
   ClipboardList,
-  Download,
   HeartPulse,
   Home,
   Image,
   Loader2,
-  MapPin,
   Menu,
   PackageSearch,
   Pill,
@@ -20,14 +18,12 @@ import {
   Plus,
   Search,
   ShieldCheck,
-  Smartphone,
   Truck,
   Trash2,
   Video,
   X,
   Zap,
 } from "lucide-react"
-import PatientInstallPrompt from "../components/PatientInstallPrompt"
 import { PatientPortalStyles } from "../components/PatientLayout"
 import { pharmacyosClient } from "../lib/pharmacyosClient"
 import { buildSupabaseAccessBlockedCopy, isSupabaseAccessBlocked } from "../lib/supabaseAccess"
@@ -39,7 +35,7 @@ export default function PatientPortal() {
   const [searchQuery, setSearchQuery] = useState("")
   const [searchFocused, setSearchFocused] = useState(false)
   const [submitting, setSubmitting] = useState("")
-  const portalBrand = { name: "PharmaCourse patient portal", avatar: "PC" }
+  const portalBrand = { avatar: "PC" }
   const [pharmacies, setPharmacies] = useState([])
   const [pharmaciesLoading, setPharmaciesLoading] = useState(true)
   const [pharmaciesError, setPharmaciesError] = useState("")
@@ -93,15 +89,6 @@ export default function PatientPortal() {
     { id: "maternal", title: "Maternal Care", description: "ANC registration and follow-up", icon: HeartPulse, tone: "rose" },
     { id: "delivery", title: "Request Delivery", description: "Get medicines delivered to your door", icon: Truck, tone: "amber" },
     { id: "updates", title: "Check Updates", description: "Track your requests and notifications", icon: Bell, tone: "ink" },
-  ]
-
-  const previewTiles = [
-    { title: "Prescriptions", description: "Refills and uploads", icon: Pill, tone: "green" },
-    { title: "Appointments", description: "Calls and visits", icon: CalendarDays, tone: "blue" },
-    { title: "Maternal Care", description: "ANC follow-up", icon: HeartPulse, tone: "rose" },
-    { title: "Delivery", description: "Doorstep delivery", icon: Truck, tone: "amber" },
-    { title: "Updates", description: "Track replies", icon: Bell, tone: "ink" },
-    { title: "Install PWA", description: "Add to home screen", icon: Download, tone: "cyan" },
   ]
 
   const features = [
@@ -252,16 +239,6 @@ export default function PatientPortal() {
     return branchPharmacies.filter((row) => String(row?.parent_pharmacy_id || "") === String(selectedMainPharmacy.id))
   }, [branchPharmacies, selectedMainPharmacy])
 
-  const portalStats = useMemo(
-    () => [
-      { label: "Main pharmacies", value: String(mainPharmacies.length), icon: Building2, color: "#0f6e56", bg: "#e5f4ee" },
-      { label: "Branches shown", value: String(branchCards.length), icon: PackageSearch, color: "#1a6bb5", bg: "#e8f1fb" },
-      { label: "Matching locations", value: String(filteredPharmacies.length), icon: ClipboardList, color: "#c76a00", bg: "#fff0d9" },
-      { label: "Services", value: String(quickActions.length), icon: Smartphone, color: "#7c3aed", bg: "#f3eefe" },
-    ],
-    [branchCards.length, filteredPharmacies.length, mainPharmacies.length, quickActions.length],
-  )
-
   const searchSuggestions = useMemo(() => {
     const pharmacySuggestions = pharmacies
       .slice(0, 3)
@@ -308,118 +285,6 @@ export default function PatientPortal() {
   function renderHomeScreen() {
     return (
       <div className="portal-home">
-        <PatientInstallPrompt />
-
-        <section className="portal-hero">
-          <div className="portal-hero-copy">
-            <span className="portal-kicker">Patient self-service</span>
-            <h1>Choose your branch and continue like a native app</h1>
-            <p>
-              Choose a branch, place requests, and track updates from one polished portal built for mobile-first use.
-              Install it on your home screen and keep your brand colors intact.
-            </p>
-
-            <div className="portal-hero-actions">
-              <button type="button" className="portal-btn primary" onClick={() => setActiveTab("prescription")}>
-                Start a request
-              </button>
-              <button type="button" className="portal-btn secondary" onClick={() => setActiveTab("updates")}>
-                Check updates
-              </button>
-              <Link to={buildPatientLoginPath(selectedMainPharmacy?.id || mainPharmacies[0]?.id || "")} className="portal-btn ghost">
-                Sign in
-              </Link>
-              <button type="button" className="portal-btn ghost" onClick={() => setIsMobileMenuOpen(true)}>
-                Open menu
-              </button>
-            </div>
-
-            <div className="portal-trust-row">
-              {trustBadges.map((badge) => (
-                <span key={badge.label} className="portal-trust-pill">
-                  <badge.icon size={14} />
-                  {badge.label}
-                </span>
-              ))}
-            </div>
-
-            <div className="portal-stats-grid">
-              {portalStats.map((stat) => (
-                <div key={stat.label} className="portal-stat-card">
-                  <div className="portal-stat-icon" style={{ background: stat.bg, color: stat.color }}>
-                    <stat.icon size={18} />
-                  </div>
-                  <div className="portal-stat-info">
-                    <span className="portal-stat-value">{stat.value}</span>
-                    <span className="portal-stat-label">{stat.label}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="portal-hero-preview">
-            <div className="portal-preview-shell">
-              <div className="portal-preview-top">
-                <div>
-                  <span className="portal-preview-label">Branch portal</span>
-                  <strong>{portalBrand.name}</strong>
-                  <p>Search, book, request, and track from one place.</p>
-                </div>
-                <span className="portal-preview-avatar">{portalBrand.avatar}</span>
-              </div>
-
-              <div className="portal-preview-search">
-                <Search size={14} />
-                <span>Search medicines, appointments, or pharmacy...</span>
-              </div>
-
-              <div className="portal-preview-banner">
-                <div>
-                  <span className="portal-preview-banner-kicker">Real PWA</span>
-                  <strong>Install from the browser, not from a screenshot</strong>
-                  <p>
-                    This portal uses the browser install prompt on supported phones. On iPhone, use Safari and choose
-                    Add to Home Screen.
-                  </p>
-                </div>
-                <Smartphone size={18} />
-              </div>
-
-              <div className="portal-preview-grid">
-                {previewTiles.map((tile) => (
-                  <button key={tile.title} type="button" className={`portal-preview-tile tone-${tile.tone}`}>
-                    <span className="portal-preview-tile-icon">
-                      <tile.icon size={16} />
-                    </span>
-                    <strong>{tile.title}</strong>
-                    <p>{tile.description}</p>
-                  </button>
-                ))}
-              </div>
-
-              <div className="portal-preview-footer">
-                <span>
-                  <ShieldCheck size={14} />
-                  Secure branch access
-                </span>
-                <span>
-                  <MapPin size={14} />
-                  Pharmacy-linked
-                </span>
-              </div>
-
-              <div className="portal-preview-bottom-nav" aria-label="Portal preview navigation">
-                {[Home, Pill, CalendarDays, Truck].map((Icon, index) => (
-                  <span key={index} className={`portal-preview-bottom-item${index === 0 ? " active" : ""}`}>
-                    <Icon size={14} />
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
         <section className="portal-section portal-directory-section">
           <div className="portal-section-header">
             <h2 className="portal-section-title">Choose a pharmacy first</h2>
