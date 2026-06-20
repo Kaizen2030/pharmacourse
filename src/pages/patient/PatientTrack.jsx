@@ -1515,7 +1515,6 @@ export default function PatientTrack() {
               </div>
             )}
           </section>
-      ) : null}
 
       {selectedRequest ? (
         <div className="patient-detail-overlay" role="dialog" aria-modal="true" aria-label="Prescription request progress">
