@@ -100,10 +100,11 @@ export default function PatientInstallPrompt() {
       </div>
 
       <div className="patient-install-copy">
-        <div className="patient-install-kicker">Install on your phone</div>
-        <h2>Install the patient portal like an app</h2>
+        <div className="patient-install-kicker">Installable PWA</div>
+        <h2>Install the patient portal from your browser</h2>
         <p>
-          Add the RemedacarePOS patient portal to your home screen so it opens from an icon like a real app.
+          This portal is a progressive web app. On supported phones and browsers, install it so it opens from a home
+          screen icon like a real app.
         </p>
       </div>
 

@@ -1,31 +1,81 @@
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
+import { Link } from "react-router-dom"
 import {
-  Home, Pill, CalendarDays, HeartPulse, Truck, Bell,
-  Plus, Trash2, Loader2, Search, Menu, X, ChevronRight,
-  PhoneCall, Video, Building2, Image, Award, ShieldCheck,
-  Smartphone, Zap, ClipboardList, PackageSearch,
+  Award,
+  Bell,
+  Building2,
+  CalendarDays,
+  ChevronRight,
+  ClipboardList,
+  Download,
+  HeartPulse,
+  Home,
+  Image,
+  Loader2,
+  MapPin,
+  Menu,
+  PackageSearch,
+  Pill,
+  PhoneCall,
+  Plus,
+  Search,
+  ShieldCheck,
+  Smartphone,
+  Truck,
+  Trash2,
+  Video,
+  X,
+  Zap,
 } from "lucide-react"
+import PatientInstallPrompt from "../components/PatientInstallPrompt"
+import { PatientPortalStyles } from "../components/PatientLayout"
+import { pharmacyosClient } from "../lib/pharmacyosClient"
+import "./PatientPortal.css"
 
 export default function PatientPortal() {
   const [activeTab, setActiveTab] = useState("home")
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [searchFocused, setSearchFocused] = useState(false)
+  const [submitting, setSubmitting] = useState("")
+  const portalBrand = { name: "PharmaCourse patient portal", avatar: "PC" }
+  const [pharmacies, setPharmacies] = useState([])
+  const [pharmaciesLoading, setPharmaciesLoading] = useState(true)
+  const [pharmaciesError, setPharmaciesError] = useState("")
+  const [selectedMainPharmacyId, setSelectedMainPharmacyId] = useState("")
+  const [countyFilter, setCountyFilter] = useState("all")
+  const [subcountyFilter, setSubcountyFilter] = useState("all")
+  const [townFilter, setTownFilter] = useState("all")
   const [prescriptionForm, setPrescriptionForm] = useState({
-    patientName: "", patientPhone: "", patientEmail: "",
-    conditionNotes: "", requestedDrugs: [""],
+    patientName: "",
+    patientPhone: "",
+    patientEmail: "",
+    conditionNotes: "",
+    requestedDrugs: [""],
   })
   const [appointmentForm, setAppointmentForm] = useState({
-    patientName: "", patientPhone: "", patientEmail: "",
-    appointmentType: "phone_call", slotDatetime: "",
-    conditionSummary: "", patientNotes: "",
+    patientName: "",
+    patientPhone: "",
+    patientEmail: "",
+    appointmentType: "phone_call",
+    slotDatetime: "",
+    conditionSummary: "",
+    patientNotes: "",
+  })
+  const [maternalForm, setMaternalForm] = useState({
+    patientName: "",
+    patientPhone: "",
+    lmpDate: "",
+    gravida: "",
+    parity: "",
+    notes: "",
   })
   const [deliveryForm, setDeliveryForm] = useState({
-    patientName: "", patientPhone: "", patientEmail: "", patientAddress: "",
+    patientName: "",
+    patientPhone: "",
+    patientAddress: "",
     items: [{ drug_name: "", qty: "1", price: "" }],
   })
-  const [submitting, setSubmitting] = useState("")
-  const [user] = useState({ name: "Jane Mwangi", avatar: "JM" })
 
   const tabs = [
     { id: "home", label: "Home", icon: Home },
@@ -37,11 +87,20 @@ export default function PatientPortal() {
   ]
 
   const quickActions = [
-    { id: "prescription", title: "Request Prescription", description: "Send a refill request or upload prescription", icon: Pill, bgColor: "#ecfdf5", iconColor: "#059669" },
-    { id: "appointment", title: "Book Appointment", description: "Schedule a call or video consultation", icon: CalendarDays, bgColor: "#eff6ff", iconColor: "#2563eb" },
-    { id: "maternal", title: "Maternal Care", description: "ANC registration & pregnancy follow-up", icon: HeartPulse, bgColor: "#fff1f2", iconColor: "#e11d48" },
-    { id: "delivery", title: "Request Delivery", description: "Get medicines delivered to your door", icon: Truck, bgColor: "#fffbeb", iconColor: "#d97706" },
-    { id: "updates", title: "Check Updates", description: "Track your requests & notifications", icon: Bell, bgColor: "#f5f3ff", iconColor: "#7c3aed" },
+    { id: "prescription", title: "Request Prescription", description: "Send a refill request or upload prescription", icon: Pill, tone: "green" },
+    { id: "appointment", title: "Book Appointment", description: "Schedule a call or video consultation", icon: CalendarDays, tone: "blue" },
+    { id: "maternal", title: "Maternal Care", description: "ANC registration and follow-up", icon: HeartPulse, tone: "rose" },
+    { id: "delivery", title: "Request Delivery", description: "Get medicines delivered to your door", icon: Truck, tone: "amber" },
+    { id: "updates", title: "Check Updates", description: "Track your requests and notifications", icon: Bell, tone: "ink" },
+  ]
+
+  const previewTiles = [
+    { title: "Prescriptions", description: "Refills and uploads", icon: Pill, tone: "green" },
+    { title: "Appointments", description: "Calls and visits", icon: CalendarDays, tone: "blue" },
+    { title: "Maternal Care", description: "ANC follow-up", icon: HeartPulse, tone: "rose" },
+    { title: "Delivery", description: "Doorstep delivery", icon: Truck, tone: "amber" },
+    { title: "Updates", description: "Track replies", icon: Bell, tone: "ink" },
+    { title: "Install PWA", description: "Add to home screen", icon: Download, tone: "cyan" },
   ]
 
   const features = [
@@ -49,7 +108,7 @@ export default function PatientPortal() {
     { icon: ClipboardList, title: "Prescription Requests", description: "Send refill requests with photos" },
     { icon: CalendarDays, title: "Appointments", description: "Book calls or video consultations" },
     { icon: PackageSearch, title: "Live Tracking", description: "Follow your order in real-time" },
-    { icon: HeartPulse, title: "Maternal Care", description: "ANC registration & follow-up" },
+    { icon: HeartPulse, title: "Maternal Care", description: "ANC registration and follow-up" },
     { icon: Truck, title: "Delivery", description: "Get medicines delivered" },
   ]
 
@@ -60,59 +119,468 @@ export default function PatientPortal() {
     { icon: Zap, label: "Real-Time Updates" },
   ]
 
-  const mockActivities = [
-    { id: 1, title: "Metformin 500mg", statusLabel: "Under Review", status: "pending", time: "2 hours ago", icon: Pill, color: "#d97706", bg: "#fffbeb" },
-    { id: 2, title: "Video Consultation", statusLabel: "Confirmed", status: "confirmed", time: "Tomorrow, 10:00 AM", icon: Video, color: "#2563eb", bg: "#eff6ff" },
-    { id: 3, title: "Delivery #1234", statusLabel: "On the Way", status: "dispatched", time: "Today, 3:30 PM", icon: Truck, color: "#059669", bg: "#ecfdf5" },
-  ]
+  useEffect(() => {
+    let ignore = false
 
-  const statsCards = [
-    { label: "Active Prescriptions", value: "3", icon: Pill, color: "#059669", bg: "#ecfdf5" },
-    { label: "Upcoming Appointments", value: "2", icon: CalendarDays, color: "#2563eb", bg: "#eff6ff" },
-    { label: "Pending Deliveries", value: "1", icon: Truck, color: "#d97706", bg: "#fffbeb" },
-    { label: "Notifications", value: "5", icon: Bell, color: "#7c3aed", bg: "#f5f3ff" },
-  ]
+    async function loadPharmacies() {
+      setPharmaciesLoading(true)
+      setPharmaciesError("")
+
+      const { data, error } = await pharmacyosClient
+        .from("pharmacies")
+        .select("id, name, location, parent_pharmacy_id, county, subcounty, town, area")
+        .order("name", { ascending: true })
+
+      if (ignore) {
+        return
+      }
+
+      if (error) {
+        setPharmacies([])
+        setPharmaciesError(error.message || "We could not load the pharmacy list.")
+      } else {
+        setPharmacies(Array.isArray(data) ? data : [])
+      }
+
+      setPharmaciesLoading(false)
+    }
+
+    void loadPharmacies()
+
+    return () => {
+      ignore = true
+    }
+  }, [])
+
+  const pharmacyStats = useMemo(() => {
+    const branchCountByParent = new Map()
+
+    pharmacies.forEach((row) => {
+      const parentId = String(row?.parent_pharmacy_id || "").trim()
+      if (!parentId) return
+      branchCountByParent.set(parentId, (branchCountByParent.get(parentId) || 0) + 1)
+    })
+
+    return branchCountByParent
+  }, [pharmacies])
+
+  const directoryOptions = useMemo(() => {
+    const uniqueSortedValues = (key) =>
+      Array.from(
+        new Set(
+          pharmacies
+            .map((row) => String(row?.[key] || "").trim())
+            .filter(Boolean),
+        ),
+      ).sort((left, right) => left.localeCompare(right))
+
+    return {
+      counties: uniqueSortedValues("county"),
+      subcounties: uniqueSortedValues("subcounty"),
+      towns: uniqueSortedValues("town"),
+    }
+  }, [pharmacies])
+
+  const filteredPharmacies = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase()
+
+    return pharmacies.filter((row) => {
+      const fields = [
+        row?.name,
+        row?.location,
+        row?.county,
+        row?.subcounty,
+        row?.town,
+        row?.area,
+      ]
+        .map((value) => String(value || "").trim().toLowerCase())
+        .filter(Boolean)
+
+      const matchesQuery = !query || fields.some((value) => value.includes(query))
+      const matchesCounty = countyFilter === "all" || String(row?.county || "").trim() === countyFilter
+      const matchesSubcounty = subcountyFilter === "all" || String(row?.subcounty || "").trim() === subcountyFilter
+      const matchesTown = townFilter === "all" || String(row?.town || "").trim() === townFilter
+
+      return matchesQuery && matchesCounty && matchesSubcounty && matchesTown
+    })
+  }, [countyFilter, pharmacies, searchQuery, subcountyFilter, townFilter])
+
+  const mainPharmacies = useMemo(
+    () => filteredPharmacies.filter((row) => !String(row?.parent_pharmacy_id || "").trim()),
+    [filteredPharmacies],
+  )
+
+  const branchPharmacies = useMemo(
+    () => filteredPharmacies.filter((row) => String(row?.parent_pharmacy_id || "").trim()),
+    [filteredPharmacies],
+  )
+
+  const selectedMainPharmacy = useMemo(() => {
+    if (!mainPharmacies.length) return null
+    return (
+      mainPharmacies.find((row) => String(row.id) === String(selectedMainPharmacyId)) ||
+      mainPharmacies[0] ||
+      null
+    )
+  }, [mainPharmacies, selectedMainPharmacyId])
+
+  const branchCards = useMemo(() => {
+    if (!selectedMainPharmacy) return branchPharmacies
+
+    return branchPharmacies.filter((row) => String(row?.parent_pharmacy_id || "") === String(selectedMainPharmacy.id))
+  }, [branchPharmacies, selectedMainPharmacy])
+
+  const portalStats = useMemo(
+    () => [
+      { label: "Main pharmacies", value: String(mainPharmacies.length), icon: Building2, color: "#0f6e56", bg: "#e5f4ee" },
+      { label: "Branches shown", value: String(branchCards.length), icon: PackageSearch, color: "#1a6bb5", bg: "#e8f1fb" },
+      { label: "Services", value: String(quickActions.length), icon: ClipboardList, color: "#c76a00", bg: "#fff0d9" },
+      { label: "PWA ready", value: "Yes", icon: Smartphone, color: "#7c3aed", bg: "#f3eefe" },
+    ],
+    [branchCards.length, mainPharmacies.length, quickActions.length],
+  )
+
+  const searchSuggestions = useMemo(() => {
+    const pharmacySuggestions = pharmacies
+      .slice(0, 3)
+      .map((row) => String(row?.name || "").trim())
+      .filter(Boolean)
+
+    return [...pharmacySuggestions, "Prescription requests", "Delivery tracking", "Book appointments"].slice(0, 6)
+  }, [pharmacies])
+
+  function buildPatientPath(pathname, pharmacyId) {
+    if (!pharmacyId) {
+      return pathname
+    }
+
+    return `${pathname}?pharmacy=${encodeURIComponent(pharmacyId)}`
+  }
 
   function handleQuickAction(actionId) {
     setActiveTab(actionId)
+    setIsMobileMenuOpen(false)
   }
 
   function renderHomeScreen() {
     return (
       <div className="portal-home">
-        <div className="portal-welcome">
-          <div className="portal-welcome-content">
-            <div>
-              <span className="portal-greeting">Good morning 👋</span>
-              <h1 className="portal-welcome-title">{user.name}</h1>
-              <p className="portal-welcome-sub">Your health journey starts here</p>
+        <PatientInstallPrompt />
+
+        <section className="portal-hero">
+          <div className="portal-hero-copy">
+            <span className="portal-kicker">Patient self-service</span>
+            <h1>Choose your branch and continue like a native app</h1>
+            <p>
+              Choose a branch, place requests, and track updates from one polished portal built for mobile-first use.
+              Install it on your home screen and keep your brand colors intact.
+            </p>
+
+            <div className="portal-hero-actions">
+              <button type="button" className="portal-btn primary" onClick={() => setActiveTab("prescription")}>
+                Start a request
+              </button>
+              <button type="button" className="portal-btn secondary" onClick={() => setActiveTab("updates")}>
+                Check updates
+              </button>
+              <Link to="/patient/login" className="portal-btn ghost">
+                Sign in
+              </Link>
+              <button type="button" className="portal-btn ghost" onClick={() => setIsMobileMenuOpen(true)}>
+                Open menu
+              </button>
             </div>
-            <span className="portal-avatar">{user.avatar}</span>
-          </div>
-          <div className="portal-stats-grid">
-            {statsCards.map((stat) => (
-              <div key={stat.label} className="portal-stat-card">
-                <div className="portal-stat-icon">
-                  <stat.icon size={18} />
+
+            <div className="portal-trust-row">
+              {trustBadges.map((badge) => (
+                <span key={badge.label} className="portal-trust-pill">
+                  <badge.icon size={14} />
+                  {badge.label}
+                </span>
+              ))}
+            </div>
+
+            <div className="portal-stats-grid">
+              {portalStats.map((stat) => (
+                <div key={stat.label} className="portal-stat-card">
+                  <div className="portal-stat-icon" style={{ background: stat.bg, color: stat.color }}>
+                    <stat.icon size={18} />
+                  </div>
+                  <div className="portal-stat-info">
+                    <span className="portal-stat-value">{stat.value}</span>
+                    <span className="portal-stat-label">{stat.label}</span>
+                  </div>
                 </div>
-                <div className="portal-stat-info">
-                  <span className="portal-stat-value">{stat.value}</span>
-                  <span className="portal-stat-label">{stat.label}</span>
+              ))}
+            </div>
+          </div>
+
+          <div className="portal-hero-preview">
+            <div className="portal-preview-shell">
+              <div className="portal-preview-top">
+                <div>
+                  <span className="portal-preview-label">Branch portal</span>
+                  <strong>{portalBrand.name}</strong>
+                  <p>Search, book, request, and track from one place.</p>
+                </div>
+                <span className="portal-preview-avatar">{portalBrand.avatar}</span>
+              </div>
+
+              <div className="portal-preview-search">
+                <Search size={14} />
+                <span>Search medicines, appointments, or pharmacy...</span>
+              </div>
+
+              <div className="portal-preview-banner">
+                <div>
+                  <span className="portal-preview-banner-kicker">Real PWA</span>
+                  <strong>Install from the browser, not from a screenshot</strong>
+                  <p>
+                    This portal uses the browser install prompt on supported phones. On iPhone, use Safari and choose
+                    Add to Home Screen.
+                  </p>
+                </div>
+                <Smartphone size={18} />
+              </div>
+
+              <div className="portal-preview-grid">
+                {previewTiles.map((tile) => (
+                  <button key={tile.title} type="button" className={`portal-preview-tile tone-${tile.tone}`}>
+                    <span className="portal-preview-tile-icon">
+                      <tile.icon size={16} />
+                    </span>
+                    <strong>{tile.title}</strong>
+                    <p>{tile.description}</p>
+                  </button>
+                ))}
+              </div>
+
+              <div className="portal-preview-footer">
+                <span>
+                  <ShieldCheck size={14} />
+                  Secure branch access
+                </span>
+                <span>
+                  <MapPin size={14} />
+                  Pharmacy-linked
+                </span>
+              </div>
+
+              <div className="portal-preview-bottom-nav" aria-label="Portal preview navigation">
+                {[Home, Pill, CalendarDays, Truck].map((Icon, index) => (
+                  <span key={index} className={`portal-preview-bottom-item${index === 0 ? " active" : ""}`}>
+                    <Icon size={14} />
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="portal-section portal-directory-section">
+          <div className="portal-section-header">
+            <h2 className="portal-section-title">Choose a pharmacy first</h2>
+            <span className="portal-section-badge">
+              {pharmaciesLoading ? "Loading pharmacies..." : `${filteredPharmacies.length} matching locations`}
+            </span>
+          </div>
+
+          <div className="portal-directory-grid">
+            <aside className="portal-directory-sidebar">
+              <div className="portal-directory-card">
+                <h3>Search by pharmacy, county, town, or area</h3>
+                <p>Use the filters to narrow the list, then jump into the exact branch you want.</p>
+
+                <div className="portal-directory-form">
+                  <label className="portal-directory-field">
+                    <span>Search</span>
+                    <input
+                      className="portal-input portal-directory-input"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search pharmacy, branch, county, or area"
+                    />
+                  </label>
+
+                  <label className="portal-directory-field">
+                    <span>All counties</span>
+                    <select className="portal-input portal-directory-select" value={countyFilter} onChange={(e) => setCountyFilter(e.target.value)}>
+                      <option value="all">All counties</option>
+                      {directoryOptions.counties.map((county) => (
+                        <option key={county} value={county}>
+                          {county}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="portal-directory-field">
+                    <span>All subcounties</span>
+                    <select className="portal-input portal-directory-select" value={subcountyFilter} onChange={(e) => setSubcountyFilter(e.target.value)}>
+                      <option value="all">All subcounties</option>
+                      {directoryOptions.subcounties.map((subcounty) => (
+                        <option key={subcounty} value={subcounty}>
+                          {subcounty}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="portal-directory-field">
+                    <span>All towns / areas</span>
+                    <select className="portal-input portal-directory-select" value={townFilter} onChange={(e) => setTownFilter(e.target.value)}>
+                      <option value="all">All towns / areas</option>
+                      {directoryOptions.towns.map((town) => (
+                        <option key={town} value={town}>
+                          {town}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+
+                <div className="portal-directory-share">
+                  <span>Share this one link with patients:</span>
+                  <strong>pharmacourse.co.ke/patient</strong>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
 
-        <div className="portal-section">
+              <div className="portal-directory-emergency">
+                <h3>Emergency note</h3>
+                <p>
+                  For chest pain, severe bleeding, difficulty breathing, stroke symptoms, or collapse, go to the nearest
+                  hospital or call emergency services immediately.
+                </p>
+              </div>
+            </aside>
+
+            <div className="portal-directory-main">
+              <div className="portal-directory-panel">
+                <div className="portal-directory-panel-copy">
+                  <h3>Select Your Pharmacy or Branch</h3>
+                  <p>Patients should first choose the main pharmacy, then pick the exact branch nearest to them.</p>
+                </div>
+
+                <div className="portal-directory-lookup">
+                  <div>
+                    <strong>Already Submitted a Request?</strong>
+                    <p>Your signed-in patient account can find updates even if you forgot the branch you selected earlier.</p>
+                  </div>
+                  <div className="portal-directory-lookup-card">
+                    <span>Signed in as portal visitor.</span>
+                    <Link to={buildPatientPath("/patient/track", selectedMainPharmacy?.id || mainPharmacies[0]?.id || "")} className="portal-directory-button">
+                      Find My Updates
+                    </Link>
+                  </div>
+                </div>
+
+                {pharmaciesError ? <div className="portal-directory-error">{pharmaciesError}</div> : null}
+
+                <div className="portal-directory-summary">
+                  Showing {filteredPharmacies.length} matching locations
+                </div>
+
+                <div className="portal-directory-stage">
+                  <div className="portal-directory-stage-header">
+                    <h4>1. Choose Main Pharmacy</h4>
+                    <span>{mainPharmacies.length}</span>
+                  </div>
+
+                  {mainPharmacies.length ? (
+                    <div className="portal-directory-card-grid">
+                      {mainPharmacies.map((pharmacy) => {
+                        const location = pharmacy?.location || pharmacy?.town || pharmacy?.subcounty || pharmacy?.county || "Kenya"
+                        const branchCount = pharmacyStats.get(String(pharmacy.id)) || 0
+
+                        return (
+                          <article key={pharmacy.id} className="portal-directory-pharmacy-card">
+                            <div className="portal-directory-card-top">
+                              <span className="portal-directory-chip">MAIN</span>
+                              <span>{branchCount} branches</span>
+                            </div>
+                            <h5>{pharmacy.name}</h5>
+                            <p>{location}</p>
+                            <div className="portal-directory-tags">
+                              {pharmacy.county ? <span>{pharmacy.county}</span> : null}
+                              {pharmacy.subcounty ? <span>{pharmacy.subcounty}</span> : null}
+                              {pharmacy.town ? <span>{pharmacy.town}</span> : null}
+                            </div>
+                            <div className="portal-directory-actions">
+                              <Link to={buildPatientPath("/patient", pharmacy.id)} className="portal-directory-button primary">
+                                Use main pharmacy
+                              </Link>
+                              <button
+                                type="button"
+                                className="portal-directory-button secondary"
+                                onClick={() => setSelectedMainPharmacyId(String(pharmacy.id))}
+                              >
+                                Browse branches
+                              </button>
+                            </div>
+                          </article>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <div className="portal-directory-empty">
+                      No main pharmacies matched your filters yet. Try widening the search.
+                    </div>
+                  )}
+
+                  <div className="portal-directory-stage-header secondary">
+                    <div>
+                      <h4>2. Choose Branch</h4>
+                      <p>Pick a main pharmacy above to narrow branches faster.</p>
+                    </div>
+                    <span>{branchCards.length}</span>
+                  </div>
+
+                  <div className="portal-directory-subtitle">Other branches in this pharmacy</div>
+
+                  {pharmaciesLoading ? (
+                    <div className="portal-directory-empty">Loading pharmacies from the POS database...</div>
+                  ) : branchCards.length ? (
+                    <div className="portal-directory-branch-grid">
+                      {branchCards.map((branch) => {
+                        const location = branch?.location || branch?.town || branch?.subcounty || branch?.county || "Kenya"
+
+                        return (
+                          <article key={branch.id} className="portal-directory-branch-card">
+                            <span className="portal-directory-chip branch">BRANCH</span>
+                            <h5>{branch.name}</h5>
+                            <p>{location}</p>
+                            <div className="portal-directory-tags">
+                              {branch.county ? <span>{branch.county}</span> : null}
+                              {branch.subcounty ? <span>{branch.subcounty}</span> : null}
+                              {branch.town ? <span>{branch.town}</span> : null}
+                            </div>
+                            <Link to={buildPatientPath("/patient", branch.id)} className="portal-directory-link">
+                              Choose this branch
+                            </Link>
+                          </article>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <div className="portal-directory-empty">
+                      Pick a main pharmacy above or clear your filters to see the branch cards.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="portal-section">
           <div className="portal-section-header">
             <h2 className="portal-section-title">Quick Actions</h2>
-            <span className="portal-section-badge">6 services</span>
+            <span className="portal-section-badge">5 services</span>
           </div>
           <div className="portal-quick-grid">
             {quickActions.map((action) => (
-              <button key={action.id} className="portal-quick-card" onClick={() => handleQuickAction(action.id)}>
-                <div className="portal-quick-icon" style={{ background: action.bgColor, color: action.iconColor }}>
+              <button key={action.id} className={`portal-quick-card tone-${action.tone}`} onClick={() => handleQuickAction(action.id)}>
+                <div className="portal-quick-icon">
                   <action.icon size={22} />
                 </div>
                 <div className="portal-quick-content">
@@ -123,32 +591,25 @@ export default function PatientPortal() {
               </button>
             ))}
           </div>
-        </div>
+        </section>
 
-        <div className="portal-section">
+        <section className="portal-section">
           <div className="portal-section-header">
             <h2 className="portal-section-title">Recent Activity</h2>
             <button className="portal-link-btn">View All</button>
           </div>
           <div className="portal-activity-list">
-            {mockActivities.map((activity) => (
-              <div key={activity.id} className="portal-activity-item">
-                <div className="portal-activity-icon" style={{ background: activity.bg, color: activity.color }}>
-                  <activity.icon size={16} />
-                </div>
-                <div className="portal-activity-content">
-                  <div className="portal-activity-top">
-                    <span className="portal-activity-title">{activity.title}</span>
-                    <span className={`portal-activity-status portal-status-${activity.status}`}>{activity.statusLabel}</span>
-                  </div>
-                  <span className="portal-activity-time">{activity.time}</span>
-                </div>
-              </div>
-            ))}
+            <div className="portal-empty-state portal-empty-state-portal">
+              <Bell size={40} className="portal-empty-icon" />
+              <h3 className="portal-empty-title">No demo activity loaded</h3>
+              <p className="portal-empty-desc">
+                This page does not invent patient records. Real prescriptions, appointments, and delivery updates appear after sign-in.
+              </p>
+            </div>
           </div>
-        </div>
+        </section>
 
-        <div className="portal-section">
+        <section className="portal-section">
           <div className="portal-section-header">
             <h2 className="portal-section-title">Everything You Need</h2>
             <span className="portal-section-badge">All in one place</span>
@@ -156,13 +617,15 @@ export default function PatientPortal() {
           <div className="portal-features-grid">
             {features.map((feature) => (
               <div key={feature.title} className="portal-feature-card">
-                <div className="portal-feature-icon"><feature.icon size={20} /></div>
+                <div className="portal-feature-icon">
+                  <feature.icon size={20} />
+                </div>
                 <h4 className="portal-feature-title">{feature.title}</h4>
                 <p className="portal-feature-desc">{feature.description}</p>
               </div>
             ))}
           </div>
-        </div>
+        </section>
 
         <div className="portal-trust-section">
           {trustBadges.map((badge) => (
@@ -260,6 +723,7 @@ export default function PatientPortal() {
       { value: "video_consultation", label: "Video Consultation", icon: Video },
       { value: "pickup", label: "In-Person Pickup", icon: Building2 },
     ]
+
     return (
       <div className="portal-form-page">
         <div className="portal-form-header">
@@ -331,26 +795,31 @@ export default function PatientPortal() {
           <div className="portal-form-row">
             <div className="portal-form-group">
               <label className="portal-label">Full Name</label>
-              <input className="portal-input" placeholder="Mother's full name" />
+              <input className="portal-input" placeholder="Mother's full name" value={maternalForm.patientName}
+                onChange={(e) => setMaternalForm({ ...maternalForm, patientName: e.target.value })} />
             </div>
             <div className="portal-form-group">
               <label className="portal-label">Phone Number</label>
-              <input className="portal-input" placeholder="07XXXXXXXX" />
+              <input className="portal-input" placeholder="07XXXXXXXX" value={maternalForm.patientPhone}
+                onChange={(e) => setMaternalForm({ ...maternalForm, patientPhone: e.target.value })} />
             </div>
           </div>
           <div className="portal-form-row">
             <div className="portal-form-group">
               <label className="portal-label">Last Menstrual Period (LMP)</label>
-              <input className="portal-input" type="date" />
+              <input className="portal-input" type="date" value={maternalForm.lmpDate}
+                onChange={(e) => setMaternalForm({ ...maternalForm, lmpDate: e.target.value })} />
             </div>
             <div className="portal-form-group">
               <label className="portal-label">Gravida / Parity</label>
-              <input className="portal-input" placeholder="e.g. G2 P1" />
+              <input className="portal-input" placeholder="e.g. G2 P1" value={maternalForm.gravida}
+                onChange={(e) => setMaternalForm({ ...maternalForm, gravida: e.target.value })} />
             </div>
           </div>
           <div className="portal-form-group">
             <label className="portal-label">Current Concerns or Notes</label>
-            <textarea className="portal-textarea" rows={4} placeholder="Share any pregnancy concerns or follow-up needs..." />
+            <textarea className="portal-textarea" rows={4} placeholder="Share any pregnancy concerns or follow-up needs..." value={maternalForm.notes}
+              onChange={(e) => setMaternalForm({ ...maternalForm, notes: e.target.value })} />
           </div>
           <button type="submit" className="portal-submit-btn">Send Maternal Care Request</button>
         </form>
@@ -409,7 +878,8 @@ export default function PatientPortal() {
                       const newItems = [...deliveryForm.items]
                       newItems[index].qty = e.target.value
                       setDeliveryForm({ ...deliveryForm, items: newItems })
-                    }} placeholder="Qty" />
+                    }}
+                    placeholder="Qty" />
                   {deliveryForm.items.length > 1 && (
                     <button type="button" className="portal-remove-btn"
                       onClick={() => setDeliveryForm({ ...deliveryForm, items: deliveryForm.items.filter((_, i) => i !== index) })}>
@@ -444,57 +914,87 @@ export default function PatientPortal() {
 
   function renderContent() {
     switch (activeTab) {
-      case "home": return renderHomeScreen()
-      case "prescription": return renderPrescriptionForm()
-      case "appointment": return renderAppointmentForm()
-      case "maternal": return renderMaternalForm()
-      case "delivery": return renderDeliveryForm()
-      case "updates": return renderUpdatesScreen()
-      default: return renderHomeScreen()
+      case "home":
+        return renderHomeScreen()
+      case "prescription":
+        return renderPrescriptionForm()
+      case "appointment":
+        return renderAppointmentForm()
+      case "maternal":
+        return renderMaternalForm()
+      case "delivery":
+        return renderDeliveryForm()
+      case "updates":
+        return renderUpdatesScreen()
+      default:
+        return renderHomeScreen()
     }
   }
 
   return (
     <div className="portal-container">
+      <PatientPortalStyles />
+
       <header className="portal-header">
         <div className="portal-header-inner">
           <div className="portal-brand">
-            <button className="portal-menu-toggle" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+            <button className="portal-menu-toggle" onClick={() => setIsMobileMenuOpen((open) => !open)} type="button" aria-label="Toggle navigation">
               {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
             <div className="portal-logo">
-              <span className="portal-logo-icon">💊</span>
+              <span className="portal-logo-icon"><Pill size={16} /></span>
               <span>Pharma<span className="portal-logo-highlight">Course</span></span>
             </div>
           </div>
+
           <nav className={`portal-nav ${isMobileMenuOpen ? "open" : ""}`}>
             {tabs.map((tab) => (
-              <button key={tab.id} className={`portal-nav-item ${activeTab === tab.id ? "active" : ""}`}
-                onClick={() => { setActiveTab(tab.id); setIsMobileMenuOpen(false) }}>
-                <tab.icon size={18} /><span>{tab.label}</span>
+              <button
+                key={tab.id}
+                className={`portal-nav-item ${activeTab === tab.id ? "active" : ""}`}
+                onClick={() => {
+                  setActiveTab(tab.id)
+                  setIsMobileMenuOpen(false)
+                }}
+                type="button"
+              >
+                <tab.icon size={18} />
+                <span>{tab.label}</span>
               </button>
             ))}
           </nav>
+
           <div className="portal-header-actions">
-            <button className="portal-notification-btn">
-              <Bell size={20} /><span className="portal-notification-dot">3</span>
+            <Link className="portal-login-link" to="/patient/login">
+              Sign in
+            </Link>
+            <button className="portal-notification-btn" type="button" aria-label="Notifications">
+              <Bell size={20} />
             </button>
-            <span className="portal-avatar-sm">{user.avatar}</span>
+            <span className="portal-avatar-sm">{portalBrand.avatar}</span>
           </div>
         </div>
+
         <div className="portal-search-bar">
           <div className="portal-search-wrapper">
             <Search size={18} className="portal-search-icon" />
-            <input className="portal-search-input" placeholder="Search for medicines, appointments, or pharmacy..."
-              value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => setSearchFocused(true)} onBlur={() => setSearchFocused(false)} />
-            {searchFocused && (
+            <input
+              className="portal-search-input"
+              placeholder="Search for medicines, appointments, or pharmacy..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setSearchFocused(false)}
+            />
+            {searchFocused ? (
               <div className="portal-search-suggestions">
-                <div className="portal-search-suggestion">Metformin 500mg</div>
-                <div className="portal-search-suggestion">Blood pressure check</div>
-                <div className="portal-search-suggestion">Delivery tracking</div>
+                {searchSuggestions.map((item) => (
+                  <div key={item} className="portal-search-suggestion">
+                    {item}
+                  </div>
+                ))}
               </div>
-            )}
+            ) : null}
           </div>
         </div>
       </header>
@@ -503,143 +1003,22 @@ export default function PatientPortal() {
         <div className="portal-content">{renderContent()}</div>
       </main>
 
-      <nav className="portal-bottom-nav">
+      <nav className="portal-bottom-nav" aria-label="Mobile portal navigation">
         {tabs.slice(0, 4).map((tab) => (
-          <button key={tab.id} className={`portal-bottom-nav-item ${activeTab === tab.id ? "active" : ""}`} onClick={() => setActiveTab(tab.id)}>
-            <tab.icon size={20} /><span>{tab.label}</span>
+          <button
+            key={tab.id}
+            className={`portal-bottom-nav-item ${activeTab === tab.id ? "active" : ""}`}
+            onClick={() => setActiveTab(tab.id)}
+            type="button"
+          >
+            <tab.icon size={20} />
+            <span>{tab.label}</span>
           </button>
         ))}
       </nav>
 
-      <style>{`
-        .portal-container { min-height: 100vh; background: linear-gradient(180deg, #f0faf6 0%, #e6f2ed 100%); font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #163329; }
-        .portal-header { background: rgba(255,255,255,0.95); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(15,110,86,0.08); position: sticky; top: 0; z-index: 50; }
-        .portal-header-inner { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; max-width: 1200px; margin: 0 auto; position: relative; }
-        .portal-brand { display: flex; align-items: center; gap: 0.75rem; }
-        .portal-menu-toggle { background: none; border: none; color: #163329; cursor: pointer; padding: 0.25rem; display: none; }
-        .portal-logo { display: flex; align-items: center; gap: 0.5rem; font-weight: 800; font-size: 1.1rem; }
-        .portal-logo-icon { font-size: 1.4rem; }
-        .portal-logo-highlight { color: #0f6e56; }
-        .portal-nav { display: flex; align-items: center; gap: 0.25rem; }
-        .portal-nav-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.85rem; border-radius: 12px; border: none; background: transparent; color: #5f746b; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.2s ease; }
-        .portal-nav-item:hover { background: rgba(15,110,86,0.06); color: #163329; }
-        .portal-nav-item.active { background: rgba(15,110,86,0.1); color: #0f6e56; }
-        .portal-header-actions { display: flex; align-items: center; gap: 0.75rem; }
-        .portal-notification-btn { position: relative; background: none; border: none; color: #5f746b; cursor: pointer; padding: 0.35rem; border-radius: 10px; }
-        .portal-notification-dot { position: absolute; top: -2px; right: -2px; width: 18px; height: 18px; border-radius: 50%; background: #ef4444; color: white; font-size: 0.6rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
-        .portal-avatar-sm { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg,#0f6e56,#0d5d49); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; }
-        .portal-search-bar { padding: 0.5rem 1rem 0.75rem; max-width: 1200px; margin: 0 auto; }
-        .portal-search-wrapper { position: relative; }
-        .portal-search-icon { position: absolute; left: 0.85rem; top: 50%; transform: translateY(-50%); color: #8fa8a0; }
-        .portal-search-input { width: 100%; padding: 0.6rem 1rem 0.6rem 2.8rem; border-radius: 14px; border: 1.5px solid rgba(15,110,86,0.12); background: rgba(255,255,255,0.9); font-size: 0.9rem; color: #163329; outline: none; box-sizing: border-box; }
-        .portal-search-input:focus { border-color: #0f6e56; box-shadow: 0 0 0 4px rgba(15,110,86,0.08); }
-        .portal-search-suggestions { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: white; border-radius: 12px; border: 1px solid rgba(15,110,86,0.08); box-shadow: 0 12px 40px rgba(15,42,32,0.08); overflow: hidden; z-index: 20; }
-        .portal-search-suggestion { padding: 0.6rem 1rem; cursor: pointer; font-size: 0.85rem; color: #24463a; }
-        .portal-search-suggestion:hover { background: rgba(15,110,86,0.04); }
-        .portal-main { padding: 1rem; max-width: 1200px; margin: 0 auto; }
-        .portal-content { display: flex; flex-direction: column; gap: 1.5rem; }
-        .portal-welcome { background: linear-gradient(135deg,#0f6e56,#0d5d49); border-radius: 20px; padding: 1.5rem; color: white; }
-        .portal-welcome-content { display: flex; justify-content: space-between; align-items: flex-start; }
-        .portal-greeting { font-size: 0.85rem; opacity: 0.8; }
-        .portal-welcome-title { font-size: 1.6rem; font-weight: 800; margin: 0.2rem 0 0.1rem; letter-spacing: -0.02em; }
-        .portal-welcome-sub { font-size: 0.95rem; opacity: 0.75; margin: 0; }
-        .portal-avatar { width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,0.2); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.2rem; border: 2px solid rgba(255,255,255,0.3); }
-        .portal-stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 0.75rem; margin-top: 1rem; }
-        .portal-stat-card { background: rgba(255,255,255,0.12); border-radius: 14px; padding: 0.75rem; display: flex; align-items: center; gap: 0.6rem; }
-        .portal-stat-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.15); color: white; }
-        .portal-stat-info { display: flex; flex-direction: column; }
-        .portal-stat-value { font-size: 1.1rem; font-weight: 800; }
-        .portal-stat-label { font-size: 0.65rem; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.04em; }
-        .portal-section { background: white; border-radius: 16px; padding: 1.25rem; box-shadow: 0 2px 12px rgba(15,42,32,0.04); border: 1px solid rgba(15,110,86,0.06); }
-        .portal-section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-        .portal-section-title { font-size: 1.05rem; font-weight: 700; margin: 0; }
-        .portal-section-badge { font-size: 0.7rem; padding: 0.2rem 0.6rem; border-radius: 20px; background: rgba(15,110,86,0.08); color: #0f6e56; font-weight: 600; }
-        .portal-link-btn { background: none; border: none; color: #0f6e56; font-weight: 600; font-size: 0.85rem; cursor: pointer; }
-        .portal-quick-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(200px,1fr)); gap: 0.75rem; }
-        .portal-quick-card { display: flex; align-items: center; gap: 0.75rem; padding: 0.85rem; border-radius: 14px; border: 1px solid rgba(15,110,86,0.06); background: white; cursor: pointer; transition: all 0.2s ease; text-align: left; width: 100%; }
-        .portal-quick-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(15,42,32,0.06); border-color: rgba(15,110,86,0.12); }
-        .portal-quick-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .portal-quick-content { flex: 1; min-width: 0; }
-        .portal-quick-title { font-size: 0.85rem; font-weight: 700; margin: 0; }
-        .portal-quick-desc { font-size: 0.75rem; color: #5f746b; margin: 0.1rem 0 0; }
-        .portal-quick-arrow { color: #b0c4bb; flex-shrink: 0; }
-        .portal-activity-list { display: flex; flex-direction: column; gap: 0.5rem; }
-        .portal-activity-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0.75rem; border-radius: 12px; background: rgba(248,252,250,0.8); }
-        .portal-activity-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .portal-activity-content { flex: 1; min-width: 0; }
-        .portal-activity-top { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
-        .portal-activity-title { font-weight: 600; font-size: 0.85rem; }
-        .portal-activity-status { font-size: 0.65rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 20px; flex-shrink: 0; }
-        .portal-status-pending { background: #fef3c7; color: #92400e; }
-        .portal-status-confirmed { background: #d1fae5; color: #065f46; }
-        .portal-status-dispatched { background: #dbeafe; color: #1e40af; }
-        .portal-activity-time { font-size: 0.7rem; color: #8fa8a0; }
-        .portal-features-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(160px,1fr)); gap: 0.75rem; }
-        .portal-feature-card { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 1rem; border-radius: 14px; border: 1px solid rgba(15,110,86,0.04); background: rgba(248,252,250,0.6); }
-        .portal-feature-icon { width: 40px; height: 40px; border-radius: 12px; background: rgba(15,110,86,0.08); color: #0f6e56; display: flex; align-items: center; justify-content: center; margin-bottom: 0.5rem; }
-        .portal-feature-title { font-size: 0.8rem; font-weight: 700; margin: 0; }
-        .portal-feature-desc { font-size: 0.7rem; color: #5f746b; margin: 0.2rem 0 0; line-height: 1.4; }
-        .portal-trust-section { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; padding: 0.5rem 0; }
-        .portal-trust-badge { display: flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.8rem; border-radius: 20px; background: rgba(15,110,86,0.04); color: #24463a; font-size: 0.75rem; font-weight: 500; }
-        .portal-trust-icon { color: #0f6e56; }
-        .portal-form-page { background: white; border-radius: 16px; padding: 1.5rem; box-shadow: 0 2px 12px rgba(15,42,32,0.04); border: 1px solid rgba(15,110,86,0.06); }
-        .portal-form-header { margin-bottom: 1.5rem; }
-        .portal-form-title { font-size: 1.25rem; font-weight: 800; margin: 0; }
-        .portal-form-sub { font-size: 0.9rem; color: #5f746b; margin: 0.2rem 0 0; }
-        .portal-form { display: flex; flex-direction: column; gap: 1rem; }
-        .portal-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-        .portal-form-group { display: flex; flex-direction: column; gap: 0.3rem; }
-        .portal-form-label-row { display: flex; justify-content: space-between; align-items: center; }
-        .portal-label { font-size: 0.8rem; font-weight: 700; color: #24463a; }
-        .portal-input, .portal-textarea { padding: 0.6rem 0.85rem; border-radius: 10px; border: 1.5px solid rgba(15,110,86,0.1); font-size: 0.9rem; color: #163329; background: white; outline: none; width: 100%; box-sizing: border-box; font-family: inherit; }
-        .portal-input:focus, .portal-textarea:focus { border-color: #0f6e56; box-shadow: 0 0 0 4px rgba(15,110,86,0.06); }
-        .portal-textarea { resize: vertical; }
-        .portal-radio-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 0.5rem; }
-        .portal-radio-card { padding: 0.75rem; border-radius: 12px; border: 2px solid rgba(15,110,86,0.08); background: white; cursor: pointer; text-align: center; }
-        .portal-radio-card.selected { border-color: #0f6e56; background: rgba(15,110,86,0.04); }
-        .portal-radio-card input { display: none; }
-        .portal-radio-content { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
-        .portal-radio-icon { width: 36px; height: 36px; border-radius: 10px; background: rgba(15,110,86,0.06); color: #0f6e56; display: flex; align-items: center; justify-content: center; }
-        .portal-radio-label { font-size: 0.75rem; font-weight: 600; color: #24463a; }
-        .portal-add-btn { display: flex; align-items: center; gap: 0.3rem; padding: 0.3rem 0.7rem; border-radius: 8px; border: 1px solid rgba(15,110,86,0.15); background: transparent; color: #0f6e56; font-weight: 600; font-size: 0.75rem; cursor: pointer; }
-        .portal-drug-list { display: flex; flex-direction: column; gap: 0.5rem; }
-        .portal-drug-item { display: flex; gap: 0.5rem; align-items: center; }
-        .portal-drug-item .portal-input { flex: 1; }
-        .portal-remove-btn { padding: 0.3rem 0.5rem; border-radius: 8px; border: 1px solid rgba(239,68,68,0.15); background: transparent; color: #ef4444; cursor: pointer; display: flex; align-items: center; }
-        .portal-upload-zone { border: 2px dashed rgba(15,110,86,0.2); border-radius: 14px; padding: 1.5rem; text-align: center; background: rgba(248,252,250,0.6); }
-        .portal-upload-icon { color: #0f6e56; margin-bottom: 0.5rem; }
-        .portal-upload-text { font-weight: 600; margin: 0; }
-        .portal-upload-sub { font-size: 0.75rem; color: #5f746b; margin: 0.2rem 0 0; }
-        .portal-submit-btn { padding: 0.75rem 1.5rem; border-radius: 12px; border: none; background: linear-gradient(135deg,#0f6e56,#0d5d49); color: white; font-weight: 700; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-top: 0.5rem; }
-        .portal-submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-        .portal-spinner { animation: spin 0.8s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .portal-delivery-qty { max-width: 70px; }
-        .portal-empty-state { text-align: center; padding: 2rem; }
-        .portal-empty-icon { color: #b0c4bb; margin-bottom: 0.5rem; }
-        .portal-empty-title { font-size: 1rem; font-weight: 700; margin: 0; }
-        .portal-empty-desc { font-size: 0.85rem; color: #5f746b; margin: 0.2rem 0 0; }
-        .portal-bottom-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(12px); border-top: 1px solid rgba(15,110,86,0.06); padding: 0.4rem 0.5rem 0.6rem; justify-content: space-around; z-index: 40; }
-        .portal-bottom-nav-item { display: flex; flex-direction: column; align-items: center; gap: 0.1rem; background: none; border: none; color: #8fa8a0; font-size: 0.6rem; font-weight: 600; cursor: pointer; padding: 0.2rem 0.5rem; }
-        .portal-bottom-nav-item.active { color: #0f6e56; }
-        @media (max-width: 768px) {
-          .portal-menu-toggle { display: block; }
-          .portal-nav { display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; flex-direction: column; padding: 0.5rem; border-bottom: 1px solid rgba(15,110,86,0.06); box-shadow: 0 12px 40px rgba(15,42,32,0.06); }
-          .portal-nav.open { display: flex; }
-          .portal-nav-item { width: 100%; padding: 0.6rem 0.85rem; }
-          .portal-stats-grid { grid-template-columns: repeat(2,1fr); }
-          .portal-quick-grid { grid-template-columns: 1fr; }
-          .portal-form-row { grid-template-columns: 1fr; }
-          .portal-radio-grid { grid-template-columns: 1fr; }
-          .portal-features-grid { grid-template-columns: repeat(2,1fr); }
-          .portal-bottom-nav { display: flex; }
-          .portal-main { padding-bottom: 4.5rem; }
-        }
-        @media (max-width: 480px) {
-          .portal-welcome-title { font-size: 1.2rem; }
-          .portal-features-grid { grid-template-columns: 1fr; }
-        }
-      `}</style>
+      
     </div>
   )
 }
+
