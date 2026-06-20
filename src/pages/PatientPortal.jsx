@@ -1,5 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
+import {
+  ArrowRight,
+  Building2,
+  CalendarDays,
+  ClipboardList,
+  HeartPulse,
+  PackageSearch,
+  ShieldCheck,
+  Smartphone,
+} from "lucide-react"
+import PatientInstallPrompt from "../components/PatientInstallPrompt"
 import { pharmacyPortalSupabase as supabase } from "../lib/pharmacyPortalSupabase"
 import SEO from "../components/SEO"
 import { usePatientPortalAuth } from "../hooks/usePatientPortalAuth"
@@ -16,6 +27,35 @@ const PORTAL_TABS = [
   { id: "maternal", label: "Maternal Care" },
   { id: "delivery", label: "Delivery Request" },
   { id: "updates", label: "Check Updates" },
+]
+
+const PORTAL_FEATURES = [
+  {
+    title: "Branch routing",
+    description: "Choose the right pharmacy or branch before you submit anything.",
+    icon: Building2,
+  },
+  {
+    title: "Prescription requests",
+    description: "Send a refill request or upload a photo of your prescription.",
+    icon: ClipboardList,
+  },
+  {
+    title: "Appointments",
+    description: "Book a callback, a video consultation, or an in-person visit.",
+    icon: CalendarDays,
+  },
+  {
+    title: "Follow-up tracking",
+    description: "Check updates, delivery progress, and branch replies in one place.",
+    icon: PackageSearch,
+  },
+]
+
+const PORTAL_TRUST_POINTS = [
+  "Mobile-first and PWA ready",
+  "Branch-linked requests",
+  "Brand colors preserved",
 ]
 
 const APPOINTMENT_OPTIONS = [
@@ -753,6 +793,7 @@ export default function PatientPortal() {
   const requestedTab = String(searchParams.get("tab") || "").trim()
   const patientLoginPath = useMemo(() => buildPatientRouteUrl("/patient/login", searchParams), [searchParams])
   const patientRegisterPath = useMemo(() => buildPatientRouteUrl("/patient/register", searchParams), [searchParams])
+  const patientHomePath = useMemo(() => buildPatientRouteUrl("/patient", searchParams), [searchParams])
   const {
     loading: patientAuthLoading,
     isAuthenticated: patientAccountAuthenticated,
@@ -2314,39 +2355,167 @@ export default function PatientPortal() {
     <>
       <SEO
         title={pharmacy?.name ? `${pharmacy.name} Patient Portal | PharmaCourse` : "Find a Pharmacy | PharmaCourse"}
-        description="Send prescription requests, book pharmacist appointments, request maternal care outreach, request deliveries, and check updates online."
+        description="Choose your pharmacy branch, send prescription requests, book appointments, request deliveries, and install the patient portal like an app."
+        path="/patient-portal"
       />
 
       <div className="patient-portal-page">
         <section className="patient-portal-hero">
           <div className="patient-portal-hero-inner">
-            <div className="patient-portal-badge">Patient Self-Service</div>
-            <h1>{pharmacy?.name || "Find Your Pharmacy"}</h1>
-            <p>
-              {hasActivePharmacy
-                ? "Send your request directly to the pharmacy, book a consultation, or request delivery using one secure link."
-                : "Choose the pharmacy or branch nearest to you first, then continue with your prescription request, appointment, or delivery."}
-            </p>
-            {hasActivePharmacy && (
-              <div className="patient-portal-branch-card">
-                <div>
-                  <strong>{pharmacy.name}</strong>
-                  <span>{pharmacy.locationLabel || pharmacy.location || "Location not provided"}</span>
+            <div className="patient-portal-hero-grid">
+              <div className="patient-portal-hero-copy">
+                <div className="patient-portal-badge">Patient self-service</div>
+                <h1>{hasActivePharmacy ? `${pharmacy?.name || "Your pharmacy"} on the web` : "A patient portal that feels like a pharmacy app"}</h1>
+                <p>
+                  {hasActivePharmacy
+                    ? "Send a request, book a follow-up, request delivery, and track branch replies from one secure portal built for mobile first use."
+                    : "Choose the pharmacy or branch nearest to you, then continue with prescriptions, appointments, delivery requests, and private updates from one responsive portal."}
+                </p>
+
+                <div className="patient-portal-hero-actions">
+                  {hasActivePharmacy ? (
+                    <Link to={patientHomePath} className="patient-portal-hero-button primary">
+                      Open patient portal
+                      <ArrowRight size={16} />
+                    </Link>
+                  ) : (
+                    <a href="#patient-directory" className="patient-portal-hero-button primary">
+                      Browse pharmacies
+                      <ArrowRight size={16} />
+                    </a>
+                  )}
+                  <Link to={patientLoginPath} className="patient-portal-hero-button secondary">
+                    Sign in
+                  </Link>
+                  <Link to={patientRegisterPath} className="patient-portal-hero-button ghost">
+                    Create profile
+                  </Link>
                 </div>
-                {pharmacy.parentName && (
-                  <div>
-                    <strong>Main Pharmacy</strong>
-                    <span>{pharmacy.parentName}</span>
-                  </div>
-                )}
+
+                <div className="patient-portal-trust-row" aria-label="Patient portal highlights">
+                  {PORTAL_TRUST_POINTS.map((point) => (
+                    <span key={point} className="patient-portal-trust-pill">
+                      <ShieldCheck size={14} />
+                      {point}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="patient-portal-branch-card">
+                  {hasActivePharmacy ? (
+                    <>
+                      <div>
+                        <strong>{pharmacy.name}</strong>
+                        <span>{pharmacy.locationLabel || pharmacy.location || "Location not provided"}</span>
+                      </div>
+                      {pharmacy.parentName ? (
+                        <div>
+                          <strong>Main Pharmacy</strong>
+                          <span>{pharmacy.parentName}</span>
+                        </div>
+                      ) : null}
+                    </>
+                  ) : (
+                    <>
+                      <div>
+                        <strong>Find your branch</strong>
+                        <span>Search by pharmacy name, county, town, or area to connect the right location.</span>
+                      </div>
+                      <div>
+                        <strong>Install like an app</strong>
+                        <span>Add the portal to your home screen for faster access on mobile.</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <PatientInstallPrompt />
               </div>
-            )}
+
+              <div className="patient-portal-hero-preview">
+                <div className="patient-portal-phone-frame">
+                  <div className="patient-portal-phone-notch" />
+                  <div className="patient-portal-phone-shell">
+                    <div className="patient-portal-phone-topbar">
+                      <div>
+                        <div className="patient-portal-phone-kicker">
+                          <Smartphone size={12} />
+                          Branch portal
+                        </div>
+                        <div className="patient-portal-phone-name">{pharmacy?.name || "Choose your pharmacy"}</div>
+                        <div className="patient-portal-phone-meta">{pharmacy?.locationLabel || pharmacy?.location || "One link for prescriptions, bookings, and updates"}</div>
+                      </div>
+                      <div className="patient-portal-phone-powered">RemedacarePOS</div>
+                    </div>
+
+                    <div className="patient-portal-phone-content">
+                      <div className="patient-portal-phone-hero">
+                        <span className="patient-portal-badge">Mobile-first</span>
+                        <h2>Looks and works like a native app</h2>
+                        <p>Fast branch selection, clean request cards, and PWA installation for day-to-day use.</p>
+                      </div>
+
+                      <div className="patient-portal-phone-grid">
+                        {PORTAL_FEATURES.map(({ title, description, icon: Icon }) => (
+                          <div key={title} className="patient-portal-phone-tile">
+                            <span className="patient-portal-phone-icon">
+                              <Icon size={16} />
+                            </span>
+                            <strong>{title}</strong>
+                            <span>{description}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="patient-portal-phone-footer">
+                        <span className="patient-portal-phone-footer-copy">
+                          <ShieldCheck size={14} />
+                          Secure branch access
+                        </span>
+                        <span className="patient-portal-phone-footer-action">
+                          Open portal
+                          <ArrowRight size={14} />
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="patient-portal-phone-bottom-nav">
+                      {[
+                        { label: "Home", icon: Building2 },
+                        { label: "Rx", icon: ClipboardList },
+                        { label: "Book", icon: CalendarDays },
+                        { label: "Track", icon: PackageSearch },
+                      ].map(({ label, icon: Icon }, index) => (
+                        <span key={label} className={`patient-portal-phone-tab${index === 0 ? " active" : ""}`}>
+                          <Icon size={14} />
+                          {label}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="patient-portal-preview-stack">
+                  <div className="patient-portal-preview-card">
+                    <span className="patient-portal-preview-kicker">Desktop ready</span>
+                    <strong>Clean on larger screens too</strong>
+                    <p>The same portal expands into a two-column layout for branch search, request forms, and updates.</p>
+                  </div>
+                  <div className="patient-portal-preview-card accent">
+                    <span className="patient-portal-preview-kicker">PWA support</span>
+                    <strong>Install on your phone</strong>
+                    <p>Add it to the home screen to reopen it like an app with less friction.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {(portalError || directoryError) && <div className="patient-portal-feedback error">{portalError || directoryError}</div>}
           </div>
         </section>
 
         {(!hasActivePharmacy || !portalError) && (
-          <section className="patient-portal-content">
+          <section className="patient-portal-content" id="patient-directory">
             <div className="patient-portal-shell">
               <aside className="patient-portal-sidebar">
                 <div className="patient-portal-sidebar-card">

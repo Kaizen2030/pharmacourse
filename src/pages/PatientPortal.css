@@ -1,29 +1,78 @@
 .patient-portal-page {
   min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  color: #163329;
   background:
-    radial-gradient(circle at top left, rgba(15, 110, 86, 0.12), transparent 24%),
-    linear-gradient(180deg, #f7fbf9, #eef5f1);
+    radial-gradient(circle at top left, rgba(15, 110, 86, 0.16), transparent 26%),
+    radial-gradient(circle at right 12%, rgba(26, 107, 181, 0.08), transparent 18%),
+    linear-gradient(180deg, #f6fbf8 0%, #edf5f0 100%);
+}
+
+.patient-portal-page::before,
+.patient-portal-page::after {
+  content: "";
+  position: absolute;
+  inset: auto;
+  pointer-events: none;
+  border-radius: 999px;
+  filter: blur(10px);
+  opacity: 0.65;
+}
+
+.patient-portal-page::before {
+  width: 22rem;
+  height: 22rem;
+  top: 2rem;
+  right: -8rem;
+  background: rgba(15, 110, 86, 0.08);
+}
+
+.patient-portal-page::after {
+  width: 16rem;
+  height: 16rem;
+  left: -5rem;
+  bottom: 18rem;
+  background: rgba(26, 107, 181, 0.08);
 }
 
 .patient-portal-hero {
-  padding: clamp(1.5rem, 4vw, 2.5rem);
+  position: relative;
+  padding: clamp(1.2rem, 3vw, 2rem) 0 1rem;
 }
 
 .patient-portal-hero-inner {
   width: min(1180px, calc(100% - 1rem));
   margin: 0 auto;
-  padding: clamp(1.5rem, 4vw, 3rem);
-  border-radius: 18px;
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(237, 248, 243, 0.96)),
-    radial-gradient(circle at top right, rgba(15, 110, 86, 0.1), transparent 30%);
+  padding: clamp(1.2rem, 3.5vw, 2.4rem);
+  border-radius: 30px;
   border: 1px solid rgba(15, 110, 86, 0.14);
-  box-shadow: 0 28px 60px rgba(15, 42, 32, 0.12);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(240, 249, 245, 0.95)),
+    radial-gradient(circle at top right, rgba(15, 110, 86, 0.08), transparent 32%);
+  box-shadow: 0 28px 70px rgba(15, 42, 32, 0.12);
+  position: relative;
+  z-index: 1;
+}
+
+.patient-portal-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(300px, 0.95fr);
+  gap: 1.35rem;
+  align-items: center;
+}
+
+.patient-portal-hero-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .patient-portal-badge {
   display: inline-flex;
   align-items: center;
+  width: fit-content;
   padding: 0.42rem 0.82rem;
   border-radius: 999px;
   background: rgba(15, 110, 86, 0.1);
@@ -32,29 +81,93 @@
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  margin-bottom: 1rem;
 }
 
 .patient-portal-hero h1 {
-  font-size: clamp(2.2rem, 5vw, 4rem);
-  margin-bottom: 0.8rem;
+  margin: 0;
+  max-width: 11ch;
+  font-size: clamp(2.4rem, 5vw, 4.4rem);
+  line-height: 0.96;
+  letter-spacing: -0.04em;
 }
 
 .patient-portal-hero p {
+  margin: 0;
   max-width: 760px;
   color: var(--text-500);
-  font-size: 1rem;
+  font-size: 1.02rem;
+  line-height: 1.65;
+}
+
+.patient-portal-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.patient-portal-hero-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.05rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-weight: 800;
+  text-decoration: none;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.patient-portal-hero-button:hover {
+  transform: translateY(-1px);
+}
+
+.patient-portal-hero-button.primary {
+  color: #fff;
+  background: linear-gradient(135deg, #0f6e56, #0d5d49);
+  box-shadow: 0 14px 28px rgba(15, 110, 86, 0.24);
+}
+
+.patient-portal-hero-button.secondary {
+  color: var(--green);
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(15, 110, 86, 0.16);
+}
+
+.patient-portal-hero-button.ghost {
+  color: #24463a;
+  background: rgba(15, 110, 86, 0.06);
+  border-color: rgba(15, 110, 86, 0.1);
+}
+
+.patient-portal-trust-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.patient-portal-trust-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(15, 110, 86, 0.1);
+  color: #24463a;
+  font-size: 0.88rem;
+  font-weight: 700;
+  box-shadow: 0 10px 24px rgba(15, 42, 32, 0.05);
 }
 
 .patient-portal-branch-card {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1rem;
-  margin-top: 1.5rem;
-  padding: 1rem 1.1rem;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.72);
+  gap: 0.95rem;
+  padding: 1rem 1.05rem;
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(241, 249, 246, 0.92));
   border: 1px solid rgba(15, 110, 86, 0.12);
+  box-shadow: 0 12px 28px rgba(15, 42, 32, 0.05);
 }
 
 .patient-portal-branch-card strong,
@@ -62,7 +175,9 @@
 .patient-portal-panel-head h2,
 .patient-portal-sidebar-card h2,
 .patient-portal-sidebar-card h3,
-.patient-portal-update-title {
+.patient-portal-update-title,
+.patient-portal-preview-card strong,
+.patient-portal-phone-name {
   display: block;
   color: var(--text-900);
 }
@@ -73,8 +188,346 @@
 .patient-portal-sidebar-card p,
 .patient-portal-update-text,
 .patient-portal-update-time,
-.patient-portal-total {
+.patient-portal-total,
+.patient-portal-preview-card p,
+.patient-portal-phone-meta,
+.patient-portal-phone-hero p,
+.patient-portal-phone-tile span {
   color: var(--text-500);
+}
+
+.patient-portal-hero-preview {
+  display: grid;
+  gap: 0.95rem;
+  align-self: stretch;
+}
+
+.patient-portal-phone-frame {
+  position: relative;
+  border-radius: 34px;
+  border: 6px solid #17231f;
+  background: #f0faf6;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(15, 42, 32, 0.16);
+}
+
+.patient-portal-phone-notch {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: 2;
+  width: 72px;
+  height: 12px;
+  border-radius: 0 0 10px 10px;
+  background: #17231f;
+  transform: translateX(-50%);
+}
+
+.patient-portal-phone-shell {
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  padding-top: 12px;
+}
+
+.patient-portal-phone-topbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 0.8rem 0.95rem 0.7rem;
+  background: rgba(255, 255, 255, 0.96);
+  border-bottom: 1px solid rgba(15, 110, 86, 0.08);
+}
+
+.patient-portal-phone-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.15rem;
+  color: #0f6e56;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.patient-portal-phone-name {
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.patient-portal-phone-meta {
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.patient-portal-phone-powered {
+  flex-shrink: 0;
+  align-self: flex-start;
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(15, 110, 86, 0.1);
+  color: #0f6e56;
+  font-size: 0.68rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.patient-portal-phone-content {
+  display: grid;
+  gap: 0.85rem;
+  padding: 0.95rem;
+}
+
+.patient-portal-phone-hero {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.95rem;
+  border-radius: 22px;
+  border: 1px solid rgba(15, 110, 86, 0.1);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(239, 248, 244, 0.95));
+  box-shadow: 0 12px 28px rgba(15, 42, 32, 0.05);
+}
+
+.patient-portal-phone-hero h2 {
+  margin: 0.25rem 0 0;
+  font-size: 1.05rem;
+  line-height: 1.15;
+}
+
+.patient-portal-phone-hero p {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.patient-portal-phone-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.patient-portal-phone-tile {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.82rem;
+  border-radius: 18px;
+  border: 1px solid rgba(15, 110, 86, 0.1);
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 10px 24px rgba(15, 42, 32, 0.04);
+}
+
+.patient-portal-phone-icon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 110, 86, 0.1);
+  color: #0f6e56;
+}
+
+.patient-portal-phone-tile strong {
+  font-size: 0.88rem;
+}
+
+.patient-portal-phone-tile span {
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.patient-portal-phone-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 0 0.1rem;
+  color: #24463a;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.patient-portal-phone-footer-copy,
+.patient-portal-phone-footer-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.patient-portal-phone-footer-action {
+  color: #0f6e56;
+}
+
+.patient-portal-phone-bottom-nav {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.25rem;
+  margin: 0.3rem 0.85rem 0.9rem;
+  padding: 0.3rem;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 110, 86, 0.08);
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.patient-portal-phone-tab {
+  height: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.12rem;
+  border-radius: 999px;
+  color: #7f9189;
+  font-size: 0.62rem;
+  font-weight: 800;
+}
+
+.patient-portal-phone-tab.active {
+  background: #0f6e56;
+  color: #fff;
+}
+
+.patient-portal-preview-stack {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.patient-portal-preview-card {
+  display: grid;
+  gap: 0.35rem;
+  padding: 1rem 1.05rem;
+  border-radius: 22px;
+  border: 1px solid rgba(15, 110, 86, 0.1);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 12px 28px rgba(15, 42, 32, 0.05);
+}
+
+.patient-portal-preview-card.accent {
+  border-color: rgba(15, 110, 86, 0.14);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.98), rgba(15, 110, 86, 0.05));
+}
+
+.patient-portal-preview-kicker {
+  color: #0f6e56;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.patient-portal-preview-card strong {
+  font-size: 1rem;
+}
+
+.patient-portal-preview-card p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.patient-install-card {
+  display: grid;
+  gap: 0.95rem;
+  margin-top: 0.15rem;
+  padding: 1rem;
+  border-radius: 22px;
+  border: 1px solid rgba(15, 110, 86, 0.14);
+  background:
+    radial-gradient(circle at top right, rgba(15, 110, 86, 0.08), transparent 30%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(239, 248, 244, 0.95));
+  box-shadow: 0 14px 30px rgba(15, 42, 32, 0.06);
+}
+
+.patient-install-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.patient-install-icon,
+.patient-install-close {
+  width: 42px;
+  height: 42px;
+  border-radius: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.patient-install-icon {
+  background: rgba(15, 110, 86, 0.1);
+  color: #0f6e56;
+}
+
+.patient-install-icon svg,
+.patient-install-close svg {
+  width: 18px;
+  height: 18px;
+}
+
+.patient-install-close {
+  border: 1px solid rgba(15, 110, 86, 0.1);
+  background: rgba(255, 255, 255, 0.9);
+  color: #6b7f76;
+  cursor: pointer;
+}
+
+.patient-install-copy h2 {
+  margin: 0.2rem 0 0.3rem;
+  color: #163329;
+  font-size: 1rem;
+}
+
+.patient-install-copy p,
+.patient-install-ios-row span {
+  color: #5f746b;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.patient-install-kicker {
+  color: #0f6e56;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.patient-install-actions {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.patient-install-actions .patient-button,
+.patient-install-actions .patient-button-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+}
+
+.patient-install-actions .patient-button svg,
+.patient-install-ios-row svg {
+  width: 18px;
+  height: 18px;
+}
+
+.patient-install-ios {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.patient-install-ios-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 16px;
+  background: rgba(15, 110, 86, 0.06);
+  color: #24463a;
 }
 
 .patient-portal-turnstile-wrap {
@@ -94,11 +547,11 @@
 }
 
 .patient-portal-turnstile-error {
-  color: #b42318;
-  font-size: 0.9rem;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  color: #b42318;
+  font-size: 0.9rem;
 }
 
 .patient-portal-turnstile-reset {
@@ -106,27 +559,29 @@
   border: 0;
   background: transparent;
   color: var(--green);
-  font-weight: 700;
   cursor: pointer;
+  font-weight: 700;
   padding: 0;
 }
 
 .patient-portal-content {
-  padding: 0 1.5rem 3rem;
+  padding: 0 1rem 3rem;
+  position: relative;
+  z-index: 1;
 }
 
 .patient-portal-shell {
   width: min(1180px, calc(100% - 1rem));
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 300px minmax(0, 1fr);
-  gap: 1.5rem;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 1.25rem;
   align-items: start;
 }
 
 .patient-portal-sidebar {
   position: sticky;
-  top: 1.5rem;
+  top: 1.25rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -136,14 +591,14 @@
 .patient-portal-panel,
 .patient-portal-items-card,
 .patient-portal-update-card {
-  background: rgba(255, 255, 255, 0.92);
   border: 1px solid rgba(223, 232, 227, 0.95);
-  border-radius: 14px;
-  box-shadow: var(--shadow-sm);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 16px 38px rgba(15, 42, 32, 0.06);
 }
 
 .patient-portal-sidebar-card {
-  padding: 1.25rem;
+  padding: 1.15rem;
 }
 
 .patient-portal-sidebar-card.muted {
@@ -217,7 +672,7 @@
 }
 
 .patient-portal-panel {
-  padding: clamp(1.25rem, 3vw, 2rem);
+  padding: clamp(1.15rem, 3vw, 2rem);
 }
 
 .patient-portal-panel-head {
@@ -1115,6 +1570,23 @@
 }
 
 @media (max-width: 980px) {
+  .patient-portal-hero-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .patient-portal-hero h1 {
+    max-width: none;
+  }
+
+  .patient-portal-phone-frame {
+    max-width: 560px;
+    justify-self: center;
+  }
+
+  .patient-portal-preview-stack {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .patient-portal-shell {
     grid-template-columns: 1fr;
   }
@@ -1132,11 +1604,38 @@
   }
 
   .patient-portal-hero-inner {
-    padding: 1.1rem;
+    padding: 1rem;
   }
 
   .patient-portal-hero h1 {
     font-size: clamp(1.8rem, 8vw, 2.5rem);
+  }
+
+  .patient-portal-hero-actions {
+    flex-direction: column;
+  }
+
+  .patient-portal-trust-row {
+    flex-direction: column;
+  }
+
+  .patient-portal-preview-stack {
+    grid-template-columns: 1fr;
+  }
+
+  .patient-portal-hero-button,
+  .patient-portal-trust-pill {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .patient-portal-phone-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .patient-portal-phone-footer {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .patient-portal-branch-card,
@@ -1155,6 +1654,10 @@
 
   .patient-portal-section-head {
     flex-direction: column;
+  }
+
+  .patient-portal-shell {
+    width: min(1180px, calc(100% - 0.75rem));
   }
 
   .patient-portal-submit,
