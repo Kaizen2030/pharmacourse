@@ -1,11 +1,11 @@
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import { usePatient } from "../../components/PatientLayout"
 import { pharmacyosClient } from "../../lib/pharmacyosClient"
 import { getAuthRedirectUrl } from "../../lib/authRedirect"
 import { buildPatientRouteUrl } from "../../lib/patientPortalRoutes"
-import { savePatientPortalSession } from "../../lib/patientPortalSession"
-import { buildPatientAuthMetadata } from "../../hooks/usePatientPortalAuth"
+import { getPatientPortalProfileDraft, savePatientPortalSession } from "../../lib/patientPortalSession"
+import { buildPatientAuthMetadata, usePatientPortalAuth } from "../../hooks/usePatientPortalAuth"
 import TurnstileWidget from "../../components/TurnstileWidget"
 
 const insuranceOptions = ["SHA/NHIF", "AAR", "Jubilee", "Britam", "Madison", "CIC", "None"]
@@ -28,10 +28,12 @@ function isValidPhone(phone) {
 
 export default function PatientRegister() {
   const { pharmacyId, branchName, createPatientPath } = usePatient()
-  const [formValues, setFormValues] = useState({
-    fullName: "",
-    phone: "",
-    email: "",
+  const { fullName: authFullName, patientPhone: authPhone } = usePatientPortalAuth()
+  const profileDraft = getPatientPortalProfileDraft()
+  const [formValues, setFormValues] = useState(() => ({
+    fullName: profileDraft?.fullName || authFullName || "",
+    phone: profileDraft?.phone || authPhone || "",
+    email: profileDraft?.email || "",
     dob: "",
     gender: "",
     shaMemberNo: "",
@@ -40,13 +42,22 @@ export default function PatientRegister() {
     allergies: "",
     password: "",
     confirmPassword: "",
-  })
+  }))
   const [selectedConditions, setSelectedConditions] = useState([])
   const [feedback, setFeedback] = useState({ type: "", message: "" })
   const [accountFeedback, setAccountFeedback] = useState({ type: "", message: "" })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [turnstileToken, setTurnstileToken] = useState("")
   const [turnstileResetKey, setTurnstileResetKey] = useState(0)
+
+  useEffect(() => {
+    setFormValues((current) => ({
+      ...current,
+      fullName: current.fullName || profileDraft?.fullName || authFullName || "",
+      phone: current.phone || profileDraft?.phone || authPhone || "",
+      email: current.email || profileDraft?.email || "",
+    }))
+  }, [authFullName, authPhone, profileDraft?.email, profileDraft?.fullName, profileDraft?.phone])
 
   function handleInputChange(event) {
     const { name, value } = event.target

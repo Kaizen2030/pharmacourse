@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { jsPDF } from "jspdf"
 import { ArrowUpRight, BellRing, CalendarClock, ClipboardList, PackageSearch, Video, X } from "lucide-react"
 import { Link } from "react-router-dom"
@@ -409,6 +409,7 @@ export default function PatientTrack() {
   const [turnstileResetKey, setTurnstileResetKey] = useState(0)
   const [selectedRequestId, setSelectedRequestId] = useState("")
   const [activeTrackSection, setActiveTrackSection] = useState("prescriptions")
+  const hasManualSectionChoiceRef = useRef(false)
   const { loading: authLoading, isAuthenticated, patientPhone, fullName } = usePatientPortalAuth()
   const patientLoginPath = createPatientPath("/patient/login")
   const unreadCount = notifications.filter((notification) => !notification.read).length
@@ -471,6 +472,53 @@ export default function PatientTrack() {
   const visibleAppointments = sortedAppointments.slice(0, visibleCounts.appointments)
   const standaloneBranchNotices = sortedBranchNotices
   const visibleStandaloneBranchNotices = standaloneBranchNotices.slice(0, visibleCounts.notifications)
+  const latestNotification = sortedNotifications[0] || null
+  const latestTrackEvent = useMemo(() => {
+    if (progressCards[0]) {
+      return {
+        section: "prescriptions",
+        label: progressCards[0].headline,
+        status: progressCards[0].progressState.label,
+        detail: progressCards[0].summary,
+        timestamp: progressCards[0].lastUpdatedAt || progressCards[0].request.created_at || "",
+      }
+    }
+
+    if (activeDeliveries[0]) {
+      return {
+        section: "deliveries",
+        label: activeDeliveries[0].patient_name || "Delivery request",
+        status: String(activeDeliveries[0].status || "Pending"),
+        detail:
+          activeDeliveries[0].delivery_partner_type ||
+          activeDeliveries[0].rider_name ||
+          "A delivery update is waiting here.",
+        timestamp: activeDeliveries[0].updated_at || activeDeliveries[0].created_at || "",
+      }
+    }
+
+    if (sortedAppointments[0]) {
+      return {
+        section: "appointments",
+        label: formatAppointmentType(sortedAppointments[0].appointment_type),
+        status: sortedAppointments[0].status || "Pending",
+        detail: sortedAppointments[0].pharmacist_response || sortedAppointments[0].condition_summary || "An appointment update is waiting here.",
+        timestamp: sortedAppointments[0].updated_at || sortedAppointments[0].created_at || sortedAppointments[0].slot_datetime || "",
+      }
+    }
+
+    if (latestNotification) {
+      return {
+        section: "notices",
+        label: getNotificationTypeLabel(latestNotification.type),
+        status: unreadCount ? "Unread" : "Latest notice",
+        detail: latestNotification.message || "The branch shared a new notice.",
+        timestamp: latestNotification.created_at || "",
+      }
+    }
+
+    return null
+  }, [activeDeliveries, latestNotification, progressCards, sortedAppointments, unreadCount])
   const trackSectionCards = useMemo(() => {
     const latestPrescription = progressCards[0]
     const latestDelivery = activeDeliveries[0]
@@ -516,6 +564,18 @@ export default function PatientTrack() {
       },
     ]
   }, [activeDeliveries, openPrescriptions.length, progressCards, receiptEntries, sortedAppointments, standaloneBranchNotices, visibleAppointments.length])
+  const trackSectionLabel = useMemo(() => {
+    const currentCard = trackSectionCards.find((card) => card.id === activeTrackSection)
+    return currentCard?.label || "Updates"
+  }, [activeTrackSection, trackSectionCards])
+
+  useEffect(() => {
+    if (!latestTrackEvent?.section || hasManualSectionChoiceRef.current) {
+      return
+    }
+
+    setActiveTrackSection(latestTrackEvent.section)
+  }, [latestTrackEvent?.section])
   const handleTurnstileVerify = useCallback((token) => {
     setTurnstileToken(token || "")
   }, [])
@@ -759,51 +819,65 @@ export default function PatientTrack() {
     <div className="patient-page">
       <section className="patient-card patient-card-muted patient-hero">
         <span className="patient-badge">Tracking and notifications</span>
-        <div className="patient-toolbar">
-          <div className="patient-meta-copy">
+        <div className="patient-track-hero-grid">
+          <div className="patient-track-hero-copy">
             <h1 style={{ margin: 0 }}>{getGreeting(displayName)}</h1>
-            <p>Track pending deliveries, prescription progress, appointment updates, and branch messages in one place.</p>
+            <p>Track your latest prescription responses, delivery status, appointment replies, and branch notices from one calm dashboard.</p>
+            <div className="patient-track-hero-pills">
+              <span className="patient-track-hero-pill">{unreadCount ? `${unreadCount} unread updates` : "No unread updates"}</span>
+              <span className="patient-track-hero-pill">Refreshed every 30 seconds</span>
+              <span className="patient-track-hero-pill">Current branch: {branchName}</span>
+            </div>
           </div>
-          <div className="patient-inline-icon" style={{ position: "relative" }}>
-            <BellRing />
-            {unreadCount ? (
-              <span
-                style={{
-                  position: "absolute",
-                  top: -4,
-                  right: -4,
-                  minWidth: 18,
-                  height: 18,
-                  borderRadius: 999,
-                  background: "#f59e0b",
-                  color: "#163329",
-                  fontSize: "0.68rem",
-                  fontWeight: 800,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  paddingInline: 4,
-                }}
-              >
-                {unreadCount}
-              </span>
-            ) : null}
+
+          <div className="patient-track-hero-bell">
+            <div className="patient-track-hero-bell-icon" style={{ position: "relative" }}>
+              <BellRing />
+              {unreadCount ? <span className="patient-track-hero-bell-badge">{unreadCount}</span> : null}
+            </div>
+            <div className="patient-track-hero-bell-copy">
+              <span className="patient-kicker">Latest update</span>
+              {latestTrackEvent ? (
+                <>
+                  <div className="patient-meta-title">{latestTrackEvent.label}</div>
+                  <p>
+                    {latestTrackEvent.status}
+                    {latestTrackEvent.timestamp ? ` · ${formatRelativeTime(latestTrackEvent.timestamp)}` : ""}
+                  </p>
+                  <p>{latestTrackEvent.detail}</p>
+                </>
+              ) : (
+                <p>Nothing has been sent from the branch yet.</p>
+              )}
+            </div>
           </div>
         </div>
       </section>
 
       <section className="patient-card">
-        <div className="patient-toolbar">
+        <div className="patient-toolbar patient-track-toolbar">
           <div className="patient-meta-copy">
             <span className="patient-kicker">Private patient updates</span>
             <div className="patient-meta-title">This page refreshes every 30 seconds for the signed-in patient account.</div>
             <p>{lastUpdated ? `Last updated ${lastUpdated}` : "Auto-refresh every 30s"}</p>
           </div>
           <div className="patient-toolbar-actions">
+            <Link to="/patient-portal" className="patient-button-secondary" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+              Change branch
+            </Link>
             <button className="patient-button-secondary" type="button" onClick={() => void loadTrackingData()} disabled={isLoading || !isAuthenticated}>
               {isLoading ? "Refreshing..." : "Refresh"}
             </button>
           </div>
+        </div>
+
+        <div className="patient-track-switch-hint">
+          <div>
+            <span className="patient-kicker">Branch switch</span>
+            <div className="patient-meta-title">Moved to another area?</div>
+            <p>Tap change branch, pick the new pharmacy, then sign in again so future updates go to the right place.</p>
+          </div>
+          <span className="patient-badge">Open {trackSectionLabel}</span>
         </div>
 
         {feedback.message ? (
@@ -854,25 +928,7 @@ export default function PatientTrack() {
 
       {isAuthenticated && patientPhone ? (
         <>
-          <section className="patient-card patient-card-muted patient-track-switch-card">
-            <div className="patient-track-switch-copy">
-              <span className="patient-badge">Branch switch</span>
-              <h2 className="patient-section-title">Changed location? Pick a new pharmacy first.</h2>
-              <p className="patient-form-help">
-                Jump back to the pharmacy directory, choose the branch nearest to you, and then sign in again with the same patient account.
-              </p>
-            </div>
-            <div className="patient-toolbar-actions">
-              <Link to="/patient-portal" className="patient-button" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-                Change branch
-              </Link>
-              <button className="patient-button-secondary" type="button" onClick={() => void loadTrackingData()} disabled={isLoading || !isAuthenticated}>
-                {isLoading ? "Refreshing..." : "Refresh now"}
-              </button>
-            </div>
-          </section>
-
-          <section className="patient-card patient-track-nav-card">
+          <section className="patient-card patient-track-nav-panel">
             <div className="patient-section-header">
               <div>
                 <h2 className="patient-section-title">Choose what you want to read</h2>
@@ -891,7 +947,10 @@ export default function PatientTrack() {
                     key={card.id}
                     type="button"
                     className={`patient-track-nav-card${isActive ? " active" : ""}`}
-                    onClick={() => setActiveTrackSection(card.id)}
+                    onClick={() => {
+                      hasManualSectionChoiceRef.current = true
+                      setActiveTrackSection(card.id)
+                    }}
                   >
                     <div className="patient-track-nav-top">
                       <span className="patient-track-nav-icon">

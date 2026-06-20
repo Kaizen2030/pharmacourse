@@ -1198,7 +1198,86 @@ export function PatientPortalStyles() {
         align-items: center;
       }
 
-      .patient-track-nav-card {
+      .patient-track-hero-grid {
+        display: grid;
+        gap: 0.9rem;
+      }
+
+      .patient-track-hero-copy,
+      .patient-track-hero-bell,
+      .patient-track-switch-hint {
+        display: grid;
+        gap: 0.6rem;
+      }
+
+      .patient-track-hero-bell {
+        padding: 0.95rem;
+        border-radius: 18px;
+        border: 0.5px solid #d7e1dc;
+        background: linear-gradient(180deg, rgba(15,110,86,0.08), rgba(246,251,248,0.95));
+      }
+
+      .patient-track-hero-bell-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 18px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(15, 110, 86, 0.12);
+        color: #0f6e56;
+      }
+
+      .patient-track-hero-bell-icon svg {
+        width: 22px;
+        height: 22px;
+      }
+
+      .patient-track-hero-bell-badge {
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        min-width: 20px;
+        height: 20px;
+        padding: 0 5px;
+        border-radius: 999px;
+        background: #f59e0b;
+        color: #163329;
+        font-size: 0.7rem;
+        font-weight: 900;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 18px rgba(245, 158, 11, 0.25);
+      }
+
+      .patient-track-hero-bell-copy p {
+        margin: 0;
+        color: #5f746b;
+        font-size: 0.92rem;
+        line-height: 1.55;
+      }
+
+      .patient-track-hero-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.55rem;
+      }
+
+      .patient-track-hero-pill {
+        display: inline-flex;
+        align-items: center;
+        min-height: 34px;
+        padding: 0.35rem 0.75rem;
+        border-radius: 999px;
+        border: 0.5px solid rgba(15, 110, 86, 0.18);
+        background: rgba(255, 255, 255, 0.72);
+        color: #24463a;
+        font-size: 0.78rem;
+        font-weight: 800;
+      }
+
+      .patient-track-nav-panel {
         display: grid;
         gap: 0.95rem;
       }
@@ -1278,6 +1357,10 @@ export function PatientPortalStyles() {
       .patient-track-switch-copy {
         display: grid;
         gap: 0.35rem;
+      }
+
+      .patient-track-toolbar {
+        align-items: flex-start;
       }
 
       .patient-dashboard-card {
@@ -1389,6 +1472,11 @@ export function PatientPortalStyles() {
           align-items: start;
         }
 
+        .patient-track-hero-grid {
+          grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.85fr);
+          align-items: stretch;
+        }
+
         .patient-track-nav-grid {
           grid-template-columns: repeat(3, minmax(0, 1fr));
         }
@@ -1409,6 +1497,10 @@ export function PatientPortalStyles() {
 
         .patient-track-nav-grid {
           grid-template-columns: 1fr;
+        }
+
+        .patient-track-hero-pills {
+          gap: 0.45rem;
         }
 
         .patient-avatar {
