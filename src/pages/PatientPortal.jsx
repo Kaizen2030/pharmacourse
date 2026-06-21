@@ -40,7 +40,7 @@ export default function PatientPortal() {
   const [searchQuery, setSearchQuery] = useState("")
   const [searchFocused, setSearchFocused] = useState(false)
   const [submitting, setSubmitting] = useState("")
-  const portalBrand = { avatar: "RP" }
+  const portalBrand = { avatar: "RC" }
   const [authPrompt, setAuthPrompt] = useState({
     open: false,
     actionId: "prescription",

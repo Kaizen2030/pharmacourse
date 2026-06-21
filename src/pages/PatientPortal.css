@@ -1361,16 +1361,19 @@
           .portal-header-inner {
             align-items: center;
             gap: 0.55rem;
+            flex-wrap: nowrap;
           }
 
           .portal-brand {
-            width: 100%;
-            justify-content: space-between;
+            width: auto;
+            flex: 1 1 auto;
+            min-width: 0;
+            justify-content: flex-start;
           }
 
           .portal-menu-toggle {
             display: inline-flex;
-            margin-right: 0.3rem;
+            margin-right: 0.15rem;
           }
 
           .portal-nav {
@@ -1388,13 +1391,20 @@
             background: rgba(248, 253, 250, 0.98);
             box-shadow: -18px 0 42px rgba(15, 42, 32, 0.12);
             transform: translateX(102%);
-            transition: transform 0.22s ease;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: transform 0.22s ease, opacity 0.18s ease, visibility 0s linear 0.22s;
             z-index: 60;
             overflow-y: auto;
           }
 
           .portal-nav.open {
             transform: translateX(0);
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+            transition-delay: 0s;
           }
 
           .portal-nav-backdrop {
@@ -1418,7 +1428,8 @@
           }
 
           .portal-header-actions {
-            width: 100%;
+            width: auto;
+            flex: 0 0 auto;
             justify-content: flex-end;
             gap: 0.5rem;
           }
@@ -1596,6 +1607,23 @@
           .portal-main {
             padding-left: 0.75rem;
             padding-right: 0.75rem;
+          }
+
+          .portal-logo {
+            font-size: 0.98rem;
+          }
+
+          .portal-login-link {
+            display: none;
+          }
+
+          .portal-avatar-sm {
+            width: 32px;
+            height: 32px;
+          }
+
+          .portal-header-actions {
+            gap: 0.35rem;
           }
 
           .portal-section,

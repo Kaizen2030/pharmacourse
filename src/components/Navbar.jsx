@@ -141,7 +141,7 @@ export default function Navbar() {
   return (
     <>
       <nav className="nav">
-        <Link to="/" className="nav-logo">PharmaCourse</Link>
+        <Link to="/" className="nav-logo">RemedacarePOS</Link>
 
         <div className="nav-desktop" ref={navInteractiveRef}>
           <ul className="nav-links">
@@ -237,7 +237,7 @@ export default function Navbar() {
 
       <div ref={drawerRef} id="mobile-nav-drawer" className={`nav-drawer ${menuOpen ? "open" : ""}`}>
         <div className="nav-drawer-header">
-          <Link to="/" className="nav-logo" onClick={() => setMenuOpen(false)}>PharmaCourse</Link>
+          <Link to="/" className="nav-logo" onClick={() => setMenuOpen(false)}>RemedacarePOS</Link>
           <button className="nav-drawer-close" onClick={() => setMenuOpen(false)} aria-label="Close menu">x</button>
         </div>
 
