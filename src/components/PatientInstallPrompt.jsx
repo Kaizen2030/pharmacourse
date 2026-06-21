@@ -125,12 +125,8 @@ export default function PatientInstallPrompt() {
   }
 
   const showNativeInstall = Boolean(deferredPrompt)
-  const primaryLabel = showNativeInstall ? (isInstalling ? "Installing..." : "Install") : "How to install"
-  const description = showNativeInstall
-    ? "Add RemedacarePOS to your home screen."
-    : isIos
-    ? "Use Safari Share to add it to your home screen."
-    : "Use your browser menu to add it to your home screen."
+  const primaryLabel = isInstalling ? "Installing..." : "Install app"
+  const description = showNativeInstall ? "Add RemedacarePOS to your home screen." : "If install does not open, your browser does not support the native prompt."
 
   return (
     <div className="patient-install-banner" role="status" aria-live="polite">
@@ -162,11 +158,11 @@ export default function PatientInstallPrompt() {
             <span>{primaryLabel}</span>
           </button>
           <button type="button" className="patient-install-secondary" onClick={handleDismiss}>
-            Not now
+            X
           </button>
         </div>
 
-        {(showHelp || !showNativeInstall) && (
+        {showHelp && !showNativeInstall && (
           <div className="patient-install-help">
             <div className="patient-install-help-title">Install steps</div>
             <div className="patient-install-help-item">
