@@ -134,7 +134,7 @@ export function PatientPortalStyles() {
       .patient-main {
         width: min(100%, 760px);
         margin: 0 auto;
-        padding: 1rem 1rem 7.4rem;
+        padding: 1rem 1rem 8.8rem;
       }
 
       .patient-branch-lock {
@@ -702,12 +702,12 @@ export function PatientPortalStyles() {
         bottom: 0.9rem;
         transform: translateX(-50%);
         width: min(calc(100% - 1rem), 760px);
-        padding: 0.5rem;
+        padding: 0.58rem;
         border-radius: 999px;
-        border: 1px solid rgba(15, 110, 86, 0.12);
-        background: rgba(255, 255, 255, 0.96);
-        backdrop-filter: blur(16px);
-        box-shadow: 0 16px 38px rgba(15, 42, 32, 0.12);
+        border: 1px solid rgba(15, 110, 86, 0.14);
+        background: rgba(252, 254, 253, 0.99);
+        backdrop-filter: blur(18px);
+        box-shadow: 0 18px 42px rgba(15, 42, 32, 0.16), 0 0 0 1px rgba(255, 255, 255, 0.7) inset;
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 0.35rem;
@@ -777,7 +777,7 @@ export function PatientPortalStyles() {
         }
 
         .patient-main {
-          padding: 0.85rem 0.8rem 7.05rem;
+          padding: 0.85rem 0.8rem 9.4rem;
         }
 
         .patient-card {
@@ -814,8 +814,9 @@ export function PatientPortalStyles() {
         }
 
         .patient-bottom-nav {
-          width: calc(100% - 0.8rem);
-          bottom: 0.4rem;
+          width: calc(100% - 0.7rem);
+          bottom: 0.55rem;
+          padding: 0.54rem;
         }
 
         .patient-tab {
