@@ -20,7 +20,6 @@ export default function PatientInstallPrompt() {
   const [isVisible, setIsVisible] = useState(false)
   const [isInstalling, setIsInstalling] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
   const [isStandalone, setIsStandalone] = useState(false)
   const [isIos, setIsIos] = useState(false)
 
@@ -29,7 +28,6 @@ export default function PatientInstallPrompt() {
 
     const mobileQuery = window.matchMedia?.("(max-width: 767px)")
     const syncDeviceState = () => {
-      setIsMobile(Boolean(mobileQuery?.matches))
       setIsStandalone(isStandaloneDisplay())
       setIsIos(isIosSafari())
     }
@@ -130,7 +128,7 @@ export default function PatientInstallPrompt() {
     setIsVisible(false)
   }
 
-  if (!isVisible || isStandalone || !isMobile) {
+  if (!isVisible || isStandalone) {
     return null
   }
 
