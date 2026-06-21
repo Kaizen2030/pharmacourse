@@ -47,7 +47,7 @@ export function PatientPortalStyles() {
         height: 7.5rem;
         background: linear-gradient(180deg, rgba(245, 250, 247, 0), rgba(245, 250, 247, 0.9) 34%, rgba(245, 250, 247, 0.99));
         pointer-events: none;
-        z-index: 18;
+        z-index: 8;
       }
 
       .patient-missing,
@@ -717,13 +717,14 @@ export function PatientPortalStyles() {
         width: min(calc(100% - 1rem), 760px);
         padding: 0.58rem;
         border-radius: 999px;
-        border: 1px solid rgba(15, 110, 86, 0.14);
-        background: rgba(252, 254, 253, 0.99);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: linear-gradient(180deg, rgba(15, 110, 86, 0.98), rgba(11, 94, 73, 0.98));
         backdrop-filter: blur(18px);
-        box-shadow: 0 18px 42px rgba(15, 42, 32, 0.16), 0 0 0 1px rgba(255, 255, 255, 0.7) inset;
+        box-shadow: 0 18px 42px rgba(15, 42, 32, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 0.35rem;
+        z-index: 30;
       }
 
       .patient-tab {
@@ -732,7 +733,7 @@ export function PatientPortalStyles() {
         display: grid;
         place-items: center;
         gap: 0.2rem;
-        color: #5f746b;
+        color: rgba(255, 255, 255, 0.85);
         font-size: 0.74rem;
         font-weight: 800;
         transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
@@ -744,9 +745,10 @@ export function PatientPortalStyles() {
       }
 
       .patient-tab.active {
-        background: #0f6e56;
-        color: #fff;
+        background: rgba(255, 255, 255, 0.96);
+        color: #0f6e56;
         transform: translateY(-1px);
+        box-shadow: 0 10px 24px rgba(6, 46, 35, 0.18);
       }
 
       .patient-refresh {
@@ -845,6 +847,7 @@ export function PatientPortalStyles() {
 
       .patient-shell::after {
         height: 8.6rem;
+        z-index: 8;
       }
 
       .patient-topbar {
