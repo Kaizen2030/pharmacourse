@@ -358,27 +358,35 @@ export default function Navbar() {
           display: none;
           flex-direction: column;
           justify-content: center;
-          gap: 5px;
-          width: 42px;
-          height: 42px;
-          border: none;
+          align-items: center;
+          gap: 6px;
+          width: 48px;
+          height: 48px;
+          border: 1px solid rgba(15, 110, 86, 0.14);
           cursor: pointer;
-          padding: 4px;
-          border-radius: 12px;
-          transition: background 0.2s ease;
+          padding: 8px;
+          border-radius: 16px;
+          background: rgba(255, 255, 255, 0.96);
+          transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
         }
 
         .nav-hamburger:hover {
-          background: rgba(0, 0, 0, 0.05);
+          background: rgba(15, 110, 86, 0.08);
+          border-color: rgba(15, 110, 86, 0.22);
+        }
+
+        .nav-hamburger:focus-visible {
+          outline: none;
+          box-shadow: 0 0 0 4px rgba(15, 110, 86, 0.16);
         }
 
         .hamburger-bar {
           display: block;
-          width: 22px;
-          height: 2px;
-          border-radius: 2px;
+          width: 26px;
+          height: 3px;
+          border-radius: 999px;
           background: var(--text-900, #111);
-          transition: transform 0.25s ease, opacity 0.2s ease, width 0.2s ease;
+          transition: transform 0.25s ease, opacity 0.2s ease, width 0.2s ease, background 0.2s ease;
           transform-origin: center;
         }
 
@@ -564,7 +572,7 @@ export default function Navbar() {
           width: min(320px, 86vw);
           height: 100dvh;
           background: #fff;
-          box-shadow: -4px 0 32px rgba(0, 0, 0, 0.15);
+          box-shadow: -4px 0 32px rgba(0, 0, 0, 0.16);
           z-index: 999;
           display: flex;
           flex-direction: column;
@@ -575,6 +583,34 @@ export default function Navbar() {
 
         .nav-drawer.open {
           transform: translateX(0);
+        }
+
+        .nav-drawer-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 1.25rem 1.5rem;
+          border-bottom: 1px solid #eff4f1;
+        }
+
+        .nav-drawer-close {
+          width: 36px;
+          height: 36px;
+          border: none;
+          border-radius: 12px;
+          color: var(--text-600, #666);
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1rem;
+          transition: background 0.2s ease, color 0.2s ease;
+          background: rgba(242, 247, 244, 0.9);
+        }
+
+        .nav-drawer-close:hover {
+          background: rgba(15, 110, 86, 0.1);
+          color: var(--text-900, #111);
         }
 
         .nav-drawer-header {
@@ -616,7 +652,7 @@ export default function Navbar() {
           align-items: center;
           justify-content: space-between;
           width: 100%;
-          padding: .85rem 1.5rem;
+          padding: .95rem 1.5rem;
           font-size: 1rem;
           font-weight: 600;
           color: var(--text-900, #111);
