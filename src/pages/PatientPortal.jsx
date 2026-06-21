@@ -254,11 +254,7 @@ export default function PatientPortal() {
 
   const selectedMainPharmacy = useMemo(() => {
     if (!mainPharmacies.length) return null
-    return (
-      mainPharmacies.find((row) => String(row.id) === String(selectedMainPharmacyId)) ||
-      mainPharmacies[0] ||
-      null
-    )
+    return mainPharmacies.find((row) => String(row.id) === String(selectedMainPharmacyId)) || null
   }, [mainPharmacies, selectedMainPharmacyId])
 
   const branchCards = useMemo(() => {
@@ -666,13 +662,17 @@ export default function PatientPortal() {
                         ? "Checking sign-in..."
                         : isAuthenticated
                           ? "Signed in with patient account."
-                          : "Sign in to see private updates."}
+                          : navigationBranch
+                            ? "Sign in to see private updates."
+                            : "Choose a pharmacy first, then sign in."}
                     </span>
                     <Link
-                      to={buildPatientLoginPath(navigationBranch, buildPatientPath("/patient/track", navigationBranch))}
+                      to={navigationBranch
+                        ? buildPatientLoginPath(navigationBranch, buildPatientPath("/patient/track", navigationBranch))
+                        : "/patient-portal"}
                       className="portal-directory-button"
                     >
-                      Find My Updates
+                      {navigationBranch ? "Find My Updates" : "Choose pharmacy"}
                     </Link>
                   </div>
                 </div>
@@ -704,7 +704,9 @@ export default function PatientPortal() {
                 <div className="portal-directory-summary">
                   {pharmaciesAccessBlocked
                     ? "POS pharmacy access is blocked until the Supabase policy or RPC is opened up."
-                    : `Showing ${filteredPharmacies.length} matching locations`}
+                    : selectedMainPharmacy
+                      ? `Showing ${filteredPharmacies.length} matching locations`
+                      : `Choose a main pharmacy to focus the branch list (${filteredPharmacies.length} matches right now)`}
                 </div>
 
                 <div className="portal-directory-stage">
