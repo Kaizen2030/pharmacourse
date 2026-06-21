@@ -8,19 +8,23 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
+      devOptions: {
+        enabled: true,
+        type: "module",
+      },
       registerType: "autoUpdate",
       injectRegister: false,
       includeAssets: ["favicon.svg", "apple-touch-icon.png"],
       manifest: {
-        id: "/patient",
+        id: "/",
         name: "RemedacarePOS Patient Portal",
         short_name: "RemedacarePOS",
         description: "Install the RemedacarePOS patient portal to manage prescriptions, bookings, deliveries, and patient updates from your pharmacy.",
         theme_color: "#0F6E56",
         background_color: "#f4fbf8",
         display: "standalone",
-        scope: "/patient",
-        start_url: "/patient",
+        scope: "/",
+        start_url: "/patient-portal",
         orientation: "portrait",
         icons: [
           {

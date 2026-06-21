@@ -28,6 +28,7 @@ import PatientRegister from "./pages/patient/PatientRegister"
 import PatientResetPassword from "./pages/patient/PatientResetPassword"
 import PatientTrack from "./pages/patient/PatientTrack"
 import PatientPortal from "./pages/PatientPortal"
+import PatientInstallPrompt from "./components/PatientInstallPrompt"
 import PatientPortalFlyer from "./pages/PatientPortalFlyer"
 import PharmacyOS from "./pages/Pharmacyos"
 import Register from "./pages/Register"
@@ -106,6 +107,7 @@ function AppShell() {
     <>
       <MediaProtection />
       <WebsiteAnalyticsTracker />
+      {isPatientRoute ? <PatientInstallPrompt /> : null}
       {!isPatientRoute && !isFlyerRoute && !isActivationRoute ? <Navbar /> : null}
       <Routes>
         <Route path="/" element={<Home />} />

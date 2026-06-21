@@ -4,7 +4,6 @@ import { Link, NavLink, Outlet, useSearchParams } from "react-router-dom"
 import { Building2, CalendarDays, ClipboardList, House, PackageSearch } from "lucide-react"
 import { fetchPatientPortalPharmacyById } from "../lib/patientPortalDirectory"
 import { buildSupabaseAccessBlockedCopy, isSupabaseAccessBlocked } from "../lib/supabaseAccess"
-import PatientInstallPrompt from "./PatientInstallPrompt"
 import PatientPortal from "../pages/PatientPortal"
 
 const PatientContext = createContext(null)
@@ -1743,8 +1742,6 @@ export default function PatientLayout() {
               </div>
             </div>
           ) : null}
-
-          <PatientInstallPrompt />
 
           <Outlet />
         </main>

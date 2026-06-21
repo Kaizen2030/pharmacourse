@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { Download, Smartphone, X } from "lucide-react"
+import { Download, Share2, Smartphone, X } from "lucide-react"
 import "./PatientInstallPrompt.css"
 
 const DISMISS_KEY = "patientPortalInstallPromptDismissedAt"
@@ -10,13 +10,23 @@ function shouldHideFromDismissal() {
   return dismissedAt > 0 && Date.now() - dismissedAt < DISMISS_WINDOW_MS
 }
 
+function isIosSafari() {
+  if (typeof window === "undefined") return false
+
+  const ua = window.navigator.userAgent.toLowerCase()
+  const isIos = /iphone|ipad|ipod/.test(ua)
+  const isSafari = /safari/.test(ua) && !/crios|fxios|edgios/.test(ua)
+  return isIos && isSafari
+}
+
 export default function PatientInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState(null)
+  const [showBanner, setShowBanner] = useState(false)
+  const [showIosBanner, setShowIosBanner] = useState(false)
   const [isStandalone, setIsStandalone] = useState(false)
-  const [isVisible, setIsVisible] = useState(false)
   const [isInstalling, setIsInstalling] = useState(false)
 
-  const isIos = useMemo(() => /iphone|ipad|ipod/i.test(window.navigator.userAgent || ""), [])
+  const isIos = useMemo(() => isIosSafari(), [])
   const isAndroid = useMemo(() => /android/i.test(window.navigator.userAgent || ""), [])
   const isMobile = useMemo(
     () => Boolean(window.matchMedia?.("(max-width: 768px)")?.matches || isIos || isAndroid),
@@ -24,40 +34,66 @@ export default function PatientInstallPrompt() {
   )
 
   useEffect(() => {
+    if (typeof window === "undefined") return
+
     const standalone =
       window.matchMedia?.("(display-mode: standalone)")?.matches ||
       window.navigator.standalone === true
 
-    setIsStandalone(Boolean(standalone))
+    console.info("PatientInstallPrompt mounted", {
+      standalone,
+      isIos,
+      isAndroid,
+      isMobile,
+      dismissed: window.localStorage.getItem(DISMISS_KEY),
+    })
 
+    setIsStandalone(Boolean(standalone))
     if (standalone || shouldHideFromDismissal()) {
       return
     }
 
-    if (isMobile) {
-      setIsVisible(true)
-    }
-
     function handleBeforeInstallPrompt(event) {
+      console.info("beforeinstallprompt event received", event)
       event.preventDefault()
+      if (window.localStorage.getItem(DISMISS_KEY)) return
       setDeferredPrompt(event)
-      setIsVisible(true)
+      setShowBanner(true)
     }
 
     function handleAppInstalled() {
+      console.info("appinstalled event received")
       setDeferredPrompt(null)
-      setIsVisible(false)
+      setShowBanner(false)
+      setShowIosBanner(false)
       window.localStorage.removeItem(DISMISS_KEY)
     }
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt)
     window.addEventListener("appinstalled", handleAppInstalled)
 
+    const fallbackTimer = window.setTimeout(() => {
+      if (!window.localStorage.getItem(DISMISS_KEY) && isAndroid) {
+        setShowBanner(true)
+      }
+    }, 900)
+
+    let iosTimer = null
+    if (isIos) {
+      iosTimer = window.setTimeout(() => {
+        if (!window.localStorage.getItem(DISMISS_KEY)) {
+          setShowIosBanner(true)
+        }
+      }, 1800)
+    }
+
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt)
       window.removeEventListener("appinstalled", handleAppInstalled)
+      window.clearTimeout(fallbackTimer)
+      if (iosTimer) window.clearTimeout(iosTimer)
     }
-  }, [isMobile])
+  }, [isIos])
 
   async function handleInstall() {
     if (!deferredPrompt) {
@@ -65,13 +101,12 @@ export default function PatientInstallPrompt() {
     }
 
     setIsInstalling(true)
-
     try {
       deferredPrompt.prompt()
       const choice = await deferredPrompt.userChoice
-
       if (choice?.outcome === "accepted") {
-        setIsVisible(false)
+        setShowBanner(false)
+        setShowIosBanner(false)
       }
     } finally {
       setDeferredPrompt(null)
@@ -81,34 +116,41 @@ export default function PatientInstallPrompt() {
 
   function handleDismiss() {
     window.localStorage.setItem(DISMISS_KEY, String(Date.now()))
-    setIsVisible(false)
+    setShowBanner(false)
+    setShowIosBanner(false)
     setDeferredPrompt(null)
   }
 
-  if (isStandalone || !isVisible) {
+  if (isStandalone || (!showBanner && !showIosBanner && !deferredPrompt)) {
     return null
   }
 
-  return (
-    <div className="patient-install-modal" role="presentation">
-      <button type="button" className="patient-install-backdrop" onClick={handleDismiss} aria-label="Dismiss install prompt" />
+  const showIosFallback = !deferredPrompt && showIosBanner && isIos
+  const showFallback = !deferredPrompt && showBanner && !showIosFallback
 
-      <section className="patient-install-card patient-install-card-popover" aria-label="Install patient portal" role="dialog" aria-modal="true" aria-live="polite">
+  return (
+    <div className="patient-install-banner" role="status" aria-live="polite">
+      <section className="patient-install-card" aria-label="Install patient portal">
         <div className="patient-install-head">
           <div className="patient-install-icon">
             <Smartphone />
           </div>
+
+          <div className="patient-install-copy">
+            <div className="patient-install-kicker">RemedacarePOS</div>
+            <h2>Install the patient portal</h2>
+            <p>
+              {deferredPrompt
+                ? "Tap install to add RemedacarePOS to your home screen."
+                : showIosFallback
+                ? "Tap Share, then choose Add to Home Screen in Safari."
+                : "Open the browser menu and choose Install app or Add to Home Screen."}
+            </p>
+          </div>
+
           <button type="button" className="patient-install-close" onClick={handleDismiss} aria-label="Dismiss install prompt">
             <X />
           </button>
-        </div>
-
-        <div className="patient-install-copy">
-          <div className="patient-install-kicker">RemedacarePOS</div>
-          <h2>Install the RemedacarePOS patient portal</h2>
-          <p>
-            Install this portal from your mobile browser so it opens from your home screen with a dedicated app-style experience.
-          </p>
         </div>
 
         <div className="patient-install-actions">
@@ -117,87 +159,19 @@ export default function PatientInstallPrompt() {
               <Download />
               <span>{isInstalling ? "Preparing install..." : "Install patient portal"}</span>
             </button>
-          ) : null}
-          <button type="button" className="patient-button-secondary" onClick={handleDismiss}>
-            Not now
-          </button>
+          ) : (
+            <button type="button" className="patient-button-secondary" onClick={handleDismiss}>
+              Dismiss
+            </button>
+          )}
         </div>
 
-        <div className="patient-install-steps" aria-label="Install steps">
-          {isAndroid ? (
-            <>
-              <div className="patient-install-step">
-                <span className="patient-install-step-badge">1</span>
-                <div>
-                  <strong>Open the portal in Chrome</strong>
-                  <span>Use Chrome on Android so the install action appears correctly.</span>
-                </div>
-              </div>
-              <div className="patient-install-step">
-                <span className="patient-install-step-badge">2</span>
-                <div>
-                  <strong>Tap the browser menu</strong>
-                  <span>Choose <em>Install app</em> or <em>Add to Home screen</em>.</span>
-                </div>
-              </div>
-              <div className="patient-install-step">
-                <span className="patient-install-step-badge">3</span>
-                <div>
-                  <strong>Launch the portal from your home screen</strong>
-                  <span>Open it like a native app with RemedacarePOS branding.</span>
-                </div>
-              </div>
-            </>
-          ) : isIos ? (
-            <>
-              <div className="patient-install-step">
-                <span className="patient-install-step-badge">1</span>
-                <div>
-                  <strong>Open in Safari</strong>
-                  <span>Use Safari on iPhone for the best install experience.</span>
-                </div>
-              </div>
-              <div className="patient-install-step">
-                <span className="patient-install-step-badge">2</span>
-                <div>
-                  <strong>Tap Share</strong>
-                  <span>Open the Share menu at the bottom of Safari.</span>
-                </div>
-              </div>
-              <div className="patient-install-step">
-                <span className="patient-install-step-badge">3</span>
-                <div>
-                  <strong>Add to Home Screen</strong>
-                  <span>Choose <em>Add to Home Screen</em> to pin RemedacarePOS.</span>
-                </div>
-              </div>
-            </>
-          ) : isMobile ? (
-            <>
-              <div className="patient-install-step">
-                <span className="patient-install-step-badge">1</span>
-                <div>
-                  <strong>Open the portal in your browser</strong>
-                  <span>Use the phone browser, not an in-app view, for the best install flow.</span>
-                </div>
-              </div>
-              <div className="patient-install-step">
-                <span className="patient-install-step-badge">2</span>
-                <div>
-                  <strong>Use the install or share menu</strong>
-                  <span>Look for <em>Install app</em> on Android or <em>Add to Home Screen</em> on iPhone.</span>
-                </div>
-              </div>
-              <div className="patient-install-step">
-                <span className="patient-install-step-badge">3</span>
-                <div>
-                  <strong>Open the app from your home screen</strong>
-                  <span>Launch RemedacarePOS like a native app with its own icon.</span>
-                </div>
-              </div>
-            </>
-          ) : null}
-        </div>
+        {showFallback && !showIosFallback ? (
+          <div className="patient-install-fallback">
+            <span className="patient-install-fallback-label">If the native prompt doesn’t appear,</span>
+            <span>open the browser menu and add the portal to your home screen.</span>
+          </div>
+        ) : null}
       </section>
     </div>
   )
