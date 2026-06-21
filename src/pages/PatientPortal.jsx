@@ -1393,29 +1393,6 @@ export default function PatientPortal() {
           </div>
 
 
-          <nav className={`portal-nav ${isMobileMenuOpen ? "open" : ""}`}>
-            <button
-              type="button"
-              className="portal-nav-close"
-              aria-label="Close navigation"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              <X size={18} />
-            </button>
-
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                className={`portal-nav-item ${activeTab === tab.id ? "active" : ""}`}
-                onClick={() => { handleProtectedAction(tab.id); setIsMobileMenuOpen(false) }}
-                type="button"
-              >
-                <tab.icon size={18} />
-                <span>{tab.label}</span>
-              </button>
-            ))}
-          </nav>
-
           <div className="portal-header-actions">
             <Link className="portal-login-link" to={buildPatientLoginPath(getNavigationBranch())}>
               Sign in
@@ -1434,15 +1411,6 @@ export default function PatientPortal() {
             </button>
           </div>
         </div>
-
-        {isMobileMenuOpen ? (
-          <button
-            type="button"
-            className="portal-nav-backdrop"
-            aria-label="Close navigation"
-            onClick={() => setIsMobileMenuOpen(false)}
-          />
-        ) : null}
 
         <div className="portal-search-bar">
           <div className="portal-search-wrapper">
@@ -1467,6 +1435,38 @@ export default function PatientPortal() {
           </div>
         </div>
       </header>
+
+      {isMobileMenuOpen ? (
+        <button
+          type="button"
+          className="portal-nav-backdrop"
+          aria-label="Close navigation"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      ) : null}
+
+      <nav className={`portal-nav ${isMobileMenuOpen ? "open" : ""}`}>
+        <button
+          type="button"
+          className="portal-nav-close"
+          aria-label="Close navigation"
+          onClick={() => setIsMobileMenuOpen(false)}
+        >
+          <X size={18} />
+        </button>
+
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            className={`portal-nav-item ${activeTab === tab.id ? "active" : ""}`}
+            onClick={() => { handleProtectedAction(tab.id); setIsMobileMenuOpen(false) }}
+            type="button"
+          >
+            <tab.icon size={18} />
+            <span>{tab.label}</span>
+          </button>
+        ))}
+      </nav>
 
       <main className="portal-main">
         <div className="portal-content">{renderContent()}</div>
