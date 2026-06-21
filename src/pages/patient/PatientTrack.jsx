@@ -416,6 +416,15 @@ export default function PatientTrack() {
   const [selectedRequestId, setSelectedRequestId] = useState("")
   const [activeTrackSection, setActiveTrackSection] = useState("")
   const [isSwitchModalOpen, setIsSwitchModalOpen] = useState(false)
+  const [isTrackPreviewOpen, setIsTrackPreviewOpen] = useState(false)
+  const [selectedTrackPreviewId, setSelectedTrackPreviewId] = useState("")
+  const [isMobileViewport, setIsMobileViewport] = useState(() => {
+    if (typeof window === "undefined" || !window.matchMedia) {
+      return false
+    }
+
+    return window.matchMedia("(max-width: 767px)").matches
+  })
   const { loading: authLoading, isAuthenticated, patientPhone, fullName, signOut } = usePatientPortalAuth()
   const patientLoginPath = createPatientPath("/patient/login")
   const unreadCount = notifications.filter((notification) => !notification.read).length
@@ -575,6 +584,11 @@ export default function PatientTrack() {
     return currentCard?.label || "Updates"
   }, [activeTrackSection, trackSectionCards])
 
+  const selectedTrackPreviewCard = useMemo(
+    () => trackSectionCards.find((card) => card.id === selectedTrackPreviewId) || null,
+    [selectedTrackPreviewId, trackSectionCards],
+  )
+
   useEffect(() => {
     if (!isSwitchModalOpen) {
       return undefined
@@ -590,6 +604,45 @@ export default function PatientTrack() {
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [isSwitchModalOpen])
 
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) {
+      return undefined
+    }
+
+    const mediaQuery = window.matchMedia("(max-width: 767px)")
+
+    function handleChange(event) {
+      setIsMobileViewport(Boolean(event.matches))
+    }
+
+    setIsMobileViewport(Boolean(mediaQuery.matches))
+
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", handleChange)
+      return () => mediaQuery.removeEventListener("change", handleChange)
+    }
+
+    mediaQuery.addListener(handleChange)
+    return () => mediaQuery.removeListener(handleChange)
+  }, [])
+
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return undefined
+    }
+
+    if (!isTrackPreviewOpen) {
+      return undefined
+    }
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [isTrackPreviewOpen])
+
   const handleTurnstileVerify = useCallback((token) => {
     setTurnstileToken(token || "")
   }, [])
@@ -603,6 +656,111 @@ export default function PatientTrack() {
 
   function closeSwitchModal() {
     setIsSwitchModalOpen(false)
+  }
+
+  function openTrackSection(cardId) {
+    if (isMobileViewport) {
+      setSelectedTrackPreviewId(cardId)
+      setIsTrackPreviewOpen(true)
+      return
+    }
+
+    setActiveTrackSection(cardId)
+  }
+
+  function closeTrackPreview() {
+    setIsTrackPreviewOpen(false)
+    setSelectedTrackPreviewId("")
+  }
+
+  function openPreviewSection() {
+    if (selectedTrackPreviewId) {
+      setActiveTrackSection(selectedTrackPreviewId)
+    }
+
+    closeTrackPreview()
+  }
+
+  function renderTrackPreviewRows(sectionId) {
+    switch (sectionId) {
+      case "prescriptions":
+        return visibleProgressCards.slice(0, 3).map(({ request, drugs, headline, progressState, summary, lastUpdatedAt }) => (
+          <article key={`preview-${request.id}`} className="patient-list-item">
+            <div className="patient-list-header">
+              <div style={{ minWidth: 0 }}>
+                <div className="patient-list-title">{headline}</div>
+                <div className="patient-list-meta">{drugs.length} {drugs.length === 1 ? "product" : "products"} · Last updated {formatRelativeTime(lastUpdatedAt || request.created_at)}</div>
+              </div>
+              <span className={`patient-status-badge ${getStatusClass(progressState.tone)}`}>{progressState.label}</span>
+            </div>
+            <p className="patient-list-text" style={{ marginBottom: "0.75rem" }}>{summary}</p>
+            <div className="patient-progress-chip-row">
+              {drugs.slice(0, 2).map((drug) => (
+                <span key={`preview-${request.id}-${drug}`} className="patient-progress-chip">{drug}</span>
+              ))}
+            </div>
+          </article>
+        ))
+      case "deliveries":
+        return visibleDeliveries.slice(0, 3).map((delivery) => (
+          <article key={`preview-${delivery.id}`} className="patient-list-item">
+            <div className="patient-list-header">
+              <div style={{ minWidth: 0 }}>
+                <div className="patient-list-title">{delivery.patient_name || "Delivery request"}</div>
+                <div className="patient-list-meta">Created {formatDateTime(delivery.created_at)}</div>
+              </div>
+              <span className={`patient-status-badge ${getStatusClass(delivery.status)}`}>{delivery.status || "Pending"}</span>
+            </div>
+            <p className="patient-list-text">
+              {delivery.delivery_partner_type || delivery.rider_name || "Delivery tracking is active for this request."}
+            </p>
+          </article>
+        ))
+      case "appointments":
+        return visibleAppointments.slice(0, 3).map((appointment) => (
+          <article key={`preview-${appointment.id}`} className="patient-list-item">
+            <div className="patient-list-header">
+              <div style={{ minWidth: 0 }}>
+                <div className="patient-list-title">{formatAppointmentType(appointment.appointment_type)}</div>
+                <div className="patient-list-meta">{formatDateTime(appointment.slot_datetime)}</div>
+              </div>
+              <span className={`patient-status-badge ${getStatusClass(appointment.status)}`}>{appointment.status || "Pending"}</span>
+            </div>
+            <p className="patient-list-text">
+              {appointment.pharmacist_response || appointment.condition_summary || "Appointment details will show here."}
+            </p>
+          </article>
+        ))
+      case "receipts":
+        return visibleReceipts.slice(0, 3).map((receipt) => (
+          <article key={`preview-${receipt.id}`} className="patient-list-item">
+            <div className="patient-list-header">
+              <div style={{ minWidth: 0 }}>
+                <div className="patient-list-title">{receipt.receiptNumber}</div>
+                <div className="patient-list-meta">{receipt.mode} · {formatDateTime(receipt.fulfilledAt)}</div>
+              </div>
+            </div>
+            <p className="patient-list-text">
+              {buildPaymentLabel(receipt.paymentStatus, receipt.paymentMethod, receipt.paymentReference)} · Total {formatMoney(receipt.total)}
+            </p>
+          </article>
+        ))
+      case "notices":
+        return visibleStandaloneBranchNotices.slice(0, 3).map((notification) => (
+          <article key={`preview-${notification.id}`} className="patient-list-item">
+            <div className="patient-list-header">
+              <div style={{ minWidth: 0 }}>
+                <div className="patient-list-title">{getNotificationTypeLabel(notification.type)}</div>
+                <div className="patient-list-meta">{formatRelativeTime(notification.created_at)}</div>
+              </div>
+              <span className={`patient-status-badge ${getStatusClass(notification.type)}`}>{notification.read ? "Read" : "Unread"}</span>
+            </div>
+            <p className="patient-list-text">{notification.message}</p>
+          </article>
+        ))
+      default:
+        return null
+    }
   }
 
   function handleSwitchBranch() {
@@ -995,7 +1153,7 @@ export default function PatientTrack() {
                     key={card.id}
                     type="button"
                     className={`patient-track-nav-card${isActive ? " active" : ""}`}
-                    onClick={() => setActiveTrackSection(card.id)}
+                    onClick={() => openTrackSection(card.id)}
                   >
                     <div className="patient-track-nav-top">
                       <span className="patient-track-nav-icon">
@@ -1517,9 +1675,51 @@ export default function PatientTrack() {
           </section>
 
           </div>
-        ) : null}
+      ) : null}
         </div>
       )}
+
+      {isTrackPreviewOpen && selectedTrackPreviewCard ? (
+        <div className="patient-detail-overlay" role="dialog" aria-modal="true" aria-label={`${selectedTrackPreviewCard.label} preview`}>
+          <div className="patient-detail-backdrop" onClick={closeTrackPreview} />
+          <div className="patient-detail-sheet">
+            <div className="patient-detail-head">
+              <div>
+                <div className="patient-kicker">Quick preview</div>
+                <h2 className="patient-detail-title">{selectedTrackPreviewCard.label}</h2>
+                <p className="patient-form-help" style={{ marginTop: 6 }}>
+                  Tap expand to open the full {selectedTrackPreviewCard.label.toLowerCase()} section.
+                </p>
+              </div>
+              <div className="patient-detail-head-actions">
+                <span className="patient-status-badge">{selectedTrackPreviewCard.count} items</span>
+                <button type="button" className="patient-detail-close" onClick={closeTrackPreview} aria-label="Close preview">
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            {renderTrackPreviewRows(selectedTrackPreviewCard.id) ? (
+              <div className="patient-list" style={{ marginTop: 0 }}>
+                {renderTrackPreviewRows(selectedTrackPreviewCard.id)}
+              </div>
+            ) : (
+              <div className="patient-empty-state">
+                <p className="patient-empty">Nothing to preview yet for this section.</p>
+              </div>
+            )}
+
+            <div className="patient-progress-actions" style={{ marginTop: "1rem" }}>
+              <button type="button" className="patient-button" onClick={openPreviewSection}>
+                Open full section
+              </button>
+              <button type="button" className="patient-button-secondary" onClick={closeTrackPreview}>
+                Keep preview closed
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {selectedRequest && (
         <div className="patient-detail-overlay" role="dialog" aria-modal="true" aria-label="Prescription request progress">
