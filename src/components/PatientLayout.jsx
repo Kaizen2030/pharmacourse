@@ -44,7 +44,7 @@ export function PatientPortalStyles() {
         left: 0;
         right: 0;
         bottom: 0;
-        height: 7.5rem;
+        height: 9rem;
         background: linear-gradient(180deg, rgba(245, 250, 247, 0), rgba(245, 250, 247, 0.9) 34%, rgba(245, 250, 247, 0.99));
         pointer-events: none;
         z-index: 8;
@@ -147,7 +147,7 @@ export function PatientPortalStyles() {
       .patient-main {
         width: min(100%, 760px);
         margin: 0 auto;
-        padding: 1rem 1rem 9.8rem;
+        padding: 1rem 1rem 11.2rem;
       }
 
       .patient-branch-lock {
@@ -711,12 +711,13 @@ export function PatientPortalStyles() {
 
       .patient-bottom-nav {
         position: fixed;
-        left: 50%;
-        bottom: 0.9rem;
-        transform: translateX(-50%);
-        width: min(calc(100% - 1rem), 760px);
-        padding: 0.58rem;
-        border-radius: 999px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        transform: none;
+        width: 100vw;
+        padding: 0.35rem 0.55rem calc(0.35rem + env(safe-area-inset-bottom));
+        border-radius: 0;
         border: 1px solid rgba(255, 255, 255, 0.18);
         background: linear-gradient(180deg, rgba(15, 110, 86, 0.98), rgba(11, 94, 73, 0.98));
         backdrop-filter: blur(18px);
@@ -725,16 +726,17 @@ export function PatientPortalStyles() {
         grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 0.35rem;
         z-index: 30;
+        min-height: 5.25rem;
       }
 
       .patient-tab {
-        min-height: 56px;
-        border-radius: 999px;
+        min-height: 4.15rem;
+        border-radius: 16px;
         display: grid;
         place-items: center;
-        gap: 0.2rem;
+        gap: 0.15rem;
         color: rgba(255, 255, 255, 0.85);
-        font-size: 0.74rem;
+        font-size: 0.7rem;
         font-weight: 800;
         transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
       }
@@ -792,7 +794,7 @@ export function PatientPortalStyles() {
         }
 
         .patient-main {
-          padding: 0.85rem 0.8rem 10.6rem;
+          padding: 0.85rem 0.8rem 12.2rem;
         }
 
         .patient-card {
@@ -829,14 +831,14 @@ export function PatientPortalStyles() {
         }
 
         .patient-bottom-nav {
-          width: calc(100% - 0.7rem);
-          bottom: 0.55rem;
-          padding: 0.54rem;
+          width: 100vw;
+          bottom: 0;
+          padding: 0.3rem 0.45rem calc(0.3rem + env(safe-area-inset-bottom));
         }
 
         .patient-tab {
-          min-height: 54px;
-          font-size: 0.68rem;
+          min-height: 3.9rem;
+          font-size: 0.65rem;
         }
       }
 
@@ -846,7 +848,7 @@ export function PatientPortalStyles() {
       }
 
       .patient-shell::after {
-        height: 8.6rem;
+        height: 10rem;
         z-index: 8;
       }
 
