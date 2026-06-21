@@ -144,86 +144,105 @@ export default function PatientRegister() {
     setFeedback({ type: "", message: "" })
     setAccountFeedback({ type: "", message: "" })
 
-    const { data, error } = await pharmacyosClient.functions.invoke("patient-portal-submit", {
-      body: {
-        submissionType: "registration",
-        turnstileToken,
-        payload: {
-          pharmacy_id: pharmacyId,
-          full_name: trimmedName,
-          phone: normalizedPhone,
-          email: normalizedEmail,
-          dob: formValues.dob || null,
-          gender: formValues.gender || null,
-          sha_member_no: formValues.shaMemberNo.trim() || null,
-          insurer: formValues.insurer || null,
-          insurance_member_no: formValues.insuranceMemberNo.trim() || null,
-          chronic_conditions: selectedConditions,
-          allergies: formValues.allergies.trim() || null,
+    try {
+      const { data: authData, error: authError } = await pharmacyosClient.auth.signUp({
+        email: normalizedEmail,
+        password: formValues.password,
+        options: {
+          data: buildPatientAuthMetadata({
+            fullName: trimmedName,
+            phone: normalizedPhone,
+            pharmacyId,
+          }),
+          emailRedirectTo: getAuthRedirectUrl(loginPath),
         },
-      },
-    })
+      })
 
-    if (error || data?.error) {
-      setFeedback({ type: "error", message: error?.message || data?.error || "We could not save your registration." })
-      setIsSubmitting(false)
-      setTurnstileResetKey((current) => current + 1)
-      return
-    }
+      let canSaveRegistration = true
 
-    setFeedback({
-      type: data?.alreadyRegistered ? "info" : "success",
-      message: data?.alreadyRegistered
-        ? `Your profile is already linked at ${branchName}. Your reference number is ${normalizedPhone}.`
-        : `Registration successful at ${branchName}. Your reference number is ${normalizedPhone}.`,
-    })
-    savePatientPortalSession(pharmacyId, {
-      phone: normalizedPhone,
-      fullName: trimmedName,
-      patientId: data?.patient?.id || null,
-    })
-
-    const { data: authData, error: authError } = await pharmacyosClient.auth.signUp({
-      email: normalizedEmail,
-      password: formValues.password,
-      options: {
-        data: buildPatientAuthMetadata({
-          fullName: trimmedName,
-          phone: normalizedPhone,
-          pharmacyId,
-        }),
-        emailRedirectTo: getAuthRedirectUrl(loginPath),
-      },
-    })
-
-    if (authError) {
-      const normalizedMessage = String(authError.message || "").toLowerCase()
-      if (normalizedMessage.includes("already registered") || normalizedMessage.includes("already been registered")) {
+      if (authError) {
+        const normalizedMessage = String(authError.message || "").toLowerCase()
+        if (normalizedMessage.includes("already registered") || normalizedMessage.includes("already been registered")) {
+          setAccountFeedback({
+            type: "info",
+            message: "Your patient profile is saved. This email already has an account, so sign in or reset your password to view private updates.",
+          })
+        } else {
+          canSaveRegistration = false
+          setAccountFeedback({
+            type: "error",
+            message: `Your patient web account could not be created: ${authError.message}`,
+          })
+        }
+      } else if (authData?.session?.user) {
         setAccountFeedback({
-          type: "info",
-          message: "Your patient profile is saved. This email already has an account, so sign in or reset your password to view private updates.",
+          type: "success",
+          message: "Your patient web account is now active. Sign in stays on this device, and only your account can view your updates and notifications.",
         })
       } else {
         setAccountFeedback({
-          type: "error",
-          message: `Your patient profile was saved, but the web account could not be created: ${authError.message}`,
+          type: "success",
+          message: `Your patient web account has been created. Check ${normalizedEmail} to confirm it, then sign in to view private updates and notifications.`,
         })
       }
-    } else if (authData?.session?.user) {
-      setAccountFeedback({
-        type: "success",
-        message: "Your patient web account is now active. Sign in stays on this device, and only your account can view your updates and notifications.",
-      })
-    } else {
-      setAccountFeedback({
-        type: "success",
-        message: `Your patient web account has been created. Check ${normalizedEmail} to confirm it, then sign in to view private updates and notifications.`,
-      })
-    }
 
-    setTurnstileResetKey((current) => current + 1)
-    setTurnstileToken("")
-    setIsSubmitting(false)
+      if (canSaveRegistration) {
+        const { data, error } = await pharmacyosClient.functions.invoke("patient-portal-submit", {
+          body: {
+            submissionType: "registration",
+            turnstileToken,
+            payload: {
+              pharmacy_id: pharmacyId,
+              full_name: trimmedName,
+              phone: normalizedPhone,
+              email: normalizedEmail,
+              dob: formValues.dob || null,
+              gender: formValues.gender || null,
+              sha_member_no: formValues.shaMemberNo.trim() || null,
+              insurer: formValues.insurer || null,
+              insurance_member_no: formValues.insuranceMemberNo.trim() || null,
+              chronic_conditions: selectedConditions,
+              allergies: formValues.allergies.trim() || null,
+            },
+          },
+        })
+
+        if (error || data?.error) {
+          setFeedback({
+            type: "error",
+            message:
+              error?.message || data?.error || "Your web account was created, but we could not save the registration details right now.",
+          })
+        } else {
+          setFeedback({
+            type: data?.alreadyRegistered ? "info" : "success",
+            message: data?.alreadyRegistered
+              ? `Your profile is already linked at ${branchName}. Your reference number is ${normalizedPhone}.`
+              : `Registration successful at ${branchName}. Your reference number is ${normalizedPhone}.`,
+          })
+          savePatientPortalSession(pharmacyId, {
+            phone: normalizedPhone,
+            fullName: trimmedName,
+            patientId: data?.patient?.id || null,
+          })
+        }
+      }
+      if (!canSaveRegistration) {
+        setFeedback({
+          type: "error",
+          message: "Your patient account could not be created, so we stopped before saving the registration details.",
+        })
+      }
+    } catch (submitError) {
+      setAccountFeedback({
+        type: "error",
+        message: `We tried to create your patient account, but something unexpected happened: ${submitError?.message || "Unknown error"}`,
+      })
+    } finally {
+      setTurnstileResetKey((current) => current + 1)
+      setTurnstileToken("")
+      setIsSubmitting(false)
+    }
   }
 
   return (
