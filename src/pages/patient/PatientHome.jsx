@@ -1,10 +1,10 @@
 import { createElement, useEffect, useState } from "react"
 import { CalendarPlus2, ChevronRight, ClipboardPlus, HeartPulse, IdCard, LogOut, PillBottle } from "lucide-react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { usePatient } from "../../components/PatientLayout"
 import { usePatientPortalAuth } from "../../hooks/usePatientPortalAuth"
 import { fetchPatientPortalUpdates } from "../../lib/patientPortalUpdates"
-import { clearPatientPortalSession, getPatientPortalSession } from "../../lib/patientPortalSession"
+import { clearPatientPortalProfileDraft, clearPatientPortalSession, getPatientPortalSession } from "../../lib/patientPortalSession"
 
 function getInitials(value) {
   return String(value || "")
@@ -18,6 +18,7 @@ function getInitials(value) {
 
 export default function PatientHome() {
   const { branchName, pharmacyId, branchLocation, createPatientPath } = usePatient()
+  const navigate = useNavigate()
   const [rememberedPatient, setRememberedPatient] = useState(() => getPatientPortalSession(pharmacyId))
   const [feedback, setFeedback] = useState({ type: "", message: "" })
   const [isSigningOut, setIsSigningOut] = useState(false)
@@ -126,12 +127,15 @@ export default function PatientHome() {
     setFeedback({ type: "", message: "" })
 
     try {
+      clearPatientPortalSession(pharmacyId)
+      clearPatientPortalProfileDraft()
+      setRememberedPatient(null)
       await signOut()
-      setFeedback({ type: "success", message: "Patient account signed out for this browser session." })
     } catch (error) {
       setFeedback({ type: "error", message: error?.message || "We could not sign you out right now." })
     } finally {
       setIsSigningOut(false)
+      navigate("/patient-portal", { replace: true })
     }
   }
 

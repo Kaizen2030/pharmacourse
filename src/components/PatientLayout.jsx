@@ -134,7 +134,7 @@ export function PatientPortalStyles() {
       .patient-main {
         width: min(100%, 760px);
         margin: 0 auto;
-        padding: 1rem 1rem 6.8rem;
+        padding: 1rem 1rem 7.4rem;
       }
 
       .patient-branch-lock {
@@ -777,7 +777,7 @@ export function PatientPortalStyles() {
         }
 
         .patient-main {
-          padding: 0.85rem 0.8rem 6.6rem;
+          padding: 0.85rem 0.8rem 7.05rem;
         }
 
         .patient-card {
@@ -947,10 +947,13 @@ export function PatientPortalStyles() {
       }
 
       .patient-auth-status {
-        padding: 0.95rem 1rem;
-        border-radius: 14px;
-        border: 0.5px solid #d7e1dc;
-        background: #fbfefd;
+        padding: 1rem 1.05rem;
+        border-radius: 18px;
+        border: 1px solid rgba(15, 110, 86, 0.12);
+        background:
+          radial-gradient(circle at top right, rgba(15, 110, 86, 0.1), transparent 38%),
+          linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 251, 248, 0.96));
+        box-shadow: 0 12px 28px rgba(15, 42, 32, 0.06);
       }
 
       .patient-session-bar,

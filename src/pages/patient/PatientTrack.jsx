@@ -781,7 +781,7 @@ export default function PatientTrack() {
       // If sign-out fails, still continue to branch selection so the user can restart.
     }
 
-    navigate("/patient-portal?switch=1")
+    navigate("/patient-portal", { replace: true })
   }
 
   function downloadReceipt(receipt) {
