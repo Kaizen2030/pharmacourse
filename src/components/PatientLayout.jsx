@@ -44,7 +44,7 @@ export function PatientPortalStyles() {
         left: 0;
         right: 0;
         bottom: 0;
-        height: 9rem;
+        height: 6.5rem;
         background: linear-gradient(180deg, rgba(245, 250, 247, 0), rgba(245, 250, 247, 0.9) 34%, rgba(245, 250, 247, 0.99));
         pointer-events: none;
         z-index: 8;
@@ -716,7 +716,7 @@ export function PatientPortalStyles() {
         bottom: 0;
         transform: none;
         width: 100vw;
-        padding: 0.35rem 0.55rem calc(0.35rem + env(safe-area-inset-bottom));
+        padding: 0.2rem 0.35rem calc(0.2rem + env(safe-area-inset-bottom));
         border-radius: 0;
         border: 1px solid rgba(255, 255, 255, 0.18);
         background: linear-gradient(180deg, rgba(15, 110, 86, 0.98), rgba(11, 94, 73, 0.98));
@@ -726,15 +726,15 @@ export function PatientPortalStyles() {
         grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 0.35rem;
         z-index: 30;
-        min-height: 5.25rem;
+        min-height: 6rem;
       }
 
       .patient-tab {
-        min-height: 4.15rem;
-        border-radius: 16px;
+        min-height: 5.35rem;
+        border-radius: 0;
         display: grid;
         place-items: center;
-        gap: 0.15rem;
+        gap: 0.12rem;
         color: rgba(255, 255, 255, 0.85);
         font-size: 0.7rem;
         font-weight: 800;
@@ -794,7 +794,7 @@ export function PatientPortalStyles() {
         }
 
         .patient-main {
-          padding: 0.85rem 0.8rem 12.2rem;
+          padding: 0.85rem 0.8rem 10rem;
         }
 
         .patient-card {
@@ -833,11 +833,11 @@ export function PatientPortalStyles() {
         .patient-bottom-nav {
           width: 100vw;
           bottom: 0;
-          padding: 0.3rem 0.45rem calc(0.3rem + env(safe-area-inset-bottom));
+          padding: 0.18rem 0.3rem calc(0.18rem + env(safe-area-inset-bottom));
         }
 
         .patient-tab {
-          min-height: 3.9rem;
+          min-height: 4.8rem;
           font-size: 0.65rem;
         }
       }
@@ -848,7 +848,7 @@ export function PatientPortalStyles() {
       }
 
       .patient-shell::after {
-        height: 10rem;
+        height: 7.4rem;
         z-index: 8;
       }
 

@@ -30,6 +30,8 @@ export default function PatientRegister() {
   const { pharmacyId, branchName, createPatientPath } = usePatient()
   const { fullName: authFullName, patientPhone: authPhone } = usePatientPortalAuth()
   const profileDraft = getPatientPortalProfileDraft()
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [formValues, setFormValues] = useState(() => ({
     fullName: profileDraft?.fullName || authFullName || "",
     phone: profileDraft?.phone || authPhone || "",
@@ -289,16 +291,40 @@ export default function PatientRegister() {
               <label className="patient-label" htmlFor="password">
                 Web Account Password*
               </label>
-              <input
-                id="password"
-                name="password"
-                className="patient-input"
-                type="password"
-                value={formValues.password}
-                onChange={handleInputChange}
-                placeholder="At least 8 characters"
-                required
-              />
+              <div style={{ position: "relative" }}>
+                <input
+                  id="password"
+                  name="password"
+                  className="patient-input"
+                  type={showPassword ? "text" : "password"}
+                  value={formValues.password}
+                  onChange={handleInputChange}
+                  placeholder="At least 8 characters"
+                  required
+                  style={{ paddingRight: "4.5rem" }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((current) => !current)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  style={{
+                    position: "absolute",
+                    right: "0.5rem",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    border: "none",
+                    background: "rgba(15, 110, 86, 0.08)",
+                    color: "#0f6e56",
+                    borderRadius: "999px",
+                    padding: "0.35rem 0.7rem",
+                    fontSize: "0.78rem",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                  }}
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -306,16 +332,40 @@ export default function PatientRegister() {
             <label className="patient-label" htmlFor="confirmPassword">
               Confirm Password*
             </label>
-            <input
-              id="confirmPassword"
-              name="confirmPassword"
-              className="patient-input"
-              type="password"
-              value={formValues.confirmPassword}
-              onChange={handleInputChange}
-              placeholder="Repeat your password"
-              required
-            />
+            <div style={{ position: "relative" }}>
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                className="patient-input"
+                type={showConfirmPassword ? "text" : "password"}
+                value={formValues.confirmPassword}
+                onChange={handleInputChange}
+                placeholder="Repeat your password"
+                required
+                style={{ paddingRight: "4.5rem" }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword((current) => !current)}
+                aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                style={{
+                  position: "absolute",
+                  right: "0.5rem",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  border: "none",
+                  background: "rgba(15, 110, 86, 0.08)",
+                  color: "#0f6e56",
+                  borderRadius: "999px",
+                  padding: "0.35rem 0.7rem",
+                  fontSize: "0.78rem",
+                  fontWeight: 800,
+                  cursor: "pointer",
+                }}
+              >
+                {showConfirmPassword ? "Hide" : "Show"}
+              </button>
+            </div>
             <p className="patient-form-help" style={{ margin: 0 }}>
               This patient web account is what unlocks private updates and notifications. Phone number alone will no longer work.
             </p>
