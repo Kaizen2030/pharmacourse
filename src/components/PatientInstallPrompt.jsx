@@ -1,102 +1,118 @@
-import { useEffect, useMemo, useState } from "react"
-import { Download, Share2, Smartphone, X } from "lucide-react"
+import { useEffect, useState } from "react"
+import { Download, Smartphone, X } from "lucide-react"
 import "./PatientInstallPrompt.css"
 
 const DISMISS_KEY = "patientPortalInstallPromptDismissedAt"
 const DISMISS_WINDOW_MS = 1000 * 60 * 60 * 24 * 3
 
-function shouldHideFromDismissal() {
-  const dismissedAt = Number(window.localStorage.getItem(DISMISS_KEY) || 0)
-  return dismissedAt > 0 && Date.now() - dismissedAt < DISMISS_WINDOW_MS
+function isStandaloneDisplay() {
+  if (typeof window === "undefined") return false
+  return Boolean(window.matchMedia?.("(display-mode: standalone)")?.matches || window.navigator.standalone === true)
 }
 
 function isIosSafari() {
   if (typeof window === "undefined") return false
-
   const ua = window.navigator.userAgent.toLowerCase()
   const isIos = /iphone|ipad|ipod/.test(ua)
   const isSafari = /safari/.test(ua) && !/crios|fxios|edgios/.test(ua)
   return isIos && isSafari
 }
 
+function isRecentlyDismissed() {
+  if (typeof window === "undefined") return false
+  const dismissedAt = Number(window.localStorage.getItem(DISMISS_KEY) || 0)
+  return dismissedAt > 0 && Date.now() - dismissedAt < DISMISS_WINDOW_MS
+}
+
 export default function PatientInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState(null)
-  const [showBanner, setShowBanner] = useState(false)
-  const [showIosBanner, setShowIosBanner] = useState(false)
-  const [isStandalone, setIsStandalone] = useState(false)
+  const [isVisible, setIsVisible] = useState(false)
   const [isInstalling, setIsInstalling] = useState(false)
-
-  const isIos = useMemo(() => isIosSafari(), [])
-  const isAndroid = useMemo(() => /android/i.test(window.navigator.userAgent || ""), [])
-  const isMobile = useMemo(
-    () => Boolean(window.matchMedia?.("(max-width: 768px)")?.matches || isIos || isAndroid),
-    [isAndroid, isIos],
-  )
+  const [showHelp, setShowHelp] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+  const [isStandalone, setIsStandalone] = useState(false)
+  const [isIos, setIsIos] = useState(false)
 
   useEffect(() => {
-    if (typeof window === "undefined") return
+    if (typeof window === "undefined") return undefined
 
-    const standalone =
-      window.matchMedia?.("(display-mode: standalone)")?.matches ||
-      window.navigator.standalone === true
-
-    console.info("PatientInstallPrompt mounted", {
-      standalone,
-      isIos,
-      isAndroid,
-      isMobile,
-      dismissed: window.localStorage.getItem(DISMISS_KEY),
-    })
-
-    setIsStandalone(Boolean(standalone))
-    if (standalone || shouldHideFromDismissal()) {
-      return
+    const mobileQuery = window.matchMedia?.("(max-width: 767px)")
+    const syncDeviceState = () => {
+      setIsMobile(Boolean(mobileQuery?.matches))
+      setIsStandalone(isStandaloneDisplay())
+      setIsIos(isIosSafari())
     }
 
+    syncDeviceState()
+
+    if (isStandaloneDisplay() || isRecentlyDismissed()) {
+      return undefined
+    }
+
+    const showFallback = window.setTimeout(() => {
+      if (!isRecentlyDismissed() && !isStandaloneDisplay()) {
+        setIsVisible(true)
+        setShowHelp(false)
+      }
+    }, 1400)
+
     function handleBeforeInstallPrompt(event) {
-      console.info("beforeinstallprompt event received", event)
       event.preventDefault()
-      if (window.localStorage.getItem(DISMISS_KEY)) return
       setDeferredPrompt(event)
-      setShowBanner(true)
+      setIsVisible(true)
+      setShowHelp(false)
     }
 
     function handleAppInstalled() {
-      console.info("appinstalled event received")
-      setDeferredPrompt(null)
-      setShowBanner(false)
-      setShowIosBanner(false)
       window.localStorage.removeItem(DISMISS_KEY)
+      setDeferredPrompt(null)
+      setIsVisible(false)
+      setShowHelp(false)
+      setIsStandalone(true)
     }
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt)
     window.addEventListener("appinstalled", handleAppInstalled)
 
-    const fallbackTimer = window.setTimeout(() => {
-      if (!window.localStorage.getItem(DISMISS_KEY) && isAndroid) {
-        setShowBanner(true)
+    const handleChange = () => syncDeviceState()
+    if (mobileQuery) {
+      if (typeof mobileQuery.addEventListener === "function") {
+        mobileQuery.addEventListener("change", handleChange)
+      } else {
+        mobileQuery.addListener(handleChange)
       }
-    }, 900)
-
-    let iosTimer = null
-    if (isIos) {
-      iosTimer = window.setTimeout(() => {
-        if (!window.localStorage.getItem(DISMISS_KEY)) {
-          setShowIosBanner(true)
-        }
-      }, 1800)
     }
 
     return () => {
+      window.clearTimeout(showFallback)
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt)
       window.removeEventListener("appinstalled", handleAppInstalled)
-      window.clearTimeout(fallbackTimer)
-      if (iosTimer) window.clearTimeout(iosTimer)
+      if (mobileQuery) {
+        if (typeof mobileQuery.removeEventListener === "function") {
+          mobileQuery.removeEventListener("change", handleChange)
+        } else {
+          mobileQuery.removeListener(handleChange)
+        }
+      }
     }
-  }, [isIos])
+  }, [])
+
+  useEffect(() => {
+    if (typeof document === "undefined") return undefined
+    if (!isVisible) return undefined
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [isVisible])
 
   async function handleInstall() {
     if (!deferredPrompt) {
+      setShowHelp(true)
+      setIsVisible(true)
       return
     }
 
@@ -105,9 +121,14 @@ export default function PatientInstallPrompt() {
       deferredPrompt.prompt()
       const choice = await deferredPrompt.userChoice
       if (choice?.outcome === "accepted") {
-        setShowBanner(false)
-        setShowIosBanner(false)
+        window.localStorage.removeItem(DISMISS_KEY)
+        setIsVisible(false)
+        setShowHelp(false)
       }
+    } catch (error) {
+      console.error("Install prompt error:", error)
+      setShowHelp(true)
+      setIsVisible(true)
     } finally {
       setDeferredPrompt(null)
       setIsInstalling(false)
@@ -115,63 +136,75 @@ export default function PatientInstallPrompt() {
   }
 
   function handleDismiss() {
-    window.localStorage.setItem(DISMISS_KEY, String(Date.now()))
-    setShowBanner(false)
-    setShowIosBanner(false)
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(DISMISS_KEY, String(Date.now()))
+    }
     setDeferredPrompt(null)
+    setShowHelp(false)
+    setIsVisible(false)
   }
 
-  if (isStandalone || (!showBanner && !showIosBanner && !deferredPrompt)) {
+  if (!isVisible || isStandalone || !isMobile) {
     return null
   }
 
-  const showIosFallback = !deferredPrompt && showIosBanner && isIos
-  const showFallback = !deferredPrompt && showBanner && !showIosFallback
+  const showNativeInstall = Boolean(deferredPrompt)
+  const primaryLabel = showNativeInstall ? (isInstalling ? "Installing..." : "Install app") : "Show install steps"
+  const description = showNativeInstall
+    ? "Tap Install to add RemedacarePOS to your home screen for fast access."
+    : isIos
+    ? "Tap Share in Safari, then choose Add to Home Screen."
+    : "Open the browser menu and choose Install app or Add to Home Screen."
 
   return (
     <div className="patient-install-banner" role="status" aria-live="polite">
-      <section className="patient-install-card" aria-label="Install patient portal">
-        <div className="patient-install-head">
-          <div className="patient-install-icon">
-            <Smartphone />
+      <section className="patient-install-card" aria-label="Install RemedacarePOS">
+        <div className="patient-install-top">
+          <div className="patient-install-badge" aria-hidden="true">
+            <Smartphone size={18} />
           </div>
 
           <div className="patient-install-copy">
             <div className="patient-install-kicker">RemedacarePOS</div>
             <h2>Install the patient portal</h2>
-            <p>
-              {deferredPrompt
-                ? "Tap install to add RemedacarePOS to your home screen."
-                : showIosFallback
-                ? "Tap Share, then choose Add to Home Screen in Safari."
-                : "Open the browser menu and choose Install app or Add to Home Screen."}
-            </p>
+            <p>{description}</p>
           </div>
 
-          <button type="button" className="patient-install-close" onClick={handleDismiss} aria-label="Dismiss install prompt">
-            <X />
+          <button
+            type="button"
+            className="patient-install-close"
+            onClick={handleDismiss}
+            aria-label="Dismiss install prompt"
+          >
+            <X size={18} />
           </button>
         </div>
 
         <div className="patient-install-actions">
-          {deferredPrompt ? (
-            <button type="button" className="patient-button" onClick={handleInstall} disabled={isInstalling}>
-              <Download />
-              <span>{isInstalling ? "Preparing install..." : "Install patient portal"}</span>
-            </button>
-          ) : (
-            <button type="button" className="patient-button-secondary" onClick={handleDismiss}>
-              Dismiss
-            </button>
-          )}
+          <button type="button" className="patient-install-primary" onClick={handleInstall} disabled={isInstalling}>
+            <Download size={16} />
+            <span>{primaryLabel}</span>
+          </button>
+          <button type="button" className="patient-install-secondary" onClick={handleDismiss}>
+            Not now
+          </button>
         </div>
 
-        {showFallback && !showIosFallback ? (
-          <div className="patient-install-fallback">
-            <span className="patient-install-fallback-label">If the native prompt doesn’t appear,</span>
-            <span>open the browser menu and add the portal to your home screen.</span>
+        {(showHelp || !showNativeInstall) && (
+          <div className="patient-install-help">
+            <div className="patient-install-help-title">Quick steps</div>
+            <div className="patient-install-help-grid">
+              <div className="patient-install-help-item">
+                <strong>{isIos ? "iPhone / iPad" : "Android"}</strong>
+                <span>{isIos ? "Share > Add to Home Screen" : "Menu > Install app"}</span>
+              </div>
+              <div className="patient-install-help-item">
+                <strong>Fast access</strong>
+                <span>Open the portal like a native app from your home screen.</span>
+              </div>
+            </div>
           </div>
-        ) : null}
+        )}
       </section>
     </div>
   )

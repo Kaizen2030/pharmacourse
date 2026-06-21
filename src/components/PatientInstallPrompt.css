@@ -1,374 +1,233 @@
 .patient-install-banner {
   position: fixed;
-  bottom: 1rem;
-  left: 1rem;
-  right: 1rem;
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 1000;
   display: flex;
   justify-content: center;
+  padding: 0 0.75rem calc(0.75rem + env(safe-area-inset-bottom));
   pointer-events: none;
 }
 
 .patient-install-card {
   pointer-events: auto;
-  width: 100%;
-  max-width: 420px;
-  background: var(--surface);
-  border-radius: var(--radius-2xl);
-  box-shadow: var(--shadow-xl);
-  padding: 1rem 1rem 0.9rem;
-  border: 1px solid rgba(15, 110, 86, 0.12);
-  animation: patientInstallSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  width: min(100%, 680px);
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(16, 93, 72, 0.12);
+  border-radius: 24px;
+  box-shadow: 0 18px 50px rgba(12, 53, 42, 0.16);
+  padding: 0.95rem;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  animation: patientInstallRise 0.24s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.patient-install-head {
-  display: flex;
-  gap: 0.75rem;
-  align-items: flex-start;
-  justify-content: space-between;
+.patient-install-top {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.85rem;
+  align-items: start;
 }
 
-.patient-install-icon {
+.patient-install-badge {
   width: 44px;
   height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 15px;
-  background: rgba(15, 110, 86, 0.1);
-  color: var(--green-dark);
-}
-
-.patient-install-close {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  color: var(--text-500);
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.patient-install-close:hover {
-  background: var(--gray-100);
-  color: var(--text-900);
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(180deg, rgba(22, 122, 93, 0.14), rgba(22, 122, 93, 0.08));
+  color: var(--green-dark, #0f6e56);
+  flex: none;
 }
 
 .patient-install-copy {
-  flex: 1;
   min-width: 0;
 }
 
 .patient-install-kicker {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  padding: 0.2rem 0.6rem;
+  margin-bottom: 0.45rem;
+  border-radius: 999px;
+  background: rgba(22, 122, 93, 0.1);
+  color: var(--green-dark, #0f6e56);
   font-size: 0.7rem;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--green-dark);
-  background: rgba(15, 110, 86, 0.1);
-  padding: 0.25rem 0.55rem;
-  border-radius: 999px;
-  margin-bottom: 0.5rem;
 }
 
 .patient-install-copy h2 {
-  font-size: 1rem;
-  font-weight: 700;
   margin: 0;
-  color: var(--text-900);
-  line-height: 1.3;
+  color: var(--text-900, #123026);
+  font-size: 1rem;
+  line-height: 1.2;
 }
 
 .patient-install-copy p {
-  margin: 0.45rem 0 0;
-  font-size: 0.82rem;
-  color: var(--text-500);
-  line-height: 1.5;
-}
-
-.patient-install-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.65rem;
-  margin-top: 0.95rem;
-}
-
-.patient-button,
-.patient-button-secondary {
-  min-width: 0;
-  padding: 0.8rem 1rem;
-  border-radius: 999px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.15s ease;
-}
-
-.patient-button {
-  background: var(--green);
-  color: #fff;
-  box-shadow: var(--shadow-sm);
-}
-
-.patient-button:hover:not(:disabled) {
-  background: var(--green-dark);
-  transform: translateY(-1px);
-}
-
-.patient-button-secondary {
-  background: rgba(15, 110, 86, 0.08);
-  color: var(--green-dark);
-}
-
-.patient-install-fallback {
-  margin-top: 0.85rem;
-  padding-top: 0.85rem;
-  border-top: 1px solid rgba(15, 110, 86, 0.12);
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  font-size: 0.78rem;
-  color: var(--text-500);
-}
-
-.patient-install-fallback-label {
-  font-weight: 700;
-  color: var(--text-700);
-}
-
-@keyframes patientInstallSlideUp {
-  from {
-    transform: translateY(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-@media (min-width: 640px) {
-  .patient-install-modal {
-    align-items: center;
-  }
-
-  .patient-install-card-popover {
-    border-radius: var(--radius-lg);
-    margin-bottom: 0;
-    animation: patientInstallPopIn 0.24s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-}
-
-.patient-install-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-}
-
-.patient-install-icon {
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius);
-  background: var(--green-light);
-  color: var(--green);
-}
-
-.patient-install-icon svg {
-  width: 24px;
-  height: 24px;
+  margin: 0.4rem 0 0;
+  color: var(--text-600, #5e726d);
+  font-size: 0.9rem;
+  line-height: 1.45;
 }
 
 .patient-install-close {
   width: 36px;
   height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  color: var(--text-500);
-  transition: background 0.15s ease, color 0.15s ease;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  color: var(--text-500, #738681);
+  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
 }
 
 .patient-install-close:hover {
-  background: var(--gray-100);
-  color: var(--text-900);
-}
-
-.patient-install-close svg {
-  width: 18px;
-  height: 18px;
-}
-
-.patient-install-copy {
-  margin-bottom: 1.25rem;
-}
-
-.patient-install-kicker {
-  display: inline-block;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--green);
-  background: var(--green-light);
-  padding: 0.25rem 0.6rem;
-  border-radius: 999px;
-  margin-bottom: 0.6rem;
-}
-
-.patient-install-copy h2 {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--text-900);
-  margin-bottom: 0.4rem;
-}
-
-.patient-install-copy p {
-  font-size: 0.875rem;
-  color: var(--text-500);
-  line-height: 1.55;
+  background: rgba(18, 48, 38, 0.06);
+  color: var(--text-900, #123026);
+  transform: translateY(-1px);
 }
 
 .patient-install-actions {
   display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  margin-bottom: 1.25rem;
+  gap: 0.7rem;
+  margin-top: 0.9rem;
+  flex-wrap: wrap;
 }
 
-.patient-button,
-.patient-button-secondary {
-  display: flex;
+.patient-install-primary,
+.patient-install-secondary {
+  border: 0;
+  border-radius: 999px;
+  height: 42px;
+  padding: 0 1rem;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border-radius: var(--radius-sm);
-  font-size: 0.9rem;
-  font-weight: 700;
+  font-weight: 800;
+  font-size: 0.88rem;
   cursor: pointer;
-  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.15s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, opacity 0.15s ease;
 }
 
-.patient-button {
-  background: var(--green);
+.patient-install-primary {
+  min-width: 160px;
+  background: linear-gradient(180deg, #167a5d, #0f6e56);
   color: #fff;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 10px 24px rgba(15, 110, 86, 0.26);
 }
 
-.patient-button svg {
-  width: 18px;
-  height: 18px;
-}
-
-.patient-button:hover:not(:disabled) {
-  background: var(--green-dark);
+.patient-install-primary:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: var(--shadow);
+  box-shadow: 0 12px 28px rgba(15, 110, 86, 0.3);
 }
 
-.patient-button:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-  transform: none;
+.patient-install-primary:disabled {
+  opacity: 0.75;
+  cursor: progress;
 }
 
-.patient-button-secondary {
-  background: transparent;
-  color: var(--text-500);
+.patient-install-secondary {
+  background: rgba(18, 48, 38, 0.06);
+  color: var(--text-700, #2f4740);
 }
 
-.patient-button-secondary:hover {
-  background: var(--gray-100);
-  color: var(--text-900);
+.patient-install-secondary:hover {
+  transform: translateY(-1px);
+  background: rgba(18, 48, 38, 0.09);
 }
 
-.patient-install-steps {
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-  padding-top: 1.1rem;
-  border-top: 1px solid var(--border);
+.patient-install-help {
+  margin-top: 0.95rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid rgba(16, 93, 72, 0.12);
 }
 
-.patient-install-step {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
+.patient-install-help-title {
+  color: var(--text-900, #123026);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.55rem;
 }
 
-.patient-install-step-badge {
-  flex-shrink: 0;
-  width: 22px;
-  height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: var(--green-mid);
-  color: var(--green-dark);
-  font-size: 0.75rem;
-  font-weight: 700;
+.patient-install-help-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
 }
 
-.patient-install-step div {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
+.patient-install-help-item {
+  border-radius: 18px;
+  padding: 0.8rem 0.85rem;
+  background: linear-gradient(180deg, rgba(22, 122, 93, 0.08), rgba(22, 122, 93, 0.04));
+  color: var(--text-700, #2f4740);
 }
 
-.patient-install-step strong {
-  font-size: 0.8125rem;
-  color: var(--text-900);
-  font-weight: 700;
+.patient-install-help-item strong {
+  display: block;
+  color: var(--text-900, #123026);
+  font-size: 0.86rem;
+  margin-bottom: 0.2rem;
 }
 
-.patient-install-step span {
-  font-size: 0.8125rem;
-  color: var(--text-500);
-  line-height: 1.45;
+.patient-install-help-item span {
+  display: block;
+  font-size: 0.82rem;
+  line-height: 1.35;
 }
 
-.patient-install-step em {
-  font-style: normal;
-  font-weight: 600;
-  color: var(--text-700);
-}
-
-@keyframes patientInstallFade {
+@keyframes patientInstallRise {
   from {
+    transform: translateY(20px);
     opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes patientInstallSlideUp {
-  from {
-    transform: translateY(100%);
   }
   to {
     transform: translateY(0);
+    opacity: 1;
   }
 }
 
-@keyframes patientInstallPopIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95) translateY(8px);
+@media (max-width: 480px) {
+  .patient-install-banner {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
   }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
+
+  .patient-install-card {
+    width: 100%;
+    border-radius: 20px;
+    padding: 0.85rem;
+  }
+
+  .patient-install-top {
+    gap: 0.65rem;
+  }
+
+  .patient-install-badge {
+    width: 40px;
+    height: 40px;
+    border-radius: 14px;
+  }
+
+  .patient-install-copy h2 {
+    font-size: 0.96rem;
+  }
+
+  .patient-install-copy p {
+    font-size: 0.84rem;
+  }
+
+  .patient-install-primary,
+  .patient-install-secondary {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .patient-install-help-grid {
+    grid-template-columns: 1fr;
   }
 }
