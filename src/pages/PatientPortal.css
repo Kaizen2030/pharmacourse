@@ -1,5 +1,4 @@
-
-        .portal-container {
+.portal-container {
           min-height: 100vh;
           background:
             radial-gradient(circle at top left, rgba(15, 110, 86, 0.12), transparent 24%),
@@ -42,23 +41,25 @@
           align-items: center;
           justify-content: center;
           border: none;
-          background: transparent;
+          background: rgba(15, 110, 86, 0.08);
           color: #163329;
           cursor: pointer;
-          padding: 0.5rem;
-          width: 2.5rem;
-          height: 2.5rem;
+          padding: 0.55rem;
+          width: 3rem;
+          height: 3rem;
           flex-shrink: 0;
-          border-radius: 8px;
-          transition: background 0.18s ease;
+          border-radius: 12px;
+          transition: background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+          box-shadow: inset 0 0 0 1px rgba(15, 110, 86, 0.12);
         }
 
         .portal-menu-toggle:hover {
-          background: rgba(15, 110, 86, 0.08);
+          background: rgba(15, 110, 86, 0.14);
         }
 
         .portal-menu-toggle:active {
-          background: rgba(15, 110, 86, 0.12);
+          transform: scale(0.98);
+          background: rgba(15, 110, 86, 0.18);
         }
 
         .portal-logo {
@@ -1378,29 +1379,34 @@
           .portal-menu-toggle {
             display: inline-flex;
             margin-right: 0.15rem;
+            z-index: 81;
+            position: relative;
           }
 
           .portal-nav {
             position: fixed;
             top: 0;
-            right: 0;
+            left: 0;
             bottom: 0;
-            width: 100vw;
+            width: min(80vw, 280px);
+            max-width: 100%;
             display: flex;
             flex-direction: column;
-            gap: 0.35rem;
+            gap: 0.85rem;
             padding: 4.25rem 1rem 1rem;
-            border-left: none;
-            border-radius: 0;
-            background: rgba(248, 253, 250, 0.98);
-            box-shadow: none;
-            transform: translateX(100%);
+            box-sizing: border-box;
+            border-right: 1px solid rgba(15, 110, 86, 0.08);
+            border-radius: 0 24px 24px 0;
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: 12px 0 38px rgba(0, 0, 0, 0.18);
+            transform: translateX(-100%);
             opacity: 0;
             visibility: hidden;
             pointer-events: none;
             transition: transform 0.22s ease, opacity 0.18s ease, visibility 0s linear 0.22s;
             z-index: 70;
             overflow-y: auto;
+            overflow-x: hidden;
           }
 
           .portal-nav.open {
@@ -1409,6 +1415,26 @@
             visibility: visible;
             pointer-events: auto;
             transition-delay: 0s;
+          }
+
+          .portal-nav-close {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            margin-left: auto;
+            border: none;
+            border-radius: 12px;
+            background: rgba(15, 110, 86, 0.08);
+            color: #163329;
+            cursor: pointer;
+            transition: background 0.18s ease, transform 0.18s ease;
+          }
+
+          .portal-nav-close:hover {
+            background: rgba(15, 110, 86, 0.14);
+            transform: scale(0.98);
           }
 
           .portal-container.mobile-menu-open .portal-main {
@@ -1428,11 +1454,13 @@
           .portal-nav-item {
             justify-content: flex-start;
             width: 100%;
-            min-height: 2.8rem;
-            padding: 0.72rem 0.85rem;
+            min-height: 3rem;
+            padding: 0.85rem 1rem;
             border-radius: 16px;
-            background: rgba(255, 255, 255, 0.78);
-            border-color: rgba(15, 110, 86, 0.08);
+            background: rgba(255, 255, 255, 0.93);
+            border: 1px solid rgba(15, 110, 86, 0.14);
+            color: #163329;
+            gap: 0.65rem;
           }
 
           .portal-header-actions {
@@ -1582,12 +1610,12 @@
 
           .portal-bottom-nav {
             display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-columns: repeat(6, minmax(0, 1fr));
             left: 50%;
             right: auto;
             transform: translateX(-50%);
             bottom: 0.55rem;
-            width: min(calc(100% - 0.7rem), 420px);
+            width: min(calc(100% - 0.7rem), 520px);
             padding: 0.45rem;
             border: 1px solid rgba(15, 110, 86, 0.1);
             border-radius: 24px;
@@ -1830,4 +1858,3 @@
             background: rgba(15, 110, 86, 0.12);
           }
         }
-      

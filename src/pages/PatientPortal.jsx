@@ -1386,21 +1386,39 @@ export default function PatientPortal() {
       <header className="portal-header">
         <div className="portal-header-inner">
           <div className="portal-brand">
-            <button className="portal-menu-toggle" onClick={() => setIsMobileMenuOpen((open) => !open)} type="button" aria-label="Toggle navigation">
-              {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
-            </button>
             <div className="portal-logo">
               <span className="portal-logo-icon"><Pill size={16} /></span>
               <span>RemedacarePOS</span>
             </div>
           </div>
 
+          <button
+            type="button"
+            className="portal-menu-toggle"
+            aria-label="Open navigation"
+            onClick={() => setIsMobileMenuOpen(true)}
+          >
+            <Menu size={18} />
+          </button>
+
           <nav className={`portal-nav ${isMobileMenuOpen ? "open" : ""}`}>
+            <button
+              type="button"
+              className="portal-nav-close"
+              aria-label="Close navigation"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <X size={18} />
+            </button>
+
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 className={`portal-nav-item ${activeTab === tab.id ? "active" : ""}`}
-                onClick={() => handleProtectedAction(tab.id)}
+                onClick={() => {
+                  handleProtectedAction(tab.id)
+                  setIsMobileMenuOpen(false)
+                }}
                 type="button"
               >
                 <tab.icon size={18} />
