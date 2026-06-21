@@ -2,9 +2,6 @@ import { useEffect, useState } from "react"
 import { Download, Smartphone, X } from "lucide-react"
 import "./PatientInstallPrompt.css"
 
-const DISMISS_KEY = "patientPortalInstallPromptDismissedAt"
-const DISMISS_WINDOW_MS = 1000 * 60 * 60 * 24 * 3
-
 function isStandaloneDisplay() {
   if (typeof window === "undefined") return false
   return Boolean(window.matchMedia?.("(display-mode: standalone)")?.matches || window.navigator.standalone === true)
@@ -16,12 +13,6 @@ function isIosSafari() {
   const isIos = /iphone|ipad|ipod/.test(ua)
   const isSafari = /safari/.test(ua) && !/crios|fxios|edgios/.test(ua)
   return isIos && isSafari
-}
-
-function isRecentlyDismissed() {
-  if (typeof window === "undefined") return false
-  const dismissedAt = Number(window.localStorage.getItem(DISMISS_KEY) || 0)
-  return dismissedAt > 0 && Date.now() - dismissedAt < DISMISS_WINDOW_MS
 }
 
 export default function PatientInstallPrompt() {
@@ -45,12 +36,12 @@ export default function PatientInstallPrompt() {
 
     syncDeviceState()
 
-    if (isStandaloneDisplay() || isRecentlyDismissed()) {
+    if (isStandaloneDisplay()) {
       return undefined
     }
 
     const showFallback = window.setTimeout(() => {
-      if (!isRecentlyDismissed() && !isStandaloneDisplay()) {
+      if (!isStandaloneDisplay()) {
         setIsVisible(true)
         setShowHelp(false)
       }
@@ -64,7 +55,6 @@ export default function PatientInstallPrompt() {
     }
 
     function handleAppInstalled() {
-      window.localStorage.removeItem(DISMISS_KEY)
       setDeferredPrompt(null)
       setIsVisible(false)
       setShowHelp(false)
@@ -121,7 +111,6 @@ export default function PatientInstallPrompt() {
       deferredPrompt.prompt()
       const choice = await deferredPrompt.userChoice
       if (choice?.outcome === "accepted") {
-        window.localStorage.removeItem(DISMISS_KEY)
         setIsVisible(false)
         setShowHelp(false)
       }
@@ -136,9 +125,6 @@ export default function PatientInstallPrompt() {
   }
 
   function handleDismiss() {
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(DISMISS_KEY, String(Date.now()))
-    }
     setDeferredPrompt(null)
     setShowHelp(false)
     setIsVisible(false)
@@ -151,10 +137,10 @@ export default function PatientInstallPrompt() {
   const showNativeInstall = Boolean(deferredPrompt)
   const primaryLabel = showNativeInstall ? (isInstalling ? "Installing..." : "Install app") : "Show install steps"
   const description = showNativeInstall
-    ? "Tap Install to add RemedacarePOS to your home screen for fast access."
+    ? "Add RemedacarePOS to your home screen for quick access."
     : isIos
-    ? "Tap Share in Safari, then choose Add to Home Screen."
-    : "Open the browser menu and choose Install app or Add to Home Screen."
+    ? "Safari: Share, then Add to Home Screen."
+    : "Open the browser menu and choose Install app."
 
   return (
     <div className="patient-install-banner" role="status" aria-live="polite">
@@ -193,15 +179,9 @@ export default function PatientInstallPrompt() {
         {(showHelp || !showNativeInstall) && (
           <div className="patient-install-help">
             <div className="patient-install-help-title">Quick steps</div>
-            <div className="patient-install-help-grid">
-              <div className="patient-install-help-item">
-                <strong>{isIos ? "iPhone / iPad" : "Android"}</strong>
-                <span>{isIos ? "Share > Add to Home Screen" : "Menu > Install app"}</span>
-              </div>
-              <div className="patient-install-help-item">
-                <strong>Fast access</strong>
-                <span>Open the portal like a native app from your home screen.</span>
-              </div>
+            <div className="patient-install-help-item">
+              <strong>{isIos ? "iPhone / iPad" : "Android"}</strong>
+              <span>{isIos ? "Tap Share, then Add to Home Screen." : "Tap the menu, then choose Install app."}</span>
             </div>
           </div>
         )}
