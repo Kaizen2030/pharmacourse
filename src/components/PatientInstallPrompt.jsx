@@ -17,7 +17,7 @@ function isIosSafari() {
 
 export default function PatientInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState(null)
-  const [isVisible, setIsVisible] = useState(false)
+  const [isVisible, setIsVisible] = useState(true)
   const [isInstalling, setIsInstalling] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
   const [isStandalone, setIsStandalone] = useState(false)
@@ -37,13 +37,6 @@ export default function PatientInstallPrompt() {
     if (isStandaloneDisplay()) {
       return undefined
     }
-
-    const showFallback = window.setTimeout(() => {
-      if (!isStandaloneDisplay()) {
-        setIsVisible(true)
-        setShowHelp(false)
-      }
-    }, 1400)
 
     function handleBeforeInstallPrompt(event) {
       event.preventDefault()
@@ -72,7 +65,6 @@ export default function PatientInstallPrompt() {
     }
 
     return () => {
-      window.clearTimeout(showFallback)
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt)
       window.removeEventListener("appinstalled", handleAppInstalled)
       if (mobileQuery) {
@@ -133,12 +125,12 @@ export default function PatientInstallPrompt() {
   }
 
   const showNativeInstall = Boolean(deferredPrompt)
-  const primaryLabel = showNativeInstall ? (isInstalling ? "Installing..." : "Install app") : "Show install steps"
+  const primaryLabel = showNativeInstall ? (isInstalling ? "Installing..." : "Install") : "How to install"
   const description = showNativeInstall
-    ? "Add RemedacarePOS to your home screen for quick access."
+    ? "Add RemedacarePOS to your home screen."
     : isIos
-    ? "Safari: Share, then Add to Home Screen."
-    : "Open the browser menu and choose Install app."
+    ? "Use Safari Share to add it to your home screen."
+    : "Use your browser menu to add it to your home screen."
 
   return (
     <div className="patient-install-banner" role="status" aria-live="polite">
@@ -176,10 +168,10 @@ export default function PatientInstallPrompt() {
 
         {(showHelp || !showNativeInstall) && (
           <div className="patient-install-help">
-            <div className="patient-install-help-title">Quick steps</div>
+            <div className="patient-install-help-title">Install steps</div>
             <div className="patient-install-help-item">
               <strong>{isIos ? "iPhone / iPad" : "Android"}</strong>
-              <span>{isIos ? "Tap Share, then Add to Home Screen." : "Tap the menu, then choose Install app."}</span>
+              <span>{isIos ? "Share, then Add to Home Screen." : "Menu, then Install app."}</span>
             </div>
           </div>
         )}
