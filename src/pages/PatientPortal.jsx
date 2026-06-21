@@ -1392,14 +1392,6 @@ export default function PatientPortal() {
             </div>
           </div>
 
-          <button
-            type="button"
-            className="portal-menu-toggle"
-            aria-label="Open navigation"
-            onClick={() => setIsMobileMenuOpen(true)}
-          >
-            <Menu size={18} />
-          </button>
 
           <nav className={`portal-nav ${isMobileMenuOpen ? "open" : ""}`}>
             <button
@@ -1415,10 +1407,7 @@ export default function PatientPortal() {
               <button
                 key={tab.id}
                 className={`portal-nav-item ${activeTab === tab.id ? "active" : ""}`}
-                onClick={() => {
-                  handleProtectedAction(tab.id)
-                  setIsMobileMenuOpen(false)
-                }}
+                onClick={() => { handleProtectedAction(tab.id); setIsMobileMenuOpen(false) }}
                 type="button"
               >
                 <tab.icon size={18} />
@@ -1435,6 +1424,14 @@ export default function PatientPortal() {
               <Bell size={20} />
             </button>
             <span className="portal-avatar-sm">{portalBrand.avatar}</span>
+            <button
+              type="button"
+              className="portal-menu-toggle"
+              aria-label="Open navigation"
+              onClick={() => setIsMobileMenuOpen(true)}
+            >
+              <Menu size={20} />
+            </button>
           </div>
         </div>
 
@@ -1536,4 +1533,3 @@ export default function PatientPortal() {
     </div>
   )
 }
-
