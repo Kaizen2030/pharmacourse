@@ -251,6 +251,24 @@ export default function PatientRegister() {
         <span className="patient-badge">Patient registration</span>
         <h1>Create your profile</h1>
         <p className="patient-copy">Register once with {branchName} so future prescription requests, appointments, and delivery updates are linked to your number.</p>
+        <div
+          style={{
+            marginTop: "1rem",
+            padding: "1rem 1.1rem",
+            borderRadius: "20px",
+            border: "1px solid rgba(15, 110, 86, 0.22)",
+            background: "linear-gradient(180deg, rgba(15, 110, 86, 0.12), rgba(15, 110, 86, 0.05))",
+            boxShadow: "0 10px 26px rgba(15, 42, 32, 0.06)",
+          }}
+        >
+          <div style={{ fontSize: "0.72rem", fontWeight: 900, letterSpacing: "0.08em", textTransform: "uppercase", color: "#0f6e56" }}>
+            Selected pharmacy
+          </div>
+          <div style={{ marginTop: "0.3rem", fontSize: "1.15rem", fontWeight: 900, color: "#163329" }}>{branchName}</div>
+          <div style={{ marginTop: "0.2rem", color: "#5f746b", lineHeight: 1.6 }}>
+            All account details, requests, and updates from this form will be tied to this branch only.
+          </div>
+        </div>
       </section>
 
       <section className="patient-card">
