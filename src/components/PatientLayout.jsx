@@ -1519,19 +1519,17 @@ export function PatientPortalStyles() {
         }
 
         .patient-track-nav-grid {
-          grid-template-columns: none;
-          grid-auto-flow: column;
-          grid-auto-columns: minmax(112px, 34vw);
-          overflow-x: auto;
-          padding-bottom: 0.15rem;
-          touch-action: pan-x;
-          scroll-snap-type: x proximity;
-          -webkit-overflow-scrolling: touch;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          grid-auto-flow: row;
+          overflow: visible;
+          padding-bottom: 0;
+          touch-action: auto;
+          scroll-snap-type: none;
+          -webkit-overflow-scrolling: auto;
         }
 
         .patient-track-nav-card {
           min-height: 100%;
-          scroll-snap-align: start;
         }
 
         .patient-track-hero-pills {
