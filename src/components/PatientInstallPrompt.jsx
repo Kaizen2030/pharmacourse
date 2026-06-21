@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { Download, Smartphone, X } from "lucide-react"
+import { consumeDeferredInstallPrompt, subscribeToInstallPrompt } from "../lib/pwaInstallPrompt"
 import "./PatientInstallPrompt.css"
 
 function isStandaloneDisplay() {
@@ -38,13 +39,6 @@ export default function PatientInstallPrompt() {
       return undefined
     }
 
-    function handleBeforeInstallPrompt(event) {
-      event.preventDefault()
-      setDeferredPrompt(event)
-      setIsVisible(true)
-      setShowHelp(false)
-    }
-
     function handleAppInstalled() {
       setDeferredPrompt(null)
       setIsVisible(false)
@@ -52,8 +46,14 @@ export default function PatientInstallPrompt() {
       setIsStandalone(true)
     }
 
-    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt)
     window.addEventListener("appinstalled", handleAppInstalled)
+    const unsubscribe = subscribeToInstallPrompt((prompt) => {
+      setDeferredPrompt(prompt)
+      if (prompt) {
+        setIsVisible(true)
+        setShowHelp(false)
+      }
+    })
 
     const handleChange = () => syncDeviceState()
     if (mobileQuery) {
@@ -65,8 +65,8 @@ export default function PatientInstallPrompt() {
     }
 
     return () => {
-      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt)
       window.removeEventListener("appinstalled", handleAppInstalled)
+      unsubscribe()
       if (mobileQuery) {
         if (typeof mobileQuery.removeEventListener === "function") {
           mobileQuery.removeEventListener("change", handleChange)
@@ -98,8 +98,9 @@ export default function PatientInstallPrompt() {
 
     setIsInstalling(true)
     try {
-      deferredPrompt.prompt()
-      const choice = await deferredPrompt.userChoice
+      const prompt = consumeDeferredInstallPrompt() || deferredPrompt
+      await prompt.prompt()
+      const choice = await prompt.userChoice
       if (choice?.outcome === "accepted") {
         setIsVisible(false)
         setShowHelp(false)
