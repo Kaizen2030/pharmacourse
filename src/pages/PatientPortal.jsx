@@ -40,7 +40,15 @@ export default function PatientPortal() {
   const [searchQuery, setSearchQuery] = useState("")
   const [searchFocused, setSearchFocused] = useState(false)
   const [submitting, setSubmitting] = useState("")
-  const portalBrand = { avatar: "PC" }
+  const portalBrand = { avatar: "RP" }
+  const [authPrompt, setAuthPrompt] = useState({
+    open: false,
+    actionId: "prescription",
+    title: "",
+    description: "",
+    ctaLabel: "",
+    branch: null,
+  })
   const [pharmacies, setPharmacies] = useState([])
   const [pharmaciesLoading, setPharmaciesLoading] = useState(true)
   const [pharmaciesError, setPharmaciesError] = useState("")
@@ -50,6 +58,7 @@ export default function PatientPortal() {
   const [townFilter, setTownFilter] = useState("all")
   const [profileDraft, setProfileDraft] = useState(() => getPatientPortalProfileDraft())
   const isSwitchFlow = searchParams.get("switch") === "1" || Boolean(profileDraft)
+  const [savedBranches, setSavedBranches] = useState([])
   const [isCompactDirectory, setIsCompactDirectory] = useState(() => {
     if (typeof window === "undefined") return false
     return Boolean(window.matchMedia?.("(max-width: 520px)")?.matches)
@@ -338,14 +347,135 @@ export default function PatientPortal() {
     return selectedMainPharmacy || mainPharmacies[0] || branchCards[0] || null
   }
 
-  function handleQuickAction(actionId) {
+  function getAuthPromptCopy(actionId) {
+    switch (actionId) {
+      case "appointment":
+        return {
+          title: "Sign in to book an appointment",
+          description: "We will link the booking to your patient profile and the branch you chose.",
+          ctaLabel: "Sign in to book",
+        }
+      case "maternal":
+        return {
+          title: "Sign in for maternal care",
+          description: "ANC and pregnancy follow-up need a signed-in patient profile and branch.",
+          ctaLabel: "Sign in to continue",
+        }
+      case "delivery":
+        return {
+          title: "Sign in to request delivery",
+          description: "Delivery requests must be attached to a real patient account and branch.",
+          ctaLabel: "Sign in to request delivery",
+        }
+      case "updates":
+        return {
+          title: "Sign in to view updates",
+          description: "Tracking, notifications, and receipts belong to the signed-in patient account.",
+          ctaLabel: "Sign in to view updates",
+        }
+      case "prescription":
+      default:
+        return {
+          title: "Sign in to request medicine",
+          description: "Prescription requests need your patient profile and pharmacy branch attached.",
+          ctaLabel: "Sign in to request medicine",
+        }
+    }
+  }
+
+  function openSignInPrompt(actionId) {
+    const branch = getNavigationBranch()
+    const promptCopy = getAuthPromptCopy(actionId)
+
+    setAuthPrompt({
+      open: true,
+      actionId,
+      title: promptCopy.title,
+      description: promptCopy.description,
+      ctaLabel: promptCopy.ctaLabel,
+      branch: branch
+        ? {
+            id: branch.id,
+            name: branch.name,
+            location: branch.location || branch.town || branch.subcounty || branch.county || "",
+          }
+        : null,
+    })
+  }
+
+  function closeAuthPrompt() {
+    setAuthPrompt((current) => ({ ...current, open: false }))
+  }
+
+  function handleProtectedAction(actionId) {
+    if (!isAuthenticated && !authLoading) {
+      openSignInPrompt(actionId)
+      return
+    }
+
     setActiveTab(actionId)
     setIsMobileMenuOpen(false)
+  }
+
+  function loadSavedBranchSessions() {
+    if (typeof window === "undefined") {
+      setSavedBranches([])
+      return
+    }
+
+    const entries = []
+    const branchById = new Map(pharmacies.map((row) => [String(row?.id || "").trim(), row]))
+
+    for (let index = 0; index < window.localStorage.length; index += 1) {
+      const key = window.localStorage.key(index)
+      if (!key || !key.startsWith("patientPortalSession:")) {
+        continue
+      }
+
+      const pharmacyId = key.slice("patientPortalSession:".length).trim()
+      if (!pharmacyId) {
+        continue
+      }
+
+      try {
+        const raw = window.localStorage.getItem(key)
+        if (!raw) {
+          continue
+        }
+
+        const session = JSON.parse(raw)
+        const branch = branchById.get(pharmacyId)
+
+        entries.push({
+          pharmacyId,
+          name: branch?.name || `Saved branch ${pharmacyId}`,
+          location: branch?.location || branch?.town || branch?.subcounty || branch?.county || "",
+          session,
+        })
+      } catch {
+        // Ignore malformed saved sessions and keep the portal usable.
+      }
+    }
+
+    entries.sort((left, right) => String(right.session?.updatedAt || "").localeCompare(String(left.session?.updatedAt || "")))
+    setSavedBranches(entries)
   }
 
   useEffect(() => {
     setBranchPage(0)
   }, [countyFilter, isCompactDirectory, searchQuery, selectedMainPharmacyId, subcountyFilter, townFilter])
+
+  useEffect(() => {
+    loadSavedBranchSessions()
+
+    if (typeof window === "undefined") {
+      return undefined
+    }
+
+    const handleStorage = () => loadSavedBranchSessions()
+    window.addEventListener("storage", handleStorage)
+    return () => window.removeEventListener("storage", handleStorage)
+  }, [pharmacies])
 
   async function handleClearSavedDraft() {
     clearPatientPortalProfileDraft()
@@ -713,6 +843,61 @@ export default function PatientPortal() {
           </div>
         </section>
 
+        {savedBranches.length ? (
+          <section className="portal-section portal-saved-branches-section">
+            <div className="portal-section-header">
+              <h2 className="portal-section-title">My opted-in branches</h2>
+              <span className="portal-section-badge">{savedBranches.length} saved</span>
+            </div>
+
+            <div className="portal-branches-grid">
+              {savedBranches.map((entry) => {
+                const branch = {
+                  id: entry.pharmacyId,
+                  name: entry.name,
+                  location: entry.location,
+                }
+                const updatedAtLabel = entry.session?.updatedAt
+                  ? new Intl.DateTimeFormat("en-KE", {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    }).format(new Date(entry.session.updatedAt))
+                  : "Recently saved"
+
+                return (
+                  <article key={entry.pharmacyId} className="portal-branch-card">
+                    <div className="portal-branch-card-top">
+                      <span className="portal-directory-chip branch">OPTED IN</span>
+                      <span>{updatedAtLabel}</span>
+                    </div>
+                    <h3>{entry.name}</h3>
+                    <p>{entry.location || "Saved on this device"}</p>
+                    <div className="portal-directory-action-note">
+                      <strong>{entry.session?.fullName || "Patient account"}</strong>
+                      <span>{entry.session?.phone || "No phone saved yet"}</span>
+                    </div>
+                    <div className="portal-directory-actions">
+                      <Link
+                        to={buildPatientLoginPath(branch, buildPatientPath("/patient", branch))}
+                        className="portal-directory-button primary"
+                      >
+                        Open branch
+                      </Link>
+                      <button
+                        type="button"
+                        className="portal-directory-button secondary"
+                        onClick={() => setSelectedMainPharmacyId(String(entry.pharmacyId))}
+                      >
+                        Focus in directory
+                      </button>
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
+          </section>
+        ) : null}
+
         <section className="portal-section">
           <div className="portal-section-header">
             <h2 className="portal-section-title">Quick Actions</h2>
@@ -720,7 +905,11 @@ export default function PatientPortal() {
           </div>
           <div className="portal-quick-grid">
             {quickActions.map((action) => (
-              <button key={action.id} className={`portal-quick-card tone-${action.tone}`} onClick={() => handleQuickAction(action.id)}>
+              <button
+                key={action.id}
+                className={`portal-quick-card tone-${action.tone}`}
+                onClick={() => handleProtectedAction(action.id)}
+              >
                 <div className="portal-quick-icon">
                   <action.icon size={22} />
                 </div>
@@ -1198,10 +1387,7 @@ export default function PatientPortal() {
               <button
                 key={tab.id}
                 className={`portal-nav-item ${activeTab === tab.id ? "active" : ""}`}
-                onClick={() => {
-                  setActiveTab(tab.id)
-                  setIsMobileMenuOpen(false)
-                }}
+                onClick={() => handleProtectedAction(tab.id)}
                 type="button"
               >
                 <tab.icon size={18} />
@@ -1258,12 +1444,55 @@ export default function PatientPortal() {
         <div className="portal-content">{renderContent()}</div>
       </main>
 
+      {authPrompt.open ? (
+        <div className="portal-auth-modal" role="dialog" aria-modal="true" aria-label={authPrompt.title || "Sign in required"}>
+          <button type="button" className="portal-auth-modal-backdrop" onClick={closeAuthPrompt} aria-label="Close sign in prompt" />
+          <div className="portal-auth-modal-sheet">
+            <div className="portal-auth-modal-head">
+              <div>
+                <div className="portal-kicker">Sign-in required</div>
+                <h2 className="portal-section-title" style={{ marginTop: 4 }}>
+                  {authPrompt.title || "Sign in first"}
+                </h2>
+                <p className="portal-form-sub" style={{ marginTop: 8 }}>
+                  {authPrompt.description || "Please sign in before you continue."}
+                </p>
+              </div>
+              <button type="button" className="portal-auth-modal-close" onClick={closeAuthPrompt} aria-label="Close sign in prompt">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="portal-auth-modal-branch">
+              <span className="portal-directory-chip branch">Branch first</span>
+              <strong>{authPrompt.branch?.name || "Choose your pharmacy or branch"}</strong>
+              <p>
+                {authPrompt.branch?.location || "Pick the branch on the home screen, then sign in so your request reaches the right pharmacy."}
+              </p>
+            </div>
+
+            <div className="portal-auth-modal-actions">
+              <Link
+                to={buildPatientLoginPath(authPrompt.branch, getActionRedirectPath(authPrompt.actionId, authPrompt.branch))}
+                className="portal-directory-button primary"
+                onClick={closeAuthPrompt}
+              >
+                {authPrompt.ctaLabel || "Sign in now"}
+              </Link>
+              <button type="button" className="portal-directory-button secondary" onClick={() => { closeAuthPrompt(); setActiveTab("home") }}>
+                Choose branch
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <nav className="portal-bottom-nav" aria-label="Mobile portal navigation">
         {tabs.slice(0, 4).map((tab) => (
           <button
             key={tab.id}
             className={`portal-bottom-nav-item ${activeTab === tab.id ? "active" : ""}`}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => handleProtectedAction(tab.id)}
             type="button"
           >
             <tab.icon size={20} />

@@ -974,8 +974,8 @@ export default function PatientTrack() {
         ) : null}
       </section>
 
-      {isAuthenticated && patientPhone ? (
-        <>
+      {isAuthenticated && patientPhone && (
+        <div className="patient-track-authenticated">
           <section className="patient-card patient-track-nav-panel">
             <div className="patient-section-header">
               <div>
@@ -1265,7 +1265,7 @@ export default function PatientTrack() {
                           </button>
                         </div>
                       </div>
-                    ) : null}
+        ) : null}
 
                     {String(request.status || "").toLowerCase() === "rejected" ? (
                       <div style={{ marginTop: "0.9rem", padding: "0.9rem", borderRadius: 14, border: "0.5px solid #fecaca", background: "#fff7f7", display: "grid", gap: "0.7rem" }}>
@@ -1516,7 +1516,12 @@ export default function PatientTrack() {
             )}
           </section>
 
-      {selectedRequest ? (
+          </div>
+        ) : null}
+        </div>
+      )}
+
+      {selectedRequest && (
         <div className="patient-detail-overlay" role="dialog" aria-modal="true" aria-label="Prescription request progress">
           <div className="patient-detail-backdrop" onClick={() => setSelectedRequestId("")} />
           <div className="patient-detail-sheet">
@@ -1584,9 +1589,9 @@ export default function PatientTrack() {
             </section>
           </div>
         </div>
-      ) : null}
+      )}
 
-      {isSwitchModalOpen ? (
+      {isSwitchModalOpen && (
         <div className="patient-switch-modal" role="dialog" aria-modal="true" aria-label="Switch pharmacy confirmation">
           <button type="button" className="patient-switch-modal-backdrop" onClick={closeSwitchModal} aria-label="Close switch confirmation" />
           <div className="patient-switch-modal-sheet">
@@ -1626,7 +1631,7 @@ export default function PatientTrack() {
             </div>
           </div>
         </div>
-      ) : null}
+      )}
     </div>
   )
 }
