@@ -14,8 +14,8 @@ export default defineConfig({
       manifest: {
         id: "/patient",
         name: "RemedacarePOS Patient Portal",
-        short_name: "Patient Portal",
-        description: "Install the RemedacarePOS patient portal to request prescriptions, book appointments, request deliveries, and track updates from your pharmacy.",
+        short_name: "RemedacarePOS",
+        description: "Install the RemedacarePOS patient portal to manage prescriptions, bookings, deliveries, and patient updates from your pharmacy.",
         theme_color: "#0F6E56",
         background_color: "#f4fbf8",
         display: "standalone",
@@ -38,6 +38,18 @@ export default defineConfig({
             sizes: "512x512",
             type: "image/png",
             purpose: "maskable",
+          },
+          {
+            src: "/favicon.svg",
+            sizes: "any",
+            type: "image/svg+xml",
+            purpose: "any",
+          },
+          {
+            src: "/apple-touch-icon.png",
+            sizes: "180x180",
+            type: "image/png",
+            purpose: "any",
           },
         ],
         shortcuts: [

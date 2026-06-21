@@ -104,11 +104,10 @@ export default function PatientInstallPrompt() {
         </div>
 
         <div className="patient-install-copy">
-          <div className="patient-install-kicker">Installable PWA</div>
-          <h2>Install the patient portal from your browser</h2>
+          <div className="patient-install-kicker">RemedacarePOS</div>
+          <h2>Install the RemedacarePOS patient portal</h2>
           <p>
-            This portal is a progressive web app. On supported phones and browsers, install it so it opens from a home
-            screen icon like a real app.
+            Install this portal from your mobile browser so it opens from your home screen with a dedicated app-style experience.
           </p>
         </div>
 
@@ -116,7 +115,7 @@ export default function PatientInstallPrompt() {
           {deferredPrompt ? (
             <button type="button" className="patient-button" onClick={handleInstall} disabled={isInstalling}>
               <Download />
-              <span>{isInstalling ? "Preparing install..." : "Install patient portal app"}</span>
+              <span>{isInstalling ? "Preparing install..." : "Install patient portal"}</span>
             </button>
           ) : null}
           <button type="button" className="patient-button-secondary" onClick={handleDismiss}>
@@ -131,21 +130,21 @@ export default function PatientInstallPrompt() {
                 <span className="patient-install-step-badge">1</span>
                 <div>
                   <strong>Open the portal in Chrome</strong>
-                  <span>Use Chrome on Android so the install option appears correctly.</span>
+                  <span>Use Chrome on Android so the install action appears correctly.</span>
                 </div>
               </div>
               <div className="patient-install-step">
                 <span className="patient-install-step-badge">2</span>
                 <div>
-                  <strong>Tap the menu</strong>
-                  <span>Choose <em>Install app</em> or <em>Add to Home screen</em> from the browser menu.</span>
+                  <strong>Tap the browser menu</strong>
+                  <span>Choose <em>Install app</em> or <em>Add to Home screen</em>.</span>
                 </div>
               </div>
               <div className="patient-install-step">
                 <span className="patient-install-step-badge">3</span>
                 <div>
-                  <strong>Open it from your home screen</strong>
-                  <span>The portal will reopen like a dedicated app with its own icon.</span>
+                  <strong>Launch the portal from your home screen</strong>
+                  <span>Open it like a native app with RemedacarePOS branding.</span>
                 </div>
               </div>
             </>
@@ -155,21 +154,21 @@ export default function PatientInstallPrompt() {
                 <span className="patient-install-step-badge">1</span>
                 <div>
                   <strong>Open in Safari</strong>
-                  <span>iPhone installs work from Safari, not from in-app browsers.</span>
+                  <span>Use Safari on iPhone for the best install experience.</span>
                 </div>
               </div>
               <div className="patient-install-step">
                 <span className="patient-install-step-badge">2</span>
                 <div>
                   <strong>Tap Share</strong>
-                  <span>Use the Share icon at the bottom of Safari.</span>
+                  <span>Open the Share menu at the bottom of Safari.</span>
                 </div>
               </div>
               <div className="patient-install-step">
                 <span className="patient-install-step-badge">3</span>
                 <div>
                   <strong>Add to Home Screen</strong>
-                  <span>Choose <em>Add to Home Screen</em> to create the app icon.</span>
+                  <span>Choose <em>Add to Home Screen</em> to pin RemedacarePOS.</span>
                 </div>
               </div>
             </>
@@ -179,7 +178,7 @@ export default function PatientInstallPrompt() {
                 <span className="patient-install-step-badge">1</span>
                 <div>
                   <strong>Open the portal in your browser</strong>
-                  <span>Use the phone browser, not an in-app view, for best results.</span>
+                  <span>Use the phone browser, not an in-app view, for the best install flow.</span>
                 </div>
               </div>
               <div className="patient-install-step">
@@ -192,8 +191,8 @@ export default function PatientInstallPrompt() {
               <div className="patient-install-step">
                 <span className="patient-install-step-badge">3</span>
                 <div>
-                  <strong>Launch like a native app</strong>
-                  <span>The portal opens from the home screen icon with a full-screen app feel.</span>
+                  <strong>Open the app from your home screen</strong>
+                  <span>Launch RemedacarePOS like a native app with its own icon.</span>
                 </div>
               </div>
             </>
