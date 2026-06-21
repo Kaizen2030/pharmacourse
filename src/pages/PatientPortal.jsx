@@ -1501,7 +1501,7 @@ export default function PatientPortal() {
       ) : null}
 
       <nav className={`portal-bottom-nav ${isMobileMenuOpen ? "hidden" : ""}`} aria-label="Mobile portal navigation">
-        {tabs.slice(0, 4).map((tab) => (
+        {tabs.map((tab) => (
           <button
             key={tab.id}
             className={`portal-bottom-nav-item ${activeTab === tab.id ? "active" : ""}`}
