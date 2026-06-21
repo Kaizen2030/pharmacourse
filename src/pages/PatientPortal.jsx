@@ -1380,7 +1380,7 @@ export default function PatientPortal() {
   }
 
   return (
-    <div className="portal-container">
+    <div className={`portal-container ${isMobileMenuOpen ? "mobile-menu-open" : ""}`}>
       <PatientPortalStyles />
 
       <header className="portal-header">
@@ -1500,7 +1500,7 @@ export default function PatientPortal() {
         </div>
       ) : null}
 
-      <nav className="portal-bottom-nav" aria-label="Mobile portal navigation">
+      <nav className={`portal-bottom-nav ${isMobileMenuOpen ? "hidden" : ""}`} aria-label="Mobile portal navigation">
         {tabs.slice(0, 4).map((tab) => (
           <button
             key={tab.id}

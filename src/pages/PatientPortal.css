@@ -1330,6 +1330,10 @@
           backdrop-filter: blur(14px);
         }
 
+        .portal-bottom-nav.hidden {
+          display: none !important;
+        }
+
         .portal-bottom-nav-item {
           display: inline-flex;
           flex-direction: column;
@@ -1405,6 +1409,10 @@
             visibility: visible;
             pointer-events: auto;
             transition-delay: 0s;
+          }
+
+          .portal-container.mobile-menu-open .portal-main {
+            filter: blur(0.8px);
           }
 
           .portal-nav-backdrop {
