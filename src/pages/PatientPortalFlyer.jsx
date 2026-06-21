@@ -409,7 +409,7 @@ export default function PatientPortalFlyer() {
                   <Share2 size={15} />
                   Share this page with patients
                 </span>
-                <span>Powered by PharmaCourse + RemedacarePOS</span>
+                <span>Powered by RemedacarePOS + RemedacareHMS</span>
               </div>
             </section>
           </div>

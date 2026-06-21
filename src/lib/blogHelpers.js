@@ -112,7 +112,7 @@ export function getBlogExcerpt(post) {
     .map((section) => `${section.body || ""}`.replace(/\s+/g, " ").trim())
     .find(Boolean)
 
-  if (!firstSectionBody) return "Read the latest pharmacy operations and professional learning insight from PharmaCourse."
+  if (!firstSectionBody) return "Read the latest pharmacy operations and professional learning insight from RemedacarePOS."
   return firstSectionBody.length > 160 ? `${firstSectionBody.slice(0, 160)}...` : firstSectionBody
 }
 

@@ -290,7 +290,7 @@ export default function PharmacyOS() {
           },
           provider: {
             "@type": "Organization",
-            name: "PharmaCourse",
+            name: "RemedacarePOS",
           },
         }}
       />
@@ -567,7 +567,7 @@ export default function PharmacyOS() {
               Book POS Walkthrough <ArrowRight size={16} />
             </a>
             <Link to="/courses" style={{ background: "transparent", color: "#fff", fontWeight: 600, padding: "15px 30px", borderRadius: 10, textDecoration: "none", fontSize: 15, border: "1.5px solid rgba(255,255,255,0.35)", display: "flex", alignItems: "center", gap: 8 }}>
-              Explore PharmaCourse <ChevronRight size={15} />
+              Explore RemedacarePOS <ChevronRight size={15} />
             </Link>
           </div>
           <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, marginTop: 28 }}>

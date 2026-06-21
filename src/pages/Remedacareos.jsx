@@ -296,7 +296,7 @@ export default function RemedacareOS() {
           },
           provider: {
             "@type": "Organization",
-            name: "PharmaCourse",
+            name: "RemedacarePOS",
           },
         }}
       />

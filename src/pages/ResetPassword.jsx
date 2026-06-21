@@ -134,7 +134,7 @@ export default function ResetPassword() {
       <div className="auth-wrap">
         <SEO
           title="Reset Password"
-          description="Reset your PharmaCourse password securely."
+          description="Reset your RemedacarePOS password securely."
           path="/reset-password"
           noindex
         />
@@ -151,7 +151,7 @@ export default function ResetPassword() {
       <div className="auth-wrap">
         <SEO
           title="Reset Password"
-          description="Reset your PharmaCourse password securely."
+          description="Reset your RemedacarePOS password securely."
           path="/reset-password"
           noindex
         />
@@ -177,13 +177,13 @@ export default function ResetPassword() {
     <div className="auth-wrap">
       <SEO
         title="Reset Password"
-        description="Reset your PharmaCourse password securely."
+        description="Reset your RemedacarePOS password securely."
         path="/reset-password"
         noindex
       />
 
       <div className="auth-card">
-        <div className="auth-logo">PharmaCourse</div>
+        <div className="auth-logo">RemedacarePOS</div>
         <h1>Set a new password</h1>
         <p>
           {recoveryEmail

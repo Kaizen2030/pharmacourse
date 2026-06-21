@@ -54,13 +54,13 @@ export default function Login() {
     <div className="auth-wrap">
       <SEO
         title="Sign In"
-        description="Sign in to your PharmaCourse account to continue learning and manage your courses."
+        description="Sign in to your RemedacarePOS account to continue learning and manage your courses."
         path="/login"
         noindex
       />
 
       <div className="auth-card">
-        <div className="auth-logo">PharmaCourse</div>
+        <div className="auth-logo">RemedacarePOS</div>
         <h1>Welcome back</h1>
         <p>Sign in to continue your learning</p>
 

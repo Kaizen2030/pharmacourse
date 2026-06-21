@@ -175,7 +175,7 @@ export default function Courses() {
     <div className="page">
       <SEO
         title="Pharmacy Courses"
-        description="Explore self-paced pharmacy CPD courses with practical lessons, downloadable resources, and completion certificates from PharmaCourse."
+        description="Explore self-paced pharmacy CPD courses with practical lessons, downloadable resources, and completion certificates from RemedacarePOS."
         path="/courses"
         type="website"
       />

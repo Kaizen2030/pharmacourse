@@ -225,7 +225,7 @@ export default function Certificate() {
       doc.setTextColor(220, 245, 238)
       doc.setFont("helvetica", "bold")
       doc.setFontSize(7)
-      const railLabelLines = doc.splitTextToSize((settings.left_vertical_text || "PharmaCourse Kenya").toUpperCase(), 24)
+      const railLabelLines = doc.splitTextToSize((settings.left_vertical_text || "RemedacarePOS Kenya").toUpperCase(), 24)
       doc.text(railLabelLines, margin + railWidth / 2, pageHeight - 22, { align: "center" })
 
       doc.setDrawColor(122, 217, 202)
@@ -334,7 +334,7 @@ export default function Certificate() {
       doc.setTextColor(96, 112, 104)
       doc.setFont("helvetica", "normal")
       doc.setFontSize(7.5)
-      doc.text(settings.signature_role || "Director, PharmaCourse", contentX, signatureBaseY + 12)
+      doc.text(settings.signature_role || "Director, RemedacarePOS", contentX, signatureBaseY + 12)
 
       const dateX = contentX + 68
       doc.setTextColor(147, 160, 152)
@@ -362,9 +362,9 @@ export default function Certificate() {
       doc.setTextColor(147, 160, 152)
       doc.setFont("helvetica", "normal")
       doc.setFontSize(6.5)
-      doc.text(settings.footer_text || "PharmaCourse - Professional Pharmacy CPD Platform - www.pharmacourse.co.ke", pageWidth / 2 + 16, pageHeight - 14, { align: "center" })
+      doc.text(settings.footer_text || "RemedacarePOS - Professional Pharmacy CPD Platform - www.pharmacourse.co.ke", pageWidth / 2 + 16, pageHeight - 14, { align: "center" })
 
-      doc.save(`PharmaCourse_Certificate_${(profile?.full_name || "Certificate").replace(/ /g, "_")}.pdf`)
+      doc.save(`RemedacarePOS_Certificate_${(profile?.full_name || "Certificate").replace(/ /g, "_")}.pdf`)
     } finally {
       setDownloading(false)
     }

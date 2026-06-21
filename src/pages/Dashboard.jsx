@@ -214,7 +214,7 @@ export default function Dashboard() {
     <div className="page">
       <SEO
         title="Dashboard"
-        description="Your PharmaCourse learning dashboard."
+        description="Your RemedacarePOS learning dashboard."
         path="/dashboard"
         noindex
       />

@@ -31,7 +31,7 @@ async function sendWhatsAppMessage(toNumber, pearlTitle, pearlContent) {
   let num = toNumber.replace(/\s+/g, "").replace(/^\+/, "")
   if (num.startsWith("0")) num = "254" + num.slice(1)
 
-  const body = `💊 *PharmaCourse Daily Pearl*\n\n*${pearlTitle}*\n\n${pearlContent}\n\n📖 Keep learning → pharmacourse.co.ke`
+  const body = `💊 *RemedacarePOS Daily Pearl*\n\n*${pearlTitle}*\n\n${pearlContent}\n\n📖 Keep learning → pharmacourse.co.ke`
 
   const res = await fetch(
     `https://graph.facebook.com/v19.0/${WA_PHONE_ID}/messages`,
@@ -185,7 +185,7 @@ export default function WhatsAppSettings() {
           <div style={{ display: "flex", alignItems: "center", gap: ".75rem", marginBottom: "1rem" }}>
             <div style={{ width: 40, height: 40, borderRadius: "50%", background: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.2rem" }}>💊</div>
             <div>
-              <p style={{ fontWeight: 700, fontSize: ".9rem", margin: 0 }}>PharmaCourse</p>
+              <p style={{ fontWeight: 700, fontSize: ".9rem", margin: 0 }}>RemedacarePOS</p>
               <p style={{ fontSize: ".75rem", opacity: .7, margin: 0 }}>Daily Clinical Pearl</p>
             </div>
           </div>

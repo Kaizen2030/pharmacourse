@@ -68,7 +68,7 @@ export default function CompleteProfile() {
       <div className="auth-wrap">
         <SEO
           title="Complete Profile"
-          description="Complete your PharmaCourse profile details."
+          description="Complete your RemedacarePOS profile details."
           path="/complete-profile"
           noindex
         />
@@ -84,13 +84,13 @@ export default function CompleteProfile() {
     <div className="auth-wrap">
       <SEO
         title="Complete Profile"
-        description="Complete your PharmaCourse profile details."
+        description="Complete your RemedacarePOS profile details."
         path="/complete-profile"
         noindex
       />
 
       <div className="auth-card">
-        <div className="auth-logo">PharmaCourse</div>
+        <div className="auth-logo">RemedacarePOS</div>
         <h1>Complete your profile</h1>
         <p>Confirm the name and professional ID that should appear on your certificate.</p>
 

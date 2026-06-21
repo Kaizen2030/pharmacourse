@@ -55,7 +55,7 @@ export default function VerifyCertificate() {
     <div className="page" style={{ maxWidth: 900 }}>
       <SEO
         title="Certificate Verification"
-        description="Verify a PharmaCourse certificate using its certificate ID."
+        description="Verify a RemedacarePOS certificate using its certificate ID."
         path={`/verify/${certificateId || ""}`}
         noindex
       />
@@ -85,12 +85,12 @@ export default function VerifyCertificate() {
               marginBottom: "1rem",
             }}
           >
-            <img src="/favicon.svg" alt="PharmaCourse logo" style={{ width: 28, height: 28, borderRadius: 8 }} />
-            PharmaCourse Verification
+            <img src="/favicon.svg" alt="RemedacarePOS logo" style={{ width: 28, height: 28, borderRadius: 8 }} />
+            RemedacarePOS Verification
           </div>
           <h1 style={{ margin: "0 0 0.65rem", fontSize: "2.2rem" }}>Certificate Verification</h1>
           <p style={{ margin: 0, color: "var(--text-500)" }}>
-            Confirm whether this PharmaCourse certificate is genuine.
+            Confirm whether this RemedacarePOS certificate is genuine.
           </p>
         </div>
 
@@ -190,7 +190,7 @@ export default function VerifyCertificate() {
             </div>
 
             <div style={{ textAlign: "center", color: "var(--text-500)" }}>
-              This certificate record matches a valid course completion in PharmaCourse.
+              This certificate record matches a valid course completion in RemedacarePOS.
             </div>
           </div>
         ) : (
@@ -219,7 +219,7 @@ export default function VerifyCertificate() {
         )}
 
         <div style={{ marginTop: "2rem", textAlign: "center" }}>
-          <Link to="/" className="btn btn-outline">Back to PharmaCourse</Link>
+          <Link to="/" className="btn btn-outline">Back to RemedacarePOS</Link>
         </div>
       </div>
     </div>

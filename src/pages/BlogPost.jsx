@@ -385,7 +385,7 @@ export default function BlogPost() {
       `${profile?.full_name || ""}`.trim() ||
       `${user.user_metadata?.full_name || ""}`.trim() ||
       `${user.email || ""}`.split("@")[0] ||
-      "PharmaCourse Member"
+      "RemedacarePOS Member"
 
     setCommentSaving(true)
     setCommentError("")
@@ -467,7 +467,7 @@ export default function BlogPost() {
   }
 
   const categoryLabel = getBlogCategoryLabel(post.category)
-  const authorName = post.author_name || "PharmaCourse Team"
+  const authorName = post.author_name || "RemedacarePOS Team"
   const authorTitle = post.author_title || "Editorial Team"
   const contentSections = getPopulatedBlogSections(post.content_sections)
   const primarySiteRecommendation = getPrimarySiteRecommendation(post)
@@ -693,7 +693,7 @@ export default function BlogPost() {
           <div className="blog-recommendations-header">
             <span className="blog-filter-label">Continue Exploring</span>
             <h2>Further reading and practical resources</h2>
-            <p>Selected resources related to this topic from PharmaCourse.</p>
+            <p>Selected resources related to this topic from RemedacarePOS.</p>
           </div>
 
           <div className="blog-recommendation-strip" role="list" aria-label="Recommended resources">

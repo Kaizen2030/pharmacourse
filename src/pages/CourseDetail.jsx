@@ -171,7 +171,7 @@ export default function CourseDetail() {
             "Pharmacy course with practical lessons and a certificate.",
           provider: {
             "@type": "Organization",
-            name: "PharmaCourse",
+            name: "RemedacarePOS",
             sameAs: "https://www.pharmacourse.co.ke",
           },
         }}

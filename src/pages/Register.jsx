@@ -65,13 +65,13 @@ export default function Register() {
     <div className="auth-wrap">
       <SEO
         title="Register"
-        description="Create your PharmaCourse account to start pharmacy learning and earn certificates."
+        description="Create your RemedacarePOS account to start pharmacy learning and earn certificates."
         path="/register"
         noindex
       />
 
       <div className="auth-card">
-        <div className="auth-logo">PharmaCourse</div>
+        <div className="auth-logo">RemedacarePOS</div>
         <h1>Create your account</h1>
         <p>Free access to pharmacy CPD courses</p>
 

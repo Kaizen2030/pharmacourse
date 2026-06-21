@@ -42,7 +42,7 @@ const DEFAULT_SECTIONS = {
     enabled: true,
     order: 1,
     heading: "One connected ecosystem for pharmacy, telepharmacy, and hospital care.",
-    subheading: "PharmaCourse brings together professional education, RemedacarePOS for modern pharmacy operations, and RemedacareHMS for hospital-wide clinical and financial workflows.",
+    subheading: "RemedacarePOS brings together professional education, RemedacarePOS for modern pharmacy operations, and RemedacareHMS for hospital-wide clinical and financial workflows.",
     badge_text: "Complete Pharmacy Ecosystem",
     primary_btn_text: "Book Platform Demo",
     primary_btn_url: WHATSAPP,
@@ -113,7 +113,7 @@ const DEFAULT_SECTIONS = {
     enabled: true,
     order: 10,
     heading: "Ready to modernise the way your team delivers care?",
-    subheading: "Join PharmaCourse for learning, or book a live walkthrough of RemedacarePOS and RemedacareHMS in action.",
+    subheading: "Join RemedacarePOS for learning, or book a live walkthrough of RemedacarePOS and RemedacareHMS in action.",
     primary_btn_text: "Start Learning Free",
     primary_btn_url: "/register",
     secondary_btn_text: "Book a Demo",
@@ -264,7 +264,7 @@ const ProductMockup = ({ type, videoUrl, imageSrc, imageAlt }) => {
     pharmaCourse: {
       color: "#0F6E56",
       bg: "#eef8f4",
-      title: "PharmaCourse",
+      title: "RemedacarePOS",
       rows: ["Module 3: Drug Interactions", "Quiz score: 8/10", "Certificate progress: 72%"],
       badge: "CPD ready",
       total: "Progress: 72%",
@@ -517,12 +517,12 @@ export default function Home() {
     <div className="home">
       <SEO
         title="Pharmacy CPD Courses, RemedacarePOS & RemedacareHMS Kenya"
-        description="PharmaCourse helps Kenyan pharmacy professionals learn practical skills, earn certificates, and explore RemedacarePOS and RemedacareHMS software."
+        description="RemedacarePOS helps Kenyan pharmacy professionals learn practical skills, earn certificates, and explore RemedacarePOS and RemedacareHMS software."
         path="/"
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "Organization",
-          name: "PharmaCourse",
+          name: "RemedacarePOS",
           url: SITE_URL,
           logo: `${SITE_URL}/favicon.svg`,
           description:
@@ -575,9 +575,9 @@ export default function Home() {
 
                       <div className="service-showcase">
                         <div className="service-icon pharmacourse">
-                          <img src="/favicon.svg" alt="PharmaCourse logo" className="service-icon-mark" />
+                          <img src="/favicon.svg" alt="RemedacarePOS logo" className="service-icon-mark" />
                         </div>
-                        <h3>PharmaCourse</h3>
+                        <h3>RemedacarePOS</h3>
                         <p>Professional CPD courses with certificates to help pharmacy teams keep sharpening practical skills.</p>
                         <Link to="/courses" className="service-link">Explore Courses <ChevronRight size={16} /></Link>
                       </div>
@@ -589,7 +589,7 @@ export default function Home() {
                           type="pharmaCourse"
                           videoUrl={config.video_url}
                           imageSrc={config.image_url || pharmacourseHeroVisual}
-                          imageAlt="PharmaCourse My Learning dashboard showing learner progress, enrolled courses and certificates"
+                          imageAlt="RemedacarePOS My Learning dashboard showing learner progress, enrolled courses and certificates"
                         />
                       </div>
 
@@ -641,11 +641,11 @@ export default function Home() {
                       <div className="platform-card">
                         <img
                           src="/favicon.svg"
-                          alt="PharmaCourse logo"
+                          alt="RemedacarePOS logo"
                           style={{ width: 32, height: 32, objectFit: "contain" }}
                         />
                         <span className="platform-status">Live Now</span>
-                        <h3>PharmaCourse</h3>
+                        <h3>RemedacarePOS</h3>
                         <p>Online CPD learning platform with self-paced courses, certificates, and clinical case simulations.</p>
                         <Link to="/courses" className="platform-link">Explore courses <ChevronRight size={16} /></Link>
                       </div>
@@ -902,7 +902,7 @@ export default function Home() {
                       <div className="section-header">
                         <span className="section-badge">Latest from the Blog</span>
                         <h2>Fresh ideas for pharmacy practice and operations</h2>
-                        <p>Read quick, practical articles from the PharmaCourse team and contributors.</p>
+                        <p>Read quick, practical articles from the RemedacarePOS team and contributors.</p>
                       </div>
 
                       <div className="mobile-carousel-shell">
@@ -944,7 +944,7 @@ export default function Home() {
                                       likeCount={post.like_count}
                                     />
                                     <div className="blog-preview-footer">
-                                      <span>{post.author_name || "PharmaCourse Team"}</span>
+                                      <span>{post.author_name || "RemedacarePOS Team"}</span>
                                       <span>Read more</span>
                                     </div>
                                   </div>

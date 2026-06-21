@@ -6,7 +6,7 @@ export default function Footer() {
       <div className="container-wide site-footer-shell">
         <div className="site-footer-top">
           <div className="site-footer-brand">
-            <span className="footer-logo">PharmaCourse</span>
+            <span className="footer-logo">RemedacarePOS</span>
             <p className="site-footer-copy">
               Learning, pharmacy operations, and hospital workflows connected for modern Kenyan healthcare teams.
             </p>
@@ -48,7 +48,7 @@ export default function Footer() {
         </div>
 
         <div className="site-footer-bottom">
-          <span className="footer-copy">Copyright 2026 PharmaCourse. All rights reserved.</span>
+          <span className="footer-copy">Copyright 2026 RemedacarePOS. All rights reserved.</span>
           <span className="footer-copy">Built for pharmacy, clinic, and hospital teams across Kenya.</span>
         </div>
       </div>

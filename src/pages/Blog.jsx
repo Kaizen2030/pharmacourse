@@ -39,7 +39,7 @@ function BlogCard({ post }) {
         />
 
         <div className="blog-card-footer">
-          <span className="blog-card-author">{post.author_name || "PharmaCourse Team"}</span>
+          <span className="blog-card-author">{post.author_name || "RemedacarePOS Team"}</span>
           <span>Read article</span>
         </div>
       </div>
@@ -177,7 +177,7 @@ export default function Blog() {
     <div className="page blog-page">
       <SEO
         title="Blog"
-        description="Insights, practical guidance, and pharmacy operations articles from the PharmaCourse team."
+        description="Insights, practical guidance, and pharmacy operations articles from the RemedacarePOS team."
         path="/blog"
         type="website"
       />
@@ -186,7 +186,7 @@ export default function Blog() {
         <div className="card blog-toolbar">
           <div className="blog-toolbar-head">
             <div className="blog-toolbar-copy">
-              <h1>PharmaCourse Blog</h1>
+              <h1>RemedacarePOS Blog</h1>
               <p>Practical insights on pharmacy practice, healthcare operations, and professional learning.</p>
             </div>
           </div>

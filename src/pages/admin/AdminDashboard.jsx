@@ -2090,7 +2090,7 @@ function BlogRichTextEditor({ value, onChange }) {
 
 function BlogDraftPreview({ form }) {
   const normalizedCategory = normalizeBlogCategory(form.category) || "General"
-  const authorName = `${form.author_name || ""}`.trim() || "PharmaCourse Team"
+  const authorName = `${form.author_name || ""}`.trim() || "RemedacarePOS Team"
   const authorTitle = `${form.author_title || ""}`.trim() || "Editorial Team"
   const contentSections = getPopulatedBlogSections(form.content_sections)
   const previewDate = form.is_published && form.published_at ? formatBlogDate(form.published_at) : "Draft preview"
@@ -4184,7 +4184,7 @@ function LeaderboardTab() {
                   </div>
 
                   <div className="instructor-cell">
-                    {entry.display_name || "PharmaCourse Learner"}
+                    {entry.display_name || "RemedacarePOS Learner"}
                   </div>
 
                   <div className="instructor-cell">
@@ -5236,7 +5236,7 @@ function CertificateSettingsTab() {
                   style={inputStyle}
                   value={form.left_vertical_text || ""}
                   onChange={(event) => setForm({ ...form, left_vertical_text: event.target.value })}
-                  placeholder="PharmaCourse Kenya"
+                  placeholder="RemedacarePOS Kenya"
                 />
               </div>
               <div>
@@ -5270,7 +5270,7 @@ function CertificateSettingsTab() {
                     style={inputStyle}
                     value={form.signature_role || ""}
                     onChange={(event) => setForm({ ...form, signature_role: event.target.value })}
-                    placeholder="Director, PharmaCourse"
+                    placeholder="Director, RemedacarePOS"
                   />
                 </div>
               </div>

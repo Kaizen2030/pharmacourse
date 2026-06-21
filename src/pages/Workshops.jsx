@@ -245,7 +245,7 @@ export default function Workshops() {
     <div className="page workshops-page">
       <SEO
         title="Live Workshops & Webinars"
-        description="Join live pharmacy workshops and webinars, register quickly on WhatsApp, and revisit past sessions from PharmaCourse."
+        description="Join live pharmacy workshops and webinars, register quickly on WhatsApp, and revisit past sessions from RemedacarePOS."
         path="/workshops"
         type="website"
       />

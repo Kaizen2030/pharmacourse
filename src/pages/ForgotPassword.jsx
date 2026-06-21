@@ -33,13 +33,13 @@ export default function ForgotPassword() {
     <div className="auth-wrap">
       <SEO
         title="Forgot Password"
-        description="Request a secure password reset link for your PharmaCourse account."
+        description="Request a secure password reset link for your RemedacarePOS account."
         path="/forgot-password"
         noindex
       />
 
       <div className="auth-card">
-        <div className="auth-logo">PharmaCourse</div>
+        <div className="auth-logo">RemedacarePOS</div>
         <h1>Reset your password</h1>
         <p>Enter your email and we will send you a secure reset link.</p>
 
