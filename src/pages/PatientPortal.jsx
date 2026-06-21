@@ -357,7 +357,7 @@ export default function PatientPortal() {
   }
 
   function getNavigationBranch() {
-    return selectedMainPharmacy || mainPharmacies[0] || branchCards[0] || null
+    return selectedMainPharmacy || null
   }
 
   function getAuthPromptCopy(actionId) {
@@ -520,7 +520,7 @@ export default function PatientPortal() {
           <p className="portal-empty-desc">
             {branch
               ? `We will keep ${branch.name} attached after login so your request reaches the exact branch you chose.`
-              : "Choose a pharmacy from the directory first so your request stays branch-linked after login."}
+              : "Choose a pharmacy or branch from the directory first so your request stays branch-linked after login."}
           </p>
           <div className="portal-inline-actions" style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem" }}>
             <Link to={loginPath} className="portal-directory-button primary">
@@ -1495,7 +1495,7 @@ export default function PatientPortal() {
               <span className="portal-directory-chip branch">Branch first</span>
               <strong>{authPrompt.branch?.name || "Choose your pharmacy or branch"}</strong>
               <p>
-                {authPrompt.branch?.location || "Pick the branch on the home screen, then sign in so your request reaches the right pharmacy."}
+                {authPrompt.branch?.location || "Pick the branch on the home screen first, then sign in so your request reaches the right pharmacy."}
               </p>
             </div>
 
@@ -1507,7 +1507,16 @@ export default function PatientPortal() {
               >
                 {authPrompt.ctaLabel || "Sign in now"}
               </Link>
-              <button type="button" className="portal-directory-button secondary" onClick={() => { closeAuthPrompt(); setActiveTab("home") }}>
+              <button
+                type="button"
+                className="portal-directory-button secondary"
+                onClick={() => {
+                  closeAuthPrompt()
+                  setSelectedMainPharmacyId("")
+                  setBranchPage(0)
+                  setActiveTab("home")
+                }}
+              >
                 Choose branch
               </button>
             </div>
