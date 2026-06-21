@@ -32,6 +32,25 @@ import { clearPatientPortalProfileDraft, getPatientPortalProfileDraft } from "..
 import { buildSupabaseAccessBlockedCopy, isSupabaseAccessBlocked } from "../lib/supabaseAccess"
 import "./PatientPortal.css"
 
+function computeMaternalEdd(lmpDate) {
+  if (!lmpDate) return ""
+  const date = new Date(lmpDate)
+  date.setDate(date.getDate() + 280)
+  return date.toISOString().slice(0, 10)
+}
+
+function computeMaternalGestationWeeks(lmpDate) {
+  if (!lmpDate) return null
+  const diffMs = Date.now() - new Date(lmpDate).getTime()
+  if (!Number.isFinite(diffMs) || diffMs < 0) return null
+  return Math.floor(diffMs / (1000 * 60 * 60 * 24 * 7))
+}
+
+function formatMaternalDate(value) {
+  if (!value) return "-"
+  return new Date(value).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+}
+
 export default function PatientPortal() {
   const { isAuthenticated, loading: authLoading, signOut } = usePatientPortalAuth()
   const [searchParams] = useSearchParams()
@@ -86,6 +105,7 @@ export default function PatientPortal() {
     lmpDate: "",
     gravida: "",
     parity: "",
+    gestationByUltrasound: "",
     notes: "",
   })
   const [deliveryForm, setDeliveryForm] = useState({
@@ -1219,9 +1239,31 @@ export default function PatientPortal() {
                 onChange={(e) => setMaternalForm({ ...maternalForm, lmpDate: e.target.value })} />
             </div>
             <div className="portal-form-group">
-              <label className="portal-label">Gravida / Parity</label>
-              <input className="portal-input" placeholder="e.g. G2 P1" value={maternalForm.gravida}
-                onChange={(e) => setMaternalForm({ ...maternalForm, gravida: e.target.value })} />
+              <label className="portal-label">EDD</label>
+              <input className="portal-input" value={maternalForm.lmpDate ? formatMaternalDate(computeMaternalEdd(maternalForm.lmpDate)) : "-"} disabled readOnly />
+            </div>
+          </div>
+          <div className="portal-form-row">
+            <div className="portal-form-group">
+              <label className="portal-label">Gravida</label>
+              <input className="portal-input" placeholder="e.g. 2" value={maternalForm.gravida}
+                onChange={(e) => setMaternalForm({ ...maternalForm, gravida: e.target.value.replace(/[^\d]/g, "") })} />
+            </div>
+            <div className="portal-form-group">
+              <label className="portal-label">Parity</label>
+              <input className="portal-input" placeholder="e.g. 1" value={maternalForm.parity}
+                onChange={(e) => setMaternalForm({ ...maternalForm, parity: e.target.value.replace(/[^\d]/g, "") })} />
+            </div>
+          </div>
+          <div className="portal-form-row">
+            <div className="portal-form-group">
+              <label className="portal-label">Gestation by Date</label>
+              <input className="portal-input" value={maternalForm.lmpDate ? `${computeMaternalGestationWeeks(maternalForm.lmpDate) || 0} weeks` : "-"} disabled readOnly />
+            </div>
+            <div className="portal-form-group">
+              <label className="portal-label">Gestation by Ultrasound (weeks)</label>
+              <input className="portal-input" placeholder="e.g. 12.4" value={maternalForm.gestationByUltrasound}
+                onChange={(e) => setMaternalForm({ ...maternalForm, gestationByUltrasound: e.target.value.replace(/[^\d.]/g, "") })} />
             </div>
           </div>
           <div className="portal-form-group">
