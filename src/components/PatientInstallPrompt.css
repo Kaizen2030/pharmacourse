@@ -172,6 +172,13 @@
   line-height: 1.35;
 }
 
+.patient-install-note {
+  margin-top: 0.55rem;
+  font-size: 0.7rem;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.84);
+}
+
 @keyframes patientInstallRise {
   from {
     transform: translateY(20px);

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { Download, Smartphone, X } from "lucide-react"
-import { consumeDeferredInstallPrompt, subscribeToInstallPrompt } from "../lib/pwaInstallPrompt"
+import { consumeDeferredInstallPrompt, getDeferredInstallPrompt, subscribeToInstallPrompt } from "../lib/pwaInstallPrompt"
 import "./PatientInstallPrompt.css"
 
 function isStandaloneDisplay() {
@@ -17,12 +17,13 @@ function isIosSafari() {
 }
 
 export default function PatientInstallPrompt() {
-  const [deferredPrompt, setDeferredPrompt] = useState(null)
+  const [deferredPrompt, setDeferredPrompt] = useState(() => getDeferredInstallPrompt())
   const [isVisible, setIsVisible] = useState(true)
   const [isInstalling, setIsInstalling] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
   const [isStandalone, setIsStandalone] = useState(false)
   const [isIos, setIsIos] = useState(false)
+  const [installNote, setInstallNote] = useState("")
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined
@@ -93,10 +94,12 @@ export default function PatientInstallPrompt() {
     if (!deferredPrompt) {
       setShowHelp(true)
       setIsVisible(true)
+      setInstallNote("Your browser is not showing the native install prompt right now.")
       return
     }
 
     setIsInstalling(true)
+    setInstallNote("Opening the browser install prompt...")
     try {
       const prompt = consumeDeferredInstallPrompt() || deferredPrompt
       await prompt.prompt()
@@ -104,11 +107,15 @@ export default function PatientInstallPrompt() {
       if (choice?.outcome === "accepted") {
         setIsVisible(false)
         setShowHelp(false)
+        setInstallNote("Installed successfully.")
+      } else {
+        setInstallNote("Install prompt was closed. Tap Install app again to retry.")
       }
     } catch (error) {
       console.error("Install prompt error:", error)
       setShowHelp(true)
       setIsVisible(true)
+      setInstallNote("The browser did not open the native install prompt.")
     } finally {
       setDeferredPrompt(null)
       setIsInstalling(false)
@@ -172,6 +179,8 @@ export default function PatientInstallPrompt() {
             </div>
           </div>
         )}
+
+        {installNote ? <div className="patient-install-note">{installNote}</div> : null}
       </section>
     </div>
   )
