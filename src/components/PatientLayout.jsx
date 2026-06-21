@@ -29,12 +29,25 @@ export function PatientPortalStyles() {
   return (
     <style>{`
       .patient-shell {
+        position: relative;
         min-height: 100dvh;
         background:
           radial-gradient(circle at top left, rgba(15, 110, 86, 0.16), transparent 28%),
           radial-gradient(circle at bottom right, rgba(15, 110, 86, 0.1), transparent 26%),
           linear-gradient(180deg, #f4fbf8 0%, #eff7f4 100%);
         color: #163329;
+      }
+
+      .patient-shell::after {
+        content: "";
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 7.5rem;
+        background: linear-gradient(180deg, rgba(245, 250, 247, 0), rgba(245, 250, 247, 0.9) 34%, rgba(245, 250, 247, 0.99));
+        pointer-events: none;
+        z-index: 18;
       }
 
       .patient-missing,
@@ -134,7 +147,7 @@ export function PatientPortalStyles() {
       .patient-main {
         width: min(100%, 760px);
         margin: 0 auto;
-        padding: 1rem 1rem 8.8rem;
+        padding: 1rem 1rem 9.8rem;
       }
 
       .patient-branch-lock {
@@ -777,7 +790,7 @@ export function PatientPortalStyles() {
         }
 
         .patient-main {
-          padding: 0.85rem 0.8rem 9.4rem;
+          padding: 0.85rem 0.8rem 10.6rem;
         }
 
         .patient-card {
@@ -828,6 +841,10 @@ export function PatientPortalStyles() {
       .patient-shell {
         background:
           linear-gradient(180deg, #f5faf7 0%, #edf6f2 100%);
+      }
+
+      .patient-shell::after {
+        height: 8.6rem;
       }
 
       .patient-topbar {
