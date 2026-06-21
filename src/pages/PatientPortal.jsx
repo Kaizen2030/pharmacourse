@@ -176,6 +176,19 @@ export default function PatientPortal() {
     return () => mediaQuery.removeListener(handleChange)
   }, [])
 
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return undefined
+    }
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = isMobileMenuOpen ? "hidden" : previousOverflow || ""
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [isMobileMenuOpen])
+
   const pharmacyStats = useMemo(() => {
     const branchCountByParent = new Map()
 

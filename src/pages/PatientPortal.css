@@ -1381,21 +1381,21 @@
             top: 0;
             right: 0;
             bottom: 0;
-            width: min(84vw, 330px);
+            width: 100vw;
             display: flex;
             flex-direction: column;
             gap: 0.35rem;
-            padding: 4.25rem 0.9rem 1rem;
-            border-left: 1px solid rgba(15, 110, 86, 0.1);
-            border-radius: 24px 0 0 24px;
+            padding: 4.25rem 1rem 1rem;
+            border-left: none;
+            border-radius: 0;
             background: rgba(248, 253, 250, 0.98);
-            box-shadow: -18px 0 42px rgba(15, 42, 32, 0.12);
-            transform: translateX(102%);
+            box-shadow: none;
+            transform: translateX(100%);
             opacity: 0;
             visibility: hidden;
             pointer-events: none;
             transition: transform 0.22s ease, opacity 0.18s ease, visibility 0s linear 0.22s;
-            z-index: 60;
+            z-index: 70;
             overflow-y: auto;
           }
 
@@ -1414,7 +1414,7 @@
             border: none;
             background: rgba(8, 25, 19, 0.34);
             backdrop-filter: blur(2px);
-            z-index: 55;
+            z-index: 65;
           }
 
           .portal-nav-item {
