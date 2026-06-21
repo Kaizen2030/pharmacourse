@@ -434,6 +434,7 @@ export default function PatientTrack() {
   const sortedPrescriptions = useMemo(() => sortNewestFirst(prescriptions), [prescriptions])
   const receiptEntries = useMemo(() => sortNewestFirst(buildReceiptEntries(sortedPrescriptions), (entry) => entry.fulfilledAt), [sortedPrescriptions])
   const sortedAppointments = useMemo(() => sortNewestFirst(appointments, (appointment) => appointment?.updated_at || appointment?.created_at || appointment?.slot_datetime || ""), [appointments])
+  const unreadNotifications = useMemo(() => sortedNotifications.filter((notification) => !notification.read), [sortedNotifications])
   const sortedBranchNotices = useMemo(
     () =>
       sortNewestFirst(
@@ -470,21 +471,27 @@ export default function PatientTrack() {
       }
     })
   ), [sortedDeliveries, sortedNotifications, sortedPrescriptions])
-  const selectedProgressCard = progressCards.find((card) => String(card.request.id) === String(selectedRequestId)) || null
+  const sortedProgressCards = useMemo(() => sortNewestFirst(progressCards, (card) => card.lastUpdatedAt || card.request.created_at), [progressCards])
+  const selectedProgressCard = sortedProgressCards.find((card) => String(card.request.id) === String(selectedRequestId)) || null
   const selectedRequest = selectedProgressCard?.request || null
-  const visibleProgressCards = progressCards.slice(0, visibleCounts.notifications)
+  const visibleProgressCards = sortedProgressCards.slice(0, visibleCounts.notifications)
   const activeDeliveries = useMemo(
     () => sortedDeliveries.filter((delivery) => !["delivered", "cancelled"].includes(String(delivery?.status || "").trim().toLowerCase())),
     [sortedDeliveries],
   )
-  const visibleDeliveries = activeDeliveries.slice(0, visibleCounts.deliveries)
+  const latestDeliveries = useMemo(() => sortNewestFirst(activeDeliveries, (delivery) => delivery?.updated_at || delivery?.created_at || ""), [activeDeliveries])
+  const visibleDeliveries = latestDeliveries.slice(0, visibleCounts.deliveries)
   const openPrescriptions = useMemo(
     () => sortedPrescriptions.filter((request) => !completedReceiptRequestIds.has(String(request.id))),
     [completedReceiptRequestIds, sortedPrescriptions],
   )
-  const visiblePrescriptions = openPrescriptions.slice(0, visibleCounts.prescriptions)
+  const sortedOpenPrescriptions = useMemo(
+    () => sortNewestFirst(openPrescriptions, (request) => request?.updated_at || request?.created_at || request?.dispensed_at || ""),
+    [openPrescriptions],
+  )
+  const visiblePrescriptions = sortedOpenPrescriptions.slice(0, visibleCounts.prescriptions)
   const visibleReceipts = receiptEntries.slice(0, visibleCounts.receipts)
-  const visibleAppointments = sortedAppointments.slice(0, visibleCounts.appointments)
+  const visibleAppointments = sortNewestFirst(sortedAppointments, (appointment) => appointment?.updated_at || appointment?.created_at || appointment?.slot_datetime || "").slice(0, visibleCounts.appointments)
   const standaloneBranchNotices = sortedBranchNotices
   const visibleStandaloneBranchNotices = standaloneBranchNotices.slice(0, visibleCounts.notifications)
   const latestNotification = sortedNotifications[0] || null
@@ -533,11 +540,11 @@ export default function PatientTrack() {
     }
 
     return null
-  }, [activeDeliveries, latestNotification, progressCards, sortedAppointments, unreadCount])
+  }, [latestDeliveries, latestNotification, sortedAppointments, sortedProgressCards, unreadCount])
   const trackSectionCards = useMemo(() => {
-    const latestPrescription = progressCards[0]
-    const latestDelivery = activeDeliveries[0]
-    const latestAppointment = sortedAppointments[0]
+    const latestPrescription = sortedProgressCards[0]
+    const latestDelivery = latestDeliveries[0]
+    const latestAppointment = visibleAppointments[0]
     const latestReceipt = receiptEntries[0]
     const latestNotice = standaloneBranchNotices[0]
 
@@ -545,7 +552,7 @@ export default function PatientTrack() {
       {
         id: "prescriptions",
         label: "Prescriptions",
-        count: openPrescriptions.length,
+        count: sortedProgressCards.length,
         latest: latestPrescription ? `${latestPrescription.progressState.label} · ${formatRelativeTime(latestPrescription.lastUpdatedAt || latestPrescription.request.created_at)}` : "No active requests",
         icon: ClipboardList,
       },
@@ -573,12 +580,12 @@ export default function PatientTrack() {
       {
         id: "notices",
         label: "Branch notices",
-        count: standaloneBranchNotices.length,
+        count: unreadNotifications.length,
         latest: latestNotice ? `${getNotificationTypeLabel(latestNotice.type)} · ${formatRelativeTime(latestNotice.created_at)}` : "No extra notices",
         icon: BellRing,
       },
     ]
-  }, [activeDeliveries, openPrescriptions.length, progressCards, receiptEntries, sortedAppointments, standaloneBranchNotices, visibleAppointments.length])
+  }, [latestDeliveries, receiptEntries, sortedAppointments, sortedProgressCards, standaloneBranchNotices, unreadCount, visibleAppointments])
   const trackSectionLabel = useMemo(() => {
     const currentCard = trackSectionCards.find((card) => card.id === activeTrackSection)
     return currentCard?.label || "Updates"
