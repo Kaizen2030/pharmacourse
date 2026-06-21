@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, createElement, useContext, useEffect, useState } from "react"
-import { Link, NavLink, Outlet, useSearchParams } from "react-router-dom"
+import { Link, NavLink, Outlet, useLocation, useSearchParams } from "react-router-dom"
 import { Building2, CalendarDays, ClipboardList, House, PackageSearch } from "lucide-react"
 import { fetchPatientPortalPharmacyById } from "../lib/patientPortalDirectory"
 import { buildSupabaseAccessBlockedCopy, isSupabaseAccessBlocked } from "../lib/supabaseAccess"
@@ -1601,6 +1601,7 @@ function buildBranchLocationLabel(row = {}, branchLocationParam = "") {
 }
 
 export default function PatientLayout() {
+  const location = useLocation()
   const [searchParams] = useSearchParams()
   const pharmacyId = searchParams.get("pharmacy")?.trim() || ""
   const branchNameParam = searchParams.get("branch_name")?.trim() || ""
@@ -1685,6 +1686,40 @@ export default function PatientLayout() {
 
     const query = params.toString()
     return query ? `${pathname}?${query}` : pathname
+  }
+
+  if (!pharmacyId && location.pathname !== "/patient") {
+    return (
+      <div className="patient-shell">
+        <PatientPortalStyles />
+        <div className="patient-missing">
+          <div className="patient-missing-card">
+            <Building2 />
+            <h1>Choose a pharmacy first</h1>
+            <p>
+              Registration, prescriptions, appointments, maternal care, and tracking all need a branch selected first.
+              Go back to the patient portal and pick the pharmacy you want before you continue.
+            </p>
+            <div style={{ display: "grid", gap: "0.75rem", marginTop: "1.25rem" }}>
+              <Link
+                to="/patient-portal"
+                className="patient-button"
+                style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", justifyContent: "center" }}
+              >
+                Choose a pharmacy
+              </Link>
+              <Link
+                to="/patient"
+                className="patient-button-secondary"
+                style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", justifyContent: "center" }}
+              >
+                Back to patient home
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (!pharmacyId) {
