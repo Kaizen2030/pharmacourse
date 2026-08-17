@@ -1438,6 +1438,9 @@ export default function PatientPortal() {
 
 
           <div className="portal-header-actions">
+            <Link className="portal-login-link portal-pos-link" to="/pos">
+              Open POS
+            </Link>
             <Link className="portal-login-link" to={buildPatientLoginPath(getNavigationBranch())}>
               Sign in
             </Link>

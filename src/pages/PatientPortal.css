@@ -155,6 +155,16 @@
           background: rgba(15, 110, 86, 0.12);
         }
 
+        .portal-pos-link {
+          background: #0f6e56;
+          border-color: #0f6e56;
+          color: #fff;
+        }
+
+        .portal-pos-link:hover {
+          background: #0a5a46;
+        }
+
         .portal-notification-btn {
           position: relative;
           display: inline-flex;
