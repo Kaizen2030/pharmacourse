@@ -1,4 +1,6 @@
 User-agent: *
 Allow: /
+Disallow: /pos/
+Disallow: /patient/portal/operations-preview
 
 Sitemap: https://www.pharmacourse.co.ke/sitemap.xml

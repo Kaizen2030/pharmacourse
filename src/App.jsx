@@ -28,6 +28,7 @@ import PatientRegister from "./pages/patient/PatientRegister"
 import PatientResetPassword from "./pages/patient/PatientResetPassword"
 import PatientTrack from "./pages/patient/PatientTrack"
 import PatientPortal from "./pages/PatientPortal"
+import PatientPortalOperations from "./pages/PatientPortalOperations"
 import PatientInstallPrompt from "./components/PatientInstallPrompt"
 import PatientPortalFlyer from "./pages/PatientPortalFlyer"
 import PharmacyOS from "./pages/Pharmacyos"
@@ -139,6 +140,8 @@ function AppShell() {
         <Route path="/admin/simulations" element={<SimulationAdmin />} />
 
         <Route path="/patient-portal" element={<PatientPortal />} />
+        {/* Deliberately unlinked preview route. POS staff authentication still applies inside the app. */}
+        <Route path="/patient/portal/operations-preview" element={<PatientPortalOperations />} />
         <Route path="/patient-flyer" element={<PatientPortalFlyer />} />
         <Route path="/activate/remedacarepos" element={<DesktopAccountActivate app="remedacarepos" />} />
         <Route path="/activate/pharmacyos" element={<DesktopAccountActivate app="remedacarepos" />} />
