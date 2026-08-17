@@ -1,4 +1,8 @@
 {
+  "redirects": [
+    { "source": "/pos", "destination": "/pos/index.html", "permanent": false },
+    { "source": "/POS", "destination": "/pos/index.html", "permanent": false }
+  ],
   "rewrites": [
     { "source": "/pos", "destination": "/pos/index.html" },
     { "source": "/pos/", "destination": "/pos/index.html" },
