@@ -100,9 +100,10 @@ function MediaProtection() {
 
 function AppShell() {
   const location = useLocation()
-  const isPosRoute = location.pathname === "/pos"
-    || location.pathname.startsWith("/pos/")
-    || location.pathname === "/patient/portal/operations-preview"
+  const normalizedPath = location.pathname.toLowerCase()
+  const isPosRoute = normalizedPath === "/pos"
+    || normalizedPath.startsWith("/pos/")
+    || normalizedPath === "/patient/portal/operations-preview"
   const isPatientRoute = location.pathname.startsWith("/patient") || location.pathname === "/patient-portal" || isPosRoute
   const isFlyerRoute = location.pathname === "/patient-flyer"
   const isActivationRoute = location.pathname.startsWith("/activate/")
@@ -146,6 +147,7 @@ function AppShell() {
         {/* Deliberately unlinked preview route. POS staff authentication still applies inside the app. */}
         <Route path="/patient/portal/operations-preview" element={<PatientPortalOperations />} />
         <Route path="/pos" element={<PatientPortalOperations />} />
+        <Route path="/POS" element={<PatientPortalOperations />} />
         <Route path="/patient-flyer" element={<PatientPortalFlyer />} />
         <Route path="/activate/remedacarepos" element={<DesktopAccountActivate app="remedacarepos" />} />
         <Route path="/activate/pharmacyos" element={<DesktopAccountActivate app="remedacarepos" />} />
