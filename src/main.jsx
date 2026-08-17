@@ -5,9 +5,10 @@ import "./index.css"
 import App from "./App"
 
 const updateSW = registerSW({
-  immediate: false,
+  immediate: true,
   onNeedRefresh() {
-    console.info("PWA update ready. It will apply on the next reload.")
+    console.info("PWA update ready. Activating the latest portal shell.")
+    updateSW(true)
   },
   onOfflineReady() {
     console.info("Patient portal is ready for offline shell access.")
