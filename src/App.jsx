@@ -100,7 +100,7 @@ function MediaProtection() {
 
 function AppShell() {
   const location = useLocation()
-  const isPatientRoute = location.pathname.startsWith("/patient") || location.pathname === "/patient-portal"
+  const isPatientRoute = location.pathname.startsWith("/patient") || location.pathname === "/patient-portal" || location.pathname === "/pos"
   const isFlyerRoute = location.pathname === "/patient-flyer"
   const isActivationRoute = location.pathname.startsWith("/activate/")
 
@@ -142,6 +142,7 @@ function AppShell() {
         <Route path="/patient-portal" element={<PatientPortal />} />
         {/* Deliberately unlinked preview route. POS staff authentication still applies inside the app. */}
         <Route path="/patient/portal/operations-preview" element={<PatientPortalOperations />} />
+        <Route path="/pos" element={<PatientPortalOperations />} />
         <Route path="/patient-flyer" element={<PatientPortalFlyer />} />
         <Route path="/activate/remedacarepos" element={<DesktopAccountActivate app="remedacarepos" />} />
         <Route path="/activate/pharmacyos" element={<DesktopAccountActivate app="remedacarepos" />} />
