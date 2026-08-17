@@ -1,5 +1,7 @@
 {
   "rewrites": [
+    { "source": "/POS", "destination": "/pos/index.html" },
+    { "source": "/POS/", "destination": "/pos/index.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
