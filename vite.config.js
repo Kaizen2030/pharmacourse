@@ -85,6 +85,8 @@ export default defineConfig({
       },
       workbox: {
         navigateFallback: "/index.html",
+        navigateFallbackDenylist: [/^\/pos(?:\/|$)/i],
+        globIgnores: ["pos/**"],
         globPatterns: ["**/*.{js,css,html,png,svg,woff2}"],
       },
     }),
