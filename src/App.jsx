@@ -100,7 +100,10 @@ function MediaProtection() {
 
 function AppShell() {
   const location = useLocation()
-  const isPatientRoute = location.pathname.startsWith("/patient") || location.pathname === "/patient-portal" || location.pathname === "/pos"
+  const isPosRoute = location.pathname === "/pos"
+    || location.pathname.startsWith("/pos/")
+    || location.pathname === "/patient/portal/operations-preview"
+  const isPatientRoute = location.pathname.startsWith("/patient") || location.pathname === "/patient-portal" || isPosRoute
   const isFlyerRoute = location.pathname === "/patient-flyer"
   const isActivationRoute = location.pathname.startsWith("/activate/")
 
