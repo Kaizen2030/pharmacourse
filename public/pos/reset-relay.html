@@ -25,10 +25,11 @@
       text-align: center;
     }
     .logo {
-      font-size: 54px;
-      line-height: 1;
-      margin-bottom: 12px;
-      color: #0f6e56;
+      display: block;
+      width: 82px;
+      height: 82px;
+      object-fit: contain;
+      margin: 0 auto 12px;
     }
     h1 {
       margin: 0;
@@ -62,7 +63,7 @@
 </head>
 <body>
   <div class="card">
-    <div class="logo">Rx</div>
+    <img class="logo" src="./logo-mark.png" alt="RemedacarePOS logo" />
     <h1>RemedacarePOS</h1>
     <p>Opening the desktop app so you can continue your password reset securely.</p>
     <div id="status" class="status">Preparing reset session...</div>
