@@ -21,13 +21,12 @@ export function normalizeCertificateSettings(settings) {
     ...(settings || {}),
   }
 
-  // Keep certificates on the PharmaCourse brand when older saved settings
-  // still contain the previous RemedacarePOS certificate branding.
-  for (const key of ["organization_name", "organization_subtitle", "signature_role", "footer_text", "left_vertical_text"]) {
-    if (typeof normalized[key] === "string") {
-      normalized[key] = normalized[key].replace(/RemedacarePOS/gi, "PharmaCourse")
-    }
-  }
-
-  return normalized
+  // Keep old, already-issued certificates on the PharmaCourse brand when
+  // their saved settings still contain the previous RemedacarePOS wording.
+  return Object.fromEntries(
+    Object.entries(normalized).map(([key, value]) => [
+      key,
+      typeof value === "string" ? value.replace(/RemedacarePOS/gi, "PharmaCourse") : value,
+    ])
+  )
 }
