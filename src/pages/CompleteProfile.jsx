@@ -90,7 +90,7 @@ export default function CompleteProfile() {
       />
 
       <div className="auth-card">
-        <div className="auth-logo">RemedacarePOS</div>
+        <div className="auth-logo">Pharmacourse</div>
         <h1>Complete your profile</h1>
         <p>Confirm the name and professional ID that should appear on your certificate.</p>
 

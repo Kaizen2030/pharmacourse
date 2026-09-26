@@ -133,7 +133,7 @@ export default function AdminDashboard() {
     <div className="admin-layout">
       <div className="admin-sidebar">
         <div className="admin-header">
-          <h2>RemedaCare Admin</h2>
+          <h2>Pharmacourse Admin</h2>
           <p className="admin-user">{profile?.full_name}</p>
           {isAdmin && (
             <span

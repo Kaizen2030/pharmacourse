@@ -183,7 +183,7 @@ export default function ResetPassword() {
       />
 
       <div className="auth-card">
-        <div className="auth-logo">RemedacarePOS</div>
+        <div className="auth-logo">Pharmacourse</div>
         <h1>Set a new password</h1>
         <p>
           {recoveryEmail

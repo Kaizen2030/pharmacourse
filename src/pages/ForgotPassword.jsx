@@ -39,7 +39,7 @@ export default function ForgotPassword() {
       />
 
       <div className="auth-card">
-        <div className="auth-logo">RemedacarePOS</div>
+        <div className="auth-logo">Pharmacourse</div>
         <h1>Reset your password</h1>
         <p>Enter your email and we will send you a secure reset link.</p>
 

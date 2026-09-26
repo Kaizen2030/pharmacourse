@@ -71,7 +71,7 @@ export default function Register() {
       />
 
       <div className="auth-card">
-        <div className="auth-logo">RemedacarePOS</div>
+        <div className="auth-logo">Pharmacourse</div>
         <h1>Create your account</h1>
         <p>Free access to pharmacy CPD courses</p>
 

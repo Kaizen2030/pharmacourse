@@ -60,7 +60,7 @@ export default function Login() {
       />
 
       <div className="auth-card">
-        <div className="auth-logo">RemedacarePOS</div>
+        <div className="auth-logo">Pharmacourse</div>
         <h1>Welcome back</h1>
         <p>Sign in to continue your learning</p>
 
