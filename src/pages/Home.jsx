@@ -471,7 +471,7 @@ export default function Home() {
           .select("*")
           .eq("is_published", true)
           .order("created_at", { ascending: false })
-          .limit(5)
+          .limit(4)
 
         if (courseLoadError) {
           console.error("Failed to load homepage courses:", courseLoadError)
