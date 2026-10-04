@@ -11,6 +11,11 @@ import pharmacourseHeroVisual from "../assets/pharmacourse-hero-visual.svg"
 import remedacarehmisMark from "../assets/remedacarehmis-mark.png"
 import remedacareposMark from "../assets/remedacarepos-mark.png"
 import remedacareDashboard from "../assets/remedacare-dashboard.svg"
+import labResearchOne from "../assets/hero-lab-research-1.svg"
+import labResearchTwo from "../assets/hero-lab-research-2.svg"
+import labResearchThree from "../assets/hero-lab-research-3.svg"
+import labResearchFour from "../assets/hero-lab-research-4.svg"
+import labResearchFive from "../assets/hero-lab-research-5.svg"
 import {
   BookOpen,
   Download,
@@ -30,6 +35,14 @@ import {
 import "./Home.css"
 
 const WHATSAPP = "https://wa.me/254790059584?text=Hi%20Julius%2C%20I%27d%20like%20to%20book%20a%20demo%20of%20your%20platform."
+
+const HERO_LAB_IMAGES = [
+  labResearchOne,
+  labResearchTwo,
+  labResearchThree,
+  labResearchFour,
+  labResearchFive,
+]
 
 const HOMEPAGE_BRAND_REPLACEMENTS = [
   { pattern: /RemedacareHMS/g, replacement: "RemedacareHMIS" },
@@ -593,6 +606,18 @@ export default function Home() {
             return (
               <AnimatedSection key={key}>
                 <section id="hero" className="hero-section">
+                  <div className="hero-lab-slideshow" aria-hidden="true">
+                    {HERO_LAB_IMAGES.map((image, index) => (
+                      <div
+                        key={image}
+                        className="hero-lab-slide"
+                        style={{
+                          backgroundImage: `url("${image}")`,
+                          animationDelay: `${index * -7}s`,
+                        }}
+                      />
+                    ))}
+                  </div>
                   <div className="container">
                     <div className="hero-content-top">
                       {config.badge_text && <span className="hero-badge">{config.badge_text}</span>}
