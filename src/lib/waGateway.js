@@ -10,7 +10,11 @@ async function request(path, { method = "GET", body } = {}) {
   if (!token) throw new Error("Sign in again to manage your WhatsApp connection.")
   const response = await fetch(`${BASE}${path}`, {
     method,
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      "ngrok-skip-browser-warning": "1",
+    },
     body: body ? JSON.stringify(body) : undefined,
   })
   const result = await response.json().catch(() => ({}))
