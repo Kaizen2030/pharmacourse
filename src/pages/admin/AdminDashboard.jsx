@@ -220,6 +220,14 @@ export default function AdminDashboard() {
             </button>
           )}
           <button
+            type="button"
+            className="menu-item"
+            onClick={() => { window.location.assign("/tutor/whatsapp") }}
+          >
+            <ExternalLink size={20} />
+            <span>Tutor WhatsApp</span>
+          </button>
+          <button
             className={`menu-item ${activeTab === "homepage" ? "active" : ""}`}
             onClick={() => setActiveTab("homepage")}
           >
