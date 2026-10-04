@@ -5489,18 +5489,18 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON homepage_content TO authenticated;`}
   (section_key, section_name, order_index, enabled, heading, badge_text,
    primary_btn_text, primary_btn_url, secondary_btn_text, secondary_btn_url, video_url)
 VALUES
-  ('hero','Hero Section',1,true,'Transform Pharmacy Operations & Education',
-   'Complete Pharmacy Ecosystem','Book Platform Demo',
-   'https://wa.me/254790059584','Start Learning','/courses',NULL),
+  ('hero','Hero Section',1,true,'Purpose-built tools for pharmacy learning and care delivery.',
+   'Three Distinct Products','Explore Products',
+   '#ecosystem','Start Learning','/courses',NULL),
   ('ecosystem','Ecosystem Section',2,true,
-   'Three connected products for pharmacy, care delivery, and growth.',
-   'The Remedacare Ecosystem',NULL,NULL,NULL,NULL,NULL),
+   'Choose the product that fits your team.',
+   'Our products',NULL,NULL,NULL,NULL,NULL),
   ('pharmacyOS','RemedacarePOS Section',3,true,'Everything your pharmacy needs.',
    'RemedacarePOS','Book a Demo','https://wa.me/254790059584',NULL,NULL,NULL),
   ('remedacareOS','RemedacareHMS Section',4,true,'From clinic to dispensary.',
-   'RemedacareHMS','Join Waitlist','https://wa.me/254790059584',NULL,NULL,NULL),
+   'RemedacareHMIS','Explore RemedacareHMIS','/remedacarehmis',NULL,NULL,NULL),
   ('features','Features Section',5,true,
-   'Accelerate your career with practical skills','Key Features',NULL,NULL,NULL,NULL,NULL),
+   'Accelerate your career with practical skills','Pharmacourse Learning',NULL,NULL,NULL,NULL,NULL),
   ('courses','Featured Courses',6,true,'Courses built for real-world practice',
    'Our Curriculum','View all courses','/courses',NULL,NULL,NULL),
   ('testimonials','Testimonials Section',7,true,'Learners who finished the course',
@@ -6764,7 +6764,7 @@ function SectionEditorModal({ section, saving, onClose, onSave }) {
               <input
                 value={form.badge_text || ""}
                 onChange={e => setForm({ ...form, badge_text: e.target.value })}
-                placeholder="e.g., Complete Pharmacy Ecosystem"
+                placeholder="e.g., Three distinct products"
               />
               <small>Small label above heading</small>
             </div>

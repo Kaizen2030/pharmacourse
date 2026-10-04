@@ -8,7 +8,7 @@ export default function Footer() {
           <div className="site-footer-brand">
             <span className="footer-logo">Pharmacourse</span>
             <p className="site-footer-copy">
-              Learning, pharmacy operations, and hospital workflows connected for modern Kenyan healthcare teams.
+              Professional pharmacy learning, pharmacy operations software, and hospital management for Kenyan healthcare teams.
             </p>
             <div className="site-footer-actions">
               <Link to="/courses" className="site-footer-pill">Explore Courses</Link>
@@ -20,9 +20,9 @@ export default function Footer() {
             <div>
               <div className="site-footer-heading">Products</div>
               <ul className="footer-links site-footer-links">
+                <li><Link to="/courses">Pharmacourse</Link></li>
                 <li><Link to="/remedacarepos">RemedacarePOS</Link></li>
                 <li><Link to="/remedacarehmis">RemedacareHMIS</Link></li>
-                <li><Link to="/patient">Patient Portal</Link></li>
               </ul>
             </div>
 
@@ -41,6 +41,7 @@ export default function Footer() {
                 <li><Link to="/community">Community</Link></li>
                 <li><Link to="/blog">Blog</Link></li>
                 <li><Link to="/team-plans">Team Plans</Link></li>
+                <li><Link to="/patient">Patient Portal</Link></li>
                 <li><Link to="/login">Sign In</Link></li>
               </ul>
             </div>
