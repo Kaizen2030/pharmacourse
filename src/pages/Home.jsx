@@ -54,7 +54,7 @@ const DEFAULT_SECTIONS = {
   hero: {
     enabled: true,
     order: 1,
-    heading: "Purpose-built tools for pharmacy learning and care delivery.",
+    heading: "Better learning. Smarter pharmacy. Stronger hospitals.",
     subheading: "Pharmacourse is for professional learning. RemedacarePOS is for pharmacy operations. RemedacareHMIS is for hospital management.",
     badge_text: "Three distinct products",
     primary_btn_text: "Explore Products",
@@ -172,11 +172,11 @@ function normalizeHomepageSection(sectionKey, sectionConfig) {
   }
 
   if (sectionKey === "hero") {
-    if (/transform pharmacy operations|connected ecosystem|integrated suite/i.test(normalized.heading || "")) {
+    if (/transform pharmacy operations|connected ecosystem|integrated suite|purpose-built tools for pharmacy learning and care delivery/i.test(normalized.heading || "")) {
       normalized.heading = DEFAULT_SECTIONS.hero.heading
     }
 
-    if (/brings together|connected ecosystem|integrated platform|integrated suite|clinic management|across the ecosystem/i.test(normalized.subheading || "")) {
+    if (/brings together|connected ecosystem|integrated platform|integrated suite|clinic management|across the ecosystem|pharmacourse is for professional learning.*remedacarepos is for pharmacy operations/i.test(normalized.subheading || "")) {
       normalized.subheading = DEFAULT_SECTIONS.hero.subheading
     }
 
@@ -623,65 +623,14 @@ export default function Home() {
                       {config.badge_text && <span className="hero-badge">{config.badge_text}</span>}
                       <h1>{config.heading || DEFAULT_SECTIONS.hero.heading}</h1>
                       <p>{config.subheading || ""}</p>
-                    </div>
 
-                    <div className="hero-services-grid">
-                      <div className="service-showcase">
-                        <div className="service-icon pharmacourse">
-                          <img src="/favicon.svg" alt="Pharmacourse logo" className="service-icon-mark" />
-                        </div>
-                        <h3>Pharmacourse</h3>
-                        <p>Practical, self-paced professional learning with courses, case simulations, and certificates for pharmacy teams.</p>
-                        <Link to="/courses" className="service-link">Explore courses <ChevronRight size={16} /></Link>
-                      </div>
-
-                      <div className="service-showcase">
-                        <div className="service-icon pharmacyos">
-                          <img src={remedacareposMark} alt="RemedacarePOS logo" className="service-icon-mark" />
-                        </div>
-                        <h3>RemedacarePOS</h3>
-                        <p>Telepharmacy-ready pharmacy software for dispensing, inventory, patient requests, delivery coordination, claims, and branch workflow in one system.</p>
-                        <Link to="/remedacarepos" className="service-link">Explore RemedacarePOS <ChevronRight size={16} /></Link>
-                      </div>
-
-                      <div className="service-showcase">
-                        <div className="service-icon remedacareos">
-                          <img src={remedacarehmisMark} alt="RemedacareHMIS logo" className="service-icon-mark" />
-                        </div>
-                        <h3>RemedacareHMIS</h3>
-                        <p>Hospital information software connecting clinicians, laboratory, radiology, chronic care, finance, and pharmacy workflows.</p>
-                        <Link to="/remedacarehmis" className="service-link">Explore RemedacareHMIS <ChevronRight size={16} /></Link>
-                      </div>
-                    </div>
-
-                    <div className="hero-grid-main">
-                      <div className="hero-visual">
-                        <ProductMockup
-                          type="pharmaCourse"
-                          videoUrl={config.video_url}
-                          imageSrc={config.image_url || pharmacourseHeroVisual}
-                          imageAlt="Pharmacourse learning dashboard showing learner progress, enrolled courses and certificates"
-                        />
-                      </div>
-
-                      <div className="hero-content">
-                        <div className="hero-value-prop">
-                          <h2>Three products, three distinct jobs</h2>
-                          <ul className="hero-benefits">
-                            <li><span className="check">CPD</span><div><strong>Pharmacourse:</strong> professional learning, practical courses, and certificates.</div></li>
-                            <li><span className="check">POS</span><div><strong>RemedacarePOS:</strong> pharmacy dispensing, stock control, and daily operations.</div></li>
-                            <li><span className="check">HMIS</span><div><strong>RemedacareHMIS:</strong> hospital patient workflows, clinical records, and reporting.</div></li>
-                          </ul>
-
-                          <div className="hero-actions">
-                            <a href={config.primary_btn_url || "#ecosystem"} className="btn-primary">
-                              {config.primary_btn_text || "Explore Products"}
-                            </a>
-                            <Link to={config.secondary_btn_url || "/courses"} className="btn-secondary">
-                              {config.secondary_btn_text || "Start Learning"}
-                            </Link>
-                          </div>
-                        </div>
+                      <div className="hero-actions">
+                        <Link to="/courses" className="btn-primary">
+                          Explore Pharmacourse <ChevronRight size={17} />
+                        </Link>
+                        <a href="#ecosystem" className="hero-text-link">
+                          Meet the products <span aria-hidden="true">↓</span>
+                        </a>
                       </div>
                     </div>
                   </div>
@@ -701,41 +650,44 @@ export default function Home() {
                     </div>
 
                     <div className="platform-grid">
-                      <div className="platform-card">
-                        <img
-                          src="/favicon.svg"
-                          alt="Pharmacourse logo"
-                          style={{ width: 32, height: 32, objectFit: "contain" }}
-                        />
-                        <span className="platform-status">Live Now</span>
-                        <h3>Pharmacourse</h3>
-                        <p>Professional learning with self-paced CPD courses, certificates, and practical clinical case simulations.</p>
+                      <article className="platform-card platform-card-learning">
+                        <div className="platform-card-topline">
+                          <span className="platform-index">01 / LEARN</span>
+                          <img src="/favicon.svg" alt="" className="platform-mark" />
+                        </div>
+                        <div className="platform-card-copy">
+                          <p className="platform-kicker">Professional development</p>
+                          <h3>Pharmacourse</h3>
+                          <p>Practical CPD courses, clinical case simulations, and certificates designed for pharmacy professionals.</p>
+                        </div>
                         <Link to="/courses" className="platform-link">Explore courses <ChevronRight size={16} /></Link>
-                      </div>
+                      </article>
 
-                      <div className="platform-card featured">
-                        <img
-                          src={remedacareposMark}
-                          alt="RemedacarePOS logo"
-                          style={{ width: 32, height: 32, objectFit: "contain" }}
-                        />
-                        <span className="platform-status">Available</span>
-                        <h3>RemedacarePOS</h3>
-                        <p>Pharmacy operations for dispensing, inventory, patient requests, claims, delivery coordination, and M-Pesa.</p>
+                      <article className="platform-card platform-card-pos">
+                        <div className="platform-card-topline">
+                          <span className="platform-index">02 / OPERATE</span>
+                          <img src={remedacareposMark} alt="" className="platform-mark" />
+                        </div>
+                        <div className="platform-card-copy">
+                          <p className="platform-kicker">Pharmacy operations</p>
+                          <h3>RemedacarePOS</h3>
+                          <p>Dispensing, inventory, patient requests, claims, and branch operations for pharmacies.</p>
+                        </div>
                         <Link to="/remedacarepos" className="platform-link">Explore RemedacarePOS <ChevronRight size={16} /></Link>
-                      </div>
+                      </article>
 
-                      <div className="platform-card">
-                        <img
-                          src={remedacarehmisMark}
-                          alt="RemedacareHMIS logo"
-                          style={{ width: 32, height: 32, objectFit: "contain" }}
-                        />
-                        <span className="platform-status">Available</span>
-                        <h3>RemedacareHMIS</h3>
-                        <p>Hospital information management for patient care, chronic disease follow-up, referrals, finance, and MOH reporting.</p>
+                      <article className="platform-card platform-card-hmis">
+                        <div className="platform-card-topline">
+                          <span className="platform-index">03 / MANAGE CARE</span>
+                          <img src={remedacarehmisMark} alt="" className="platform-mark" />
+                        </div>
+                        <div className="platform-card-copy">
+                          <p className="platform-kicker">Hospital management</p>
+                          <h3>RemedacareHMIS</h3>
+                          <p>Patient records, clinical departments, reporting, finance, and hospital operations in one HMIS.</p>
+                        </div>
                         <Link to="/remedacarehmis" className="platform-link">Explore RemedacareHMIS <ChevronRight size={16} /></Link>
-                      </div>
+                      </article>
                     </div>
                   </div>
                 </section>
@@ -1077,6 +1029,8 @@ export default function Home() {
             )
 
           case "testimonials":
+            if (!testimonialsError && testimonials.length === 0) return null
+
             return (
               <AnimatedSection key={key} delay={0.6}>
                 <section id="testimonials" className="testimonials-section">
@@ -1113,9 +1067,6 @@ export default function Home() {
                         </div>
                       ))}
                       {testimonialsError && <div className="empty-state">Learner reviews could not be loaded right now.</div>}
-                      {!testimonialsError && testimonials.length === 0 && (
-                        <div className="empty-state">No published learner reviews are available right now.</div>
-                      )}
                     </div>
                   </div>
                 </section>
