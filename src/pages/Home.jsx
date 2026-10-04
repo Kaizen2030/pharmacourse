@@ -11,11 +11,11 @@ import pharmacourseHeroVisual from "../assets/pharmacourse-hero-visual.svg"
 import remedacarehmisMark from "../assets/remedacarehmis-mark.png"
 import remedacareposMark from "../assets/remedacarepos-mark.png"
 import remedacareDashboard from "../assets/remedacare-dashboard.svg"
-import labResearchOne from "../assets/hero-lab-research-1.svg"
-import labResearchTwo from "../assets/hero-lab-research-2.svg"
-import labResearchThree from "../assets/hero-lab-research-3.svg"
-import labResearchFour from "../assets/hero-lab-research-4.svg"
-import labResearchFive from "../assets/hero-lab-research-5.svg"
+import labResearchOne from "../assets/hero-research-photo-1.jpg"
+import labResearchTwo from "../assets/hero-research-photo-2.jpg"
+import labResearchThree from "../assets/hero-research-photo-3.jpg"
+import labResearchFour from "../assets/hero-research-photo-4.jpg"
+import labResearchFive from "../assets/hero-research-photo-5.jpg"
 import {
   BookOpen,
   Download,
@@ -606,20 +606,20 @@ export default function Home() {
             return (
               <AnimatedSection key={key}>
                 <section id="hero" className="hero-section">
-                  <div className="hero-lab-slideshow" aria-hidden="true">
-                    {HERO_LAB_IMAGES.map((image, index) => (
-                      <div
-                        key={image}
-                        className="hero-lab-slide"
-                        style={{
-                          backgroundImage: `url("${image}")`,
-                          animationDelay: `${index * -7}s`,
-                        }}
-                      />
-                    ))}
-                  </div>
                   <div className="container">
                     <div className="hero-content-top">
+                      <div className="hero-lab-slideshow" aria-hidden="true">
+                        {HERO_LAB_IMAGES.map((image, index) => (
+                          <div
+                            key={image}
+                            className="hero-lab-slide"
+                            style={{
+                              backgroundImage: `url("${image}")`,
+                              animationDelay: `${index * -7}s`,
+                            }}
+                          />
+                        ))}
+                      </div>
                       {config.badge_text && <span className="hero-badge">{config.badge_text}</span>}
                       <h1>{config.heading || DEFAULT_SECTIONS.hero.heading}</h1>
                       <p>{config.subheading || ""}</p>

@@ -1308,16 +1308,23 @@
 }
 
 .home .hero-section {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
   padding: clamp(3.5rem, 7vw, 5.5rem) 0 clamp(3rem, 5vw, 4rem);
   background:
     radial-gradient(ellipse at 82% 5%, rgba(34, 154, 119, 0.16), transparent 32%),
     linear-gradient(135deg, #eaf4f0 0%, #dcefe8 52%, #e9f3ef 100%);
 }
 
-.home .hero-lab-slideshow {
+.home .hero-content-top {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: clamp(1.5rem, 4vw, 3rem) clamp(1rem, 4vw, 3rem);
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  border-radius: 30px;
+  box-shadow: 0 18px 54px rgba(15, 110, 86, 0.1);
+}
+
+.home .hero-content-top .hero-lab-slideshow {
   position: absolute;
   inset: 0;
   z-index: 0;
@@ -1325,9 +1332,9 @@
   pointer-events: none;
 }
 
-.home .hero-lab-slide {
+.home .hero-content-top .hero-lab-slide {
   position: absolute;
-  inset: -1.5%;
+  inset: 0;
   background-position: center;
   background-size: cover;
   opacity: 0;
@@ -1336,18 +1343,18 @@
   will-change: opacity;
 }
 
-.home .hero-section::before {
+.home .hero-content-top::before {
   position: absolute;
   inset: 0;
   z-index: 1;
   background:
-    linear-gradient(120deg, rgba(234, 245, 240, 0.8) 0%, rgba(220, 239, 232, 0.76) 52%, rgba(226, 241, 235, 0.81) 100%),
-    radial-gradient(ellipse at 82% 5%, rgba(34, 154, 119, 0.16), transparent 38%);
+    linear-gradient(120deg, rgba(234, 245, 240, 0.78) 0%, rgba(220, 239, 232, 0.73) 52%, rgba(226, 241, 235, 0.8) 100%),
+    radial-gradient(ellipse at 82% 5%, rgba(34, 154, 119, 0.14), transparent 38%);
   content: "";
   pointer-events: none;
 }
 
-.home .hero-section > .container {
+.home .hero-content-top > :not(.hero-lab-slideshow) {
   position: relative;
   z-index: 2;
 }
@@ -1369,11 +1376,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .home .hero-lab-slide {
+  .home .hero-content-top .hero-lab-slide {
     animation: none;
   }
 
-  .home .hero-lab-slide:first-child {
+  .home .hero-content-top .hero-lab-slide:first-child {
     opacity: 1;
   }
 }
