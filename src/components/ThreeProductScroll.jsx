@@ -38,16 +38,22 @@ const CHAPTERS = [
   },
 ]
 
+function applyCopyProgress(track, progress) {
+  if (!track) return
+  const slide = Math.min(progress * CHAPTERS.length, CHAPTERS.length - 1)
+  track.style.setProperty("--copy-shift", `${(-slide / CHAPTERS.length) * 100}%`)
+}
+
 export default function ThreeProductScroll() {
   const sectionRef = useRef(null)
   const canvasRef = useRef(null)
+  const copyTrackRef = useRef(null)
   const progressRef = useRef(0)
   const activeRef = useRef(0)
   const autoplayProgressRef = useRef(0)
   const autoplayModeRef = useRef(false)
   const [activeIndex, setActiveIndex] = useState(0)
   const activeChapter = CHAPTERS[activeIndex]
-  const ActiveIcon = activeChapter.icon
 
   useEffect(() => {
     const section = sectionRef.current
@@ -468,6 +474,7 @@ export default function ThreeProductScroll() {
           progressRef.current = progress
           autoplayProgressRef.current = progress
           autoplayModeRef.current = false
+          applyCopyProgress(copyTrackRef.current, progress)
           const next = Math.min(CHAPTERS.length - 1, Math.floor(progress * CHAPTERS.length))
           if (next !== activeRef.current) {
             activeRef.current = next
@@ -487,14 +494,15 @@ export default function ThreeProductScroll() {
         activeRef.current = next
         autoplayProgressRef.current = next / CHAPTERS.length + 0.025
         autoplayModeRef.current = true
+        applyCopyProgress(copyTrackRef.current, autoplayProgressRef.current)
         setActiveIndex(next)
       }, 6500)
       const animate = (time) => {
         if (isVisible) {
           const seconds = time * 0.001
-          const chapterIndex = activeRef.current
           const motion = reducedMotion.matches ? 0 : 1
           const sceneProgress = autoplayModeRef.current ? autoplayProgressRef.current : progressRef.current
+          applyCopyProgress(copyTrackRef.current, sceneProgress)
           const cameraTargetX = sceneProgress * 15
           camera.position.x += (cameraTargetX - camera.position.x) * (motion ? 0.12 : 1)
           camera.lookAt(camera.position.x, 1.52, 0)
@@ -568,13 +576,24 @@ export default function ThreeProductScroll() {
     <section id="three-products-scroll" className="three-products-scroll" ref={sectionRef} aria-label="Explore our three healthcare products">
       <div className="three-products-sticky">
         <div className="three-products-layout">
-          <div className="three-products-copy" aria-live="polite">
-            <span className="three-products-eyebrow"><ActiveIcon size={16} /> {activeChapter.number} / {activeChapter.eyebrow}</span>
-            <h2>{activeChapter.title}</h2>
-            <p>{activeChapter.description}</p>
-            <a className="three-products-link" href={activeChapter.href}>
-              {activeChapter.action} <ArrowUpRight size={17} />
-            </a>
+          <div className="three-products-copy">
+            <div className="three-products-copy-viewport">
+              <div className="three-products-copy-track" ref={copyTrackRef} aria-live="polite">
+                {CHAPTERS.map((item, index) => {
+                  const ChapterIcon = item.icon
+                  return (
+                    <article key={item.key} className="three-products-copy-slide" aria-hidden={activeIndex !== index}>
+                      <span className="three-products-eyebrow"><ChapterIcon size={16} /> {item.number} / {item.eyebrow}</span>
+                      <h2>{item.title}</h2>
+                      <p>{item.description}</p>
+                      <a className="three-products-link" href={item.href} tabIndex={activeIndex === index ? 0 : -1}>
+                        {item.action} <ArrowUpRight size={17} />
+                      </a>
+                    </article>
+                  )
+                })}
+              </div>
+            </div>
             <div className="three-products-controls" role="group" aria-label="Select a product scene">
               {CHAPTERS.map((item, index) => (
                 <button

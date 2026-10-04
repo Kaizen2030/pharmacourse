@@ -50,6 +50,23 @@
   pointer-events: auto;
 }
 
+.three-products-copy-viewport {
+  width: 100%;
+  overflow: hidden;
+}
+
+.three-products-copy-track {
+  display: flex;
+  width: 300%;
+  transform: translateX(var(--copy-shift, 0%));
+  will-change: transform;
+}
+
+.three-products-copy-slide {
+  flex: 0 0 33.333333%;
+  padding-right: 2rem;
+}
+
 .three-products-eyebrow {
   display: inline-flex;
   align-items: center;
