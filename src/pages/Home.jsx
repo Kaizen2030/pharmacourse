@@ -5,6 +5,7 @@ import { useInView } from "framer-motion"
 import SEO from "../components/SEO"
 import BlogEngagementStats from "../components/BlogEngagementStats"
 import ThreeProductScroll from "../components/ThreeProductScroll"
+import HomepageScrollExperience from "../components/HomepageScrollExperience"
 import { SITE_URL } from "../lib/siteConfig"
 import { formatBlogDate, getBlogCategoryLabel, getBlogCoverFallback, getBlogExcerpt } from "../lib/blogHelpers"
 import pharmacyosDashboard from "../assets/pharmacyos-dashboard.svg"
@@ -12,9 +13,6 @@ import pharmacourseHeroVisual from "../assets/pharmacourse-hero-visual.svg"
 import remedacarehmisMark from "../assets/remedacarehmis-mark.png"
 import remedacareposMark from "../assets/remedacarepos-mark.png"
 import remedacareDashboard from "../assets/remedacare-dashboard.svg"
-import heroMoleculeModel from "../assets/hero-molecule-model.jpg"
-import heroDnaHelix from "../assets/hero-dna-helix.jpg"
-import heroProteinSurface from "../assets/hero-protein-surface.jpg"
 import {
   BookOpen,
   Download,
@@ -35,7 +33,6 @@ import "./Home.css"
 
 const WHATSAPP = "https://wa.me/254790059584?text=Hi%20Julius%2C%20I%27d%20like%20to%20book%20a%20demo%20of%20your%20platform."
 const HERO_ART_MODES = ["learn", "practice", "care"]
-const HERO_ART_IMAGES = [heroDnaHelix, heroMoleculeModel, heroProteinSurface]
 
 const HOMEPAGE_BRAND_REPLACEMENTS = [
   { pattern: /RemedacareHMS/g, replacement: "RemedacareHMIS" },
@@ -283,19 +280,54 @@ const AnimatedSection = ({ children, delay = 0 }) => {
   )
 }
 
-function Hero3DArt() {
+function KineticLetters({ text }) {
+  const words = text.split(" ")
+  let letterIndex = 0
+
+  return (
+    <span aria-hidden="true">
+      {words.map((word, wordIndex) => (
+        <Fragment key={`${word}-${wordIndex}`}>
+          {wordIndex > 0 && <span className="kinetic-heading-space"> </span>}
+          <span className="kinetic-heading-word">
+            {Array.from(word).map((character, index) => (
+              <span
+                key={`${character}-${index}`}
+                className="kinetic-heading-letter"
+                style={{ "--letter-index": letterIndex++ }}
+              >
+                {character}
+              </span>
+            ))}
+          </span>
+        </Fragment>
+      ))}
+    </span>
+  )
+}
+
+function KineticHeading({ as = "h2", children, className = "" }) {
+  const text = `${children ?? ""}`
+  const headingClass = `kinetic-heading ${className}`.trim()
+
+  if (as === "h1") {
+    return <h1 className={headingClass} aria-label={text}><KineticLetters text={text} /></h1>
+  }
+
+  return <h2 className={headingClass} aria-label={text}><KineticLetters text={text} /></h2>
+}
+
+function Hero3DArt({ sharedScene = false }) {
   const mountRef = useRef(null)
   const [mode, setMode] = useState("learn")
   const modeRef = useRef("learn")
-  const modeIndex = HERO_ART_MODES.indexOf(mode)
-  const modeImage = HERO_ART_IMAGES[modeIndex] || HERO_ART_IMAGES[0]
 
   useEffect(() => {
     modeRef.current = mode
   }, [mode])
 
   useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return undefined
+    if (sharedScene || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return undefined
 
     const timer = window.setInterval(() => {
       if (document.visibilityState !== "visible") return
@@ -306,7 +338,7 @@ function Hero3DArt() {
     }, 5200)
 
     return () => window.clearInterval(timer)
-  }, [])
+  }, [sharedScene])
 
   useEffect(() => {
     const mount = mountRef.current
@@ -723,10 +755,11 @@ function Hero3DArt() {
     }
   }, [])
 
+  if (sharedScene) return null
+
   return (
     <div className="hero-3d-shell">
       <div ref={mountRef} className="hero-3d-canvas" aria-label="Interactive three-dimensional healthcare molecular artwork" />
-      <img src={modeImage} alt="" aria-hidden="true" className="hero-3d-image" />
       <div className="hero-3d-controls">
         {[
           { key: "learn", label: "Learn" },
@@ -888,6 +921,8 @@ const ProductMockup = ({ type, videoUrl, imageSrc, imageAlt }) => {
 
 export default function Home() {
   const [courses, setCourses] = useState([])
+  const [activeCourseArtifact, setActiveCourseArtifact] = useState(0)
+  const [capsuleBurst, setCapsuleBurst] = useState(0)
   const [coursesError, setCoursesError] = useState(false)
   const [testimonials, setTestimonials] = useState([])
   const [testimonialsError, setTestimonialsError] = useState(false)
@@ -1042,6 +1077,7 @@ export default function Home() {
 
   return (
     <div className="home">
+      <HomepageScrollExperience />
       <SEO
         title="Pharmacourse | RemedacarePOS & RemedacareHMIS Kenya"
         description="Learn with Pharmacourse, simplify pharmacy operations with RemedacarePOS, and connect hospital workflows with RemedacareHMIS."
@@ -1087,7 +1123,7 @@ export default function Home() {
                       <div className="hero-3d-layout">
                         <div className="hero-copy-panel">
                           {config.badge_text && <span className="hero-badge">{config.badge_text}</span>}
-                          <h1>{config.heading || DEFAULT_SECTIONS.hero.heading}</h1>
+                          <KineticHeading as="h1">{config.heading || DEFAULT_SECTIONS.hero.heading}</KineticHeading>
                           <p>{config.subheading || ""}</p>
 
                           <div className="hero-actions">
@@ -1116,7 +1152,7 @@ export default function Home() {
                     <div className="container">
                       <div className="section-header">
                         {config.badge_text && <span className="section-badge">{config.badge_text}</span>}
-                        <h2>{config.heading || "Choose the product that fits your team."}</h2>
+                        <KineticHeading>{config.heading || "Choose the product that fits your team."}</KineticHeading>
                         {config.subheading && <p>{config.subheading}</p>}
                       </div>
 
@@ -1197,7 +1233,7 @@ export default function Home() {
                     <div className="product-grid reverse">
                       <div className="product-heading">
                         {config.badge_text && <span className="section-badge">{config.badge_text}</span>}
-                        <h2>{config.heading || "Everything your pharmacy needs. In one desktop app."}</h2>
+                        <KineticHeading>{config.heading || "Everything your pharmacy needs. In one desktop app."}</KineticHeading>
                         {config.subheading && <p>{config.subheading}</p>}
                       </div>
 
@@ -1218,7 +1254,7 @@ export default function Home() {
                             { icon: AlertTriangle, text: "Telepharmacy and patient request workflow" },
                             { icon: CreditCard, text: "SHA, insurance, and compliance reporting" },
                           ].map((feature, idx) => (
-                            <div key={idx} className="feature-item">
+                            <div key={idx} className="feature-item" style={{ "--feature-index": idx }}>
                               <feature.icon size={20} />
                               <span>{feature.text}</span>
                             </div>
@@ -1243,7 +1279,7 @@ export default function Home() {
                     <div className="product-grid">
                       <div className="product-heading">
                         {config.badge_text && <span className="section-badge">{config.badge_text}</span>}
-                        <h2>{config.heading || "A complete hospital information system."}</h2>
+                        <KineticHeading>{config.heading || "A complete hospital information system."}</KineticHeading>
                         {config.subheading && <p>{config.subheading}</p>}
                       </div>
 
@@ -1264,7 +1300,7 @@ export default function Home() {
                             { icon: Users, text: "Antibiogram, AMS, and clinical decision support" },
                             { icon: Link2, text: "Seamless RemedacarePOS integration" },
                           ].map((feature, idx) => (
-                            <div key={idx} className="feature-item">
+                            <div key={idx} className="feature-item" style={{ "--feature-index": idx }}>
                               <feature.icon size={20} />
                               <span>{feature.text}</span>
                             </div>
@@ -1288,7 +1324,16 @@ export default function Home() {
                   <div className="container">
                     <div className="section-header">
                       {config.badge_text && <span className="section-badge">{config.badge_text}</span>}
-                      <h2>{config.heading || "Accelerate your career with practical skills"}</h2>
+                      <KineticHeading>{config.heading || "Accelerate your career with practical skills"}</KineticHeading>
+                    </div>
+
+                    <div className="learning-scene" aria-hidden="true">
+                      <div className="learning-book"><span /><span /><i /></div>
+                      <div className="learning-certificate"><Award size={28} /><i /><i /><b>CPD</b></div>
+                      <div className="learning-pdf learning-pdf-one"><i /><i /><i /></div>
+                      <div className="learning-pdf learning-pdf-two"><i /><i /><i /></div>
+                      <span className="learning-orbit learning-orbit-one" />
+                      <span className="learning-orbit learning-orbit-two" />
                     </div>
 
                     <div className="features-grid">
@@ -1322,7 +1367,37 @@ export default function Home() {
                     <div className="container">
                       <div className="section-header">
                         {config.badge_text && <span className="section-badge">{config.badge_text}</span>}
-                        <h2>{config.heading || "Courses built for real-world practice"}</h2>
+                        <KineticHeading>{config.heading || "Courses built for real-world practice"}</KineticHeading>
+                      </div>
+
+                      <div className="course-artifact-stage">
+                        <div className={`course-artifact course-artifact-${activeCourseArtifact}`} aria-hidden="true">
+                          <span className="artifact-orbit artifact-orbit-one" />
+                          <span className="artifact-orbit artifact-orbit-two" />
+                          <span className="artifact-core" />
+                          <span className="artifact-node artifact-node-one" />
+                          <span className="artifact-node artifact-node-two" />
+                          <span className="artifact-node artifact-node-three" />
+                          <span className="artifact-leaf" />
+                          <span className="artifact-podium"><i /><i /><i /></span>
+                          <span className="artifact-helix"><i /><i /><i /><i /><i /><i /></span>
+                        </div>
+                        <div className="course-artifact-controls" role="group" aria-label="Explore course themes">
+                          {["Molecule", "Botanical", "Practice", "DNA"].map((label, index) => (
+                            <button
+                              key={label}
+                              type="button"
+                              className={activeCourseArtifact === index ? "active" : ""}
+                              aria-pressed={activeCourseArtifact === index}
+                              onClick={() => {
+                                setActiveCourseArtifact(index)
+                                window.dispatchEvent(new CustomEvent("homepage-course-artifact", { detail: index }))
+                              }}
+                            >
+                              {label}
+                            </button>
+                          ))}
+                        </div>
                       </div>
 
                       <div className="mobile-carousel-shell">
@@ -1430,8 +1505,16 @@ export default function Home() {
                     <div className="container">
                       <div className="section-header">
                         <span className="section-badge">Latest from the Blog</span>
-                        <h2>Practical ideas for pharmacy teams</h2>
+                        <KineticHeading>Practical ideas for pharmacy teams</KineticHeading>
                         <p>Insights on clinical practice, technology, and healthcare operations.</p>
+                      </div>
+
+                      <div className="blog-story-scene" aria-hidden="true">
+                        <div className="blog-page blog-page-back"><i /><i /><i /><i /></div>
+                        <div className="blog-page blog-page-mid"><i /><i /><i /><i /></div>
+                        <div className="blog-page blog-page-front"><i /><i /><i /><i /></div>
+                        <div className="blog-iv"><span /><i /><b /></div>
+                        <span className="blog-story-glint" />
                       </div>
 
                       <div className="mobile-carousel-shell">
@@ -1557,7 +1640,7 @@ export default function Home() {
                   <div className="container">
                     <div className="section-header">
                       {config.badge_text && <span className="section-badge">{config.badge_text}</span>}
-                      <h2>{config.heading || "Learners who finished the course"}</h2>
+                      <KineticHeading>{config.heading || "Learners who finished the course"}</KineticHeading>
                     </div>
 
                     <div className="testimonials-grid">
@@ -1605,14 +1688,14 @@ export default function Home() {
                   <div className="container">
                     <div className="section-header">
                       {config.badge_text && <span className="section-badge">{config.badge_text}</span>}
-                      <h2>{config.heading || "Need help getting started?"}</h2>
+                      <KineticHeading>{config.heading || "Need help getting started?"}</KineticHeading>
                     </div>
 
                     <div className="faq-grid">
-                      <div className="faq-card" onPointerMove={handleCard3DPointerMove} onPointerLeave={resetCard3DTilt}><h3>How can I access the courses?</h3><p>Browse the course list, register, and enroll. Introductory lessons are easy to start, and certificate access opens once you finish.</p></div>
-                      <div className="faq-card" onPointerMove={handleCard3DPointerMove} onPointerLeave={resetCard3DTilt}><h3>What if I do not understand a topic?</h3><p>Every course includes downloadable resources and support notes so you can review concepts anytime.</p></div>
-                      <div className="faq-card" onPointerMove={handleCard3DPointerMove} onPointerLeave={resetCard3DTilt}><h3>Can I study at my own pace?</h3><p>Yes. Lessons are self-paced and available anytime so you can learn around your schedule.</p></div>
-                      <div className="faq-card" onPointerMove={handleCard3DPointerMove} onPointerLeave={resetCard3DTilt}><h3>Who teaches the courses?</h3><p>Courses are created by experienced pharmacy educators and industry professionals.</p></div>
+                      <details className="faq-card" onToggle={(event) => window.dispatchEvent(new CustomEvent("homepage-faq-toggle", { detail: event.currentTarget.open }))} onPointerMove={handleCard3DPointerMove} onPointerLeave={resetCard3DTilt}><summary>How can I access the courses?</summary><p>Browse the course list, register, and enroll. Introductory lessons are easy to start, and certificate access opens once you finish.</p></details>
+                      <details className="faq-card" onToggle={(event) => window.dispatchEvent(new CustomEvent("homepage-faq-toggle", { detail: event.currentTarget.open }))} onPointerMove={handleCard3DPointerMove} onPointerLeave={resetCard3DTilt}><summary>What if I do not understand a topic?</summary><p>Every course includes downloadable resources and support notes so you can review concepts anytime.</p></details>
+                      <details className="faq-card" onToggle={(event) => window.dispatchEvent(new CustomEvent("homepage-faq-toggle", { detail: event.currentTarget.open }))} onPointerMove={handleCard3DPointerMove} onPointerLeave={resetCard3DTilt}><summary>Can I study at my own pace?</summary><p>Yes. Lessons are self-paced and available anytime so you can learn around your schedule.</p></details>
+                      <details className="faq-card" onToggle={(event) => window.dispatchEvent(new CustomEvent("homepage-faq-toggle", { detail: event.currentTarget.open }))} onPointerMove={handleCard3DPointerMove} onPointerLeave={resetCard3DTilt}><summary>Who teaches the courses?</summary><p>Courses are created by experienced pharmacy educators and industry professionals.</p></details>
                     </div>
                   </div>
                 </section>
@@ -1625,8 +1708,19 @@ export default function Home() {
                 <section id="cta" className="cta-section">
                   <div className="container">
                     <div className="cta-content">
-                      <div className="cta-capsule-orbit" aria-hidden="true"><span className="cta-capsule"><i /></span></div>
-                      <h2>{config.heading || "Ready to transform your pharmacy practice?"}</h2>
+                      <button
+                        type="button"
+                        className={`cta-capsule-orbit${capsuleBurst ? " is-bursting" : ""}`}
+                        aria-label="Open the capsule"
+                        onClick={() => {
+                          setCapsuleBurst((current) => current + 1)
+                          window.dispatchEvent(new Event("homepage-cta-burst"))
+                        }}
+                      >
+                        <span key={`capsule-${capsuleBurst}`} className="cta-capsule"><i /></span>
+                        <span key={`confetti-${capsuleBurst}`} className="cta-capsule-confetti" aria-hidden="true"><i /><i /><i /><i /><i /><i /></span>
+                      </button>
+                      <KineticHeading>{config.heading || "Ready to transform your pharmacy practice?"}</KineticHeading>
                       {config.subheading && <p>{config.subheading}</p>}
                       <div className="cta-buttons">
                         <Link to={config.primary_btn_url || "/register"} className="btn-primary">

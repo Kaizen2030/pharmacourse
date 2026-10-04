@@ -509,22 +509,26 @@ export default function ThreeProductScroll() {
           world.rotation.y = dragRotation
 
           chapterParts.forEach((parts, index) => {
-            const guideMotion = Math.sin(seconds * 1.1 + index * 1.3) * 0.045 * motion
+            const actionPulse = Math.sin(seconds * [1.1, 2.4, 0.9][index] + index * 0.8) * motion
+            const guideMotion = Math.sin(seconds * 1.1 + index * 1.3) * 0.055 * motion
             parts.guide.position.y = guideMotion
-            parts.guide.rotation.y = Math.sin(seconds * 0.4 + index) * 0.06 * motion + (index - 1) * 0.08
-            parts.head.rotation.y = Math.sin(seconds * 0.55 + index) * 0.045 * motion + (index === 1 ? 0.12 : -0.06)
-            parts.leftArm.rotation.z = -0.15 + Math.sin(seconds * 1.5 + index) * 0.025 * motion
-            const armTarget = [0.86, 1.25, 1.05][index]
+            parts.guide.rotation.y = Math.sin(seconds * 0.48 + index) * 0.09 * motion + (index - 1) * 0.08
+            parts.guide.rotation.x = index === 1 ? 0.035 + actionPulse * 0.045 : actionPulse * 0.025
+            parts.head.rotation.y = Math.sin(seconds * 0.72 + index) * 0.08 * motion + (index === 1 ? 0.16 : -0.05)
+            parts.head.rotation.x = index === 2 ? Math.sin(seconds * 1.1) * 0.07 * motion : 0
+            parts.leftArm.rotation.z = [-0.3 + actionPulse * 0.12, -0.24 + actionPulse * 0.24, -0.12 + actionPulse * 0.1][index]
+            const armTarget = [0.62 + actionPulse * 0.28, 0.92 + actionPulse * 0.42, 0.82 + actionPulse * 0.3][index]
             parts.rightArm.rotation.z += (armTarget - parts.rightArm.rotation.z) * (motion ? 0.08 : 1)
-            parts.rightHand.rotation.z = Math.sin(seconds * 1.3 + index) * 0.03 * motion
-            parts.book.rotation.y = -0.3 + Math.sin(seconds * 0.7 + index) * 0.1 * motion
-            parts.capsule.rotation.y += 0.012 * motion
-            parts.hospital.rotation.y = -0.18 + Math.sin(seconds * 0.65 + index) * 0.04 * motion
+            parts.rightHand.rotation.z = actionPulse * 0.12
+            parts.book.rotation.y = -0.3 + Math.sin(seconds * 0.92) * 0.18 * motion
+            parts.capsule.rotation.y += 0.012 * motion + actionPulse * 0.002
+            parts.hospital.rotation.y = -0.18 + Math.sin(seconds * 0.68) * 0.07 * motion
             parts.molecule.rotation.y += 0.008 * motion
-            parts.network.rotation.y = Math.sin(seconds * 0.5 + index) * 0.08 * motion
+            parts.network.rotation.y = Math.sin(seconds * 0.65 + index) * 0.12 * motion
             parts.particles.rotation.y = seconds * 0.045 * motion
             parts.ring.rotation.z = sceneProgress * 0.3
           })
+          windowLight.emissiveIntensity = 0.22 + Math.max(0, Math.sin(seconds * 1.7)) * 0.3 * motion
           renderer.render(scene, camera)
         }
         animationFrame = window.requestAnimationFrame(animate)
