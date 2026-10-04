@@ -39,15 +39,45 @@ export default function TutorTipsManager({ courseId, courseTitle, courseSlug, in
     if (!title.trim() || !body.trim()) return
     setBusy(true)
     setError("")
-    const { error: insertError } = await supabase.from("tutor_whatsapp_posts").insert({
+    setSendMessage("")
+
+    const payload = {
       course_id: courseId,
       instructor_id: instructorId,
       title: title.trim().slice(0, 120),
       body: body.trim().slice(0, 1500),
-    })
-    if (insertError) setError(insertError.message)
-    else { setTitle(""); setBody(""); await load() }
-    setBusy(false)
+      is_published: true,
+    }
+
+    const { data: inserted, error: insertError } = await supabase
+      .from("tutor_whatsapp_posts")
+      .insert(payload)
+      .select()
+      .single()
+
+    if (insertError) {
+      setError(insertError.message)
+      setBusy(false)
+      return
+    }
+
+    try {
+      if (gatewayInstanceId) {
+        const text = formatTipForWhatsApp(inserted, courseTitle, `${SITE_URL}/courses/${courseSlug || courseId}`)
+        const result = await waGateway.broadcast(gatewayInstanceId, courseId, text)
+        setSendMessage(`Saved, published, and sent to ${result.recipients} opted-in learners.${result.skipped ? ` ${result.skipped} more were not included (200 per broadcast limit).` : ""}`)
+      } else {
+        setSendMessage("Saved and published to this course page.")
+      }
+      setTitle("")
+      setBody("")
+      await load()
+    } catch (sendError) {
+      setSendMessage(`Saved and published, but sending failed: ${sendError.message}`)
+      await load()
+    } finally {
+      setBusy(false)
+    }
   }
 
   async function togglePublished(post) {
