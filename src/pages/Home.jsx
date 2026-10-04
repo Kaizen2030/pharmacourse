@@ -171,7 +171,7 @@ function normalizeHomepageSection(sectionKey, sectionConfig) {
   }
 
   if (sectionKey === "hero") {
-    if (/transform pharmacy operations|connected ecosystem|integrated suite|purpose-built tools for pharmacy learning and care delivery/i.test(normalized.heading || "")) {
+    if (/^three distinct products:/i.test(normalized.heading || "") || /transform pharmacy operations|connected ecosystem|integrated suite|purpose-built tools for pharmacy learning and care delivery/i.test(normalized.heading || "")) {
       normalized.heading = DEFAULT_SECTIONS.hero.heading
     }
 
@@ -919,8 +919,8 @@ export default function Home() {
                     <div className="container">
                       <div className="section-header">
                         <span className="section-badge">Latest from the Blog</span>
-                        <h2>Fresh ideas for pharmacy practice and operations</h2>
-                        <p>Read quick, practical articles from the Pharmacourse team and contributors.</p>
+                        <h2>Practical ideas for pharmacy teams</h2>
+                        <p>Insights on clinical practice, technology, and healthcare operations.</p>
                       </div>
 
                       <div className="mobile-carousel-shell">

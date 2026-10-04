@@ -1654,7 +1654,7 @@
 .home .hero-content-top {
   max-width: none;
   width: 100vw;
-  min-height: clamp(500px, 48vw, 680px);
+  min-height: clamp(420px, 38vw, 560px);
   margin: 0 0 0 calc(50% - 50vw);
   margin-bottom: 0;
   padding: clamp(3rem, 7vw, 6rem) max(1.5rem, calc((100vw - 1240px) / 2 + 2rem));
@@ -1689,9 +1689,9 @@
   max-width: 850px;
   margin: 1.35rem 0 0;
   color: #102a23;
-  font-size: clamp(3.1rem, 7.2vw, 6.4rem);
-  line-height: 0.99;
-  letter-spacing: -0.055em;
+  font-size: clamp(2.75rem, 5.2vw, 4.35rem);
+  line-height: 1.04;
+  letter-spacing: -0.045em;
   text-wrap: balance;
   text-shadow: 0 2px 16px rgba(244, 252, 248, 0.55);
 }
@@ -1925,7 +1925,7 @@
 
 @media (max-width: 968px) {
   .home .hero-content-top {
-    min-height: 500px;
+    min-height: 0;
   }
 
   .home .platform-grid {
@@ -1936,7 +1936,7 @@
 @media (max-width: 640px) {
   .home .hero-content-top {
     width: 100vw;
-    min-height: 500px;
+    min-height: 0;
     margin-left: calc(50% - 50vw);
     padding: 2.5rem 1.35rem;
   }
@@ -1944,8 +1944,8 @@
   .home .hero-content-top h1 {
     max-width: 100%;
     margin-top: 1.1rem;
-    font-size: clamp(2.55rem, 11vw, 4rem);
-    line-height: 1;
+    font-size: clamp(2rem, 8vw, 3rem);
+    line-height: 1.06;
   }
 
   .home .hero-content-top > p {
@@ -2201,8 +2201,15 @@
 }
 
 .home .blog-preview-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: stretch;
   gap: 1.2rem;
+}
+
+@media (max-width: 968px) {
+  .home .blog-preview-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .home .blog-preview-card {
