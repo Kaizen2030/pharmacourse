@@ -13,7 +13,19 @@ export default function ChatWidget() {
   const [messages, setMessages] = useState([
     { from: "bot", text: "Hi! Ask me about courses, workshops or our software, or tap a question below." },
   ])
+  const [teaser, setTeaser] = useState(false)
   const listRef = useRef(null)
+
+  useEffect(() => {
+    let seen = false
+    try { seen = sessionStorage.getItem("cw-teaser") === "1" } catch { /* storage unavailable */ }
+    if (seen) return undefined
+    const timer = setTimeout(() => {
+      setTeaser(true)
+      try { sessionStorage.setItem("cw-teaser", "1") } catch { /* storage unavailable */ }
+    }, 8000)
+    return () => clearTimeout(timer)
+  }, [])
 
   useEffect(() => {
     if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight
@@ -58,6 +70,12 @@ export default function ChatWidget() {
 
   return (
     <>
+      {!open && teaser ? (
+        <button type="button" className="cw-teaser" onClick={() => { setTeaser(false); setOpen(true) }}>
+          Need help? Ask us here
+        </button>
+      ) : null}
+
       {open ? (
         <section className="cw-panel" aria-label="Pharmacourse help chat">
           <header className="cw-head">
@@ -81,7 +99,7 @@ export default function ChatWidget() {
           </div>
 
           <div className="cw-chips">
-            {FAQ.slice(0, 4).map((item) => (
+            {FAQ.slice(0, 4).concat(FAQ.slice(6, 7)).map((item) => (
               <button key={item.id} type="button" onClick={() => void ask(item.q)}>{item.q}</button>
             ))}
           </div>
@@ -101,7 +119,7 @@ export default function ChatWidget() {
         </section>
       ) : null}
 
-      <button type="button" className="cw-fab" onClick={() => setOpen((value) => !value)} aria-label={open ? "Close chat" : "Open chat"} aria-expanded={open}>
+      <button type="button" className="cw-fab" onClick={() => { setTeaser(false); setOpen((value) => !value) }} aria-label={open ? "Close chat" : "Open chat"} aria-expanded={open}>
         {open ? <X size={26} /> : <MessageCircle size={26} />}
       </button>
     </>

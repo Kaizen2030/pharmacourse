@@ -1,4 +1,4 @@
-import { mkdir, rm } from "node:fs/promises"
+import { mkdir, readdir, rm } from "node:fs/promises"
 import express from "express"
 import cors from "cors"
 import makeWASocket, { DisconnectReason, useMultiFileAuthState } from "@whiskeysockets/baileys"
@@ -55,6 +55,36 @@ async function getTutor(userId) {
   return { ...data, whatsapp_number: normalizeNumber(data.whatsapp_number) }
 }
 
+async function getTutorById(instructorId) {
+  const { data, error } = await supabase
+    .from("instructors")
+    .select("id, name, whatsapp_number")
+    .eq("id", instructorId)
+    .maybeSingle()
+  if (error || !data?.whatsapp_number) return null
+  return { ...data, whatsapp_number: normalizeNumber(data.whatsapp_number) }
+}
+
+const OPT_OUT_FOOTER = "\n\nReply STOP to stop receiving course updates."
+
+async function handleInbound(message) {
+  if (message.key?.fromMe) return
+  const jid = message.key?.remoteJid || ""
+  if (!jid.endsWith("@s.whatsapp.net")) return
+  const body = message.message?.conversation || message.message?.extendedTextMessage?.text || ""
+  if (!/^\s*(stop|unsubscribe|opt\s*out)\s*$/i.test(body)) return
+  const number = jid.split("@")[0].split(":")[0]
+  const { data } = await supabase
+    .from("user_profiles")
+    .select("id, whatsapp_number")
+    .eq("whatsapp_opted_in", true)
+    .like("whatsapp_number", `%${number.slice(-9)}`)
+  const ids = (data || []).filter((row) => {
+    try { return normalizeNumber(row.whatsapp_number) === number } catch { return false }
+  }).map((row) => row.id)
+  if (ids.length) await supabase.from("user_profiles").update({ whatsapp_opted_in: false }).in("id", ids)
+}
+
 async function authorizeTutor(request, response, next) {
   try {
     const token = (request.get("authorization") || "").replace(/^Bearer\s+/i, "")
@@ -103,6 +133,9 @@ async function startInstance(tutor) {
   })
   session.socket = socket
   socket.ev.on("creds.update", saveCreds)
+  socket.ev.on("messages.upsert", ({ messages: incoming }) => {
+    for (const message of incoming || []) void handleInbound(message).catch(() => {})
+  })
   socket.ev.on("connection.update", async (update) => {
     if (sessions.get(session.id) !== session) return
     if (update.qr) {
@@ -114,7 +147,9 @@ async function startInstance(tutor) {
       if (actualPhone !== session.expectedPhone) {
         session.status = "wrong_account"
         session.qr = null
+        session.wrongAccount = true
         await socket.logout().catch(() => {})
+        await rm(sessionDirectory, { recursive: true, force: true }).catch(() => {})
         return
       }
       session.phone = actualPhone
@@ -126,6 +161,10 @@ async function startInstance(tutor) {
       session.socket = null
       session.phone = null
       session.qr = null
+      if (session.wrongAccount) {
+        session.status = "wrong_account"
+        return
+      }
       if (session.manualClose || statusCode === DisconnectReason.loggedOut) {
         session.status = "disconnected"
         return
@@ -259,7 +298,7 @@ app.post("/instances/:id/send", requireOwnedInstance, async (request, response) 
     const recipients = await getOptedInRecipients(course.id)
     const recipient = recipients.find((item) => item.number === recipientNumber)
     if (!recipient) return response.status(403).json({ error: "Only an opted-in learner enrolled in your course can receive a message." })
-    await session.socket.sendMessage(`${recipient.number}@s.whatsapp.net`, { text })
+    await session.socket.sendMessage(`${recipient.number}@s.whatsapp.net`, { text: text + OPT_OUT_FOOTER })
     response.json({ ok: true })
   } catch (error) {
     response.status(400).json({ error: error.message || "Message was not sent." })
@@ -277,7 +316,9 @@ app.post("/instances/:id/broadcast", requireOwnedInstance, async (request, respo
     const course = await getOwnedCourse(request.tutor.id, request.body?.courseId)
     const text = String(request.body?.text || "").trim().slice(0, 1500)
     if (!text) return response.status(400).json({ error: "Message cannot be empty." })
-    const recipients = (await getOptedInRecipients(course.id)).slice(0, 200)
+    const allRecipients = await getOptedInRecipients(course.id)
+    const recipients = allRecipients.slice(0, 200)
+    const skipped = allRecipients.length - recipients.length
     if (recipients.length === 0) return response.status(400).json({ error: "There are no opted-in learners enrolled in this course." })
     const jobId = crypto.randomUUID()
     const job = { id: jobId, ownerId: request.user.id, instanceId: session.id, status: "queued", sent: 0, failed: 0 }
@@ -288,7 +329,7 @@ app.post("/instances/:id/broadcast", requireOwnedInstance, async (request, respo
       job.status = "sending"
       for (const recipient of recipients) {
         try {
-          await session.socket.sendMessage(`${recipient.number}@s.whatsapp.net`, { text })
+          await session.socket.sendMessage(`${recipient.number}@s.whatsapp.net`, { text: text + OPT_OUT_FOOTER })
           job.sent += 1
         } catch {
           job.failed += 1
@@ -308,7 +349,7 @@ app.post("/instances/:id/broadcast", requireOwnedInstance, async (request, respo
       job.status = "failed"
       job.error = error.message
     })
-    response.status(202).json({ jobId, recipients: recipients.length })
+    response.status(202).json({ jobId, recipients: recipients.length, skipped })
   } catch (error) {
     response.status(400).json({ error: error.message || "Broadcast was not started." })
   }
@@ -320,4 +361,26 @@ app.get("/jobs/:jobId", (request, response) => {
   response.json({ id: job.id, status: job.status, sent: job.sent, failed: job.failed, error: job.error || null })
 })
 
-app.listen(port, "0.0.0.0", () => console.log(`Self-hosted WhatsApp gateway listening on port ${port}`))
+setInterval(() => {
+  for (const [id, job] of jobs) {
+    if (job.status === "complete" || job.status === "failed") jobs.delete(id)
+  }
+}, 60 * 60 * 1000).unref()
+
+async function restoreSessions() {
+  let folders = []
+  try { folders = await readdir(authDirectory) } catch { return }
+  for (const folder of folders) {
+    try {
+      const tutor = await getTutorById(folder)
+      if (tutor) await startInstance(tutor)
+    } catch (error) {
+      console.error(`Could not restore WhatsApp session ${folder}:`, error.message)
+    }
+  }
+}
+
+app.listen(port, "0.0.0.0", () => {
+  console.log(`Self-hosted WhatsApp gateway listening on port ${port}`)
+  void restoreSessions()
+})

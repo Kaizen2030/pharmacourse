@@ -67,13 +67,13 @@ export default function TutorTipsManager({ courseId, courseTitle, courseSlug, in
   }
 
   async function sendToOptedIn(post) {
-    if (!window.confirm(`Send “${post.title}” to opted-in learners enrolled in ${courseTitle}?`)) return
+    if (!window.confirm(`Send "${post.title}" to opted-in learners enrolled in ${courseTitle}?`)) return
     setSendingId(post.id)
     setSendMessage("")
     try {
       const text = formatTipForWhatsApp(post, courseTitle, `${SITE_URL}/courses/${courseSlug || courseId}`)
       const result = await waGateway.broadcast(gatewayInstanceId, courseId, text)
-      setSendMessage(`Sending started for ${result.recipients} opted-in learners.`)
+      setSendMessage(`Sending started for ${result.recipients} opted-in learners.${result.skipped ? ` ${result.skipped} more were not included (200 per broadcast limit).` : ""}`)
     } catch (sendError) {
       setSendMessage(sendError.message)
     } finally {
