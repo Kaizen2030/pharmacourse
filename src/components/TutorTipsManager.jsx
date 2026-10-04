@@ -13,6 +13,7 @@ export default function TutorTipsManager({ courseId, courseTitle, courseSlug, in
   const [copiedId, setCopiedId] = useState("")
   const [sendingId, setSendingId] = useState("")
   const [sendMessage, setSendMessage] = useState("")
+  const [studentCount, setStudentCount] = useState(0)
 
   const load = useCallback(async () => {
     const { data, error: loadError } = await supabase
@@ -22,6 +23,13 @@ export default function TutorTipsManager({ courseId, courseTitle, courseSlug, in
       .order("created_at", { ascending: false })
     if (loadError) setError(loadError.message)
     else setPosts(data || [])
+
+    const { count, error: countError } = await supabase
+      .from("course_enrollments")
+      .select("id", { count: "exact", head: true })
+      .eq("course_id", courseId)
+    if (countError) setError((current) => current || countError.message)
+    else setStudentCount(count || 0)
   }, [courseId])
 
   useEffect(() => { if (courseId) void load() }, [courseId, load])
@@ -85,11 +93,16 @@ export default function TutorTipsManager({ courseId, courseTitle, courseSlug, in
 
   return (
     <div className="card" style={{ padding: "1.25rem", display: "grid", gap: "1rem" }}>
-      <div style={{ borderBottom: "1px solid var(--border)", paddingBottom: "0.7rem" }}>
-        <h3 style={{ margin: 0, fontSize: "1rem" }}>Course: {courseTitle || "Untitled course"}</h3>
-        <p style={{ margin: "0.35rem 0 0", color: "var(--text-500)", fontSize: "0.85rem" }}>
-          Audience: students enrolled in this course only. Published tips below go to that course's learners.
-        </p>
+      <div style={{ borderBottom: "1px solid var(--border)", paddingBottom: "0.7rem", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
+        <div>
+          <h3 style={{ margin: 0, fontSize: "1rem" }}>{courseTitle || "Untitled course"}</h3>
+          <p style={{ margin: "0.35rem 0 0", color: "var(--text-500)", fontSize: "0.85rem" }}>
+            Audience: students enrolled in this course only.
+          </p>
+        </div>
+        <span style={{ display: "inline-flex", alignItems: "center", padding: "0.35rem 0.65rem", borderRadius: 999, background: "rgba(15, 110, 86, 0.08)", color: "var(--green)", fontSize: "0.8rem", fontWeight: 700 }}>
+          {studentCount} students
+        </span>
       </div>
       <div>
         <h3 style={{ margin: 0, fontSize: "1rem" }}>WhatsApp tips</h3>
