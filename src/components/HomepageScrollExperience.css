@@ -5,6 +5,11 @@
   overflow: hidden;
   pointer-events: none;
   contain: strict;
+  opacity: 0.97;
+  background:
+    radial-gradient(circle at 50% 10%, rgba(128, 210, 170, 0.14), transparent 18%),
+    radial-gradient(circle at 86% 24%, rgba(122, 180, 216, 0.12), transparent 24%);
+  filter: saturate(1.08) contrast(1.04);
 }
 
 .homepage-scroll-experience canvas {
@@ -15,7 +20,7 @@
 
 @media (max-width: 640px) {
   .homepage-scroll-experience {
-    opacity: 0.84;
+    opacity: 0.88;
   }
 }
 
