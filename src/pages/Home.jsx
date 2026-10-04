@@ -70,8 +70,8 @@ const DEFAULT_SECTIONS = {
   remedacareOS: {
     enabled: true,
     order: 4,
-    heading: "Bring your hospital workflows together.",
-    subheading: "RemedacareHMIS connects consultations, laboratory, radiology, chronic care, finance, claims, and pharmacy workflows in one hospital information system.",
+    heading: "A complete hospital information system.",
+    subheading: "RemedacareHMIS supports hospital teams with patient records, clinical departments, laboratory, radiology, chronic care, finance, claims, and reporting.",
     badge_text: "RemedacareHMIS",
     primary_btn_text: "Explore RemedacareHMIS",
     primary_btn_url: "/remedacarehmis",
@@ -98,7 +98,7 @@ const DEFAULT_SECTIONS = {
     badge_text: "Reviews",
   },
   stats: {
-    enabled: true,
+    enabled: false,
     order: 8,
     heading: "Trusted by pharmacy professionals",
     badge_text: "Statistics",
@@ -120,25 +120,6 @@ const DEFAULT_SECTIONS = {
     secondary_btn_url: WHATSAPP,
   },
 }
-
-const FALLBACK_TESTIMONIALS = [
-  {
-    id: "fallback-1",
-    author_name: "Dr. Amina",
-    author_title: "Clinical Pharmacist",
-    author_photo_url: "",
-    rating: 5,
-    review_text: "This course helped me understand antimicrobial stewardship with confidence. The lessons were clear and practical.",
-  },
-  {
-    id: "fallback-2",
-    author_name: "Hospital pharmacy professional",
-    author_title: "Pharmacy Professional",
-    author_photo_url: "",
-    rating: 5,
-    review_text: "Great structure and practical examples. I can now recommend the right therapies with more confidence.",
-  },
-]
 
 function normalizeHomepageText(value) {
   if (typeof value !== "string") return value
@@ -172,6 +153,9 @@ function normalizeHomepageSection(sectionKey, sectionConfig) {
   if (sectionKey === "remedacareOS") {
     normalized.badge_text = "RemedacareHMIS"
     normalized.primary_btn_text = normalized.primary_btn_text || "Explore RemedacareHMIS"
+    if (/from clinic to dispensary|clinic to dispensary/i.test(normalized.heading || "")) {
+      normalized.heading = DEFAULT_SECTIONS.remedacareOS.heading
+    }
   }
 
   if (sectionKey === "hero") {
@@ -213,8 +197,8 @@ function normalizeHomepageSection(sectionKey, sectionConfig) {
     normalized.badge_text = DEFAULT_SECTIONS.features.badge_text
   }
 
-  if (sectionKey === "ecosystem") {
-    normalized.badge_text = DEFAULT_SECTIONS.ecosystem.badge_text
+  if (sectionKey === "stats") {
+    normalized.enabled = false
   }
 
   return normalized
@@ -422,8 +406,11 @@ const ProductMockup = ({ type, videoUrl, imageSrc, imageAlt }) => {
 
 export default function Home() {
   const [courses, setCourses] = useState([])
+  const [coursesError, setCoursesError] = useState(false)
   const [testimonials, setTestimonials] = useState([])
+  const [testimonialsError, setTestimonialsError] = useState(false)
   const [latestPosts, setLatestPosts] = useState([])
+  const [postsError, setPostsError] = useState(false)
   const [activeSection, setActiveSection] = useState("hero")
   const [activeCourseIndex, setActiveCourseIndex] = useState(0)
   const [activePostIndex, setActivePostIndex] = useState(0)
@@ -440,6 +427,10 @@ export default function Home() {
           .select("*")
           .eq("enabled", true)
           .order("order_index")
+
+        if (sectionError) {
+          console.error("Failed to load homepage sections:", sectionError)
+        }
 
         if (!sectionError && sectionData && sectionData.length > 0) {
           const sectionsObj = {}
@@ -464,31 +455,47 @@ export default function Home() {
           setSections((prev) => ({ ...prev, ...sectionsObj }))
         }
 
-        const { data: courseData } = await supabase
+        const { data: courseData, error: courseLoadError } = await supabase
           .from("courses")
-          .select("id, slug, title, short_desc, description, category, is_free, price, image_url")
+          .select("*")
           .eq("is_published", true)
+          .order("created_at", { ascending: false })
           .limit(5)
 
-        if (courseData) setCourses(courseData)
+        if (courseLoadError) {
+          console.error("Failed to load homepage courses:", courseLoadError)
+          setCoursesError(true)
+        } else {
+          setCourses(courseData || [])
+        }
 
-        const { data: blogData } = await supabase
+        const { data: blogData, error: blogLoadError } = await supabase
           .from("blog_posts")
           .select("*")
           .eq("is_published", true)
           .order("published_at", { ascending: false })
           .limit(5)
 
-        if (blogData) setLatestPosts(blogData)
+        if (blogLoadError) {
+          console.error("Failed to load homepage blog posts:", blogLoadError)
+          setPostsError(true)
+        } else {
+          setLatestPosts(blogData || [])
+        }
 
-        const { data: testimonialData } = await supabase
+        const { data: testimonialData, error: testimonialLoadError } = await supabase
           .from("testimonials")
           .select("id, author_name, author_title, author_photo_url, rating, review_text")
           .eq("is_published", true)
           .order("created_at", { ascending: false })
           .limit(6)
 
-        if (testimonialData) setTestimonials(testimonialData)
+        if (testimonialLoadError) {
+          console.error("Failed to load homepage testimonials:", testimonialLoadError)
+          setTestimonialsError(true)
+        } else {
+          setTestimonials(testimonialData || [])
+        }
       } catch (err) {
         console.error("Error loading data:", err)
       } finally {
@@ -875,9 +882,13 @@ export default function Home() {
                                 </div>
                               </Link>
                             ))
+                          ) : coursesError ? (
+                            <div className="empty-state">
+                              <p>We could not load courses right now. <Link to="/courses">Browse all courses</Link>.</p>
+                            </div>
                           ) : (
                             <div className="empty-state">
-                              <p>Courses launching soon. <Link to="/register">Register now</Link> to be notified.</p>
+                              <p>No published courses are available right now. <Link to="/courses">Browse all courses</Link>.</p>
                             </div>
                           )}
                         </div>
@@ -975,16 +986,20 @@ export default function Home() {
                                       likeCount={post.like_count}
                                     />
                                     <div className="blog-preview-footer">
-                                      <span>{post.author_name || "Pharmacourse Team"}</span>
+                                      {post.author_name && <span>{post.author_name}</span>}
                                       <span>Read more</span>
                                     </div>
                                   </div>
                                 </Link>
                               )
                             })
+                          ) : postsError ? (
+                            <div className="empty-state">
+                              <p>We could not load articles right now. <Link to="/blog">Browse all articles</Link>.</p>
+                            </div>
                           ) : (
                             <div className="empty-state">
-                              <p>Blog posts are on the way. Check back soon for fresh articles.</p>
+                              <p>No published articles are available right now. <Link to="/blog">Browse all articles</Link>.</p>
                             </div>
                           )}
                         </div>
@@ -1047,7 +1062,7 @@ export default function Home() {
                     </div>
 
                     <div className="testimonials-grid">
-                      {(testimonials.length > 0 ? testimonials : FALLBACK_TESTIMONIALS).map((testimonial) => (
+                      {testimonials.map((testimonial) => (
                         <div key={testimonial.id} className="testimonial-card">
                           <div className="testimonial-rating" aria-label={`${testimonial.rating || 5} star rating`}>
                             {"★".repeat(Math.max(1, Math.min(5, testimonial.rating || 5)))}
@@ -1072,27 +1087,10 @@ export default function Home() {
                           </div>
                         </div>
                       ))}
-                    </div>
-                  </div>
-                </section>
-              </AnimatedSection>
-            )
-
-          case "stats":
-            return (
-              <AnimatedSection key={key} delay={0.7}>
-                <section id="stats" className="stats-section">
-                  <div className="container">
-                    <div className="section-header">
-                      {config.badge_text && <span className="section-badge">{config.badge_text}</span>}
-                      <h2>{config.heading || "Trusted by pharmacy professionals"}</h2>
-                    </div>
-
-                    <div className="stats-grid">
-                      <div className="stat-card"><div className="stat-number">120+</div><p>Hours of focused learning content.</p></div>
-                      <div className="stat-card"><div className="stat-number">5,000+</div><p>Pharmacy professionals enrolled.</p></div>
-                      <div className="stat-card"><div className="stat-number">95%</div><p>Satisfied learners after course completion.</p></div>
-                      <div className="stat-card"><div className="stat-number">100%</div><p>Professional development credits available.</p></div>
+                      {testimonialsError && <div className="empty-state">Learner reviews could not be loaded right now.</div>}
+                      {!testimonialsError && testimonials.length === 0 && (
+                        <div className="empty-state">No published learner reviews are available right now.</div>
+                      )}
                     </div>
                   </div>
                 </section>

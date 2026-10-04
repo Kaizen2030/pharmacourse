@@ -313,7 +313,7 @@ export default function RemedacareOS() {
           </span>
 
           <h1 style={{ fontSize: "clamp(2.2rem, 5.5vw, 3.6rem)", fontWeight: 800, lineHeight: 1.12, margin: "0 0 22px", letterSpacing: "-0.02em" }}>
-            From clinic to dispensary.<br />One connected system.
+            A complete hospital information system.
           </h1>
           <p className="rc-hero-copy" style={{ fontSize: 18, opacity: 0.82, maxWidth: 640, margin: "0 auto 40px", lineHeight: 1.65 }}>
             A full Hospital Management Information System built for Kenyan hospitals with chronic disease follow-up, care pathways, antibiogram intelligence, AMS support, finance workflows, SHA claims, and native RemedacarePOS integration.
@@ -328,14 +328,6 @@ export default function RemedacareOS() {
             </a>
           </div>
 
-          <div className="rc-hero-stats" style={{ display: "flex", justifyContent: "center", marginTop: 56, flexWrap: "wrap", borderTop: "1px solid rgba(255,255,255,0.12)", paddingTop: 40 }}>
-            {[["16+", "HMIS Modules"], ["6", "Clinic Roles"], ["100%", "Kenyan-built"]].map(([n, l], i) => (
-              <div key={l} className="rc-hero-stat" style={{ textAlign: "center", padding: "0 40px", borderRight: i < 2 ? "1px solid rgba(255,255,255,0.15)" : "none" }}>
-                <div className="rc-hero-stat-number" style={{ fontSize: 34, fontWeight: 800, letterSpacing: "-0.02em", color: "#fff" }}>{n}</div>
-                <div className="rc-hero-stat-label" style={{ fontSize: 13, opacity: 0.6, marginTop: 4, color: "#fff" }}>{l}</div>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 
