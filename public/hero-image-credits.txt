@@ -1,20 +1,21 @@
 Homepage hero visuals
 
-1. RemedacarePOS dashboard — Pharmacourse project artwork
-   src/assets/pharmacyos-dashboard.svg
-
-2. "Apothecary Now" — sidibousaid60 — CC BY 2.0
-   https://www.flickr.com/photos/60094033@N08/7064590663
-   https://creativecommons.org/licenses/by/2.0/
-
-3. "RoscheiderHof-ladengasse-apotheke-2003-1.jpg" — Helge Klaus Rieder — CC BY-SA 3.0
-   https://commons.wikimedia.org/wiki/File:RoscheiderHof-ladengasse-apotheke-2003-1.jpg
+1. "Four colors of pills" — Ragesoss — CC BY-SA 3.0 (cropped and resized for the hero)
+   https://commons.wikimedia.org/w/index.php?curid=5289257
    https://creativecommons.org/licenses/by-sa/3.0/
 
-4. "CSIRO ScienceImage 1787 A Molecular Model of a Protein.jpg" — CSIRO — CC BY 3.0
-   https://commons.wikimedia.org/wiki/File:CSIRO_ScienceImage_1787_A_Molecular_Model_of_a_Protein.jpg
-   https://creativecommons.org/licenses/by/3.0/
+2. "L-Tryptophan Molekülbaukasten 8698" — Bin im Garten — CC BY-SA 3.0 (cropped and resized for the hero)
+   https://commons.wikimedia.org/w/index.php?curid=15518271
+   https://creativecommons.org/licenses/by-sa/3.0/
 
-5. "CSIRO ScienceImage 1788 Molecular model of a protein.jpg" — CSIRO — CC BY 3.0
-   https://commons.wikimedia.org/wiki/File:CSIRO_ScienceImage_1788_Molecular_model_of_a_protein.jpg
-   https://creativecommons.org/licenses/by/3.0/
+3. "Technology Network" — HD Wallpapers — CC0 1.0 (cropped and resized for the hero)
+   https://stocksnap.io/photo/technology-network-PN7RVGLUUD
+   https://creativecommons.org/publicdomain/zero/1.0/
+
+4. "DNA-Helix-Rendering 20220603" — PantheraLeo1359531 — CC0 1.0 (cropped and resized for the hero)
+   https://commons.wikimedia.org/w/index.php?curid=118675159
+   https://creativecommons.org/publicdomain/zero/1.0/
+
+5. "Antibody IgG1 surface" — Tokenzero — CC BY-SA 4.0 (cropped and resized for the hero)
+   https://commons.wikimedia.org/w/index.php?curid=95724513
+   https://creativecommons.org/licenses/by-sa/4.0/

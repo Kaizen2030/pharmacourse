@@ -11,10 +11,11 @@ import pharmacourseHeroVisual from "../assets/pharmacourse-hero-visual.svg"
 import remedacarehmisMark from "../assets/remedacarehmis-mark.png"
 import remedacareposMark from "../assets/remedacarepos-mark.png"
 import remedacareDashboard from "../assets/remedacare-dashboard.svg"
-import pharmacyShelves from "../assets/pharmacy-retail.jpg"
-import pharmacyCabinet from "../assets/pharmacy-store.jpg"
-import proteinModel from "../assets/protein-model.jpg"
-import proteinModelAlt from "../assets/protein-model-alt.jpg"
+import heroPills from "../assets/hero-pills.jpg"
+import heroMoleculeModel from "../assets/hero-molecule-model.jpg"
+import heroMolecularNetwork from "../assets/hero-molecular-network.jpg"
+import heroDnaHelix from "../assets/hero-dna-helix.jpg"
+import heroProteinSurface from "../assets/hero-protein-surface.jpg"
 import {
   BookOpen,
   Download,
@@ -36,11 +37,11 @@ import "./Home.css"
 const WHATSAPP = "https://wa.me/254790059584?text=Hi%20Julius%2C%20I%27d%20like%20to%20book%20a%20demo%20of%20your%20platform."
 
 const HERO_IMAGES = [
-  pharmacyosDashboard,
-  pharmacyShelves,
-  pharmacyCabinet,
-  proteinModel,
-  proteinModelAlt,
+  heroPills,
+  heroMoleculeModel,
+  heroMolecularNetwork,
+  heroDnaHelix,
+  heroProteinSurface,
 ]
 
 const HOMEPAGE_BRAND_REPLACEMENTS = [
