@@ -55,7 +55,7 @@ const DEFAULT_SECTIONS = {
     enabled: true,
     order: 1,
     heading: "Better learning. Smarter pharmacy. Stronger hospitals.",
-    subheading: "Pharmacourse is for professional learning. RemedacarePOS is for pharmacy operations. RemedacareHMIS is for hospital management.",
+    subheading: "Learn and grow with Pharmacourse. Run your pharmacy with RemedacarePOS. Manage hospital operations with RemedacareHMIS.",
     badge_text: "Three distinct products",
     primary_btn_text: "Explore Products",
     primary_btn_url: "#ecosystem",
@@ -66,8 +66,8 @@ const DEFAULT_SECTIONS = {
   ecosystem: {
     enabled: true,
     order: 2,
-    heading: "Choose the product that fits your team.",
-    subheading: "Professional learning, pharmacy management, and hospital information are separate tools for different needs.",
+    heading: "Choose what your team needs.",
+    subheading: "Learn. Run a pharmacy. Manage hospital care.",
     badge_text: "Our products",
   },
   pharmacyOS: {
@@ -191,13 +191,11 @@ function normalizeHomepageSection(sectionKey, sectionConfig) {
   }
 
   if (sectionKey === "ecosystem") {
-    if (/one company|connected products|three platforms/i.test(normalized.heading || "")) {
+    if (/^three distinct products:/i.test(normalized.heading || "") || /one company|connected products|three platforms/i.test(normalized.heading || "")) {
       normalized.heading = DEFAULT_SECTIONS.ecosystem.heading
     }
 
-    if (/connected|work together|instead of disconnected/i.test(normalized.subheading || "")) {
-      normalized.subheading = DEFAULT_SECTIONS.ecosystem.subheading
-    }
+    normalized.subheading = DEFAULT_SECTIONS.ecosystem.subheading
 
     normalized.badge_text = DEFAULT_SECTIONS.ecosystem.badge_text
   }
@@ -487,7 +485,7 @@ export default function Home() {
           .select("*")
           .eq("is_published", true)
           .order("published_at", { ascending: false })
-          .limit(5)
+          .limit(3)
 
         if (blogLoadError) {
           console.error("Failed to load homepage blog posts:", blogLoadError)

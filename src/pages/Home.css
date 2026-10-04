@@ -1747,18 +1747,31 @@
 }
 
 .home .ecosystem-section .section-header {
-  margin-bottom: clamp(1.8rem, 4vw, 3rem);
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(16rem, 0.8fr);
+  align-items: end;
+  column-gap: clamp(1.5rem, 5vw, 4rem);
+  row-gap: 0.55rem;
+  margin-bottom: clamp(1.5rem, 3vw, 2.25rem);
+}
+
+.home .ecosystem-section .section-header .section-badge {
+  grid-column: 1 / -1;
+  justify-self: start;
 }
 
 .home .ecosystem-section .section-header h2 {
-  max-width: 760px;
-  font-size: clamp(2.2rem, 4.7vw, 3.8rem);
-  letter-spacing: -0.045em;
+  max-width: 18ch;
+  font-size: clamp(2rem, 3.4vw, 2.8rem);
+  line-height: 1.08;
+  letter-spacing: -0.04em;
 }
 
 .home .ecosystem-section .section-header > p {
-  max-width: 650px;
-  font-size: 1.05rem;
+  max-width: 34ch;
+  margin: 0 0 0.2rem;
+  color: #52665f;
+  font-size: 1rem;
   line-height: 1.7;
 }
 
@@ -1926,6 +1939,15 @@
 @media (max-width: 968px) {
   .home .hero-content-top {
     min-height: 0;
+  }
+
+  .home .ecosystem-section .section-header {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .home .ecosystem-section .section-header > p {
+    max-width: 52ch;
   }
 
   .home .platform-grid {
@@ -2248,8 +2270,18 @@
   border-color: rgba(226, 246, 235, 0.15);
 }
 
-.home .blog-preview-stats {
-  color: rgba(237, 248, 242, 0.72);
+.home .blog-preview-stats .blog-engagement-pill {
+  color: #e5f5ed;
+  background: rgba(229, 245, 237, 0.14);
+}
+
+.home .blog-preview-stats .blog-engagement-pill.liked {
+  color: #ffd2df;
+  background: rgba(255, 210, 223, 0.15);
+}
+
+.home .blog-preview-stats .blog-engagement-pill svg {
+  color: currentColor;
 }
 
 .home .blog-preview-section .btn-secondary {
