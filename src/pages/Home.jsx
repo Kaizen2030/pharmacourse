@@ -153,7 +153,7 @@ function normalizeHomepageSection(sectionKey, sectionConfig) {
   if (sectionKey === "remedacareOS") {
     normalized.badge_text = "RemedacareHMIS"
     normalized.primary_btn_text = normalized.primary_btn_text || "Explore RemedacareHMIS"
-    if (/from clinic to dispensary|clinic to dispensary/i.test(normalized.heading || "")) {
+    if (/clinic.*dispensary|dispensary.*clinic/i.test(normalized.heading || "")) {
       normalized.heading = DEFAULT_SECTIONS.remedacareOS.heading
     }
   }
@@ -771,7 +771,7 @@ export default function Home() {
                     <div className="product-grid">
                       <div className="product-heading">
                         {config.badge_text && <span className="section-badge">{config.badge_text}</span>}
-                        <h2>{config.heading || "Connected hospital workflows from clinic, ward, lab, and dispensary."}</h2>
+                        <h2>{config.heading || "A complete hospital information system."}</h2>
                         {config.subheading && <p>{config.subheading}</p>}
                       </div>
 
