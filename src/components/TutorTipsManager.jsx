@@ -85,10 +85,16 @@ export default function TutorTipsManager({ courseId, courseTitle, courseSlug, in
 
   return (
     <div className="card" style={{ padding: "1.25rem", display: "grid", gap: "1rem" }}>
+      <div style={{ borderBottom: "1px solid var(--border)", paddingBottom: "0.7rem" }}>
+        <h3 style={{ margin: 0, fontSize: "1rem" }}>Course: {courseTitle || "Untitled course"}</h3>
+        <p style={{ margin: "0.35rem 0 0", color: "var(--text-500)", fontSize: "0.85rem" }}>
+          Audience: students enrolled in this course only. Published tips below go to that course's learners.
+        </p>
+      </div>
       <div>
         <h3 style={{ margin: 0, fontSize: "1rem" }}>WhatsApp tips</h3>
         <p style={{ margin: "0.3rem 0 0", color: "var(--text-500)", fontSize: "0.85rem" }}>
-          Published tips appear on the course page. Copy a tip to share it manually in your channel or group.
+          Published tips appear on this course page. Copy a tip to share it manually in your channel or group.
         </p>
       </div>
       {error ? <div role="alert" style={{ color: "var(--danger)", fontSize: "0.85rem" }}>{error}</div> : null}
