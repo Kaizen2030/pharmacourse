@@ -6,8 +6,6 @@ import ProgressBar from "../components/ProgressBar"
 import SEO from "../components/SEO"
 import { BookOpen, Award, Clock, User, ChevronRight, ArrowRight, FlaskConical } from "lucide-react"
 
-const WHATSAPP_TIPS_LINK = "https://wa.me/254790059584?text=Hi%20Julius%2C%20subscribe%20me%20to%20daily%20pharmacy%20tips."
-
 export default function Dashboard() {
   const { user, profile, loading: authLoading, updateProfile } = useAuth()
   const [enrollments, setEnrollments] = useState([])
@@ -22,6 +20,7 @@ export default function Dashboard() {
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileMessage, setProfileMessage] = useState("")
   const [profileError, setProfileError] = useState("")
+  const [hasTutorProfile, setHasTutorProfile] = useState(false)
   const [showWhatsAppOptIn, setShowWhatsAppOptIn] = useState(() => {
     try {
       return localStorage.getItem("whatsapp_optin_dismissed") !== "true"
@@ -38,6 +37,13 @@ export default function Dashboard() {
     }
 
     async function load() {
+      const { data: tutorLink } = await supabase
+        .from("instructors")
+        .select("id")
+        .eq("linked_user_id", user.id)
+        .maybeSingle()
+      setHasTutorProfile(Boolean(tutorLink))
+
       const { data: enr } = await supabase
         .from("course_enrollments").select("*, courses(*)")
         .eq("user_id", user.id)
@@ -253,6 +259,12 @@ export default function Dashboard() {
           </Link>
         </div>
 
+        {hasTutorProfile ? (
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "1rem" }}>
+            <Link to="/tutor/whatsapp" className="btn btn-outline">Manage tutor WhatsApp settings</Link>
+          </div>
+        ) : null}
+
         {/* ── Stats ── */}
         <div className="dashboard-stats" style={{
           display: "grid", gridTemplateColumns: "repeat(4, 1fr)",
@@ -337,20 +349,18 @@ export default function Dashboard() {
                   ×
                 </button>
                 <div className="whatsapp-optin-copy">
-                  <p className="whatsapp-optin-title">Get daily pharmacy tips on WhatsApp</p>
+                  <p className="whatsapp-optin-title">WhatsApp updates from your course tutor</p>
                   <p className="whatsapp-optin-text">
-                    Free CPD micro-lessons, drug updates, and exam prep sent straight to your phone.
+                    Each tutor manages their own course WhatsApp link and updates.
                   </p>
                 </div>
-                <a
-                  href={WHATSAPP_TIPS_LINK}
-                  target="_blank"
-                  rel="noreferrer"
+                <Link
+                  to="/whatsapp-settings"
                   className="btn btn-primary whatsapp-optin-button"
                   style={{ background: "linear-gradient(135deg, #128C7E, #25D366)", boxShadow: "0 10px 24px rgba(37, 211, 102, 0.2)" }}
                 >
-                  Join WhatsApp Tips
-                </a>
+                  WhatsApp preferences
+                </Link>
               </div>
             ) : null}
 

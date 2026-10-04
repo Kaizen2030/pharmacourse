@@ -11,6 +11,8 @@ import BlogContentRenderer from "../../components/BlogContentRenderer"
 import MarkdownContent from "../../components/MarkdownContent"
 import "./AdminDashboard.css"
 import WebsiteAnalyticsTab from "./AdminAnalyticsTab"
+import WhatsAppFields from "../../components/WhatsAppFields"
+import { waPayload } from "../../lib/tutorWhatsApp"
 import { DEFAULT_CERTIFICATE_SETTINGS, normalizeCertificateSettings } from "../../lib/certificateSettings"
 import {
   createEmptyBlogSection,
@@ -1094,6 +1096,12 @@ const EMPTY_INSTRUCTOR_FORM = {
   linkedin_url: "",
   years_experience: "",
   specialization: "",
+  whatsapp_enabled: false,
+  whatsapp_mode: "channel",
+  whatsapp_url: "",
+  whatsapp_number: "",
+  whatsapp_title: "",
+  whatsapp_blurb: "",
 }
 
 function getInstructorInitials(name) {
@@ -1104,6 +1112,7 @@ function getInstructorInitials(name) {
 
 function InstructorsTab() {
   const [instructors, setInstructors] = useState([])
+  const [accountOptions, setAccountOptions] = useState([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
@@ -1117,6 +1126,8 @@ function InstructorsTab() {
 
   useEffect(() => {
     loadInstructors()
+    supabase.from("user_profiles").select("id, full_name, email").order("full_name", { ascending: true })
+      .then(({ data }) => setAccountOptions(data || []))
   }, [])
 
   async function loadInstructors() {
@@ -1165,6 +1176,7 @@ function InstructorsTab() {
     setEditingId(instructor.id)
     setForm({
       id: instructor.id || "",
+      linked_user_id: instructor.linked_user_id || "",
       name: instructor.name || "",
       title: instructor.title || "",
       bio: instructor.bio || "",
@@ -1172,6 +1184,12 @@ function InstructorsTab() {
       linkedin_url: instructor.linkedin_url || "",
       years_experience: instructor.years_experience ?? "",
       specialization: instructor.specialization || "",
+      whatsapp_enabled: Boolean(instructor.whatsapp_enabled),
+      whatsapp_mode: instructor.whatsapp_mode || "channel",
+      whatsapp_url: instructor.whatsapp_url || "",
+      whatsapp_number: instructor.whatsapp_number || "",
+      whatsapp_title: instructor.whatsapp_title || "",
+      whatsapp_blurb: instructor.whatsapp_blurb || "",
     })
     setShowForm(true)
   }
@@ -1224,6 +1242,7 @@ function InstructorsTab() {
 
     const payload = {
       id: editingId || form.id || crypto.randomUUID(),
+      linked_user_id: form.linked_user_id || null,
       name: form.name.trim(),
       title: form.title.trim() || null,
       bio: form.bio.trim() || null,
@@ -1231,6 +1250,7 @@ function InstructorsTab() {
       linkedin_url: form.linkedin_url.trim() || null,
       years_experience: form.years_experience === "" ? null : Number(form.years_experience),
       specialization: form.specialization.trim() || null,
+      ...waPayload(form),
       updated_at: new Date().toISOString(),
     }
 
@@ -1325,6 +1345,15 @@ function InstructorsTab() {
             </div>
           </div>
 
+          <div className="form-group">
+            <label>Tutor login account</label>
+            <select value={form.linked_user_id || ""} onChange={updateFormField("linked_user_id")}>
+              <option value="">Not linked</option>
+              {accountOptions.map((account) => <option key={account.id} value={account.id}>{account.full_name || account.email} {account.email ? `(${account.email})` : ""}</option>)}
+            </select>
+            <small>This account can manage this tutor's WhatsApp settings and tips.</small>
+          </div>
+
           <div className="form-row">
             <div className="form-group">
               <label>Specialization</label>
@@ -1340,6 +1369,8 @@ function InstructorsTab() {
             <label>Bio</label>
             <textarea rows={3} value={form.bio} onChange={updateFormField("bio")} placeholder="Short professional summary for this instructor." />
           </div>
+
+          <WhatsAppFields value={form} onChange={(nextValue) => setForm((current) => ({ ...current, ...nextValue }))} />
 
           <div className="form-group">
             <label>Instructor Photo</label>

@@ -2,6 +2,7 @@ import { useEffect } from "react"
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom"
 import { AuthProvider } from "./context/AuthContext"
 import WebsiteAnalyticsTracker from "./components/WebsiteAnalyticsTracker"
+import ChatWidget from "./components/ChatWidget"
 import Footer from "./components/Footer"
 import Navbar from "./components/Navbar"
 import PatientLayout from "./components/PatientLayout"
@@ -37,6 +38,8 @@ import RemedacareOS from "./pages/Remedacareos"
 import ResetPassword from "./pages/ResetPassword"
 import ResetRedirect from "./pages/ResetRedirect"
 import TeamPlans from "./pages/TeamPlans"
+import TutorWhatsAppSettings from "./pages/TutorWhatsAppSettings"
+import WhatsAppSettings from "./pages/WhatsAppSettings"
 import VerifyCertificate from "./pages/VerifyCertificate"
 import Workshops from "./pages/Workshops"
 import AdminDashboard from "./pages/admin/AdminDashboard"
@@ -129,6 +132,8 @@ function AppShell() {
         <Route path="/courses/:id" element={<CourseDetail />} />
         <Route path="/learn/:courseId/:lessonId" element={<CoursePlayer />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/tutor/whatsapp" element={<TutorWhatsAppSettings />} />
+        <Route path="/whatsapp-settings" element={<WhatsAppSettings />} />
         <Route path="/certificate/:courseId" element={<Certificate />} />
         <Route path="/verify/:certificateId" element={<VerifyCertificate />} />
         <Route path="/simulation/:simulationId" element={<CaseSimulation />} />
@@ -171,6 +176,7 @@ function AppShell() {
         <Route path="/reset/pharmacyos" element={<ResetRedirect app="remedacarepos" />} />
       </Routes>
       {!isPatientRoute && !isFlyerRoute && !isActivationRoute ? <Footer /> : null}
+      {!isPatientRoute && !isFlyerRoute && !isActivationRoute ? <ChatWidget /> : null}
     </>
   )
 }

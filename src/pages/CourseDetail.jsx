@@ -3,8 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
 import { useAuth } from "../context/AuthContext"
 import SEO from "../components/SEO"
-
-const WHATSAPP_TIPS_LINK = "https://wa.me/254790059584?text=Hi%20Julius%2C%20subscribe%20me%20to%20daily%20pharmacy%20tips."
+import WhatsAppOptInCard from "../components/WhatsAppOptInCard"
 
 function getInstructorInitials(name) {
   const parts = `${name || ""}`
@@ -284,23 +283,7 @@ export default function CourseDetail() {
             </div>
           ))}
 
-          <div className="whatsapp-optin-card compact">
-            <div className="whatsapp-optin-copy">
-              <p className="whatsapp-optin-title">Get daily pharmacy tips on WhatsApp</p>
-              <p className="whatsapp-optin-text">
-                Free CPD micro-lessons, drug updates, and exam prep sent straight to your phone.
-              </p>
-            </div>
-            <a
-              href={WHATSAPP_TIPS_LINK}
-              target="_blank"
-              rel="noreferrer"
-              className="btn btn-primary whatsapp-optin-button"
-              style={{ background: "linear-gradient(135deg, #128C7E, #25D366)", boxShadow: "0 10px 24px rgba(37, 211, 102, 0.2)" }}
-            >
-              Join WhatsApp Tips
-            </a>
-          </div>
+          <WhatsAppOptInCard course={course} instructor={instructor} />
         </div>
 
         <aside className="detail-sidebar">

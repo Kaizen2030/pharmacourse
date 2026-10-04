@@ -1,0 +1,31 @@
+.cw-fab { position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 60; width: 56px; height: 56px; border: 0; border-radius: 50%; cursor: pointer; color: #fff; display: grid; place-items: center; background: linear-gradient(135deg, #128c7e, #25d366); box-shadow: 0 10px 24px rgba(37, 211, 102, 0.35); }
+.cw-panel { position: fixed; right: 16px; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); z-index: 60; width: min(360px, calc(100vw - 32px)); max-height: min(560px, calc(100dvh - 120px)); display: flex; flex-direction: column; background: #fff; border: 1px solid #c8e7da; border-radius: 12px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18); overflow: hidden; }
+.cw-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.8rem 1rem; color: #fff; background: #0f6e56; }
+.cw-head div { display: grid; gap: 3px; }
+.cw-head span { color: #d6ece4; font-size: 0.75rem; }
+.cw-icon-btn { width: 36px; height: 36px; border: 0; border-radius: 6px; background: transparent; color: inherit; cursor: pointer; display: grid; place-items: center; }
+.cw-icon-btn:hover { background: rgba(255, 255, 255, 0.14); }
+.cw-list { flex: 1; min-height: 120px; overflow-y: auto; padding: 0.9rem; display: flex; flex-direction: column; gap: 0.6rem; background: #f6fbf8; }
+.cw-msg { max-width: 88%; padding: 0.6rem 0.8rem; border-radius: 10px; font-size: 0.9rem; line-height: 1.45; overflow-wrap: anywhere; }
+.cw-msg p { margin: 0; }
+.cw-msg.bot { align-self: flex-start; background: #fff; border: 1px solid #e1efe8; color: #11231d; }
+.cw-msg.me { align-self: flex-end; background: #dcf8c6; color: #11231d; }
+.cw-msg a { display: inline-block; margin-top: 0.4rem; margin-right: 0.6rem; font-weight: 650; color: #0f6e56; }
+.cw-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; padding: 0.6rem 0.9rem 0; }
+.cw-chips button { min-height: 32px; border: 1px solid #c8e7da; background: #fff; color: #0f6e56; border-radius: 16px; padding: 0.3rem 0.7rem; font-size: 0.75rem; cursor: pointer; }
+.cw-chips button:hover { background: #f1faf6; }
+.cw-form { display: flex; gap: 0.5rem; padding: 0.7rem 0.9rem; }
+.cw-form input { flex: 1; min-width: 0; border: 1px solid #c8e7da; border-radius: 18px; padding: 0.5rem 0.9rem; font-size: 0.9rem; }
+.cw-send { width: 38px; height: 38px; flex: 0 0 auto; border: 0; border-radius: 50%; cursor: pointer; color: #fff; background: #0f6e56; display: grid; place-items: center; }
+.cw-send:disabled { opacity: 0.5; cursor: not-allowed; }
+.cw-foot { display: flex; justify-content: center; gap: 1rem; padding: 0.55rem 0.9rem 0.8rem; border-top: 1px solid #e1efe8; font-size: 0.82rem; }
+.cw-foot a { color: #128c7e; font-weight: 650; text-decoration: none; }
+
+@media (max-width: 420px) {
+  .cw-panel { right: 12px; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); width: calc(100vw - 24px); max-height: min(560px, calc(100dvh - 104px)); }
+  .cw-fab { right: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cw-fab, .cw-panel { scroll-behavior: auto; }
+}

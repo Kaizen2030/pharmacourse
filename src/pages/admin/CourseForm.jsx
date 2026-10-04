@@ -3,6 +3,9 @@ import { useParams, useNavigate } from "react-router-dom"
 import { supabase } from "../../lib/supabaseClient"
 import { useAuth } from "../../context/AuthContext"
 import { getCourseCategoryLabel, normalizeCourseCategory, slugifyCourseCategory } from "../../lib/courseCategoryHelpers"
+import WhatsAppFields from "../../components/WhatsAppFields"
+import { waPayload } from "../../lib/tutorWhatsApp"
+import TutorTipsManager from "../../components/TutorTipsManager"
 
 /* ─── tiny rich-text toolbar (no external deps) ─────────────────────────── */
 function RichTextEditor({ value, onChange }) {
@@ -253,8 +256,11 @@ export default function CourseForm() {
 
   const [form, setForm] = useState({
     title:"", slug:"", short_desc:"", description:"", category:"Microbiology",
-    is_free:true, price:"0", is_published:false, cover_url:"", tags:[]
+    is_free:true, price:"0", is_published:false, cover_url:"", tags:[],
+    instructor_id:"", whatsapp_enabled:null, whatsapp_mode:"", whatsapp_url:"",
+    whatsapp_number:"", whatsapp_title:"", whatsapp_blurb:""
   })
+  const [instructorOptions, setInstructorOptions] = useState([])
   const [modules, setModules] = useState([])
   const [saving, setSaving] = useState(false)
   const [coverUploading, setCoverUploading] = useState(false)
@@ -273,7 +279,11 @@ export default function CourseForm() {
         title: c.title, slug: c.slug, short_desc: c.short_desc||"",
         description: c.description||"", category: c.category||"Microbiology",
         is_free: c.is_free, price: c.price||"0", is_published: c.is_published,
-        cover_url: c.cover_url||"", tags: c.tags||[]
+        cover_url: c.cover_url||"", tags: c.tags||[],
+        instructor_id: c.instructor_id||"", whatsapp_enabled: c.whatsapp_enabled ?? null,
+        whatsapp_mode: c.whatsapp_mode||"", whatsapp_url: c.whatsapp_url||"",
+        whatsapp_number: c.whatsapp_number||"", whatsapp_title: c.whatsapp_title||"",
+        whatsapp_blurb: c.whatsapp_blurb||""
       })
       const { data: mods } = await supabase.from("modules").select("*, lessons(*)").eq("course_id", id).order("order_index")
       setModules(mods || [])
@@ -320,6 +330,11 @@ export default function CourseForm() {
     setCoverUploading(false)
   }
 
+  useEffect(() => {
+    supabase.from("instructors").select("id, name").order("name", { ascending: true })
+      .then(({ data }) => setInstructorOptions(data || []))
+  }, [])
+
   /* save course */
   async function saveCourse(e) {
     e.preventDefault()
@@ -328,6 +343,8 @@ export default function CourseForm() {
       ...form,
       category: normalizeCourseCategory(form.category),
       price: parseFloat(form.price)||0,
+      instructor_id: form.instructor_id || null,
+      ...waPayload(form, true),
     }
     if (!payload.slug) payload.slug = autoSlug(payload.title)
 
@@ -535,6 +552,25 @@ export default function CourseForm() {
         <div className="card" style={{ padding:"1.5rem" }}>
           <p style={styles.fieldHint}>Tags help students discover your course via search and filters.</p>
           <TagInput tags={form.tags} onChange={tags => setForm(f => ({ ...f, tags }))} />
+        </div>
+      </section>
+
+      {/* ── Tutor & WhatsApp ── */}
+      <section style={styles.section}>
+        <SectionHeading icon="💬" label="Tutor & WhatsApp" />
+        <div style={{ display:"grid", gap:"1rem" }}>
+          <div className="card" style={{ padding:"1.25rem" }}>
+            <div className="form-group" style={{ margin:0 }}>
+              <label>Tutor for this course</label>
+              <select value={form.instructor_id} onChange={(event) => setForm((current) => ({ ...current, instructor_id: event.target.value }))}>
+                <option value="">No tutor assigned</option>
+                {instructorOptions.map((instructorOption) => <option key={instructorOption.id} value={instructorOption.id}>{instructorOption.name}</option>)}
+              </select>
+              <small style={{ color:"var(--text-500)" }}>The tutor's WhatsApp settings apply unless you override them below.</small>
+            </div>
+          </div>
+          <WhatsAppFields inherit value={form} onChange={(nextValue) => setForm((current) => ({ ...current, ...nextValue }))} />
+          <TutorTipsManager courseId={courseId} courseTitle={form.title} courseSlug={form.slug} instructorId={form.instructor_id || null} />
         </div>
       </section>
 
