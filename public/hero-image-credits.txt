@@ -1,16 +1,20 @@
-Homepage hero research photographs
+Homepage hero visuals
 
-1. "A group of scientists working in a laboratory" — Esculab — CC0 1.0
-   https://commons.wikimedia.org/wiki/File:A_group_of_scientists_working_in_a_laboratory_Esculab.jpg
+1. RemedacarePOS dashboard — Pharmacourse project artwork
+   src/assets/pharmacyos-dashboard.svg
 
-2. "Medical Laboratory Scientist US NIH" — National Institutes of Health — Public domain
-   https://commons.wikimedia.org/wiki/File:Medical_Laboratory_Scientist_US_NIH.jpg
+2. "Apothecary Now" — sidibousaid60 — CC BY 2.0
+   https://www.flickr.com/photos/60094033@N08/7064590663
+   https://creativecommons.org/licenses/by/2.0/
 
-3. "CDC scientist transfers H7N9" — James Gathany / CDC — Public domain
-   https://commons.wikimedia.org/wiki/File:CDC_scientist_transfers_H7N9.png
+3. "RoscheiderHof-ladengasse-apotheke-2003-1.jpg" — Helge Klaus Rieder — CC BY-SA 3.0
+   https://commons.wikimedia.org/wiki/File:RoscheiderHof-ladengasse-apotheke-2003-1.jpg
+   https://creativecommons.org/licenses/by-sa/3.0/
 
-4. "Female scientist with DNA sample pipetting" — Daniel Sone — Public domain
-   https://commons.wikimedia.org/wiki/File:Female_scientist_with_DNA_sample_pippetting.jpg
+4. "CSIRO ScienceImage 1787 A Molecular Model of a Protein.jpg" — CSIRO — CC BY 3.0
+   https://commons.wikimedia.org/wiki/File:CSIRO_ScienceImage_1787_A_Molecular_Model_of_a_Protein.jpg
+   https://creativecommons.org/licenses/by/3.0/
 
-5. "Pipetting culture media" — National Cancer Institute — Public domain
-   https://commons.wikimedia.org/wiki/File:Pipetting_culture_media.jpg
+5. "CSIRO ScienceImage 1788 Molecular model of a protein.jpg" — CSIRO — CC BY 3.0
+   https://commons.wikimedia.org/wiki/File:CSIRO_ScienceImage_1788_Molecular_model_of_a_protein.jpg
+   https://creativecommons.org/licenses/by/3.0/

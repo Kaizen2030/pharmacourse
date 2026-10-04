@@ -11,11 +11,10 @@ import pharmacourseHeroVisual from "../assets/pharmacourse-hero-visual.svg"
 import remedacarehmisMark from "../assets/remedacarehmis-mark.png"
 import remedacareposMark from "../assets/remedacarepos-mark.png"
 import remedacareDashboard from "../assets/remedacare-dashboard.svg"
-import labResearchOne from "../assets/hero-research-photo-1.jpg"
-import labResearchTwo from "../assets/hero-research-photo-2.jpg"
-import labResearchThree from "../assets/hero-research-photo-3.jpg"
-import labResearchFour from "../assets/hero-research-photo-4.jpg"
-import labResearchFive from "../assets/hero-research-photo-5.jpg"
+import pharmacyShelves from "../assets/pharmacy-retail.jpg"
+import pharmacyCabinet from "../assets/pharmacy-store.jpg"
+import proteinModel from "../assets/protein-model.jpg"
+import proteinModelAlt from "../assets/protein-model-alt.jpg"
 import {
   BookOpen,
   Download,
@@ -36,12 +35,12 @@ import "./Home.css"
 
 const WHATSAPP = "https://wa.me/254790059584?text=Hi%20Julius%2C%20I%27d%20like%20to%20book%20a%20demo%20of%20your%20platform."
 
-const HERO_LAB_IMAGES = [
-  labResearchOne,
-  labResearchTwo,
-  labResearchThree,
-  labResearchFour,
-  labResearchFive,
+const HERO_IMAGES = [
+  pharmacyosDashboard,
+  pharmacyShelves,
+  pharmacyCabinet,
+  proteinModel,
+  proteinModelAlt,
 ]
 
 const HOMEPAGE_BRAND_REPLACEMENTS = [
@@ -608,11 +607,11 @@ export default function Home() {
                 <section id="hero" className="hero-section">
                   <div className="container">
                     <div className="hero-content-top">
-                      <div className="hero-lab-slideshow" aria-hidden="true">
-                        {HERO_LAB_IMAGES.map((image, index) => (
+                      <div className="hero-visual-slideshow" aria-hidden="true">
+                        {HERO_IMAGES.map((image, index) => (
                           <div
                             key={image}
-                            className="hero-lab-slide"
+                            className="hero-visual-slide"
                             style={{
                               backgroundImage: `url("${image}")`,
                               animationDelay: `${index * -7}s`,
