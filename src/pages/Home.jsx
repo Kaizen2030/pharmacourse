@@ -11,9 +11,7 @@ import pharmacourseHeroVisual from "../assets/pharmacourse-hero-visual.svg"
 import remedacarehmisMark from "../assets/remedacarehmis-mark.png"
 import remedacareposMark from "../assets/remedacarepos-mark.png"
 import remedacareDashboard from "../assets/remedacare-dashboard.svg"
-import heroPills from "../assets/hero-pills.jpg"
 import heroMoleculeModel from "../assets/hero-molecule-model.jpg"
-import heroMolecularNetwork from "../assets/hero-molecular-network.jpg"
 import heroDnaHelix from "../assets/hero-dna-helix.jpg"
 import heroProteinSurface from "../assets/hero-protein-surface.jpg"
 import {
@@ -35,14 +33,8 @@ import {
 import "./Home.css"
 
 const WHATSAPP = "https://wa.me/254790059584?text=Hi%20Julius%2C%20I%27d%20like%20to%20book%20a%20demo%20of%20your%20platform."
-
-const HERO_IMAGES = [
-  heroPills,
-  heroMoleculeModel,
-  heroMolecularNetwork,
-  heroDnaHelix,
-  heroProteinSurface,
-]
+const HERO_ART_MODES = ["learn", "practice", "care"]
+const HERO_ART_IMAGES = [heroDnaHelix, heroMoleculeModel, heroProteinSurface]
 
 const HOMEPAGE_BRAND_REPLACEMENTS = [
   { pattern: /RemedacareHMS/g, replacement: "RemedacareHMIS" },
@@ -272,6 +264,483 @@ const AnimatedSection = ({ children, delay = 0 }) => {
       }}
     >
       {children}
+    </div>
+  )
+}
+
+function Hero3DArt() {
+  const mountRef = useRef(null)
+  const [mode, setMode] = useState("learn")
+  const modeRef = useRef("learn")
+
+  useEffect(() => {
+    modeRef.current = mode
+  }, [mode])
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return undefined
+
+    const timer = window.setInterval(() => {
+      if (document.visibilityState !== "visible") return
+      setMode((current) => {
+        const index = HERO_ART_MODES.indexOf(current)
+        return HERO_ART_MODES[(index + 1) % HERO_ART_MODES.length]
+      })
+    }, 5200)
+
+    return () => window.clearInterval(timer)
+  }, [])
+
+  useEffect(() => {
+    const mount = mountRef.current
+    if (!mount) return undefined
+
+    let cancelled = false
+    let disposeScene
+
+    const initializeScene = async () => {
+      const THREE = await import("three")
+      if (cancelled) return
+
+    const scene = new THREE.Scene()
+    scene.background = new THREE.Color(0xe7f4f0)
+    scene.fog = new THREE.Fog(0xe7f4f0, 10, 22)
+
+    const camera = new THREE.PerspectiveCamera(32, mount.clientWidth / mount.clientHeight, 0.1, 100)
+    camera.position.set(0, 2.1, 7.2)
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    renderer.setSize(mount.clientWidth, mount.clientHeight)
+    mount.appendChild(renderer.domElement)
+
+    const ambient = new THREE.HemisphereLight(0xffffff, 0xdbece6, 1.4)
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.6)
+    keyLight.position.set(3, 6, 5)
+    scene.add(ambient, keyLight)
+
+    const floor = new THREE.Mesh(
+      new THREE.CylinderGeometry(5.2, 5.6, 0.5, 48),
+      new THREE.MeshStandardMaterial({ color: 0xe5f4ef, roughness: 0.96, metalness: 0.05 })
+    )
+    floor.position.y = -2.35
+    floor.visible = false
+    scene.add(floor)
+
+    const shelfBack = new THREE.Mesh(
+      new THREE.BoxGeometry(3.8, 2.6, 0.24),
+      new THREE.MeshStandardMaterial({ color: 0xdfece7, roughness: 0.8 })
+    )
+    shelfBack.position.set(0, 0.3, -2.6)
+    shelfBack.visible = false
+    scene.add(shelfBack)
+
+    const body = new THREE.Group()
+    body.position.y = -0.15
+    scene.add(body)
+
+    const skinMaterial = new THREE.MeshStandardMaterial({ color: 0x8f5a3e, roughness: 0.8 })
+    const coatMaterial = new THREE.MeshStandardMaterial({ color: 0xf5f7f9, roughness: 0.9 })
+    const shirtMaterial = new THREE.MeshStandardMaterial({ color: 0x9ebfe4, roughness: 0.7 })
+    const pantsMaterial = new THREE.MeshStandardMaterial({ color: 0x2e5d9e, roughness: 0.8 })
+    const hairMaterial = new THREE.MeshStandardMaterial({ color: 0x2d1f1a, roughness: 0.9 })
+    const labelMaterial = new THREE.MeshStandardMaterial({ color: 0x2c9d87, roughness: 0.7, metalness: 0.2 })
+    const capsuleMaterial = new THREE.MeshStandardMaterial({ color: 0xfd6a55, roughness: 0.5, metalness: 0.15 })
+    const metalMaterial = new THREE.MeshStandardMaterial({ color: 0xb5c6d4, roughness: 0.7, metalness: 0.6 })
+
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(1.65, 1.8, 0.72), coatMaterial)
+    torso.position.y = 1.8
+    body.add(torso)
+
+    const shirt = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.15, 0.48), shirtMaterial)
+    shirt.position.set(0, 1.8, 0.18)
+    body.add(shirt)
+
+    const hips = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.7, 0.6), pantsMaterial)
+    hips.position.set(0, 0.8, 0)
+    body.add(hips)
+
+    const leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.38, 1.2, 0.42), pantsMaterial)
+    leftLeg.position.set(-0.27, -0.2, 0)
+    const rightLeg = leftLeg.clone()
+    rightLeg.position.x = 0.27
+    body.add(leftLeg, rightLeg)
+
+    const leftShoe = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.2, 0.7), new THREE.MeshStandardMaterial({ color: 0xf4e9d6, roughness: 0.9 }))
+    leftShoe.position.set(-0.27, -1.08, 0.12)
+    const rightShoe = leftShoe.clone()
+    rightShoe.position.x = 0.27
+    body.add(leftShoe, rightShoe)
+
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.56, 32, 32), skinMaterial)
+    head.position.set(0, 3.15, 0)
+    body.add(head)
+
+    const hair = new THREE.Mesh(new THREE.SphereGeometry(0.58, 24, 24), hairMaterial)
+    hair.position.set(0, 3.42, -0.04)
+    hair.scale.set(1.08, 0.85, 1.08)
+    body.add(hair)
+
+    const forehead = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.12, 0.72), hairMaterial)
+    forehead.position.set(0, 3.44, 0.25)
+    body.add(forehead)
+
+    const leftEye = new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 12), new THREE.MeshStandardMaterial({ color: 0x1a1a1a }))
+    leftEye.position.set(-0.16, 3.18, 0.46)
+    const rightEye = leftEye.clone()
+    rightEye.position.x = 0.16
+    body.add(leftEye, rightEye)
+
+    const smile = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.02, 8, 16, Math.PI), new THREE.MeshStandardMaterial({ color: 0xc36d7a }))
+    smile.rotation.z = Math.PI
+    smile.position.set(0, 2.98, 0.48)
+    body.add(smile)
+
+    const leftGlass = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.1, 0.08), new THREE.MeshStandardMaterial({ color: 0x2a374a, transparent: true, opacity: 0.8 }))
+    leftGlass.position.set(-0.18, 3.18, 0.52)
+    const rightGlass = leftGlass.clone()
+    rightGlass.position.x = 0.18
+    body.add(leftGlass, rightGlass)
+
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.24, 18), skinMaterial)
+    neck.position.set(0, 2.5, 0)
+    body.add(neck)
+
+    const coatCollar = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.18, 0.42), new THREE.MeshStandardMaterial({ color: 0xf0dfe5 }))
+    coatCollar.position.set(0, 2.32, 0.2)
+    body.add(coatCollar)
+
+    const leftArmPivot = new THREE.Group()
+    leftArmPivot.position.set(-1.02, 2.52, 0)
+    body.add(leftArmPivot)
+
+    const rightArmPivot = new THREE.Group()
+    rightArmPivot.position.set(1.02, 2.52, 0)
+    body.add(rightArmPivot)
+
+    const armGeometry = new THREE.CapsuleGeometry(0.17, 0.9, 6, 12)
+    const leftArm = new THREE.Mesh(armGeometry, skinMaterial)
+    leftArm.position.y = -0.55
+    leftArmPivot.add(leftArm)
+
+    const rightArm = new THREE.Mesh(armGeometry, skinMaterial)
+    rightArm.position.y = -0.55
+    rightArmPivot.add(rightArm)
+
+    const leftForearm = new THREE.Mesh(new THREE.CapsuleGeometry(0.14, 0.7, 5, 12), skinMaterial)
+    leftForearm.position.set(-0.12, -1.2, 0.12)
+    leftArmPivot.add(leftForearm)
+
+    const rightForearm = new THREE.Mesh(new THREE.CapsuleGeometry(0.14, 0.7, 5, 12), skinMaterial)
+    rightForearm.position.set(0.12, -1.2, 0.12)
+    rightArmPivot.add(rightForearm)
+
+    const stethoscope = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.02, 12, 36), metalMaterial)
+    stethoscope.rotation.x = Math.PI / 2
+    stethoscope.position.set(0, 2.2, 0.12)
+    body.add(stethoscope)
+
+    const stethoscopeTube = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 1.2, 12), metalMaterial)
+    stethoscopeTube.rotation.z = Math.PI / 2
+    stethoscopeTube.position.set(0.25, 1.42, 0.1)
+    body.add(stethoscopeTube)
+
+    const badge = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.22, 0.04), labelMaterial)
+    badge.position.set(0, 1.72, 0.39)
+    body.add(badge)
+
+    const clipboard = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.08, 0.06), new THREE.MeshStandardMaterial({ color: 0xf9fbff, roughness: 0.85 }))
+    clipboard.position.set(1.4, 1.6, 0.4)
+    clipboard.rotation.z = -0.4
+    clipboard.rotation.y = -0.4
+    clipboard.visible = false
+    body.add(clipboard)
+
+    const pillBottle = new THREE.Group()
+    const bottleBody = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.8, 20), new THREE.MeshStandardMaterial({ color: 0xf4a261, roughness: 0.6 }))
+    bottleBody.position.y = 0.55
+    const bottleCap = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.2, 18), new THREE.MeshStandardMaterial({ color: 0xe76f51, roughness: 0.8 }))
+    bottleCap.position.y = 1.1
+    const capsule = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.9, 18), capsuleMaterial)
+    capsule.rotation.z = Math.PI / 2
+    capsule.position.set(0.2, 0.6, -0.15)
+    pillBottle.add(bottleBody, bottleCap, capsule)
+    pillBottle.rotation.z = -0.4
+    pillBottle.position.set(1.4, 1.65, 0.3)
+    pillBottle.visible = false
+    body.add(pillBottle)
+
+    body.visible = false
+    const art = new THREE.Group()
+    art.position.set(0, 1.65, 0)
+    scene.add(art)
+
+    const textureLoader = new THREE.TextureLoader()
+    const modeTextures = HERO_ART_IMAGES.map((image) => {
+      const texture = textureLoader.load(image)
+      texture.colorSpace = THREE.SRGBColorSpace
+      return texture
+    })
+    const imagePanel = new THREE.Mesh(
+      new THREE.PlaneGeometry(3.35, 2.75),
+      new THREE.MeshBasicMaterial({ map: modeTextures[0], transparent: true, opacity: 0.68, depthWrite: false })
+    )
+    imagePanel.position.z = -1.35
+    art.add(imagePanel)
+
+    const coreMaterial = new THREE.MeshPhysicalMaterial({
+      color: 0x17a582,
+      roughness: 0.22,
+      metalness: 0.18,
+      clearcoat: 1,
+      clearcoatRoughness: 0.16,
+    })
+    const coralMaterial = new THREE.MeshPhysicalMaterial({ color: 0xff765e, roughness: 0.25, metalness: 0.12, clearcoat: 0.8 })
+    const goldMaterial = new THREE.MeshPhysicalMaterial({ color: 0xffc857, roughness: 0.25, metalness: 0.18, clearcoat: 0.8 })
+    const blueMaterial = new THREE.MeshPhysicalMaterial({ color: 0x528ad8, roughness: 0.24, metalness: 0.16, clearcoat: 0.8 })
+    const lineMaterial = new THREE.MeshBasicMaterial({ color: 0x4b9e91, transparent: true, opacity: 0.56 })
+
+    const centralForm = new THREE.Mesh(new THREE.TorusKnotGeometry(0.78, 0.25, 180, 24, 2, 3), coreMaterial)
+    centralForm.rotation.set(0.25, -0.4, 0.2)
+    art.add(centralForm)
+
+    const nucleus = new THREE.Mesh(new THREE.IcosahedronGeometry(0.42, 2), new THREE.MeshPhysicalMaterial({
+      color: 0xf5fff9,
+      roughness: 0.08,
+      metalness: 0.12,
+      transmission: 0.35,
+      thickness: 0.8,
+      clearcoat: 1,
+    }))
+    art.add(nucleus)
+
+    const orbitRings = []
+    ;[
+      { radius: 1.42, color: 0x28a78f, rotation: [0.3, 0.35, 0.1] },
+      { radius: 1.72, color: 0xf4b84b, rotation: [1.25, -0.42, 0.55] },
+      { radius: 1.15, color: 0xe76f5a, rotation: [0.72, 1.05, -0.6] },
+    ].forEach(({ radius, color, rotation }) => {
+      const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(radius, 0.018, 12, 128),
+        new THREE.MeshStandardMaterial({ color, roughness: 0.32, metalness: 0.45, transparent: true, opacity: 0.82 })
+      )
+      ring.rotation.set(...rotation)
+      art.add(ring)
+      orbitRings.push(ring)
+    })
+
+    const atomPositions = [
+      new THREE.Vector3(-1.6, 0.62, 0.2),
+      new THREE.Vector3(1.48, 0.88, -0.15),
+      new THREE.Vector3(0.2, -1.48, 0.55),
+      new THREE.Vector3(-1.05, -0.9, -0.45),
+      new THREE.Vector3(1.18, -0.92, 0.25),
+    ]
+    const atomMaterials = [coralMaterial, goldMaterial, blueMaterial, coreMaterial, coralMaterial]
+    const atoms = atomPositions.map((position, index) => {
+      const atom = new THREE.Mesh(new THREE.SphereGeometry(index === 2 ? 0.28 : 0.2, 32, 24), atomMaterials[index])
+      atom.position.copy(position)
+      art.add(atom)
+      return atom
+    })
+
+    const connections = [
+      [0, 1], [0, 3], [1, 4], [2, 3], [2, 4], [0, 2],
+    ].map(([start, end], index) => {
+      const from = atomPositions[start]
+      const to = atomPositions[end]
+      const midpoint = from.clone().add(to).multiplyScalar(0.5)
+      midpoint.z += index % 2 ? 0.55 : -0.55
+      const curve = new THREE.QuadraticBezierCurve3(from, midpoint, to)
+      const line = new THREE.Mesh(new THREE.TubeGeometry(curve, 32, 0.014, 8, false), lineMaterial)
+      art.add(line)
+      return line
+    })
+
+    const capsuleForms = [
+      { position: [-1.78, -0.18, 0.45], color: coralMaterial, rotation: [0.35, 0.2, -0.7] },
+      { position: [1.82, -0.1, -0.3], color: blueMaterial, rotation: [0.25, -0.4, 0.6] },
+      { position: [0.04, 1.82, -0.2], color: goldMaterial, rotation: [1.1, 0.3, 0.15] },
+    ].map(({ position, color, rotation }) => {
+      const capsuleForm = new THREE.Mesh(new THREE.CapsuleGeometry(0.17, 0.62, 8, 20), color)
+      capsuleForm.position.set(...position)
+      capsuleForm.rotation.set(...rotation)
+      art.add(capsuleForm)
+      return capsuleForm
+    })
+
+    const halo = new THREE.Mesh(
+      new THREE.TorusGeometry(2.15, 0.008, 8, 160),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.45 })
+    )
+    halo.rotation.set(0.2, 0.1, 0.45)
+    art.add(halo)
+
+    const pointLight = new THREE.PointLight(0x63d9b4, 20, 8)
+    pointLight.position.set(-2.5, 2.4, 2.5)
+    scene.add(pointLight)
+    const warmLight = new THREE.PointLight(0xffa279, 12, 7)
+    warmLight.position.set(2.5, -1.4, 2)
+    scene.add(warmLight)
+
+    const orbit = { yaw: 0.45, pitch: 0.18, distance: 7.2 }
+    const scrollProgress = { value: 0 }
+    const heroSection = mount.closest(".hero-section")
+    let pointerDown = false
+    let lastX = 0
+    let lastY = 0
+
+    const updateScrollProgress = () => {
+      if (!heroSection) return
+      scrollProgress.value = THREE.MathUtils.clamp(
+        -heroSection.getBoundingClientRect().top / (window.innerHeight * 0.8),
+        0,
+        1
+      )
+    }
+    window.addEventListener("scroll", updateScrollProgress, { passive: true })
+    updateScrollProgress()
+
+    function updateCamera() {
+      const x = Math.sin(orbit.yaw) * Math.cos(orbit.pitch) * orbit.distance
+      const y = Math.sin(orbit.pitch) * orbit.distance + 1.7
+      const z = Math.cos(orbit.yaw) * Math.cos(orbit.pitch) * orbit.distance
+      camera.position.set(x, y, z)
+      camera.lookAt(0, 1.6, 0)
+    }
+
+    function updateArtwork(time) {
+      const motionScale = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0.12 : 1
+      const selectedMode = HERO_ART_MODES.indexOf(modeRef.current)
+      const modeColors = [0x17a582, 0x528ad8, 0xff765e]
+      const seconds = time * 0.001
+      const scrollTurn = scrollProgress.value * Math.PI * 0.85
+      art.rotation.y = Math.sin(seconds * 0.28) * 0.13 + selectedMode * 0.7 + scrollTurn
+      art.rotation.x = Math.sin(seconds * 0.36) * 0.06 + scrollProgress.value * 0.52
+      art.position.y = 1.65 + Math.sin(seconds * 0.8) * 0.1 * motionScale
+      centralForm.rotation.x += 0.002 * motionScale
+      centralForm.rotation.z -= 0.0025 * motionScale
+      centralForm.scale.setScalar(1 - scrollProgress.value * 0.1 + Math.sin(seconds * 1.8) * 0.035 * motionScale)
+      imagePanel.material.map = modeTextures[selectedMode] || modeTextures[0]
+      coreMaterial.color.setHex(modeColors[selectedMode] || modeColors[0])
+      orbitRings.forEach((ring, index) => {
+        ring.rotation.z += (index % 2 ? 0.0016 : -0.0012) * motionScale
+      })
+      atoms.forEach((atom, index) => {
+        atom.position.y = atomPositions[index].y + Math.sin(seconds * 1.2 + index) * 0.12 * motionScale
+      })
+      capsuleForms.forEach((capsuleForm, index) => {
+        capsuleForm.rotation.y += (index % 2 ? 0.003 : -0.002) * motionScale
+      })
+      pointLight.color.setHex(modeColors[selectedMode] || modeColors[0])
+    }
+
+    const handlePointerDown = (event) => {
+      pointerDown = true
+      lastX = event.clientX
+      lastY = event.clientY
+      renderer.domElement.setPointerCapture(event.pointerId)
+    }
+
+    const handlePointerMove = (event) => {
+      if (!pointerDown) return
+      const deltaX = (event.clientX - lastX) * 0.006
+      const deltaY = (event.clientY - lastY) * 0.004
+      orbit.yaw -= deltaX
+      orbit.pitch = THREE.MathUtils.clamp(orbit.pitch - deltaY, -0.75, 0.75)
+      lastX = event.clientX
+      lastY = event.clientY
+    }
+
+    const handlePointerUp = (event) => {
+      pointerDown = false
+      if (renderer.domElement.hasPointerCapture(event.pointerId)) {
+        renderer.domElement.releasePointerCapture(event.pointerId)
+      }
+    }
+
+    const handleWheel = (event) => {
+      if (!event.ctrlKey) return
+      event.preventDefault()
+      orbit.distance = THREE.MathUtils.clamp(orbit.distance + event.deltaY * 0.008, 5.5, 11.5)
+    }
+
+    const handleClick = () => {
+      setMode((current) => {
+        const index = HERO_ART_MODES.indexOf(current)
+        return HERO_ART_MODES[(index + 1) % HERO_ART_MODES.length]
+      })
+    }
+
+    renderer.domElement.addEventListener("pointerdown", handlePointerDown)
+    renderer.domElement.addEventListener("pointermove", handlePointerMove)
+    renderer.domElement.addEventListener("pointerup", handlePointerUp)
+    renderer.domElement.addEventListener("pointerleave", handlePointerUp)
+    renderer.domElement.addEventListener("wheel", handleWheel, { passive: false })
+    renderer.domElement.addEventListener("click", handleClick)
+
+    let frameId
+    const animate = (time) => {
+      updateCamera()
+      updateArtwork(time)
+      renderer.render(scene, camera)
+      frameId = requestAnimationFrame(animate)
+    }
+
+    animate()
+
+    const resizeObserver = new ResizeObserver(() => {
+      const width = mount.clientWidth || 420
+      const height = mount.clientHeight || 480
+      camera.aspect = width / height
+      camera.updateProjectionMatrix()
+      renderer.setSize(width, height)
+    })
+    resizeObserver.observe(mount)
+
+    disposeScene = () => {
+      cancelAnimationFrame(frameId)
+      resizeObserver.disconnect()
+      window.removeEventListener("scroll", updateScrollProgress)
+      renderer.domElement.removeEventListener("pointerdown", handlePointerDown)
+      renderer.domElement.removeEventListener("pointermove", handlePointerMove)
+      renderer.domElement.removeEventListener("pointerup", handlePointerUp)
+      renderer.domElement.removeEventListener("pointerleave", handlePointerUp)
+      renderer.domElement.removeEventListener("wheel", handleWheel)
+      renderer.domElement.removeEventListener("click", handleClick)
+      mount.removeChild(renderer.domElement)
+      renderer.dispose()
+      modeTextures.forEach((texture) => texture.dispose())
+    }
+
+    }
+
+    initializeScene().catch((error) => console.error("Failed to initialize homepage 3D art:", error))
+    return () => {
+      cancelled = true
+      disposeScene?.()
+    }
+  }, [])
+
+  return (
+    <div className="hero-3d-shell">
+      <div ref={mountRef} className="hero-3d-canvas" aria-label="Interactive three-dimensional healthcare molecular artwork" />
+      <div className="hero-3d-controls">
+        {[
+          { key: "learn", label: "Learn" },
+          { key: "practice", label: "Practice" },
+          { key: "care", label: "Care" },
+        ].map((item) => (
+          <button
+            key={item.key}
+            type="button"
+            className={mode === item.key ? "active" : ""}
+            onClick={() => setMode(item.key)}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
     </div>
   )
 }
@@ -606,29 +1075,23 @@ export default function Home() {
                 <section id="hero" className="hero-section">
                   <div className="container">
                     <div className="hero-content-top">
-                      <div className="hero-visual-slideshow" aria-hidden="true">
-                        {HERO_IMAGES.map((image, index) => (
-                          <div
-                            key={image}
-                            className="hero-visual-slide"
-                            style={{
-                              backgroundImage: `url("${image}")`,
-                              animationDelay: `${index * -7}s`,
-                            }}
-                          />
-                        ))}
-                      </div>
-                      {config.badge_text && <span className="hero-badge">{config.badge_text}</span>}
-                      <h1>{config.heading || DEFAULT_SECTIONS.hero.heading}</h1>
-                      <p>{config.subheading || ""}</p>
+                      <div className="hero-3d-layout">
+                        <div className="hero-copy-panel">
+                          {config.badge_text && <span className="hero-badge">{config.badge_text}</span>}
+                          <h1>{config.heading || DEFAULT_SECTIONS.hero.heading}</h1>
+                          <p>{config.subheading || ""}</p>
 
-                      <div className="hero-actions">
-                        <Link to="/courses" className="btn-primary">
-                          Explore Pharmacourse <ChevronRight size={17} />
-                        </Link>
-                        <a href="#ecosystem" className="hero-text-link">
-                          Meet the products <span aria-hidden="true">↓</span>
-                        </a>
+                          <div className="hero-actions">
+                            <Link to="/courses" className="btn-primary">
+                              Explore Pharmacourse <ChevronRight size={17} />
+                            </Link>
+                            <a href="#ecosystem" className="hero-text-link">
+                              Meet the products <span aria-hidden="true">↓</span>
+                            </a>
+                          </div>
+                        </div>
+
+                        <Hero3DArt />
                       </div>
                     </div>
                   </div>
