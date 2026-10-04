@@ -1875,7 +1875,7 @@
 
 .home .platform-card {
   position: relative;
-  min-height: 360px;
+  min-height: 420px;
   padding: clamp(1.35rem, 2.3vw, 2rem);
   display: flex;
   flex-direction: column;
@@ -1910,7 +1910,167 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: auto;
+  margin-bottom: 0.65rem;
+}
+
+.home .platform-sculpture {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: 100%;
+  height: 98px;
+  place-items: center;
+  margin: 0.2rem 0 0.7rem;
+  perspective: 700px;
+  transform-style: preserve-3d;
+}
+
+.home .platform-sculpture::before {
+  position: absolute;
+  width: 132px;
+  height: 52px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  opacity: 0.3;
+  transform: rotateX(68deg) rotateZ(-12deg);
+  content: "";
+}
+
+.home .sculpture-book {
+  position: relative;
+  width: 92px;
+  height: 58px;
+  transform: rotateX(50deg) rotateZ(-9deg);
+  transform-style: preserve-3d;
+  animation: sculptureBookFloat 5.8s ease-in-out infinite;
+}
+
+.home .sculpture-book-page {
+  position: absolute;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  border: 1px solid rgba(21, 67, 51, 0.18);
+  background: linear-gradient(145deg, #fffdf4, #d8f2e4);
+  box-shadow: inset 0 -5px 0 rgba(26, 112, 82, 0.08), 0 8px 16px rgba(0, 0, 0, 0.16);
+}
+
+.home .sculpture-book-page.left {
+  left: 0;
+  border-radius: 5px 1px 2px 5px;
+  transform: rotateY(-13deg);
+  transform-origin: right center;
+}
+
+.home .sculpture-book-page.right {
+  right: 0;
+  border-radius: 1px 5px 5px 2px;
+  transform: rotateY(13deg);
+  transform-origin: left center;
+}
+
+.home .sculpture-book-spine {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: calc(50% - 3px);
+  width: 6px;
+  height: 100%;
+  border-radius: 3px;
+  background: #67c69e;
+  transform: translateZ(3px);
+}
+
+.home .sculpture-capsule {
+  position: relative;
+  width: 132px;
+  height: 42px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 999px;
+  background: linear-gradient(90deg, #4ad9ad 0 46%, #f5f7ef 46% 54%, #ff806a 54% 100%);
+  box-shadow: 0 14px 24px rgba(5, 27, 22, 0.24), inset 0 4px 9px rgba(255, 255, 255, 0.56), inset 0 -5px 8px rgba(13, 52, 40, 0.16);
+  transform: rotate(-18deg) rotateY(-24deg);
+  animation: sculptureCapsuleDrift 4.8s ease-in-out infinite;
+}
+
+.home .sculpture-capsule span {
+  position: absolute;
+  top: 5px;
+  left: 18px;
+  width: 31px;
+  height: 5px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.58);
+  transform: rotate(-1deg);
+}
+
+.home .platform-sculpture-hmis::before {
+  width: 118px;
+  height: 72px;
+  transform: rotateY(58deg) rotateZ(-20deg);
+}
+
+.home .sculpture-network {
+  position: relative;
+  width: 148px;
+  height: 88px;
+  transform: rotateX(12deg) rotateY(-18deg);
+  transform-style: preserve-3d;
+  animation: sculptureNetworkOrbit 8s linear infinite;
+}
+
+.home .network-line {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.55;
+  transform-origin: left center;
+}
+
+.home .network-line.line-one { width: 62px; transform: rotate(-146deg); }
+.home .network-line.line-two { width: 58px; transform: rotate(-31deg); }
+.home .network-line.line-three { width: 56px; transform: rotate(150deg); }
+
+.home .network-node {
+  position: absolute;
+  width: 17px;
+  height: 17px;
+  border: 2px solid rgba(255, 255, 255, 0.78);
+  border-radius: 50%;
+  background: #55cba1;
+  box-shadow: 0 0 18px rgba(96, 230, 183, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.72);
+  transform: translateZ(15px);
+}
+
+.home .network-node.node-one { top: 6px; left: 26px; background: #8bd8ec; }
+.home .network-node.node-two { top: 6px; right: 24px; background: #f4b75f; }
+.home .network-node.node-three { right: 14px; bottom: 7px; background: #e98478; }
+.home .network-node.node-four { bottom: 6px; left: 14px; background: #8bd8ec; }
+.home .network-node.node-core { top: 36px; left: 66px; width: 20px; height: 20px; background: #55cba1; }
+
+@keyframes sculptureBookFloat {
+  0%, 100% { transform: translateY(0) rotateX(50deg) rotateZ(-9deg); }
+  50% { transform: translateY(-6px) rotateX(56deg) rotateZ(-6deg); }
+}
+
+@keyframes sculptureCapsuleDrift {
+  0%, 100% { transform: translateY(0) rotate(-18deg) rotateY(-24deg); }
+  50% { transform: translateY(-7px) rotate(-12deg) rotateY(14deg); }
+}
+
+@keyframes sculptureNetworkOrbit {
+  from { transform: rotateX(12deg) rotateY(-18deg) rotateZ(0deg); }
+  to { transform: rotateX(12deg) rotateY(-18deg) rotateZ(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home .sculpture-book,
+  .home .sculpture-capsule,
+  .home .sculpture-network {
+    animation: none;
+  }
 }
 
 .home .platform-index,
@@ -1934,7 +2094,7 @@
 .home .platform-card-copy {
   position: relative;
   z-index: 1;
-  margin: 2.4rem 0 1.5rem;
+  margin: 0 0 1rem;
 }
 
 .home .platform-card .platform-kicker {
@@ -2079,7 +2239,7 @@
   }
 
   .home .platform-card {
-    min-height: 310px;
+    min-height: 390px;
   }
 }
 
@@ -2490,6 +2650,207 @@
 .home .cta-buttons .btn-whatsapp {
   color: #fff;
   background: rgba(255, 255, 255, 0.08);
+}
+
+.home .course-card,
+.home .blog-preview-card {
+  transform-style: preserve-3d;
+  transform: perspective(1100px) rotateX(var(--card-tilt-x, 0deg)) rotateY(var(--card-tilt-y, 0deg));
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+.home .course-card:hover,
+.home .blog-preview-card:hover {
+  transform: perspective(1100px) rotateX(var(--card-tilt-x, 0deg)) rotateY(var(--card-tilt-y, 0deg)) translateY(-6px);
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    @keyframes homeCardDepthReveal {
+      from {
+        opacity: 0.45;
+        translate: 0 34px;
+        rotate: x 6deg;
+      }
+      to {
+        opacity: 1;
+        translate: 0 0;
+        rotate: x 0deg;
+      }
+    }
+
+    .home .course-card,
+    .home .blog-preview-card {
+      animation: homeCardDepthReveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 48%;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home .course-card,
+  .home .blog-preview-card {
+    transition: none;
+  }
+}
+
+.home .hero-3d-image {
+  position: absolute;
+  z-index: 1;
+  top: 1rem;
+  right: 1rem;
+  width: min(38%, 230px);
+  height: 42%;
+  object-fit: contain;
+  opacity: 0.7;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
+.home .product-visual,
+.home .feature-card,
+.home .testimonial-card,
+.home .faq-card {
+  transform-style: preserve-3d;
+  transition: transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease;
+}
+
+.home .product-visual,
+.home .feature-card:hover,
+.home .testimonial-card:hover,
+.home .faq-card:hover {
+  transform: perspective(1100px) rotateX(var(--card-tilt-x, 0deg)) rotateY(var(--card-tilt-y, 0deg)) translateY(-3px);
+}
+
+.home .features-grid .feature-card:hover {
+  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.16);
+}
+
+.home .faq-card:hover {
+  border-bottom-color: rgba(99, 211, 169, 0.72);
+}
+
+.home .cta-content h2,
+.home .cta-content > p,
+.home .cta-content .cta-buttons {
+  position: relative;
+  z-index: 1;
+}
+
+.home .cta-capsule-orbit {
+  position: absolute;
+  top: 50%;
+  right: clamp(1rem, 8vw, 7rem);
+  z-index: 0;
+  width: 180px;
+  height: 140px;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.home .cta-capsule-orbit::before,
+.home .cta-capsule-orbit::after {
+  position: absolute;
+  inset: 25px 5px;
+  border: 1px solid rgba(218, 250, 235, 0.27);
+  border-radius: 50%;
+  content: "";
+  transform: rotateX(68deg) rotateZ(-18deg);
+}
+
+.home .cta-capsule-orbit::after {
+  inset: 9px 25px;
+  border-color: rgba(255, 193, 118, 0.42);
+  transform: rotateY(64deg) rotateZ(22deg);
+}
+
+.home .cta-capsule {
+  position: absolute;
+  top: 46px;
+  left: 34px;
+  width: 112px;
+  height: 36px;
+  border: 1px solid rgba(255, 255, 255, 0.68);
+  border-radius: 999px;
+  background: linear-gradient(90deg, #46d2a4 0 47%, #f4f1df 47% 53%, #ff846c 53% 100%);
+  box-shadow: 0 16px 26px rgba(0, 0, 0, 0.22), inset 0 4px 8px rgba(255, 255, 255, 0.5);
+  transform: rotate(-19deg) rotateY(-24deg);
+  animation: ctaCapsuleFloat 5.8s ease-in-out infinite;
+}
+
+.home .cta-capsule i {
+  position: absolute;
+  top: 5px;
+  left: 14px;
+  width: 26px;
+  height: 4px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.58);
+}
+
+@keyframes ctaCapsuleFloat {
+  0%, 100% { translate: 0 0; rotate: 0deg; }
+  50% { translate: 0 -9px; rotate: 7deg; }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    @keyframes homepageDepthEntry {
+      from {
+        opacity: 0.55;
+        translate: 0 42px;
+        rotate: x 5deg;
+      }
+      to {
+        opacity: 1;
+        translate: 0 0;
+        rotate: x 0deg;
+      }
+    }
+
+    .home .product-heading,
+    .home .product-visual,
+    .home .product-features,
+    .home .feature-card,
+    .home .testimonial-card,
+    .home .faq-card,
+    .home .cta-content {
+      animation: homepageDepthEntry linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 48%;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home .product-visual,
+  .home .feature-card,
+  .home .testimonial-card,
+  .home .faq-card {
+    transition: none;
+  }
+
+  .home .cta-capsule {
+    animation: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .home .hero-3d-image {
+    top: 0.75rem;
+    right: 0.75rem;
+    width: 32%;
+    height: 34%;
+  }
+
+  .home .cta-capsule-orbit {
+    right: -2rem;
+    top: 1.5rem;
+    transform: scale(0.72);
+    transform-origin: top right;
+    opacity: 0.45;
+  }
 }
 
 @media (max-width: 968px) {

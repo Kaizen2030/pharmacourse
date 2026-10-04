@@ -1,9 +1,10 @@
-import { useEffect, useState, useRef } from "react"
+import { Fragment, useEffect, useState, useRef } from "react"
 import { Link } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
 import { useInView } from "framer-motion"
 import SEO from "../components/SEO"
 import BlogEngagementStats from "../components/BlogEngagementStats"
+import ThreeProductScroll from "../components/ThreeProductScroll"
 import { SITE_URL } from "../lib/siteConfig"
 import { formatBlogDate, getBlogCategoryLabel, getBlogCoverFallback, getBlogExcerpt } from "../lib/blogHelpers"
 import pharmacyosDashboard from "../assets/pharmacyos-dashboard.svg"
@@ -250,6 +251,20 @@ function scrollToSnapItem(trackRef, index) {
   })
 }
 
+function handleCard3DPointerMove(event) {
+  if (event.pointerType !== "mouse") return
+  const bounds = event.currentTarget.getBoundingClientRect()
+  const horizontal = (event.clientX - bounds.left) / bounds.width - 0.5
+  const vertical = (event.clientY - bounds.top) / bounds.height - 0.5
+  event.currentTarget.style.setProperty("--card-tilt-x", `${(-vertical * 7).toFixed(2)}deg`)
+  event.currentTarget.style.setProperty("--card-tilt-y", `${(horizontal * 9).toFixed(2)}deg`)
+}
+
+function resetCard3DTilt(event) {
+  event.currentTarget.style.setProperty("--card-tilt-x", "0deg")
+  event.currentTarget.style.setProperty("--card-tilt-y", "0deg")
+}
+
 const AnimatedSection = ({ children, delay = 0 }) => {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: "-100px" })
@@ -272,6 +287,8 @@ function Hero3DArt() {
   const mountRef = useRef(null)
   const [mode, setMode] = useState("learn")
   const modeRef = useRef("learn")
+  const modeIndex = HERO_ART_MODES.indexOf(mode)
+  const modeImage = HERO_ART_IMAGES[modeIndex] || HERO_ART_IMAGES[0]
 
   useEffect(() => {
     modeRef.current = mode
@@ -475,19 +492,6 @@ function Hero3DArt() {
     art.position.set(0, 1.65, 0)
     scene.add(art)
 
-    const textureLoader = new THREE.TextureLoader()
-    const modeTextures = HERO_ART_IMAGES.map((image) => {
-      const texture = textureLoader.load(image)
-      texture.colorSpace = THREE.SRGBColorSpace
-      return texture
-    })
-    const imagePanel = new THREE.Mesh(
-      new THREE.PlaneGeometry(3.35, 2.75),
-      new THREE.MeshBasicMaterial({ map: modeTextures[0], transparent: true, opacity: 0.68, depthWrite: false })
-    )
-    imagePanel.position.z = -1.35
-    art.add(imagePanel)
-
     const coreMaterial = new THREE.MeshPhysicalMaterial({
       color: 0x17a582,
       roughness: 0.22,
@@ -544,9 +548,9 @@ function Hero3DArt() {
       return atom
     })
 
-    const connections = [
+    ;[
       [0, 1], [0, 3], [1, 4], [2, 3], [2, 4], [0, 2],
-    ].map(([start, end], index) => {
+    ].forEach(([start, end], index) => {
       const from = atomPositions[start]
       const to = atomPositions[end]
       const midpoint = from.clone().add(to).multiplyScalar(0.5)
@@ -554,7 +558,6 @@ function Hero3DArt() {
       const curve = new THREE.QuadraticBezierCurve3(from, midpoint, to)
       const line = new THREE.Mesh(new THREE.TubeGeometry(curve, 32, 0.014, 8, false), lineMaterial)
       art.add(line)
-      return line
     })
 
     const capsuleForms = [
@@ -621,7 +624,6 @@ function Hero3DArt() {
       centralForm.rotation.x += 0.002 * motionScale
       centralForm.rotation.z -= 0.0025 * motionScale
       centralForm.scale.setScalar(1 - scrollProgress.value * 0.1 + Math.sin(seconds * 1.8) * 0.035 * motionScale)
-      imagePanel.material.map = modeTextures[selectedMode] || modeTextures[0]
       coreMaterial.color.setHex(modeColors[selectedMode] || modeColors[0])
       orbitRings.forEach((ring, index) => {
         ring.rotation.z += (index % 2 ? 0.0016 : -0.0012) * motionScale
@@ -710,7 +712,6 @@ function Hero3DArt() {
       renderer.domElement.removeEventListener("click", handleClick)
       mount.removeChild(renderer.domElement)
       renderer.dispose()
-      modeTextures.forEach((texture) => texture.dispose())
     }
 
     }
@@ -725,6 +726,7 @@ function Hero3DArt() {
   return (
     <div className="hero-3d-shell">
       <div ref={mountRef} className="hero-3d-canvas" aria-label="Interactive three-dimensional healthcare molecular artwork" />
+      <img src={modeImage} alt="" aria-hidden="true" className="hero-3d-image" />
       <div className="hero-3d-controls">
         {[
           { key: "learn", label: "Learn" },
@@ -991,9 +993,10 @@ export default function Home() {
     .sort((a, b) => (a[1].order || 999) - (b[1].order || 999))
 
   useEffect(() => {
-    const nodes = sortedSections
-      .map(([key]) => document.getElementById(key))
-      .filter(Boolean)
+    const nodes = [
+      ...sortedSections.map(([key]) => document.getElementById(key)),
+      document.getElementById("three-products-scroll"),
+    ].filter(Boolean)
 
     if (nodes.length === 0) return undefined
 
@@ -1037,8 +1040,6 @@ export default function Home() {
     scrollToSnapItem(blogTrackRef, index)
   }
 
-  if (loading) return <div className="home-loading">Loading...</div>
-
   return (
     <div className="home">
       <SEO
@@ -1065,6 +1066,14 @@ export default function Home() {
             title={key}
           />
         ))}
+        {sections.ecosystem?.enabled && (
+          <button
+            className={`section-dot ${activeSection === "three-products-scroll" ? "active" : ""}`}
+            onClick={() => document.getElementById("three-products-scroll")?.scrollIntoView({ behavior: "smooth" })}
+            title="3D product experience"
+            aria-label="Go to 3D product experience"
+          />
+        )}
       </div>
 
       {sortedSections.map(([key, config]) => {
@@ -1101,58 +1110,83 @@ export default function Home() {
 
           case "ecosystem":
             return (
-              <AnimatedSection key={key} delay={0.1}>
-                <section id="ecosystem" className="ecosystem-section">
-                  <div className="container">
-                    <div className="section-header">
-                      {config.badge_text && <span className="section-badge">{config.badge_text}</span>}
-                      <h2>{config.heading || "Choose the product that fits your team."}</h2>
-                      {config.subheading && <p>{config.subheading}</p>}
+              <Fragment key={key}>
+                <AnimatedSection delay={0.1}>
+                  <section id="ecosystem" className="ecosystem-section">
+                    <div className="container">
+                      <div className="section-header">
+                        {config.badge_text && <span className="section-badge">{config.badge_text}</span>}
+                        <h2>{config.heading || "Choose the product that fits your team."}</h2>
+                        {config.subheading && <p>{config.subheading}</p>}
+                      </div>
+
+                      <div className="platform-grid">
+                        <article className="platform-card platform-card-learning">
+                          <div className="platform-card-topline">
+                            <span className="platform-index">01 / LEARN</span>
+                            <img src="/favicon.svg" alt="" className="platform-mark" />
+                          </div>
+                          <div className="platform-sculpture platform-sculpture-learning" aria-hidden="true">
+                            <div className="sculpture-book">
+                              <span className="sculpture-book-page left" />
+                              <span className="sculpture-book-page right" />
+                              <span className="sculpture-book-spine" />
+                            </div>
+                          </div>
+                          <div className="platform-card-copy">
+                            <p className="platform-kicker">Professional development</p>
+                            <h3>Pharmacourse</h3>
+                            <p>Practical CPD courses, clinical case simulations, and certificates designed for pharmacy professionals.</p>
+                          </div>
+                          <Link to="/courses" className="platform-link">Explore courses <ChevronRight size={16} /></Link>
+                        </article>
+
+                        <article className="platform-card platform-card-pos">
+                          <div className="platform-card-topline">
+                            <span className="platform-index">02 / OPERATE</span>
+                            <img src={remedacareposMark} alt="" className="platform-mark" />
+                          </div>
+                          <div className="platform-sculpture platform-sculpture-pos" aria-hidden="true">
+                            <div className="sculpture-capsule"><span /></div>
+                          </div>
+                          <div className="platform-card-copy">
+                            <p className="platform-kicker">Pharmacy operations</p>
+                            <h3>RemedacarePOS</h3>
+                            <p>Dispensing, inventory, patient requests, claims, and branch operations for pharmacies.</p>
+                          </div>
+                          <Link to="/remedacarepos" className="platform-link">Explore RemedacarePOS <ChevronRight size={16} /></Link>
+                        </article>
+
+                        <article className="platform-card platform-card-hmis">
+                          <div className="platform-card-topline">
+                            <span className="platform-index">03 / MANAGE CARE</span>
+                            <img src={remedacarehmisMark} alt="" className="platform-mark" />
+                          </div>
+                          <div className="platform-sculpture platform-sculpture-hmis" aria-hidden="true">
+                            <div className="sculpture-network">
+                              <span className="network-line line-one" />
+                              <span className="network-line line-two" />
+                              <span className="network-line line-three" />
+                              <span className="network-node node-one" />
+                              <span className="network-node node-two" />
+                              <span className="network-node node-three" />
+                              <span className="network-node node-four" />
+                              <span className="network-node node-core" />
+                            </div>
+                          </div>
+                          <div className="platform-card-copy">
+                            <p className="platform-kicker">Hospital management</p>
+                            <h3>RemedacareHMIS</h3>
+                            <p>Patient records, clinical departments, reporting, finance, and hospital operations in one HMIS.</p>
+                          </div>
+                          <Link to="/remedacarehmis" className="platform-link">Explore RemedacareHMIS <ChevronRight size={16} /></Link>
+                        </article>
+                      </div>
                     </div>
-
-                    <div className="platform-grid">
-                      <article className="platform-card platform-card-learning">
-                        <div className="platform-card-topline">
-                          <span className="platform-index">01 / LEARN</span>
-                          <img src="/favicon.svg" alt="" className="platform-mark" />
-                        </div>
-                        <div className="platform-card-copy">
-                          <p className="platform-kicker">Professional development</p>
-                          <h3>Pharmacourse</h3>
-                          <p>Practical CPD courses, clinical case simulations, and certificates designed for pharmacy professionals.</p>
-                        </div>
-                        <Link to="/courses" className="platform-link">Explore courses <ChevronRight size={16} /></Link>
-                      </article>
-
-                      <article className="platform-card platform-card-pos">
-                        <div className="platform-card-topline">
-                          <span className="platform-index">02 / OPERATE</span>
-                          <img src={remedacareposMark} alt="" className="platform-mark" />
-                        </div>
-                        <div className="platform-card-copy">
-                          <p className="platform-kicker">Pharmacy operations</p>
-                          <h3>RemedacarePOS</h3>
-                          <p>Dispensing, inventory, patient requests, claims, and branch operations for pharmacies.</p>
-                        </div>
-                        <Link to="/remedacarepos" className="platform-link">Explore RemedacarePOS <ChevronRight size={16} /></Link>
-                      </article>
-
-                      <article className="platform-card platform-card-hmis">
-                        <div className="platform-card-topline">
-                          <span className="platform-index">03 / MANAGE CARE</span>
-                          <img src={remedacarehmisMark} alt="" className="platform-mark" />
-                        </div>
-                        <div className="platform-card-copy">
-                          <p className="platform-kicker">Hospital management</p>
-                          <h3>RemedacareHMIS</h3>
-                          <p>Patient records, clinical departments, reporting, finance, and hospital operations in one HMIS.</p>
-                        </div>
-                        <Link to="/remedacarehmis" className="platform-link">Explore RemedacareHMIS <ChevronRight size={16} /></Link>
-                      </article>
-                    </div>
-                  </div>
-                </section>
-              </AnimatedSection>
+                  </section>
+                </AnimatedSection>
+                <ThreeProductScroll />
+              </Fragment>
             )
 
           case "pharmacyOS":
@@ -1167,7 +1201,7 @@ export default function Home() {
                         {config.subheading && <p>{config.subheading}</p>}
                       </div>
 
-                      <div className="product-visual">
+                      <div className="product-visual" onPointerMove={handleCard3DPointerMove} onPointerLeave={resetCard3DTilt}>
                         <ProductMockup
                           type="pharmacyOS"
                           videoUrl={config.video_url}
@@ -1213,7 +1247,7 @@ export default function Home() {
                         {config.subheading && <p>{config.subheading}</p>}
                       </div>
 
-                      <div className="product-visual">
+                      <div className="product-visual" onPointerMove={handleCard3DPointerMove} onPointerLeave={resetCard3DTilt}>
                         <ProductMockup
                           type="remedacareOS"
                           videoUrl={config.video_url}
@@ -1263,7 +1297,12 @@ export default function Home() {
                         { icon: Download, title: "Downloadable Resources", desc: "Clinical notes and reference materials included." },
                         { icon: Award, title: "CPD Certificates", desc: "Earn certificates for your professional portfolio." },
                       ].map((feature, idx) => (
-                        <div key={idx} className="feature-card">
+                        <div
+                          key={idx}
+                          className="feature-card"
+                          onPointerMove={handleCard3DPointerMove}
+                          onPointerLeave={resetCard3DTilt}
+                        >
                           <feature.icon size={24} />
                           <h3>{feature.title}</h3>
                           <p>{feature.desc}</p>
@@ -1297,7 +1336,13 @@ export default function Home() {
                         >
                           {courses.length > 0 ? (
                             courses.map((course) => (
-                              <Link key={course.id} to={`/courses/${course.slug || course.id}`} className="course-card">
+                              <Link
+                                key={course.id}
+                                to={`/courses/${course.slug || course.id}`}
+                                className="course-card"
+                                onPointerMove={handleCard3DPointerMove}
+                                onPointerLeave={resetCard3DTilt}
+                              >
                                 <div className="course-thumb">
                                   {course.image_url ? (
                                     <img src={course.image_url} alt={course.title} className="course-thumb-img" />
@@ -1323,6 +1368,10 @@ export default function Home() {
                           ) : coursesError ? (
                             <div className="empty-state">
                               <p>We could not load courses right now. <Link to="/courses">Browse all courses</Link>.</p>
+                            </div>
+                          ) : loading ? (
+                            <div className="empty-state">
+                              <p>Loading courses...</p>
                             </div>
                           ) : (
                             <div className="empty-state">
@@ -1399,7 +1448,13 @@ export default function Home() {
                               const categoryLabel = getBlogCategoryLabel(post.category)
 
                               return (
-                                <Link key={post.id} to={`/blog/${post.slug}`} className="blog-preview-card">
+                                <Link
+                                  key={post.id}
+                                  to={`/blog/${post.slug}`}
+                                  className="blog-preview-card"
+                                  onPointerMove={handleCard3DPointerMove}
+                                  onPointerLeave={resetCard3DTilt}
+                                >
                                   {post.cover_image_url ? (
                                     <img src={post.cover_image_url} alt={post.title} className="blog-preview-image" />
                                   ) : (
@@ -1434,6 +1489,10 @@ export default function Home() {
                           ) : postsError ? (
                             <div className="empty-state">
                               <p>We could not load articles right now. <Link to="/blog">Browse all articles</Link>.</p>
+                            </div>
+                          ) : loading ? (
+                            <div className="empty-state">
+                              <p>Loading articles...</p>
                             </div>
                           ) : (
                             <div className="empty-state">
@@ -1503,7 +1562,12 @@ export default function Home() {
 
                     <div className="testimonials-grid">
                       {testimonials.map((testimonial) => (
-                        <div key={testimonial.id} className="testimonial-card">
+                        <div
+                          key={testimonial.id}
+                          className="testimonial-card"
+                          onPointerMove={handleCard3DPointerMove}
+                          onPointerLeave={resetCard3DTilt}
+                        >
                           <div className="testimonial-rating" aria-label={`${testimonial.rating || 5} star rating`}>
                             {"★".repeat(Math.max(1, Math.min(5, testimonial.rating || 5)))}
                           </div>
@@ -1545,10 +1609,10 @@ export default function Home() {
                     </div>
 
                     <div className="faq-grid">
-                      <div className="faq-card"><h3>How can I access the courses?</h3><p>Browse the course list, register, and enroll. Introductory lessons are easy to start, and certificate access opens once you finish.</p></div>
-                      <div className="faq-card"><h3>What if I do not understand a topic?</h3><p>Every course includes downloadable resources and support notes so you can review concepts anytime.</p></div>
-                      <div className="faq-card"><h3>Can I study at my own pace?</h3><p>Yes. Lessons are self-paced and available anytime so you can learn around your schedule.</p></div>
-                      <div className="faq-card"><h3>Who teaches the courses?</h3><p>Courses are created by experienced pharmacy educators and industry professionals.</p></div>
+                      <div className="faq-card" onPointerMove={handleCard3DPointerMove} onPointerLeave={resetCard3DTilt}><h3>How can I access the courses?</h3><p>Browse the course list, register, and enroll. Introductory lessons are easy to start, and certificate access opens once you finish.</p></div>
+                      <div className="faq-card" onPointerMove={handleCard3DPointerMove} onPointerLeave={resetCard3DTilt}><h3>What if I do not understand a topic?</h3><p>Every course includes downloadable resources and support notes so you can review concepts anytime.</p></div>
+                      <div className="faq-card" onPointerMove={handleCard3DPointerMove} onPointerLeave={resetCard3DTilt}><h3>Can I study at my own pace?</h3><p>Yes. Lessons are self-paced and available anytime so you can learn around your schedule.</p></div>
+                      <div className="faq-card" onPointerMove={handleCard3DPointerMove} onPointerLeave={resetCard3DTilt}><h3>Who teaches the courses?</h3><p>Courses are created by experienced pharmacy educators and industry professionals.</p></div>
                     </div>
                   </div>
                 </section>
@@ -1561,6 +1625,7 @@ export default function Home() {
                 <section id="cta" className="cta-section">
                   <div className="container">
                     <div className="cta-content">
+                      <div className="cta-capsule-orbit" aria-hidden="true"><span className="cta-capsule"><i /></span></div>
                       <h2>{config.heading || "Ready to transform your pharmacy practice?"}</h2>
                       {config.subheading && <p>{config.subheading}</p>}
                       <div className="cta-buttons">
