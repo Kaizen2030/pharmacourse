@@ -32,8 +32,8 @@ import "./Home.css"
 const WHATSAPP = "https://wa.me/254790059584?text=Hi%20Julius%2C%20I%27d%20like%20to%20book%20a%20demo%20of%20your%20platform."
 
 const HOMEPAGE_BRAND_REPLACEMENTS = [
-  { pattern: /RemedacareHMIS/g, replacement: "RemedacareHMS" },
-  { pattern: /RemedacareOS/g, replacement: "RemedacareHMS" },
+  { pattern: /RemedacareHMS/g, replacement: "RemedacareHMIS" },
+  { pattern: /RemedacareOS/g, replacement: "RemedacareHMIS" },
   { pattern: /\bPharmacyOS\b/g, replacement: "RemedacarePOS" },
 ]
 
@@ -41,9 +41,9 @@ const DEFAULT_SECTIONS = {
   hero: {
     enabled: true,
     order: 1,
-    heading: "One connected ecosystem for pharmacy, telepharmacy, and hospital care.",
-    subheading: "RemedacarePOS brings together professional education, RemedacarePOS for modern pharmacy operations, and RemedacareHMS for hospital-wide clinical and financial workflows.",
-    badge_text: "Complete Pharmacy Ecosystem",
+    heading: "One connected ecosystem for better pharmacy and patient care.",
+    subheading: "Learn with Pharmacourse, run your pharmacy with RemedacarePOS, and coordinate hospital care with RemedacareHMIS.",
+    badge_text: "Built for healthcare teams",
     primary_btn_text: "Book Platform Demo",
     primary_btn_url: WHATSAPP,
     secondary_btn_text: "Explore Products",
@@ -53,14 +53,14 @@ const DEFAULT_SECTIONS = {
   ecosystem: {
     enabled: true,
     order: 2,
-    heading: "Three connected products for pharmacy, care delivery, and growth.",
-    subheading: "Education, pharmacy operations, and hospital management designed to work together instead of as disconnected tools.",
+    heading: "The right tools for every part of care.",
+    subheading: "Practical learning, efficient pharmacy operations, and connected hospital management—built for the teams who deliver care.",
     badge_text: "The Remedacare Ecosystem",
   },
   pharmacyOS: {
     enabled: true,
     order: 3,
-    heading: "Telepharmacy-ready pharmacy operations for modern Kenyan pharmacies.",
+    heading: "Run your pharmacy with confidence.",
     subheading: "Built for Kenyan pharmacies with telepharmacy, dispensing, inventory, claims, delivery coordination, M-Pesa, eTIMS/KRA, and PPB control in one workflow.",
     badge_text: "RemedacarePOS",
     primary_btn_text: "Book a Demo",
@@ -70,11 +70,11 @@ const DEFAULT_SECTIONS = {
   remedacareOS: {
     enabled: true,
     order: 4,
-    heading: "Connected hospital workflows from clinic, ward, lab, and dispensary.",
-    subheading: "A Kenyan HMIS with consultations, laboratory, radiology, chronic disease follow-up, antibiogram, care pathways, AMS, finance, claims, and RemedacarePOS integration.",
-    badge_text: "RemedacareHMS",
-    primary_btn_text: "Explore RemedacareHMS",
-    primary_btn_url: "/remedacarehms",
+    heading: "Bring your hospital workflows together.",
+    subheading: "RemedacareHMIS connects consultations, laboratory, radiology, chronic care, finance, claims, and pharmacy workflows in one hospital information system.",
+    badge_text: "RemedacareHMIS",
+    primary_btn_text: "Explore RemedacareHMIS",
+    primary_btn_url: "/remedacarehmis",
     video_url: "/images/remedacareos-demo.mp4",
   },
   features: {
@@ -113,7 +113,7 @@ const DEFAULT_SECTIONS = {
     enabled: true,
     order: 10,
     heading: "Ready to modernise the way your team delivers care?",
-    subheading: "Join RemedacarePOS for learning, or book a live walkthrough of RemedacarePOS and RemedacareHMS in action.",
+    subheading: "Start learning with Pharmacourse, or book a live walkthrough of RemedacarePOS and RemedacareHMIS.",
     primary_btn_text: "Start Learning Free",
     primary_btn_url: "/register",
     secondary_btn_text: "Book a Demo",
@@ -170,8 +170,8 @@ function normalizeHomepageSection(sectionKey, sectionConfig) {
   }
 
   if (sectionKey === "remedacareOS") {
-    normalized.badge_text = "RemedacareHMS"
-    normalized.primary_btn_text = normalized.primary_btn_text || "Explore RemedacareHMS"
+    normalized.badge_text = "RemedacareHMIS"
+    normalized.primary_btn_text = normalized.primary_btn_text || "Explore RemedacareHMIS"
   }
 
   if (sectionKey === "ecosystem" && /one company/i.test(`${sectionConfig?.heading || ""}`)) {
@@ -256,7 +256,7 @@ const ProductMockup = ({ type, videoUrl, imageSrc, imageAlt }) => {
     remedacareOS: {
       color: "#1A6BB5",
       bg: "#e8f0fb",
-      title: "RemedacareHMS",
+      title: "RemedacareHMIS",
       rows: ["Patient: John Mwangi", "Diagnosis: Hypertension", "Rx: Amlodipine 5mg OD"],
       badge: "MOH ready",
       total: "SHA claim ready",
@@ -264,10 +264,10 @@ const ProductMockup = ({ type, videoUrl, imageSrc, imageAlt }) => {
     pharmaCourse: {
       color: "#0F6E56",
       bg: "#eef8f4",
-      title: "RemedacarePOS",
-      rows: ["Module 3: Drug Interactions", "Quiz score: 8/10", "Certificate progress: 72%"],
-      badge: "CPD ready",
-      total: "Progress: 72%",
+      title: "Pharmacourse",
+      rows: ["Course: Antimicrobial Stewardship", "Learning progress: 72%", "Certificate: In progress"],
+      badge: "CPD learning",
+      total: "Learn at your pace",
     },
   }
 
@@ -516,17 +516,17 @@ export default function Home() {
   return (
     <div className="home">
       <SEO
-        title="Pharmacy CPD Courses, RemedacarePOS & RemedacareHMS Kenya"
-        description="RemedacarePOS helps Kenyan pharmacy professionals learn practical skills, earn certificates, and explore RemedacarePOS and RemedacareHMS software."
+        title="Pharmacourse | RemedacarePOS & RemedacareHMIS Kenya"
+        description="Learn with Pharmacourse, simplify pharmacy operations with RemedacarePOS, and connect hospital workflows with RemedacareHMIS."
         path="/"
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "Organization",
-          name: "RemedacarePOS",
+          name: "Pharmacourse",
           url: SITE_URL,
           logo: `${SITE_URL}/favicon.svg`,
           description:
-            "Kenyan pharmacy education and health-tech platform offering CPD courses, RemedacarePOS, and RemedacareHMS.",
+            "A Kenyan healthcare platform bringing together Pharmacourse learning, RemedacarePOS pharmacy software, and RemedacareHMIS hospital management.",
         }}
       />
 
@@ -556,6 +556,15 @@ export default function Home() {
 
                     <div className="hero-services-grid">
                       <div className="service-showcase">
+                        <div className="service-icon pharmacourse">
+                          <img src="/favicon.svg" alt="Pharmacourse logo" className="service-icon-mark" />
+                        </div>
+                        <h3>Pharmacourse</h3>
+                        <p>Practical, self-paced professional learning with courses, case simulations, and certificates for pharmacy teams.</p>
+                        <Link to="/courses" className="service-link">Explore courses <ChevronRight size={16} /></Link>
+                      </div>
+
+                      <div className="service-showcase">
                         <div className="service-icon pharmacyos">
                           <img src={remedacareposMark} alt="RemedacarePOS logo" className="service-icon-mark" />
                         </div>
@@ -566,20 +575,11 @@ export default function Home() {
 
                       <div className="service-showcase">
                         <div className="service-icon remedacareos">
-                          <img src={remedacarehmisMark} alt="RemedacareHMS logo" className="service-icon-mark" />
+                          <img src={remedacarehmisMark} alt="RemedacareHMIS logo" className="service-icon-mark" />
                         </div>
-                        <h3>RemedacareHMS</h3>
-                        <p>Hospital management software connecting clinicians, laboratory, radiology, chronic care, finance, AMS, and pharmacy workflows in one system.</p>
-                        <Link to="/remedacarehms" className="service-link">Explore RemedacareHMS <ChevronRight size={16} /></Link>
-                      </div>
-
-                      <div className="service-showcase">
-                        <div className="service-icon pharmacourse">
-                          <img src="/favicon.svg" alt="RemedacarePOS logo" className="service-icon-mark" />
-                        </div>
-                        <h3>RemedacarePOS</h3>
-                        <p>Professional CPD courses with certificates to help pharmacy teams keep sharpening practical skills.</p>
-                        <Link to="/courses" className="service-link">Explore Courses <ChevronRight size={16} /></Link>
+                        <h3>RemedacareHMIS</h3>
+                        <p>Hospital information software connecting clinicians, laboratory, radiology, chronic care, finance, and pharmacy workflows.</p>
+                        <Link to="/remedacarehmis" className="service-link">Explore RemedacareHMIS <ChevronRight size={16} /></Link>
                       </div>
                     </div>
 
@@ -589,7 +589,7 @@ export default function Home() {
                           type="pharmaCourse"
                           videoUrl={config.video_url}
                           imageSrc={config.image_url || pharmacourseHeroVisual}
-                          imageAlt="RemedacarePOS My Learning dashboard showing learner progress, enrolled courses and certificates"
+                          imageAlt="Pharmacourse learning dashboard showing learner progress, enrolled courses and certificates"
                         />
                       </div>
 
@@ -616,10 +616,10 @@ export default function Home() {
                     </div>
 
                     <div className="hero-stats">
-                      <div className="stat-item"><div className="stat-number">3+</div><div className="stat-label">Connected Products</div></div>
-                      <div className="stat-item"><div className="stat-number">100+</div><div className="stat-label">CPD Lessons</div></div>
-                      <div className="stat-item"><div className="stat-number">24/7</div><div className="stat-label">System Access</div></div>
-                      <div className="stat-item"><div className="stat-number">1</div><div className="stat-label">Connected Ecosystem</div></div>
+                      <div className="stat-item"><div className="stat-number">3</div><div className="stat-label">Core Products</div></div>
+                      <div className="stat-item"><div className="stat-number">Learn</div><div className="stat-label">Professional CPD</div></div>
+                      <div className="stat-item"><div className="stat-number">Run</div><div className="stat-label">Pharmacy Operations</div></div>
+                      <div className="stat-item"><div className="stat-number">Connect</div><div className="stat-label">Hospital Workflows</div></div>
                     </div>
                   </div>
                 </section>
@@ -641,12 +641,12 @@ export default function Home() {
                       <div className="platform-card">
                         <img
                           src="/favicon.svg"
-                          alt="RemedacarePOS logo"
+                          alt="Pharmacourse logo"
                           style={{ width: 32, height: 32, objectFit: "contain" }}
                         />
                         <span className="platform-status">Live Now</span>
-                        <h3>RemedacarePOS</h3>
-                        <p>Online CPD learning platform with self-paced courses, certificates, and clinical case simulations.</p>
+                        <h3>Pharmacourse</h3>
+                        <p>Professional learning with self-paced CPD courses, certificates, and practical clinical case simulations.</p>
                         <Link to="/courses" className="platform-link">Explore courses <ChevronRight size={16} /></Link>
                       </div>
 
@@ -665,13 +665,13 @@ export default function Home() {
                       <div className="platform-card">
                         <img
                           src={remedacarehmisMark}
-                          alt="RemedacareHMS logo"
+                          alt="RemedacareHMIS logo"
                           style={{ width: 32, height: 32, objectFit: "contain" }}
                         />
                         <span className="platform-status">Available</span>
-                        <h3>RemedacareHMS</h3>
+                        <h3>RemedacareHMIS</h3>
                         <p>Full HMIS with chronic disease tracking, care pathways, antibiogram intelligence, referrals, finance, and MOH reporting.</p>
-                        <Link to="/remedacarehms" className="platform-link">Explore RemedacareHMS <ChevronRight size={16} /></Link>
+                        <Link to="/remedacarehmis" className="platform-link">Explore RemedacareHMIS <ChevronRight size={16} /></Link>
                       </div>
                     </div>
                   </div>
@@ -742,7 +742,7 @@ export default function Home() {
                           type="remedacareOS"
                           videoUrl={config.video_url}
                           imageSrc={config.image_url || remedacareDashboard}
-                          imageAlt="RemedacareHMS dashboard showing patient, admissions, finance and pharmacy workflow panels"
+                          imageAlt="RemedacareHMIS dashboard showing patient, admissions, finance and pharmacy workflow panels"
                         />
                       </div>
 
@@ -761,8 +761,8 @@ export default function Home() {
                           ))}
                         </div>
 
-                        <Link to="/remedacarehms" className="btn-primary">
-                          {config.primary_btn_text || "Explore RemedacareHMS"}
+                        <Link to="/remedacarehmis" className="btn-primary">
+                          {config.primary_btn_text || "Explore RemedacareHMIS"}
                         </Link>
                       </div>
                     </div>
@@ -902,7 +902,7 @@ export default function Home() {
                       <div className="section-header">
                         <span className="section-badge">Latest from the Blog</span>
                         <h2>Fresh ideas for pharmacy practice and operations</h2>
-                        <p>Read quick, practical articles from the RemedacarePOS team and contributors.</p>
+                        <p>Read quick, practical articles from the Pharmacourse team and contributors.</p>
                       </div>
 
                       <div className="mobile-carousel-shell">
@@ -944,7 +944,7 @@ export default function Home() {
                                       likeCount={post.like_count}
                                     />
                                     <div className="blog-preview-footer">
-                                      <span>{post.author_name || "RemedacarePOS Team"}</span>
+                                      <span>{post.author_name || "Pharmacourse Team"}</span>
                                       <span>Read more</span>
                                     </div>
                                   </div>
