@@ -524,7 +524,7 @@ export default function RemedacareOS() {
             Ready to transform your hospital's operations?
           </h2>
           <p style={{ color: "rgba(255,255,255,0.72)", fontSize: 16, lineHeight: 1.75, marginBottom: 40 }}>
-            RemedacareHMIS is available for Kenyan hospitals and clinics. Book a demo and see the full system across patient registration, consultations, chronic care, laboratory, finance, AMS, and MOH reporting.
+            RemedacareHMIS is available for Kenyan hospitals. Book a demo and see the full system across patient registration, consultations, chronic care, laboratory, finance, AMS, and MOH reporting.
           </p>
           <div className="rc-cta-actions" style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
             <a href={WHATSAPP} target="_blank" rel="noreferrer" className="rc-btn-white" style={{ background: "#fff", color: GREEN, fontWeight: 700, padding: "15px 30px", borderRadius: 10, textDecoration: "none", fontSize: 15, display: "flex", alignItems: "center", gap: 8, boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}>

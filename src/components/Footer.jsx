@@ -50,7 +50,7 @@ export default function Footer() {
 
         <div className="site-footer-bottom">
           <span className="footer-copy">Copyright 2026 Pharmacourse. All rights reserved.</span>
-          <span className="footer-copy">Built for pharmacy, clinic, and hospital teams across Kenya.</span>
+          <span className="footer-copy">Built for pharmacy teams and hospitals across Kenya.</span>
         </div>
       </div>
     </footer>

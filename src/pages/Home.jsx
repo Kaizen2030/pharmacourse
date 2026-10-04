@@ -163,7 +163,7 @@ function normalizeHomepageSection(sectionKey, sectionConfig) {
       normalized.heading = DEFAULT_SECTIONS.hero.heading
     }
 
-    if (/brings together|connected ecosystem|integrated suite|across the ecosystem/i.test(normalized.subheading || "")) {
+    if (/brings together|connected ecosystem|integrated platform|integrated suite|clinic management|across the ecosystem/i.test(normalized.subheading || "")) {
       normalized.subheading = DEFAULT_SECTIONS.hero.subheading
     }
 
