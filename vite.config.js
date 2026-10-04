@@ -12,7 +12,7 @@ export default defineConfig({
         enabled: true,
         type: "module",
       },
-      registerType: "autoUpdate",
+      registerType: "prompt",
       injectRegister: false,
       includeAssets: ["favicon.svg", "apple-touch-icon.png"],
       manifest: {
@@ -88,6 +88,27 @@ export default defineConfig({
         navigateFallbackDenylist: [/^\/pos(?:\/|$)/i],
         globIgnores: ["pos/**"],
         globPatterns: ["**/*.{js,css,html,png,svg,woff2}"],
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
+        sourcemap: false,
+        runtimeCaching: [
+          {
+            urlPattern: ({ request }) => request.mode === "navigate",
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "html-cache",
+              networkTimeoutSeconds: 10,
+            },
+          },
+          {
+            urlPattern: ({ request }) => ["script", "style", "image"].includes(request.destination),
+            handler: "StaleWhileRevalidate",
+            options: {
+              cacheName: "asset-cache",
+            },
+          },
+        ],
       },
     }),
   ],
