@@ -5,7 +5,6 @@ import { useInView } from "framer-motion"
 import SEO from "../components/SEO"
 import BlogEngagementStats from "../components/BlogEngagementStats"
 import ThreeProductScroll from "../components/ThreeProductScroll"
-import HomepageScrollExperience from "../components/HomepageScrollExperience"
 import { SITE_URL } from "../lib/siteConfig"
 import { formatBlogDate, getBlogCategoryLabel, getBlogCoverFallback, getBlogExcerpt } from "../lib/blogHelpers"
 import pharmacyosDashboard from "../assets/pharmacyos-dashboard.svg"
@@ -289,7 +288,7 @@ function KineticLetters({ text }) {
       {words.map((word, wordIndex) => (
         <Fragment key={`${word}-${wordIndex}`}>
           {wordIndex > 0 && <span className="kinetic-heading-space"> </span>}
-          <span className="kinetic-heading-word">
+          <span className="kinetic-heading-word" style={{ "--word-index": wordIndex }}>
             {Array.from(word).map((character, index) => (
               <span
                 key={`${character}-${index}`}
@@ -315,6 +314,27 @@ function KineticHeading({ as = "h2", children, className = "" }) {
   }
 
   return <h2 className={headingClass} aria-label={text}><KineticLetters text={text} /></h2>
+}
+
+function ScrollKineticHeading({ children, className = "" }) {
+  const headingRef = useRef(null)
+  const isInView = useInView(headingRef, { once: false, amount: 0.12 })
+  const text = `${children ?? ""}`
+  const headingClass = `kinetic-heading scroll-kinetic-heading ${isInView ? "is-visible" : ""} ${className}`.trim()
+
+  return (
+    <h2 ref={headingRef} className={headingClass} aria-label={text}>
+      <KineticLetters text={text} />
+    </h2>
+  )
+}
+
+function ScrollShowroom({ children, className = "" }) {
+  const showroomRef = useRef(null)
+  const isInView = useInView(showroomRef, { once: false, amount: 0.18 })
+  const showroomClass = `scroll-showroom ${className} ${isInView ? "is-visible" : ""}`.trim()
+
+  return <div ref={showroomRef} className={showroomClass}>{children}</div>
 }
 
 function Hero3DArt({ sharedScene = false }) {
@@ -1077,7 +1097,6 @@ export default function Home() {
 
   return (
     <div className="home">
-      <HomepageScrollExperience />
       <SEO
         title="Pharmacourse | RemedacarePOS & RemedacareHMIS Kenya"
         description="Learn with Pharmacourse, simplify pharmacy operations with RemedacarePOS, and connect hospital workflows with RemedacareHMIS."
@@ -1150,14 +1169,16 @@ export default function Home() {
                 <AnimatedSection delay={0.1}>
                   <section id="ecosystem" className="ecosystem-section">
                     <div className="container">
-                      <div className="section-header">
-                        {config.badge_text && <span className="section-badge">{config.badge_text}</span>}
-                        <KineticHeading>{config.heading || "Choose the product that fits your team."}</KineticHeading>
-                        {config.subheading && <p>{config.subheading}</p>}
-                      </div>
+                      <ScrollShowroom className="platform-showroom">
+                        <div className="section-header">
+                          {config.badge_text && <span className="section-badge">{config.badge_text}</span>}
+                          <ScrollKineticHeading>{config.heading || "Choose what your team needs."}</ScrollKineticHeading>
+                          {config.subheading && <p>{config.subheading}</p>}
+                        </div>
 
-                      <div className="platform-grid">
-                        <article className="platform-card platform-card-learning">
+                        <div className="platform-console">
+                          <div className="platform-grid">
+                          <article className="platform-card platform-card-learning" style={{ "--platform-index": 0 }}>
                           <div className="platform-card-topline">
                             <span className="platform-index">01 / LEARN</span>
                             <img src="/favicon.svg" alt="" className="platform-mark" />
@@ -1177,7 +1198,7 @@ export default function Home() {
                           <Link to="/courses" className="platform-link">Explore courses <ChevronRight size={16} /></Link>
                         </article>
 
-                        <article className="platform-card platform-card-pos">
+                        <article className="platform-card platform-card-pos" style={{ "--platform-index": 1 }}>
                           <div className="platform-card-topline">
                             <span className="platform-index">02 / OPERATE</span>
                             <img src={remedacareposMark} alt="" className="platform-mark" />
@@ -1193,7 +1214,7 @@ export default function Home() {
                           <Link to="/remedacarepos" className="platform-link">Explore RemedacarePOS <ChevronRight size={16} /></Link>
                         </article>
 
-                        <article className="platform-card platform-card-hmis">
+                        <article className="platform-card platform-card-hmis" style={{ "--platform-index": 2 }}>
                           <div className="platform-card-topline">
                             <span className="platform-index">03 / MANAGE CARE</span>
                             <img src={remedacarehmisMark} alt="" className="platform-mark" />
@@ -1218,6 +1239,9 @@ export default function Home() {
                           <Link to="/remedacarehmis" className="platform-link">Explore RemedacareHMIS <ChevronRight size={16} /></Link>
                         </article>
                       </div>
+                        <div className="platform-console-deck" aria-hidden="true" />
+                      </div>
+                    </ScrollShowroom>
                     </div>
                   </section>
                 </AnimatedSection>
@@ -1233,17 +1257,50 @@ export default function Home() {
                     <div className="product-grid reverse">
                       <div className="product-heading">
                         {config.badge_text && <span className="section-badge">{config.badge_text}</span>}
-                        <KineticHeading>{config.heading || "Everything your pharmacy needs. In one desktop app."}</KineticHeading>
+                        <ScrollKineticHeading>{config.heading || "Everything your pharmacy needs. In one desktop app."}</ScrollKineticHeading>
                         {config.subheading && <p>{config.subheading}</p>}
                       </div>
 
-                      <div className="product-visual" onPointerMove={handleCard3DPointerMove} onPointerLeave={resetCard3DTilt}>
-                        <ProductMockup
-                          type="pharmacyOS"
-                          videoUrl={config.video_url}
-                          imageSrc={config.image_url || pharmacyosDashboard}
-                          imageAlt="RemedacarePOS dashboard showing branch overview, revenue, inventory insights and recent sales"
-                        />
+                      <div className="product-visual product-visual-pos" onPointerMove={handleCard3DPointerMove} onPointerLeave={resetCard3DTilt}>
+                        <div className="pos-3d-scene">
+                          <div className="pos-terminal">
+                            <div className="pos-terminal-frame">
+                              <div className="pos-terminal-screen">
+                                <ProductMockup
+                                  type="pharmacyOS"
+                                  videoUrl={config.video_url}
+                                  imageSrc={config.image_url || pharmacyosDashboard}
+                                  imageAlt="RemedacarePOS dashboard showing branch overview, revenue, inventory insights and recent sales"
+                                />
+                              </div>
+                              <div className="pos-terminal-chin">
+                                <span>RemedacarePOS</span>
+                                <i aria-hidden="true" />
+                              </div>
+                            </div>
+                            <div className="pos-terminal-neck" />
+                            <div className="pos-terminal-base" />
+                          </div>
+
+                          <div className="pos-scene-status" aria-label="RemedacarePOS integrations">
+                            <div className="pos-status-card pos-status-payments" style={{ "--feature-index": 0 }}>
+                              <CreditCard size={17} aria-hidden="true" />
+                              <span><small>PAYMENTS</small><strong>M-Pesa ready</strong></span>
+                            </div>
+                            <div className="pos-status-card pos-status-stock" style={{ "--feature-index": 1 }}>
+                              <Package size={17} aria-hidden="true" />
+                              <span><small>INVENTORY</small><strong>Branch stock</strong></span>
+                            </div>
+                            <div className="pos-status-card pos-status-alerts" style={{ "--feature-index": 2 }}>
+                              <AlertTriangle size={17} aria-hidden="true" />
+                              <span><small>CONTROL</small><strong>Expiry alerts</strong></span>
+                            </div>
+                            <div className="pos-status-card pos-status-claims" style={{ "--feature-index": 3 }}>
+                              <Building2 size={17} aria-hidden="true" />
+                              <span><small>COMPLIANCE</small><strong>SHA · eTIMS · PPB</strong></span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
 
                       <div className="product-features">
@@ -1276,32 +1333,36 @@ export default function Home() {
               <AnimatedSection key={key} delay={0.3}>
                 <section id="remedacareOS" className="product-section alt">
                   <div className="container">
-                    <div className="product-grid">
-                      <div className="product-heading">
+                    <div className="hmis-showcase">
+                      <div className="hmis-visual-wrap">
+                        <div className="hmis-monitor-shell">
+                          <div className="hmis-monitor-bezel">
+                            <ProductMockup
+                              type="remedacareOS"
+                              videoUrl={config.video_url}
+                              imageSrc={config.image_url || remedacareDashboard}
+                              imageAlt="RemedacareHMIS dashboard showing patient, admissions, finance and pharmacy workflow panels"
+                            />
+                          </div>
+                          <div className="hmis-monitor-stand" aria-hidden="true" />
+                          <div className="hmis-monitor-base" aria-hidden="true" />
+                        </div>
+                      </div>
+
+                      <div className="hmis-story-card">
                         {config.badge_text && <span className="section-badge">{config.badge_text}</span>}
-                        <KineticHeading>{config.heading || "A complete hospital information system."}</KineticHeading>
+                        <ScrollKineticHeading>{config.heading || "A complete hospital information system."}</ScrollKineticHeading>
                         {config.subheading && <p>{config.subheading}</p>}
-                      </div>
 
-                      <div className="product-visual" onPointerMove={handleCard3DPointerMove} onPointerLeave={resetCard3DTilt}>
-                        <ProductMockup
-                          type="remedacareOS"
-                          videoUrl={config.video_url}
-                          imageSrc={config.image_url || remedacareDashboard}
-                          imageAlt="RemedacareHMIS dashboard showing patient, admissions, finance and pharmacy workflow panels"
-                        />
-                      </div>
-
-                      <div className="product-features">
-                        <div className="feature-list">
+                        <div className="hmis-list">
                           {[
                             { icon: ClipboardList, text: "Care pathways and chronic disease follow-up" },
                             { icon: BarChart3, text: "Finance, claims, and executive visibility" },
                             { icon: Users, text: "Antibiogram, AMS, and clinical decision support" },
                             { icon: Link2, text: "Seamless RemedacarePOS integration" },
                           ].map((feature, idx) => (
-                            <div key={idx} className="feature-item" style={{ "--feature-index": idx }}>
-                              <feature.icon size={20} />
+                            <div key={idx} className="hmis-list-item" style={{ "--feature-index": idx }}>
+                              <feature.icon size={18} />
                               <span>{feature.text}</span>
                             </div>
                           ))}
