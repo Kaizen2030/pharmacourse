@@ -38,9 +38,21 @@ const CHAPTERS = [
   },
 ]
 
+const CHAPTER_STOPS = [0, 4.7, 9.7]
+
+function getStorySlide(progress) {
+  const chapterProgress = Math.min(progress * CHAPTERS.length, CHAPTERS.length - 1)
+  const chapterIndex = Math.floor(chapterProgress)
+  const nextChapterIndex = Math.min(chapterIndex + 1, CHAPTERS.length - 1)
+  const localProgress = chapterProgress - chapterIndex
+  const transition = Math.max(0, Math.min(1, (localProgress - 0.78) / 0.22))
+  const easedTransition = transition * transition * (3 - 2 * transition)
+  return chapterIndex + (nextChapterIndex - chapterIndex) * easedTransition
+}
+
 function applyCopyProgress(track, progress) {
   if (!track) return
-  const slide = Math.min(progress * CHAPTERS.length, CHAPTERS.length - 1)
+  const slide = getStorySlide(progress)
   track.style.setProperty("--copy-shift", `${(-slide / CHAPTERS.length) * 100}%`)
 }
 
@@ -388,14 +400,14 @@ export default function ThreeProductScroll() {
         return chapterStage
       }
 
-      const posStage = cloneChapterStage(4.7, {
+      const posStage = cloneChapterStage(CHAPTER_STOPS[1], {
         coat: 0xf0f7f1,
         shirt: 0x30a98c,
         skin: 0x95634b,
         hair: 0x25221f,
         trousers: 0x24404a,
       }, 1)
-      const hmisStage = cloneChapterStage(9.7, {
+      const hmisStage = cloneChapterStage(CHAPTER_STOPS[2], {
         coat: 0xdcebf3,
         shirt: 0x327ca2,
         skin: 0x704b3e,
@@ -422,6 +434,7 @@ export default function ThreeProductScroll() {
       let isVisible = false
       let animationFrame
       let scrollFrame
+      let displayedProgress = null
       let pointerDown = false
       let lastPointerX = 0
       let dragRotation = 0
@@ -474,8 +487,7 @@ export default function ThreeProductScroll() {
           progressRef.current = progress
           autoplayProgressRef.current = progress
           autoplayModeRef.current = false
-          applyCopyProgress(copyTrackRef.current, progress)
-          const next = Math.min(CHAPTERS.length - 1, Math.floor(progress * CHAPTERS.length))
+          const next = Math.round(getStorySlide(progress))
           if (next !== activeRef.current) {
             activeRef.current = next
             setActiveIndex(next)
@@ -494,19 +506,33 @@ export default function ThreeProductScroll() {
         activeRef.current = next
         autoplayProgressRef.current = next / CHAPTERS.length + 0.025
         autoplayModeRef.current = true
-        applyCopyProgress(copyTrackRef.current, autoplayProgressRef.current)
         setActiveIndex(next)
       }, 6500)
       const animate = (time) => {
         if (isVisible) {
           const seconds = time * 0.001
           const motion = reducedMotion.matches ? 0 : 1
-          const sceneProgress = autoplayModeRef.current ? autoplayProgressRef.current : progressRef.current
-          applyCopyProgress(copyTrackRef.current, sceneProgress)
-          const cameraTargetX = sceneProgress * 15
-          camera.position.x += (cameraTargetX - camera.position.x) * (motion ? 0.12 : 1)
+          const targetProgress = autoplayModeRef.current ? autoplayProgressRef.current : progressRef.current
+          displayedProgress ??= targetProgress
+          displayedProgress += (targetProgress - displayedProgress) * (motion ? 0.16 : 1)
+          applyCopyProgress(copyTrackRef.current, displayedProgress)
+
+          const storySlide = getStorySlide(displayedProgress)
+          const chapterIndex = Math.floor(storySlide)
+          const nextChapterIndex = Math.min(chapterIndex + 1, CHAPTER_STOPS.length - 1)
+          const chapterBlend = storySlide - chapterIndex
+          const cameraTargetX = CHAPTER_STOPS[chapterIndex]
+            + (CHAPTER_STOPS[nextChapterIndex] - CHAPTER_STOPS[chapterIndex]) * chapterBlend
+          const copyClearance = mount.clientWidth > 900 ? 1.7 : 0
+          const cameraX = cameraTargetX - copyClearance
+          camera.position.x += (cameraX - camera.position.x) * (motion ? 0.16 : 1)
           camera.lookAt(camera.position.x, 1.52, 0)
           world.rotation.y = dragRotation
+
+          const visibleChapter = Math.round(storySlide)
+          chapterStages.forEach((chapterStage, index) => {
+            chapterStage.visible = index === visibleChapter
+          })
 
           chapterParts.forEach((parts, index) => {
             const actionPulse = Math.sin(seconds * [1.1, 2.4, 0.9][index] + index * 0.8) * motion
@@ -526,7 +552,7 @@ export default function ThreeProductScroll() {
             parts.molecule.rotation.y += 0.008 * motion
             parts.network.rotation.y = Math.sin(seconds * 0.65 + index) * 0.12 * motion
             parts.particles.rotation.y = seconds * 0.045 * motion
-            parts.ring.rotation.z = sceneProgress * 0.3
+            parts.ring.rotation.z = displayedProgress * 0.3
           })
           windowLight.emissiveIntensity = 0.22 + Math.max(0, Math.sin(seconds * 1.7)) * 0.3 * motion
           renderer.render(scene, camera)
