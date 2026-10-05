@@ -3999,7 +3999,7 @@
   isolation: isolate;
 }
 
-.home > div:not(.homepage-scroll-experience):not(.section-nav) {
+.home > div:not(.section-nav) {
   position: relative;
   z-index: 1;
 }

@@ -5,7 +5,6 @@ import { useInView } from "framer-motion"
 import SEO from "../components/SEO"
 import BlogEngagementStats from "../components/BlogEngagementStats"
 import ThreeProductScroll from "../components/ThreeProductScroll"
-import HomepageScrollExperience from "../components/HomepageScrollExperience"
 import { SITE_URL } from "../lib/siteConfig"
 import { formatBlogDate, getBlogCategoryLabel, getBlogCoverFallback, getBlogExcerpt } from "../lib/blogHelpers"
 import pharmacyosDashboard from "../assets/pharmacyos-dashboard.svg"
@@ -1077,7 +1076,6 @@ export default function Home() {
 
   return (
     <div className="home">
-      <HomepageScrollExperience />
       <SEO
         title="Pharmacourse | RemedacarePOS & RemedacareHMIS Kenya"
         description="Learn with Pharmacourse, simplify pharmacy operations with RemedacarePOS, and connect hospital workflows with RemedacareHMIS."
