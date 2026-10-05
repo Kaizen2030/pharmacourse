@@ -2,8 +2,11 @@
   position: relative;
   min-height: 360svh;
   overflow: clip;
-  color: #f4fff9;
-  background: linear-gradient(112deg, #0b1c1b 0%, #102723 48%, #142b3c 100%);
+  color: #17372f;
+  background:
+    radial-gradient(circle at 18% 22%, rgba(118, 211, 181, 0.17), transparent 18%),
+    linear-gradient(90deg, #f0f6f4 0%, #eef5f2 28%, #edf4f1 100%);
+  perspective: 1800px;
 }
 
 .three-products-sticky {
@@ -19,31 +22,70 @@
 
 .three-products-layout {
   position: relative;
-  display: block;
-  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.9fr);
+  align-items: center;
+  gap: clamp(1.5rem, 3vw, 3rem);
+  width: min(1280px, calc(100% - clamp(1.5rem, 4vw, 4rem)));
   height: 100%;
-  margin: 0;
+  margin: 0 auto;
   padding: 0;
 }
 
-.three-products-copy {
-  position: absolute;
-  top: 50%;
-  left: clamp(1.5rem, 7vw, 7rem);
-  z-index: 2;
-  width: min(540px, 43vw);
-  padding-block: 1.5rem;
-  transform: translateY(-50%);
+.three-products-stage {
+  position: relative;
+  z-index: 0;
+  width: 100%;
+  height: min(80vh, 660px);
+  min-width: 0;
   pointer-events: none;
+  overflow: visible;
+  transform:
+    rotateX(2deg)
+    rotateY(-4deg)
+    scale(1);
+  transform-style: preserve-3d;
+  opacity: 1;
+  transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.three-products-stage::before {
+  content: none;
+}
+
+.three-products-stage::after {
+  content: none;
+}
+
+.three-products-canvas {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+  touch-action: pan-y;
+  pointer-events: auto;
+  transform: perspective(1700px) rotateY(-4deg) rotateX(1deg) translateZ(20px);
+  background: transparent;
+}
+
+.three-products-canvas:active {
+  cursor: grabbing;
+}
+
+.three-products-copy {
+  position: relative;
+  z-index: 2;
+  width: min(100%, 550px);
+  justify-self: end;
+  padding-block: 1.5rem;
+  pointer-events: none;
+  opacity: 1;
+  transform: none;
 }
 
 .three-products-copy::before {
-  position: absolute;
-  z-index: -1;
-  inset: -3rem -7rem;
-  background: linear-gradient(90deg, rgba(7, 22, 19, 0.94), rgba(7, 22, 19, 0.82) 58%, rgba(7, 22, 19, 0));
-  content: "";
-  pointer-events: none;
+  content: none;
 }
 
 .three-products-copy > * {
@@ -71,7 +113,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.55rem;
-  color: #a5e5ca;
+  color: #0d775f;
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.12em;
@@ -79,21 +121,21 @@
 }
 
 .three-products-eyebrow svg {
-  color: #ffbf71;
+  color: #ff9f67;
 }
 
 .three-products-copy h2 {
   max-width: 11ch;
   margin: 1.2rem 0 1rem;
-  color: #f8fff9;
-  font-size: clamp(2.5rem, 4.4vw, 4.6rem);
-  line-height: 0.98;
+  color: #13362d;
+  font-size: clamp(2.7rem, 4.4vw, 4.9rem);
+  line-height: 0.95;
 }
 
 .three-products-copy > p {
   max-width: 43ch;
   margin: 0;
-  color: rgba(231, 247, 239, 0.72);
+  color: rgba(19, 54, 45, 0.74);
   font-size: 1rem;
   line-height: 1.72;
 }
@@ -103,7 +145,7 @@
   align-items: center;
   gap: 0.55rem;
   margin-top: 1.55rem;
-  color: #b7f2d7;
+  color: #0d6452;
   font-size: 0.9rem;
   font-weight: 800;
   text-decoration: none;
@@ -121,7 +163,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.45rem;
-  margin-top: 2.4rem;
+  margin-top: 2.2rem;
 }
 
 .three-products-controls button {
@@ -130,59 +172,39 @@
   gap: 0.5rem;
   min-height: 40px;
   padding: 0.55rem 0.72rem;
-  border: 1px solid rgba(226, 248, 237, 0.18);
-  border-radius: 3px;
-  color: rgba(237, 251, 243, 0.7);
-  background: rgba(7, 24, 20, 0.25);
+  border: 1px solid rgba(19, 54, 45, 0.14);
+  border-radius: 999px;
+  color: rgba(19, 54, 45, 0.8);
+  background: rgba(255, 255, 255, 0.58);
   font-size: 0.72rem;
   font-weight: 700;
   cursor: pointer;
-  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .three-products-controls button span {
-  color: #8ebfa9;
+  color: #1a8b73;
   font-size: 0.62rem;
 }
 
 .three-products-controls button:hover,
 .three-products-controls button.active {
-  border-color: rgba(139, 229, 191, 0.72);
+  border-color: rgba(17, 122, 94, 0.38);
   color: #fff;
-  background: rgba(24, 107, 79, 0.68);
+  background: linear-gradient(135deg, #0d6657, #1d9d79);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(13, 102, 87, 0.16);
 }
 
 .three-products-controls button.active span {
-  color: #ffe0a0;
-}
-
-.three-products-stage {
-  position: absolute;
-  z-index: 0;
-  inset: 0;
-  min-width: 0;
-  height: 100%;
-  min-height: 0;
-  pointer-events: none;
-}
-
-.three-products-canvas {
-  width: 100%;
-  height: 100%;
-  cursor: grab;
-  touch-action: pan-y;
-  pointer-events: auto;
-}
-
-.three-products-canvas:active {
-  cursor: grabbing;
+  color: #ffe7b4;
 }
 
 .three-products-stage-label,
 .three-products-stage-index {
   position: absolute;
   z-index: 1;
-  color: rgba(224, 247, 236, 0.47);
+  color: rgba(80, 109, 97, 0.68);
   font-size: 0.62rem;
   font-weight: 800;
   letter-spacing: 0.14em;
@@ -190,24 +212,24 @@
 }
 
 .three-products-stage-label {
-  top: 0.35rem;
-  right: 0.5rem;
+  top: 1rem;
+  right: 1.15rem;
 }
 
 .three-products-stage-index {
-  right: 0.5rem;
-  bottom: 0.4rem;
+  right: 1.15rem;
+  bottom: 1rem;
   display: inline-flex;
   align-items: center;
   gap: 0.55rem;
-  color: #fff;
+  color: #1a473d;
   font-size: 0.8rem;
 }
 
 .three-products-stage-index i {
   width: 48px;
   height: 1px;
-  background: rgba(224, 247, 236, 0.36);
+  background: rgba(26, 71, 61, 0.36);
 }
 
 @media (max-width: 900px) {
@@ -221,7 +243,27 @@
   }
 
   .three-products-layout {
+    grid-template-columns: 1fr;
+    width: min(100%, calc(100% - 1.5rem));
+    padding-block: 1rem;
+  }
+
+  .three-products-stage {
+    order: 1;
+    width: min(100%, 680px);
+    height: min(54vh, 430px);
+    margin: 0 auto;
+  }
+
+  .three-products-canvas {
+    transform: none;
+  }
+
+  .three-products-copy {
+    order: 2;
+    justify-self: stretch;
     width: 100%;
+    padding-block: 0.5rem 0rem;
   }
 
   .three-products-copy h2 {
