@@ -5029,3 +5029,41 @@
     transition: none;
   }
 }
+
+@media (max-width: 640px) {
+  .home .hmis-showcase {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.85rem;
+  }
+
+  .home .hmis-visual-wrap {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .home .hmis-monitor-shell {
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .home .hmis-monitor-bezel {
+    width: 100%;
+    min-width: 0;
+    padding: 0.55rem;
+    border-radius: 16px;
+  }
+
+  .home .hmis-monitor-bezel .homepage-media {
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    border-radius: 10px;
+  }
+
+  .home .hmis-monitor-stand,
+  .home .hmis-monitor-base {
+    display: none;
+  }
+}
