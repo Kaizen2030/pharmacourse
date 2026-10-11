@@ -1,185 +1,128 @@
-.home-scroll-progress {
+/* Import AFTER Home.css:  import "./home-3d-upgrade.css" */
+
+/* scroll progress */
+.home .home-progress {
   position: fixed;
-  inset: 0 auto auto 0;
-  z-index: 1000;
-  width: 100%;
+  top: 0;
+  left: 0;
+  right: 0;
   height: 3px;
-  transform: scaleX(0);
-  transform-origin: left center;
-  background: linear-gradient(90deg, #18a47c, #72d9bd, #f0b75d);
-  box-shadow: 0 0 12px rgba(24, 164, 124, 0.42);
+  z-index: 2000;
+  transform-origin: 0 50%;
+  transform: scaleX(var(--sp, 0));
+  background: linear-gradient(90deg, #2fd29a, #4bb6d8, #e08a4c);
   pointer-events: none;
-  will-change: transform;
 }
 
-.home.home-motion-enabled .home-reveal-item {
-  --home-reveal-offset: 28px;
+/* 3D scroll reveal */
+.home .reveal-3d {
   opacity: 0;
-  transform: perspective(900px) translate3d(0, var(--home-reveal-offset), 0) rotateX(calc(var(--home-tilt-x, 0deg) + 4deg)) rotateY(var(--home-tilt-y, 0deg));
-  transition: opacity 560ms ease, transform 620ms cubic-bezier(0.2, 0.7, 0.2, 1);
-  transition-delay: var(--home-reveal-delay, 0ms);
+  transform: perspective(1100px) translate3d(0, 44px, -90px) rotateX(14deg);
+  transform-origin: 50% 100%;
 }
-
-.home.home-motion-enabled .home-reveal-item.is-revealed {
-  --home-reveal-offset: 0px;
+.home .reveal-3d.is-in {
   opacity: 1;
-  transform: perspective(900px) translate3d(0, var(--home-reveal-offset), 0) rotateX(var(--home-tilt-x, 0deg)) rotateY(var(--home-tilt-y, 0deg));
+  transform: perspective(1100px) translate3d(0, 0, 0) rotateX(0deg);
+  transition: opacity 0.7s ease, transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition-delay: calc(var(--rv-i, 0) * 70ms);
 }
 
-.home.home-pointer-enabled .feature-card,
-.home.home-pointer-enabled .course-card,
-.home.home-pointer-enabled .blog-preview-card,
-.home.home-pointer-enabled .testimonial-card,
-.home.home-pointer-enabled .faq-card,
-.home.home-pointer-enabled .product-visual,
-.home.home-pointer-enabled .pos-status-card,
-.home.home-pointer-enabled .product-showroom-card {
-  --home-tilt-x: 0deg;
-  --home-tilt-y: 0deg;
-  --home-pointer-x: 50%;
-  --home-pointer-y: 50%;
-  position: relative;
-  transform: perspective(900px) translate3d(0, var(--home-reveal-offset, 0px), 0) rotateX(var(--home-tilt-x)) rotateY(var(--home-tilt-y));
+/* card tilt + glare */
+.home .tilt-3d {
   transform-style: preserve-3d;
-  transition: transform 180ms ease, box-shadow 220ms ease, border-color 220ms ease;
   will-change: transform;
 }
-
-.home.home-pointer-enabled .feature-card::after,
-.home.home-pointer-enabled .course-card::after,
-.home.home-pointer-enabled .blog-preview-card::after,
-.home.home-pointer-enabled .testimonial-card::after,
-.home.home-pointer-enabled .faq-card::after,
-.home.home-pointer-enabled .product-visual::after,
-.home.home-pointer-enabled .pos-status-card::after,
-.home.home-pointer-enabled .product-showroom-card::after {
+.home .tilt-3d:not(.is-tilting) {
+  transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+}
+.home .tilt-3d.is-tilting {
+  transform: perspective(900px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) translateY(-6px) scale(1.012) !important;
+  transition: transform 0.12s ease-out, box-shadow 0.3s ease !important;
+  box-shadow: 0 32px 54px -24px rgba(15, 42, 36, 0.38);
+}
+.home .tilt-glare {
   position: absolute;
   inset: 0;
+  z-index: 3;
   border-radius: inherit;
-  content: "";
-  background: radial-gradient(circle at var(--home-pointer-x) var(--home-pointer-y), rgba(255, 255, 255, 0.22), transparent 48%);
+  pointer-events: none;
   opacity: 0;
-  pointer-events: none;
-  transition: opacity 200ms ease;
+  transition: opacity 0.25s ease;
+  background:
+    radial-gradient(260px circle at var(--glare-x, 50%) var(--glare-y, 0%), rgba(255, 255, 255, 0.55), transparent 60%),
+    radial-gradient(320px circle at var(--glare-x, 50%) var(--glare-y, 0%), rgba(47, 210, 154, 0.14), transparent 70%);
+}
+.home .tilt-3d.is-tilting .tilt-glare { opacity: 1; }
+
+/* magnetic buttons (uses the individual `translate` property so it stacks with existing transforms) */
+.home .magnetic {
+  translate: var(--mag-x, 0px) var(--mag-y, 0px);
+}
+.home .magnetic.mag-release {
+  transition: translate 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.home.home-pointer-enabled .feature-card:hover::after,
-.home.home-pointer-enabled .course-card:hover::after,
-.home.home-pointer-enabled .blog-preview-card:hover::after,
-.home.home-pointer-enabled .testimonial-card:hover::after,
-.home.home-pointer-enabled .faq-card:hover::after,
-.home.home-pointer-enabled .product-visual:hover::after,
-.home.home-pointer-enabled .pos-status-card:hover::after,
-.home.home-pointer-enabled .product-showroom-card:hover::after {
-  opacity: 1;
-}
-
-.home.home-pointer-enabled .btn-primary,
-.home.home-pointer-enabled .btn-secondary,
-.home.home-pointer-enabled .btn-whatsapp {
-  transform: translate3d(var(--home-magnetic-x, 0px), var(--home-magnetic-y, 0px), 0);
-  transition: transform 160ms ease, box-shadow 180ms ease, background 180ms ease, color 180ms ease, border-color 180ms ease;
-}
-
+/* hero + CTA: spotlight and aurora */
 .home .hero-section,
-.home .cta-section {
-  position: relative;
-  isolation: isolate;
-}
-
-.home .hero-section::before,
-.home .cta-section::before {
+.home .cta-section { position: relative; }
+.home .hero-section > .container,
+.home .cta-section > .container { position: relative; z-index: 1; }
+.home .spot-layer {
   position: absolute;
   inset: 0;
-  z-index: -1;
-  content: "";
-  pointer-events: none;
-  background:
-    radial-gradient(ellipse 24rem 18rem at 12% calc(22% + var(--home-scroll-offset, 0px)), rgba(66, 198, 157, 0.12), transparent 72%),
-    radial-gradient(ellipse 27rem 19rem at 86% calc(72% - var(--home-scroll-offset, 0px)), rgba(81, 160, 195, 0.11), transparent 72%);
-}
-
-.home.home-pointer-enabled .hero-section::after,
-.home.home-pointer-enabled .cta-section::after {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  content: "";
-  pointer-events: none;
-  background: radial-gradient(32rem circle at var(--home-spotlight-x, 50%) var(--home-spotlight-y, 50%), rgba(255, 255, 255, 0.5), transparent 68%);
-  opacity: 0.7;
-}
-
-.home .hero-3d-shell {
-  backdrop-filter: blur(18px) saturate(1.1);
-  background: linear-gradient(145deg, rgba(224, 242, 236, 0.82), rgba(255, 255, 255, 0.48) 50%, rgba(211, 231, 226, 0.68));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 28px 70px rgba(23, 75, 62, 0.14);
-}
-
-.home.home-pointer-enabled .hero-3d-shell {
-  transform: perspective(1100px) rotateY(-3deg) rotateX(1deg);
-  transition: transform 420ms cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 300ms ease;
-}
-
-.home.home-pointer-enabled .hero-3d-shell:hover {
-  transform: perspective(1100px) rotateY(0deg) rotateX(0deg);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 34px 80px rgba(23, 75, 62, 0.2);
-}
-
-.home .cta-content {
-  position: relative;
-  overflow: hidden;
-  isolation: isolate;
-}
-
-.home .cta-content > * {
-  position: relative;
-  z-index: 1;
-}
-
-.home .cta-content::before {
-  position: absolute;
-  inset: -35%;
   z-index: 0;
-  content: "";
-  background:
-    radial-gradient(ellipse at 28% 45%, rgba(95, 228, 184, 0.24), transparent 27%),
-    radial-gradient(ellipse at 74% 68%, rgba(120, 190, 232, 0.18), transparent 30%);
-  transform: translateY(calc(var(--home-scroll-offset, 0px) * -0.18));
+  overflow: hidden;
+  border-radius: inherit;
   pointer-events: none;
 }
-
-@media (max-width: 760px) {
-  .home.home-motion-enabled .home-reveal-item {
-    --home-reveal-offset: 20px;
-  }
-
-  .home.home-motion-enabled .home-reveal-item.is-revealed {
-    --home-reveal-offset: 0px;
-  }
-
-  .home.home-pointer-enabled .hero-3d-shell,
-  .home.home-pointer-enabled .hero-3d-shell:hover {
-    transform: none;
-  }
+.home .spot-layer::before {
+  content: "";
+  position: absolute;
+  left: var(--mx, 72%);
+  top: var(--my, 28%);
+  width: 640px;
+  height: 640px;
+  translate: -50% -50%;
+  background: radial-gradient(circle, rgba(47, 210, 154, 0.2), transparent 62%);
+  transition: left 0.25s ease-out, top 0.25s ease-out;
+}
+.home .spot-layer i {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(64px);
+  opacity: 0.45;
+  animation: homeBlobDrift 18s ease-in-out infinite alternate;
+}
+.home .spot-layer i:nth-child(1) { width: 340px; height: 340px; left: -90px; top: 8%; background: #7be3c0; translate: 0 calc(var(--sy, 0) * -0.03px); }
+.home .spot-layer i:nth-child(2) { width: 300px; height: 300px; right: -70px; bottom: 4%; background: #8fd0ea; animation-delay: -6s; translate: 0 calc(var(--sy, 0) * 0.025px); }
+.home .spot-layer i:nth-child(3) { width: 220px; height: 220px; left: 46%; top: -60px; background: #f4c79a; animation-delay: -11s; }
+@keyframes homeBlobDrift {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(36px, -26px, 0) scale(1.14); }
 }
 
+/* hero: depth instead of a flat boxed card */
+.home .hero-section .hero-3d-layout {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.6), rgba(233, 247, 241, 0.72));
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 40px 80px -42px rgba(15, 42, 36, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+@media (hover: hover) and (pointer: fine) {
+  .home .hero-section .hero-3d-shell {
+    transform: perspective(1400px) rotateY(-4deg);
+    transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+    box-shadow: 0 40px 70px -32px rgba(15, 42, 36, 0.42);
+  }
+  .home .hero-section .hero-3d-shell:hover { transform: perspective(1400px) rotateY(0deg); }
+}
+
+@media (max-width: 700px) {
+  .home .spot-layer::before { width: 380px; height: 380px; }
+  .home .spot-layer i { opacity: 0.32; }
+}
 @media (prefers-reduced-motion: reduce) {
-  .home-scroll-progress {
-    display: none;
-  }
-
-  .home .hero-section::before,
-  .home .cta-section::before,
-  .home.home-pointer-enabled .hero-section::after,
-  .home.home-pointer-enabled .cta-section::after {
-    display: none;
-  }
-
-  .home .hero-3d-shell,
-  .home.home-pointer-enabled .hero-3d-shell,
-  .home.home-pointer-enabled .hero-3d-shell:hover {
-    transform: none;
-    transition: none;
-  }
+  .home .reveal-3d { opacity: 1; transform: none; }
+  .home .spot-layer i { animation: none; }
+  .home .home-progress { transition: none; }
 }

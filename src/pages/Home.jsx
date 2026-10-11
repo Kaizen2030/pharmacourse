@@ -1210,11 +1210,9 @@ export default function Home() {
             return (
               <Fragment key={key}>
                 <AnimatedSection delay={0.1}>
-                  <section id="ecosystem" className="ecosystem-section">
-                    <div className="container">
-                      <ProductShowroom3D />
-                    </div>
-                  </section>
+                  <ProductShowroom3D badge={config.badge_text} subheading={config.subheading}>
+                    <ScrollKineticHeading>{config.heading || "Choose what your team needs."}</ScrollKineticHeading>
+                  </ProductShowroom3D>
                 </AnimatedSection>
                 <ThreeProductScroll />
               </Fragment>

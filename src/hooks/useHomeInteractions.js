@@ -1,9 +1,11 @@
-import { useEffect } from "react"
-import { initializeHomeInteractions } from "./homeInteractions"
+import { useLayoutEffect } from "react"
+import { setupHomeInteractions } from "./homeInteractions"
 
+/** Call once inside the Home component. Needs the page wrapper to have className "home". */
 export default function useHomeInteractions() {
-  useEffect(() => {
+  useLayoutEffect(() => {
     const root = document.querySelector(".home")
-    return initializeHomeInteractions(root)
+    if (!root) return undefined
+    return setupHomeInteractions(root)
   }, [])
 }
