@@ -4,13 +4,13 @@ import { supabase } from "../lib/supabaseClient"
 import { useInView } from "framer-motion"
 import SEO from "../components/SEO"
 import BlogEngagementStats from "../components/BlogEngagementStats"
+import ProductShowroom3D from "../components/ProductShowroom3D"
 import ThreeProductScroll from "../components/ThreeProductScroll"
+import useHomeInteractions from "../hooks/useHomeInteractions"
 import { SITE_URL } from "../lib/siteConfig"
 import { formatBlogDate, getBlogCategoryLabel, getBlogCoverFallback, getBlogExcerpt } from "../lib/blogHelpers"
 import pharmacyosDashboard from "../assets/pharmacyos-dashboard.svg"
 import pharmacourseHeroVisual from "../assets/pharmacourse-hero-visual.svg"
-import remedacarehmisMark from "../assets/remedacarehmis-mark.png"
-import remedacareposMark from "../assets/remedacarepos-mark.png"
 import remedacareDashboard from "../assets/remedacare-dashboard.svg"
 import {
   BookOpen,
@@ -29,6 +29,7 @@ import {
   ChevronRight,
 } from "lucide-react"
 import "./Home.css"
+import "./home-3d-upgrade.css"
 
 const WHATSAPP = "https://wa.me/254790059584?text=Hi%20Julius%2C%20I%27d%20like%20to%20book%20a%20demo%20of%20your%20platform."
 const HERO_ART_MODES = ["learn", "practice", "care"]
@@ -347,7 +348,8 @@ function Hero3DArt({ sharedScene = false }) {
   }, [mode])
 
   useEffect(() => {
-    if (sharedScene || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return undefined
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    if (sharedScene || reducedMotion) return undefined
 
     const timer = window.setInterval(() => {
       if (document.visibilityState !== "visible") return
@@ -371,7 +373,10 @@ function Hero3DArt({ sharedScene = false }) {
       const THREE = await import("three")
       if (cancelled) return
 
-    const scene = new THREE.Scene()
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      const coarsePointer = window.matchMedia("(pointer: coarse)").matches
+
+      const scene = new THREE.Scene()
     scene.background = new THREE.Color(0xe7f4f0)
     scene.fog = new THREE.Fog(0xe7f4f0, 10, 22)
 
@@ -379,7 +384,7 @@ function Hero3DArt({ sharedScene = false }) {
     camera.position.set(0, 2.1, 7.2)
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, coarsePointer ? 1.25 : 2))
     renderer.setSize(mount.clientWidth, mount.clientHeight)
     mount.appendChild(renderer.domElement)
 
@@ -665,17 +670,17 @@ function Hero3DArt({ sharedScene = false }) {
     }
 
     function updateArtwork(time) {
-      const motionScale = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0.12 : 1
+      const motionScale = reducedMotion ? 0 : 1
       const selectedMode = HERO_ART_MODES.indexOf(modeRef.current)
       const modeColors = [0x17a582, 0x528ad8, 0xff765e]
       const seconds = time * 0.001
-      const scrollTurn = scrollProgress.value * Math.PI * 0.85
-      art.rotation.y = Math.sin(seconds * 0.28) * 0.13 + selectedMode * 0.7 + scrollTurn
-      art.rotation.x = Math.sin(seconds * 0.36) * 0.06 + scrollProgress.value * 0.52
+      const scrollTurn = reducedMotion ? 0 : scrollProgress.value * Math.PI * 0.85
+      art.rotation.y = Math.sin(seconds * 0.28) * 0.13 * motionScale + selectedMode * 0.7 + scrollTurn
+      art.rotation.x = Math.sin(seconds * 0.36) * 0.06 * motionScale + scrollProgress.value * 0.52 * motionScale
       art.position.y = 1.65 + Math.sin(seconds * 0.8) * 0.1 * motionScale
       centralForm.rotation.x += 0.002 * motionScale
       centralForm.rotation.z -= 0.0025 * motionScale
-      centralForm.scale.setScalar(1 - scrollProgress.value * 0.1 + Math.sin(seconds * 1.8) * 0.035 * motionScale)
+      centralForm.scale.setScalar(1 - scrollProgress.value * 0.1 * motionScale + Math.sin(seconds * 1.8) * 0.035 * motionScale)
       coreMaterial.color.setHex(modeColors[selectedMode] || modeColors[0])
       orbitRings.forEach((ring, index) => {
         ring.rotation.z += (index % 2 ? 0.0016 : -0.0012) * motionScale
@@ -733,28 +738,58 @@ function Hero3DArt({ sharedScene = false }) {
     renderer.domElement.addEventListener("wheel", handleWheel, { passive: false })
     renderer.domElement.addEventListener("click", handleClick)
 
-    let frameId
-    const animate = (time) => {
+    let frameId = 0
+    let isIntersecting = false
+
+    const renderFrame = (time) => {
+      frameId = 0
+      if (cancelled || !isIntersecting || document.hidden) return
       updateCamera()
       updateArtwork(time)
       renderer.render(scene, camera)
-      frameId = requestAnimationFrame(animate)
+      frameId = requestAnimationFrame(renderFrame)
     }
 
-    animate()
+    const startRendering = () => {
+      if (!cancelled && isIntersecting && !document.hidden && !frameId) {
+        frameId = requestAnimationFrame(renderFrame)
+      }
+    }
+
+    const stopRendering = () => {
+      if (!frameId) return
+      cancelAnimationFrame(frameId)
+      frameId = 0
+    }
+
+    const observer = new IntersectionObserver(([entry]) => {
+      isIntersecting = Boolean(entry?.isIntersecting)
+      if (isIntersecting) startRendering()
+      else stopRendering()
+    }, { threshold: 0.12, rootMargin: "160px 0px" })
+    observer.observe(mount)
+
+    const visibilityHandler = () => {
+      if (document.hidden) stopRendering()
+      else startRendering()
+    }
+    document.addEventListener("visibilitychange", visibilityHandler)
 
     const resizeObserver = new ResizeObserver(() => {
       const width = mount.clientWidth || 420
       const height = mount.clientHeight || 480
       camera.aspect = width / height
       camera.updateProjectionMatrix()
-      renderer.setSize(width, height)
+      renderer.setSize(width, height, false)
     })
     resizeObserver.observe(mount)
 
     disposeScene = () => {
-      cancelAnimationFrame(frameId)
+      cancelled = true
+      stopRendering()
+      observer.disconnect()
       resizeObserver.disconnect()
+      document.removeEventListener("visibilitychange", visibilityHandler)
       window.removeEventListener("scroll", updateScrollProgress)
       renderer.domElement.removeEventListener("pointerdown", handlePointerDown)
       renderer.domElement.removeEventListener("pointermove", handlePointerMove)
@@ -762,8 +797,14 @@ function Hero3DArt({ sharedScene = false }) {
       renderer.domElement.removeEventListener("pointerleave", handlePointerUp)
       renderer.domElement.removeEventListener("wheel", handleWheel)
       renderer.domElement.removeEventListener("click", handleClick)
-      mount.removeChild(renderer.domElement)
+      if (renderer.domElement.parentNode === mount) mount.removeChild(renderer.domElement)
+      scene.traverse((child) => {
+        child.geometry?.dispose()
+        if (Array.isArray(child.material)) child.material.forEach((material) => material.dispose())
+        else child.material?.dispose()
+      })
       renderer.dispose()
+      renderer.forceContextLoss()
     }
 
     }
@@ -940,6 +981,8 @@ const ProductMockup = ({ type, videoUrl, imageSrc, imageAlt }) => {
 }
 
 export default function Home() {
+  useHomeInteractions()
+
   const [courses, setCourses] = useState([])
   const [activeCourseArtifact, setActiveCourseArtifact] = useState(0)
   const [capsuleBurst, setCapsuleBurst] = useState(0)
@@ -1169,79 +1212,7 @@ export default function Home() {
                 <AnimatedSection delay={0.1}>
                   <section id="ecosystem" className="ecosystem-section">
                     <div className="container">
-                      <ScrollShowroom className="platform-showroom">
-                        <div className="section-header">
-                          {config.badge_text && <span className="section-badge">{config.badge_text}</span>}
-                          <ScrollKineticHeading>{config.heading || "Choose what your team needs."}</ScrollKineticHeading>
-                          {config.subheading && <p>{config.subheading}</p>}
-                        </div>
-
-                        <div className="platform-console">
-                          <div className="platform-grid">
-                          <article className="platform-card platform-card-learning" style={{ "--platform-index": 0 }}>
-                          <div className="platform-card-topline">
-                            <span className="platform-index">01 / LEARN</span>
-                            <img src="/favicon.svg" alt="" className="platform-mark" />
-                          </div>
-                          <div className="platform-sculpture platform-sculpture-learning" aria-hidden="true">
-                            <div className="sculpture-book">
-                              <span className="sculpture-book-page left" />
-                              <span className="sculpture-book-page right" />
-                              <span className="sculpture-book-spine" />
-                            </div>
-                          </div>
-                          <div className="platform-card-copy">
-                            <p className="platform-kicker">Professional development</p>
-                            <h3>Pharmacourse</h3>
-                            <p>Practical CPD courses, clinical case simulations, and certificates designed for pharmacy professionals.</p>
-                          </div>
-                          <Link to="/courses" className="platform-link">Explore courses <ChevronRight size={16} /></Link>
-                        </article>
-
-                        <article className="platform-card platform-card-pos" style={{ "--platform-index": 1 }}>
-                          <div className="platform-card-topline">
-                            <span className="platform-index">02 / OPERATE</span>
-                            <img src={remedacareposMark} alt="" className="platform-mark" />
-                          </div>
-                          <div className="platform-sculpture platform-sculpture-pos" aria-hidden="true">
-                            <div className="sculpture-capsule"><span /></div>
-                          </div>
-                          <div className="platform-card-copy">
-                            <p className="platform-kicker">Pharmacy operations</p>
-                            <h3>RemedacarePOS</h3>
-                            <p>Dispensing, inventory, patient requests, claims, and branch operations for pharmacies.</p>
-                          </div>
-                          <Link to="/remedacarepos" className="platform-link">Explore RemedacarePOS <ChevronRight size={16} /></Link>
-                        </article>
-
-                        <article className="platform-card platform-card-hmis" style={{ "--platform-index": 2 }}>
-                          <div className="platform-card-topline">
-                            <span className="platform-index">03 / MANAGE CARE</span>
-                            <img src={remedacarehmisMark} alt="" className="platform-mark" />
-                          </div>
-                          <div className="platform-sculpture platform-sculpture-hmis" aria-hidden="true">
-                            <div className="sculpture-network">
-                              <span className="network-line line-one" />
-                              <span className="network-line line-two" />
-                              <span className="network-line line-three" />
-                              <span className="network-node node-one" />
-                              <span className="network-node node-two" />
-                              <span className="network-node node-three" />
-                              <span className="network-node node-four" />
-                              <span className="network-node node-core" />
-                            </div>
-                          </div>
-                          <div className="platform-card-copy">
-                            <p className="platform-kicker">Hospital management</p>
-                            <h3>RemedacareHMIS</h3>
-                            <p>Patient records, clinical departments, reporting, finance, and hospital operations in one HMIS.</p>
-                          </div>
-                          <Link to="/remedacarehmis" className="platform-link">Explore RemedacareHMIS <ChevronRight size={16} /></Link>
-                        </article>
-                      </div>
-                        <div className="platform-console-deck" aria-hidden="true" />
-                      </div>
-                    </ScrollShowroom>
+                      <ProductShowroom3D />
                     </div>
                   </section>
                 </AnimatedSection>

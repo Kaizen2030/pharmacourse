@@ -1,0 +1,185 @@
+.home-scroll-progress {
+  position: fixed;
+  inset: 0 auto auto 0;
+  z-index: 1000;
+  width: 100%;
+  height: 3px;
+  transform: scaleX(0);
+  transform-origin: left center;
+  background: linear-gradient(90deg, #18a47c, #72d9bd, #f0b75d);
+  box-shadow: 0 0 12px rgba(24, 164, 124, 0.42);
+  pointer-events: none;
+  will-change: transform;
+}
+
+.home.home-motion-enabled .home-reveal-item {
+  --home-reveal-offset: 28px;
+  opacity: 0;
+  transform: perspective(900px) translate3d(0, var(--home-reveal-offset), 0) rotateX(calc(var(--home-tilt-x, 0deg) + 4deg)) rotateY(var(--home-tilt-y, 0deg));
+  transition: opacity 560ms ease, transform 620ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition-delay: var(--home-reveal-delay, 0ms);
+}
+
+.home.home-motion-enabled .home-reveal-item.is-revealed {
+  --home-reveal-offset: 0px;
+  opacity: 1;
+  transform: perspective(900px) translate3d(0, var(--home-reveal-offset), 0) rotateX(var(--home-tilt-x, 0deg)) rotateY(var(--home-tilt-y, 0deg));
+}
+
+.home.home-pointer-enabled .feature-card,
+.home.home-pointer-enabled .course-card,
+.home.home-pointer-enabled .blog-preview-card,
+.home.home-pointer-enabled .testimonial-card,
+.home.home-pointer-enabled .faq-card,
+.home.home-pointer-enabled .product-visual,
+.home.home-pointer-enabled .pos-status-card,
+.home.home-pointer-enabled .product-showroom-card {
+  --home-tilt-x: 0deg;
+  --home-tilt-y: 0deg;
+  --home-pointer-x: 50%;
+  --home-pointer-y: 50%;
+  position: relative;
+  transform: perspective(900px) translate3d(0, var(--home-reveal-offset, 0px), 0) rotateX(var(--home-tilt-x)) rotateY(var(--home-tilt-y));
+  transform-style: preserve-3d;
+  transition: transform 180ms ease, box-shadow 220ms ease, border-color 220ms ease;
+  will-change: transform;
+}
+
+.home.home-pointer-enabled .feature-card::after,
+.home.home-pointer-enabled .course-card::after,
+.home.home-pointer-enabled .blog-preview-card::after,
+.home.home-pointer-enabled .testimonial-card::after,
+.home.home-pointer-enabled .faq-card::after,
+.home.home-pointer-enabled .product-visual::after,
+.home.home-pointer-enabled .pos-status-card::after,
+.home.home-pointer-enabled .product-showroom-card::after {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  content: "";
+  background: radial-gradient(circle at var(--home-pointer-x) var(--home-pointer-y), rgba(255, 255, 255, 0.22), transparent 48%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease;
+}
+
+.home.home-pointer-enabled .feature-card:hover::after,
+.home.home-pointer-enabled .course-card:hover::after,
+.home.home-pointer-enabled .blog-preview-card:hover::after,
+.home.home-pointer-enabled .testimonial-card:hover::after,
+.home.home-pointer-enabled .faq-card:hover::after,
+.home.home-pointer-enabled .product-visual:hover::after,
+.home.home-pointer-enabled .pos-status-card:hover::after,
+.home.home-pointer-enabled .product-showroom-card:hover::after {
+  opacity: 1;
+}
+
+.home.home-pointer-enabled .btn-primary,
+.home.home-pointer-enabled .btn-secondary,
+.home.home-pointer-enabled .btn-whatsapp {
+  transform: translate3d(var(--home-magnetic-x, 0px), var(--home-magnetic-y, 0px), 0);
+  transition: transform 160ms ease, box-shadow 180ms ease, background 180ms ease, color 180ms ease, border-color 180ms ease;
+}
+
+.home .hero-section,
+.home .cta-section {
+  position: relative;
+  isolation: isolate;
+}
+
+.home .hero-section::before,
+.home .cta-section::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  content: "";
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 24rem 18rem at 12% calc(22% + var(--home-scroll-offset, 0px)), rgba(66, 198, 157, 0.12), transparent 72%),
+    radial-gradient(ellipse 27rem 19rem at 86% calc(72% - var(--home-scroll-offset, 0px)), rgba(81, 160, 195, 0.11), transparent 72%);
+}
+
+.home.home-pointer-enabled .hero-section::after,
+.home.home-pointer-enabled .cta-section::after {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  content: "";
+  pointer-events: none;
+  background: radial-gradient(32rem circle at var(--home-spotlight-x, 50%) var(--home-spotlight-y, 50%), rgba(255, 255, 255, 0.5), transparent 68%);
+  opacity: 0.7;
+}
+
+.home .hero-3d-shell {
+  backdrop-filter: blur(18px) saturate(1.1);
+  background: linear-gradient(145deg, rgba(224, 242, 236, 0.82), rgba(255, 255, 255, 0.48) 50%, rgba(211, 231, 226, 0.68));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 28px 70px rgba(23, 75, 62, 0.14);
+}
+
+.home.home-pointer-enabled .hero-3d-shell {
+  transform: perspective(1100px) rotateY(-3deg) rotateX(1deg);
+  transition: transform 420ms cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 300ms ease;
+}
+
+.home.home-pointer-enabled .hero-3d-shell:hover {
+  transform: perspective(1100px) rotateY(0deg) rotateX(0deg);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 34px 80px rgba(23, 75, 62, 0.2);
+}
+
+.home .cta-content {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.home .cta-content > * {
+  position: relative;
+  z-index: 1;
+}
+
+.home .cta-content::before {
+  position: absolute;
+  inset: -35%;
+  z-index: 0;
+  content: "";
+  background:
+    radial-gradient(ellipse at 28% 45%, rgba(95, 228, 184, 0.24), transparent 27%),
+    radial-gradient(ellipse at 74% 68%, rgba(120, 190, 232, 0.18), transparent 30%);
+  transform: translateY(calc(var(--home-scroll-offset, 0px) * -0.18));
+  pointer-events: none;
+}
+
+@media (max-width: 760px) {
+  .home.home-motion-enabled .home-reveal-item {
+    --home-reveal-offset: 20px;
+  }
+
+  .home.home-motion-enabled .home-reveal-item.is-revealed {
+    --home-reveal-offset: 0px;
+  }
+
+  .home.home-pointer-enabled .hero-3d-shell,
+  .home.home-pointer-enabled .hero-3d-shell:hover {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-scroll-progress {
+    display: none;
+  }
+
+  .home .hero-section::before,
+  .home .cta-section::before,
+  .home.home-pointer-enabled .hero-section::after,
+  .home.home-pointer-enabled .cta-section::after {
+    display: none;
+  }
+
+  .home .hero-3d-shell,
+  .home.home-pointer-enabled .hero-3d-shell,
+  .home.home-pointer-enabled .hero-3d-shell:hover {
+    transform: none;
+    transition: none;
+  }
+}
