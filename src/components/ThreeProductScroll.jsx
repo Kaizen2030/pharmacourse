@@ -39,6 +39,10 @@ const CHAPTERS = [
 ]
 
 const CHAPTER_STOPS = [0, 4.7, 9.7]
+const REALISM_LEVEL = "T2"
+const DESK_TOP_Y = 0.72
+const CAMERA_Z = REALISM_LEVEL === "T2" ? 9.6 : 10.2
+const CAMERA_Y = REALISM_LEVEL === "T2" ? 1.9 : 1.9
 
 function getStorySlide(progress) {
   const chapterProgress = Math.min(progress * CHAPTERS.length, CHAPTERS.length - 1)
@@ -80,7 +84,7 @@ export default function ThreeProductScroll() {
       const scene = new THREE.Scene()
       scene.background = null
       const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 80)
-      camera.position.set(0, 1.9, 10.2)
+      camera.position.set(0, CAMERA_Y, CAMERA_Z)
       const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "low-power" })
       renderer.setPixelRatio(Math.max(1, Math.min(window.devicePixelRatio || 1, 2)))
       renderer.setSize(mount.clientWidth || 640, mount.clientHeight || 620)
@@ -133,12 +137,26 @@ export default function ThreeProductScroll() {
 
       const coat = makeMaterial(0xe0e9e4, { roughness: 0.82 })
       const coatShadow = makeMaterial(0xb9cbc2, { roughness: 0.86 })
-      const skin = makeMaterial(0x895c46, { roughness: 0.8 })
+      const skin = makeMaterial(0x895c46, { roughness: 0.72 })
+      const skinShadow = makeMaterial(0x6d4632, { roughness: 0.78 })
       const hair = makeMaterial(0x2d2522, { roughness: 0.88 })
+      const hairHi = makeMaterial(0x3f342e, { roughness: 0.82 })
       const shirt = makeMaterial(0x176e5b, { roughness: 0.68 })
       const trousers = makeMaterial(0x263d4b, { roughness: 0.76 })
       const metal = makeMaterial(0xa7c4c5, { metalness: 0.72, roughness: 0.28 })
       const eye = makeMaterial(0x182522, { roughness: 0.4 })
+      const eyeWhite = makeMaterial(0xf7f6f0, { roughness: 0.28 })
+      const iris = makeMaterial(0x684b35, { roughness: 0.32 })
+      const lip = makeMaterial(0x75493e, { roughness: 0.7 })
+      const glassLens = makeMaterial(0xd9ecf2, { roughness: 0.06, metalness: 0.05, transparent: true, opacity: 0.28 })
+      const glassFrame = makeMaterial(0x1c1f24, { roughness: 0.42, metalness: 0.3 })
+      const beardMat = makeMaterial(0x211b17, { roughness: 0.92 })
+      const woodMat = makeMaterial(0xc9a878, { roughness: 0.68 })
+      const shelfMat = makeMaterial(0xd9c6a2, { roughness: 0.72 })
+      const floorMat = makeMaterial(0xd4ddd8, { roughness: 0.88 })
+      const hospitalWallMat = makeMaterial(0xdbe8ee, { roughness: 0.92 })
+      const posWallMat = makeMaterial(0xf0e6d8, { roughness: 0.92 })
+      const courseWallMat = makeMaterial(0xe3efe8, { roughness: 0.92 })
 
       const torsoProfile = [
         [0.28, 0], [0.37, 0.16], [0.41, 0.48], [0.44, 0.78],
@@ -180,112 +198,354 @@ export default function ThreeProductScroll() {
         pharmacist.add(button)
       }
 
-      const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.15, 0.22, 20), skin)
-      neck.position.y = 2.34
-      pharmacist.add(neck)
-      const head = new THREE.Group()
-      head.position.y = 2.78
-      head.name = "guide-head"
-      pharmacist.add(head)
-      const face = new THREE.Mesh(new THREE.SphereGeometry(0.39, 32, 24), skin)
-      face.scale.set(0.83, 1.08, 0.86)
-      head.add(face)
-      const hairCap = new THREE.Mesh(new THREE.SphereGeometry(0.41, 32, 24), hair)
-      hairCap.scale.set(0.9, 0.58, 0.9)
-      hairCap.position.set(0, 0.22, -0.04)
-      head.add(hairCap)
-      const fringe = new THREE.Mesh(new THREE.SphereGeometry(0.29, 24, 16), hair)
-      fringe.scale.set(1.05, 0.23, 0.62)
-      fringe.position.set(0, 0.13, 0.22)
-      head.add(fringe)
+      const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.16, 0.26, 22), skin)
+        neck.position.y = 2.32
+        pharmacist.add(neck)
+        const trapezius = new THREE.Mesh(new THREE.SphereGeometry(0.24, 18, 14), coat)
+        trapezius.scale.set(1.5, 0.32, 0.8)
+        trapezius.position.set(0, 2.24, -0.02)
+        pharmacist.add(trapezius)
 
-      const eyeWhite = makeMaterial(0xf7f6f0, { roughness: 0.28 })
-      const iris = makeMaterial(0x684b35, { roughness: 0.32 })
-      for (const side of [-1, 1]) {
-        const ear = new THREE.Mesh(new THREE.SphereGeometry(0.075, 18, 14), skin)
-        ear.scale.set(0.72, 1.05, 0.72)
-        ear.position.set(side * 0.31, -0.01, 0.005)
-        head.add(ear)
+        const head = new THREE.Group()
+        head.position.y = 2.78
+        head.name = "guide-head"
+        pharmacist.add(head)
 
-        const white = new THREE.Mesh(new THREE.SphereGeometry(0.052, 18, 14), eyeWhite)
-        white.scale.set(1.1, 0.72, 0.58)
-        white.position.set(side * 0.11, 0.025, 0.318)
-        const irisMesh = new THREE.Mesh(new THREE.SphereGeometry(0.027, 16, 12), iris)
-        irisMesh.position.set(side * 0.11, 0.02, 0.35)
-        const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.012, 12, 10), eye)
-        pupil.position.set(side * 0.11, 0.02, 0.372)
-        const brow = new THREE.Mesh(new THREE.CapsuleGeometry(0.018, 0.09, 3, 8), hair)
-        brow.position.set(side * 0.11, 0.1, 0.322)
-        brow.rotation.z = side * -0.08
-        head.add(white, irisMesh, pupil, brow)
-      }
+        const useT2Head = REALISM_LEVEL === "T2"
+        let face
+        if (useT2Head) {
+          const skullGeo = new THREE.SphereGeometry(1, 40, 32)
+          const positions = skullGeo.attributes.position
+          const vertex = new THREE.Vector3()
+          for (let vertexIndex = 0; vertexIndex < positions.count; vertexIndex += 1) {
+            vertex.fromBufferAttribute(positions, vertexIndex)
+            const jawTaper = THREE.MathUtils.clamp((-vertex.y + 0.1) / 1.1, 0, 1)
+            const jawWidth = 1 - jawTaper * 0.34
+            const jawHeight = 1 - jawTaper * 0.14
+            const backFlatten = 1 - Math.max(0, -vertex.z) * 0.14
+            const browBand = Math.exp(-Math.pow((vertex.y - 0.22) * 4.4, 2))
+            const browVolume = 1 + browBand * 0.06 * Math.max(0, vertex.z)
+            const cheekBand = Math.exp(-Math.pow((vertex.y - 0.02) * 3.6, 2)) * Math.pow(Math.abs(vertex.x), 0.8)
+            const cheekVolume = 1 + cheekBand * 0.05
+            positions.setXYZ(
+              vertexIndex,
+              vertex.x * 0.42 * jawWidth * cheekVolume,
+              vertex.y * 0.52 * jawHeight,
+              vertex.z * 0.46 * backFlatten * browVolume
+            )
+          }
+          positions.needsUpdate = true
+          skullGeo.computeVertexNormals()
+          face = new THREE.Mesh(skullGeo, skin)
+        } else {
+          face = new THREE.Mesh(new THREE.SphereGeometry(0.39, 32, 24), skin)
+          face.scale.set(0.83, 1.08, 0.86)
+        }
+        head.add(face)
 
-      const nose = new THREE.Mesh(new THREE.SphereGeometry(0.075, 20, 16), skin)
-      nose.scale.set(0.62, 1, 1.15)
-      nose.position.set(0, -0.075, 0.34)
-      head.add(nose)
+        if (useT2Head) {
+          const noseBridge = new THREE.Mesh(new THREE.CapsuleGeometry(0.032, 0.16, 4, 12), skin)
+          noseBridge.scale.set(0.85, 1, 1.05)
+          noseBridge.position.set(0, 0.02, 0.36)
+          noseBridge.rotation.x = 0.12
+          const noseTip = new THREE.Mesh(new THREE.SphereGeometry(0.058, 18, 14), skin)
+          noseTip.scale.set(0.88, 0.92, 1.18)
+          noseTip.position.set(0, -0.085, 0.372)
+          head.add(noseBridge, noseTip)
+          for (const side of [-1, 1]) {
+            const nostril = new THREE.Mesh(new THREE.SphereGeometry(0.022, 12, 10), skinShadow)
+            nostril.scale.set(1, 0.7, 0.7)
+            nostril.position.set(side * 0.038, -0.095, 0.36)
+            head.add(nostril)
+          }
+        } else {
+          const nose = new THREE.Mesh(new THREE.SphereGeometry(0.075, 20, 16), skin)
+          nose.scale.set(0.62, 1, 1.15)
+          nose.position.set(0, -0.075, 0.34)
+          head.add(nose)
+        }
 
-      const mouth = new THREE.Group()
-      mouth.name = "guide-mouth"
-      mouth.position.set(0, -0.19, 0.32)
-      const mouthCavity = new THREE.Mesh(
-        new THREE.SphereGeometry(0.052, 18, 12),
-        makeMaterial(0x542d29, { roughness: 0.86 })
-      )
-      mouthCavity.name = "guide-mouth-opening"
-      mouthCavity.scale.set(1.35, 0.62, 0.42)
-      mouthCavity.position.z = 0.012
-      mouth.add(mouthCavity)
-      const jaw = new THREE.Mesh(new THREE.SphereGeometry(0.07, 18, 12), skin)
-      jaw.name = "guide-jaw"
-      jaw.scale.set(1.1, 0.3, 0.5)
-      jaw.position.set(0, -0.045, 0.006)
-      mouth.add(jaw)
-      const lipCurve = new THREE.CatmullRomCurve3([
-        new THREE.Vector3(-0.065, 0.008, 0.017),
-        new THREE.Vector3(0, 0.025, 0.02),
-        new THREE.Vector3(0.065, 0.008, 0.017),
-      ])
-      const lip = new THREE.Mesh(
-        new THREE.TubeGeometry(lipCurve, 12, 0.008, 6, false),
-        makeMaterial(0x75493e, { roughness: 0.7 })
-      )
-      mouth.add(lip)
-      head.add(mouth)
+        for (const side of [-1, 1]) {
+          const ear = new THREE.Mesh(new THREE.SphereGeometry(useT2Head ? 0.082 : 0.075, 20, 16), skin)
+          ear.scale.set(useT2Head ? 0.55 : 0.72, 1.06, 0.72)
+          ear.position.set(side * (useT2Head ? 0.335 : 0.31), -0.015, -0.005)
+          if (useT2Head) ear.rotation.y = side * 0.22
+          head.add(ear)
+          if (useT2Head) {
+            const lobe = new THREE.Mesh(new THREE.SphereGeometry(0.032, 14, 12), skin)
+            lobe.scale.set(1, 0.8, 0.85)
+            lobe.position.set(side * 0.335, -0.09, 0.01)
+            head.add(lobe)
+          }
+        }
 
-      const armPivots = []
-      const hands = []
-      const elbows = []
-      const pelvis = new THREE.Mesh(new THREE.CapsuleGeometry(0.27, 0.24, 6, 16), trousers)
-      pelvis.position.y = 0.78
-      pelvis.scale.set(1, 0.72, 0.7)
-      pharmacist.add(pelvis)
-      for (const side of [-1, 1]) {
-        const leg = new THREE.Mesh(new THREE.CapsuleGeometry(0.14, 0.74, 6, 16), trousers)
-        leg.position.set(side * 0.2, 0.48, 0)
-        pharmacist.add(leg)
-        const shoeMesh = new THREE.Mesh(new THREE.CapsuleGeometry(0.11, 0.24, 4, 12), trousers)
-        shoeMesh.scale.set(1, 0.5, 1.4)
-        shoeMesh.rotation.z = Math.PI / 2
-        shoeMesh.position.set(side * 0.2, 0.08, 0.1)
-        pharmacist.add(shoeMesh)
+        const upperLids = []
+        for (const side of [-1, 1]) {
+          if (useT2Head) {
+            const socket = new THREE.Mesh(new THREE.SphereGeometry(0.075, 16, 14), skinShadow)
+            socket.scale.set(0.9, 0.68, 0.4)
+            socket.position.set(side * 0.105, 0.045, 0.31)
+            head.add(socket)
+          }
+          const white = new THREE.Mesh(new THREE.SphereGeometry(useT2Head ? 0.054 : 0.052, 20, 16), eyeWhite)
+          white.scale.set(useT2Head ? 1.15 : 1.1, useT2Head ? 0.95 : 0.72, 0.58)
+          white.position.set(side * (useT2Head ? 0.105 : 0.11), useT2Head ? 0.045 : 0.025, useT2Head ? 0.325 : 0.318)
+          const irisMesh = new THREE.Mesh(new THREE.SphereGeometry(useT2Head ? 0.028 : 0.027, 18, 14), iris)
+          irisMesh.position.set(side * (useT2Head ? 0.105 : 0.11), useT2Head ? 0.038 : 0.02, useT2Head ? 0.36 : 0.35)
+          const pupil = new THREE.Mesh(new THREE.SphereGeometry(useT2Head ? 0.013 : 0.012, 14, 12), eye)
+          pupil.position.set(side * (useT2Head ? 0.105 : 0.11), useT2Head ? 0.038 : 0.02, useT2Head ? 0.38 : 0.372)
+          head.add(white, irisMesh, pupil)
 
-        const pivot = new THREE.Group()
-        pivot.position.set(side * 0.45, 2.08, 0)
-        pivot.name = side < 0 ? "guide-left-arm" : "guide-right-arm"
-        pharmacist.add(pivot)
-        const upper = new THREE.Mesh(new THREE.CapsuleGeometry(0.12, 0.37, 5, 12), coat)
-        upper.position.y = -0.27
-        pivot.add(upper)
-        const elbow = new THREE.Group()
-        elbow.position.set(0, -0.48, 0.05)
-        elbow.name = side < 0 ? "guide-left-elbow" : "guide-right-elbow"
-        pivot.add(elbow)
-        const lower = new THREE.Mesh(new THREE.CapsuleGeometry(0.095, 0.36, 6, 16), coat)
-        lower.position.set(0, -0.19, 0)
-        elbow.add(lower)
-        const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.095, 0.07, 20), coatShadow)
-        cuff.position.set(0, -0.39, 0)
+          if (useT2Head) {
+            const highlight = new THREE.Mesh(new THREE.SphereGeometry(0.006, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffffff }))
+            highlight.position.set(side * 0.105 + 0.008, 0.05, 0.385)
+            head.add(highlight)
+            const upperLid = new THREE.Mesh(
+              new THREE.SphereGeometry(0.058, 20, 14, 0, Math.PI * 2, 0, Math.PI * 0.42),
+              skin
+            )
+            upperLid.name = `guide-upper-eyelid-${side < 0 ? "left" : "right"}`
+            upperLid.scale.set(1.14, 0.85, 0.62)
+            upperLid.position.set(side * 0.105, 0.052, 0.322)
+            upperLid.rotation.x = -0.28
+            const lowerLid = new THREE.Mesh(new THREE.CapsuleGeometry(0.011, 0.06, 3, 8), skin)
+            lowerLid.rotation.z = Math.PI / 2
+            lowerLid.position.set(side * 0.105, 0.014, 0.352)
+            head.add(upperLid, lowerLid)
+            upperLids.push({ lid: upperLid, restX: -0.28, restY: 0.052 })
+
+            const browInner = new THREE.Mesh(new THREE.CapsuleGeometry(0.015, 0.05, 3, 8), hair)
+            browInner.position.set(side * 0.055, 0.108, 0.345)
+            browInner.rotation.z = side * -0.32
+            const browOuter = new THREE.Mesh(new THREE.CapsuleGeometry(0.014, 0.055, 3, 8), hair)
+            browOuter.position.set(side * 0.13, 0.1, 0.335)
+            browOuter.rotation.z = side * -0.14
+            head.add(browInner, browOuter)
+          } else {
+            const brow = new THREE.Mesh(new THREE.CapsuleGeometry(0.018, 0.09, 3, 8), hair)
+            brow.position.set(side * 0.11, 0.1, 0.322)
+            brow.rotation.z = side * -0.08
+            head.add(brow)
+          }
+        }
+        head.userData.upperLids = upperLids
+
+        const mouth = new THREE.Group()
+        mouth.name = "guide-mouth"
+        mouth.position.set(0, -0.19, 0.32)
+        const mouthCavity = new THREE.Mesh(
+          new THREE.SphereGeometry(useT2Head ? 0.055 : 0.052, 20, 14),
+          makeMaterial(useT2Head ? 0x3a1a17 : 0x542d29, { roughness: 0.9 })
+        )
+        mouthCavity.name = "guide-mouth-opening"
+        mouthCavity.scale.set(useT2Head ? 1.5 : 1.35, useT2Head ? 0.75 : 0.62, useT2Head ? 0.5 : 0.42)
+        mouthCavity.position.z = 0.012
+        mouth.add(mouthCavity)
+        const jaw = new THREE.Mesh(new THREE.SphereGeometry(useT2Head ? 0.072 : 0.07, 20, 14), skin)
+        jaw.name = "guide-jaw"
+        jaw.scale.set(useT2Head ? 1.15 : 1.1, useT2Head ? 0.32 : 0.3, useT2Head ? 0.55 : 0.5)
+        jaw.position.set(0, useT2Head ? -0.05 : -0.045, 0.008)
+        mouth.add(jaw)
+        if (useT2Head) {
+          const upperLipCurve = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(-0.07, 0.018, 0.02),
+            new THREE.Vector3(-0.025, 0.028, 0.024),
+            new THREE.Vector3(0, 0.03, 0.025),
+            new THREE.Vector3(0.025, 0.028, 0.024),
+            new THREE.Vector3(0.07, 0.018, 0.02),
+          ])
+          const lowerLipCurve = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(-0.068, -0.002, 0.02),
+            new THREE.Vector3(0, -0.018, 0.026),
+            new THREE.Vector3(0.068, -0.002, 0.02),
+          ])
+          mouth.add(
+            new THREE.Mesh(new THREE.TubeGeometry(upperLipCurve, 16, 0.011, 6, false), lip),
+            new THREE.Mesh(new THREE.TubeGeometry(lowerLipCurve, 16, 0.009, 6, false), lip)
+          )
+        } else {
+          const lipCurve = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(-0.065, 0.008, 0.017),
+            new THREE.Vector3(0, 0.025, 0.02),
+            new THREE.Vector3(0.065, 0.008, 0.017),
+          ])
+          mouth.add(new THREE.Mesh(new THREE.TubeGeometry(lipCurve, 12, 0.008, 6, false), lip))
+        }
+        head.add(mouth)
+
+        const hairGroup = new THREE.Group()
+        hairGroup.name = "guide-hair"
+        head.add(hairGroup)
+        const braidMeshes = []
+        let bunGroup = null
+        if (useT2Head) {
+          const hairBase = new THREE.Mesh(
+            new THREE.SphereGeometry(0.44, 32, 24, 0, Math.PI * 2, 0, Math.PI * 0.55),
+            hair
+          )
+          hairBase.scale.set(0.92, 0.72, 0.96)
+          hairBase.position.set(0, 0.06, -0.04)
+          hairGroup.add(hairBase)
+
+          for (let strandIndex = 0; strandIndex < 18; strandIndex += 1) {
+            const t = strandIndex / 17
+            const x = (t - 0.5) * 0.62
+            const bend = Math.cos((t - 0.5) * Math.PI) * 0.06
+            const strand = new THREE.Mesh(
+              new THREE.CapsuleGeometry(0.022 + Math.random() * 0.012, 0.14 + Math.random() * 0.06, 3, 8),
+              Math.random() > 0.5 ? hairHi : hair
+            )
+            strand.position.set(x, 0.24 + Math.sin(t * Math.PI) * 0.02, 0.24 + bend)
+            strand.rotation.set(-0.35 + Math.random() * 0.2, x * 0.6, (t - 0.5) * 0.55)
+            hairGroup.add(strand)
+          }
+
+          ;[-0.34, -0.24, 0.24, 0.34].forEach((x, braidIndex) => {
+            const braid = new THREE.Group()
+            braid.name = `hair-braid-${braidIndex}`
+            braid.position.set(x, 0.14, x < 0 ? 0.02 : -0.02)
+            let y = 0
+            for (let segment = 0; segment < 7; segment += 1) {
+              const bead = new THREE.Mesh(
+                new THREE.SphereGeometry(0.032 - segment * 0.0022, 10, 8),
+                segment % 2 ? hairHi : hair
+              )
+              bead.position.set(x < 0 ? -0.008 * segment : 0.008 * segment, y, 0)
+              braid.add(bead)
+              y -= 0.055
+            }
+            const cuff = new THREE.Mesh(
+              new THREE.TorusGeometry(0.026, 0.006, 6, 12),
+              makeMaterial(0xe0b264, { metalness: 0.65, roughness: 0.3 })
+            )
+            cuff.position.y = y + 0.03
+            cuff.rotation.x = Math.PI / 2
+            braid.add(cuff)
+            braid.visible = false
+            braidMeshes.push(braid)
+            hairGroup.add(braid)
+          })
+
+          bunGroup = new THREE.Group()
+          bunGroup.name = "hair-bun"
+          bunGroup.position.set(0, 0.16, -0.34)
+          bunGroup.visible = false
+          bunGroup.add(new THREE.Mesh(new THREE.SphereGeometry(0.13, 20, 16), hair))
+          for (let wrapIndex = 0; wrapIndex < 10; wrapIndex += 1) {
+            const wrap = new THREE.Mesh(
+              new THREE.TorusGeometry(0.125 - wrapIndex * 0.002, 0.009, 5, 18, Math.PI * 1.05),
+              wrapIndex % 2 ? hairHi : hair
+            )
+            wrap.rotation.set(Math.PI / 2 + (wrapIndex - 5) * 0.11, wrapIndex * 0.55, Math.PI * 0.18)
+            bunGroup.add(wrap)
+          }
+          hairGroup.add(bunGroup)
+        } else {
+          const hairCap = new THREE.Mesh(new THREE.SphereGeometry(0.41, 32, 24), hair)
+          hairCap.scale.set(0.9, 0.58, 0.9)
+          hairCap.position.set(0, 0.22, -0.04)
+          head.add(hairCap)
+          const fringe = new THREE.Mesh(new THREE.SphereGeometry(0.29, 24, 16), hair)
+          fringe.scale.set(1.05, 0.23, 0.62)
+          fringe.position.set(0, 0.13, 0.22)
+          head.add(fringe)
+        }
+
+        const extrasGroup = new THREE.Group()
+        extrasGroup.name = "guide-extras"
+        head.add(extrasGroup)
+        if (useT2Head) {
+          const glassesGroup = new THREE.Group()
+          glassesGroup.name = "extras-glasses"
+          glassesGroup.visible = false
+          for (const side of [-1, 1]) {
+            const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.058, 0.058, 0.008, 24), glassLens)
+            lens.rotation.x = Math.PI / 2
+            lens.position.set(side * 0.105, 0.045, 0.38)
+            const rim = new THREE.Mesh(new THREE.TorusGeometry(0.062, 0.006, 8, 26), glassFrame)
+            rim.position.set(side * 0.105, 0.045, 0.378)
+            const temple = new THREE.Mesh(new THREE.CapsuleGeometry(0.004, 0.24, 3, 6), glassFrame)
+            temple.position.set(side * 0.165, 0.055, 0.27)
+            temple.rotation.set(0, side * 0.55, Math.PI / 2)
+            glassesGroup.add(lens, rim, temple)
+          }
+          const bridge = new THREE.Mesh(new THREE.CapsuleGeometry(0.004, 0.03, 3, 6), glassFrame)
+          bridge.rotation.z = Math.PI / 2
+          bridge.position.set(0, 0.06, 0.378)
+          glassesGroup.add(bridge)
+          extrasGroup.add(glassesGroup)
+
+          const headphoneGroup = new THREE.Group()
+          headphoneGroup.name = "extras-headphones"
+          headphoneGroup.visible = false
+          const headBand = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.018, 8, 32, Math.PI), hair)
+          headBand.rotation.z = Math.PI
+          headBand.position.y = 0.05
+          headphoneGroup.add(headBand)
+          for (const side of [-1, 1]) {
+            const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.045, 20), hair)
+            cup.rotation.z = Math.PI / 2
+            cup.position.set(side * 0.42, 0.02, -0.02)
+            const pad = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.02, 8, 20), coatShadow)
+            pad.rotation.y = Math.PI / 2
+            pad.position.set(side * 0.38, 0.02, -0.02)
+            headphoneGroup.add(cup, pad)
+          }
+          extrasGroup.add(headphoneGroup)
+
+          const beardGroup = new THREE.Group()
+          beardGroup.name = "extras-beard"
+          beardGroup.visible = false
+          const beardBase = new THREE.Mesh(new THREE.SphereGeometry(0.2, 20, 14, 0, Math.PI * 2, Math.PI * 0.4, Math.PI * 0.55), beardMat)
+          beardBase.scale.set(0.85, 0.7, 0.9)
+          beardBase.position.set(0, -0.13, 0.03)
+          beardGroup.add(beardBase)
+          extrasGroup.add(beardGroup)
+        }
+
+        const armPivots = []
+        const hands = []
+        const elbows = []
+        const pelvis = new THREE.Mesh(new THREE.CapsuleGeometry(0.27, 0.24, 6, 16), trousers)
+        pelvis.position.y = 0.78
+        pelvis.scale.set(1, 0.72, 0.7)
+        pharmacist.add(pelvis)
+        for (const side of [-1, 1]) {
+          const leg = new THREE.Mesh(new THREE.CapsuleGeometry(0.14, 0.74, 6, 16), trousers)
+          leg.position.set(side * 0.2, 0.48, 0)
+          pharmacist.add(leg)
+          const shoeMesh = new THREE.Mesh(new THREE.CapsuleGeometry(0.11, 0.24, 4, 12), trousers)
+          shoeMesh.scale.set(1, 0.5, 1.4)
+          shoeMesh.rotation.z = Math.PI / 2
+          shoeMesh.position.set(side * 0.2, 0.08, 0.1)
+          pharmacist.add(shoeMesh)
+
+          const pivot = new THREE.Group()
+          pivot.position.set(side * 0.45, 2.08, 0)
+          pivot.name = side < 0 ? "guide-left-arm" : "guide-right-arm"
+          pharmacist.add(pivot)
+          const upper = new THREE.Mesh(new THREE.CapsuleGeometry(0.12, 0.37, 5, 12), coat)
+          upper.position.y = -0.27
+          pivot.add(upper)
+          const elbow = new THREE.Group()
+          elbow.position.set(0, -0.48, 0.05)
+          elbow.name = side < 0 ? "guide-left-elbow" : "guide-right-elbow"
+          pivot.add(elbow)
+          const lower = new THREE.Mesh(new THREE.CapsuleGeometry(0.095, 0.36, 6, 16), coat)
+          lower.position.set(0, -0.19, 0)
+          elbow.add(lower)
+          const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.095, 0.07, 20), coatShadow)
+          cuff.position.set(0, -0.39, 0)
+
+          if (side < 0 && REALISM_LEVEL === "T2") {
+            const watchBand = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.014, 8, 24), glassFrame)
+            watchBand.position.set(0, -0.4, 0.045)
+            const watchDial = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.018, 24), eyeWhite)
+            watchDial.rotation.x = Math.PI / 2
+            watchDial.position.set(0, -0.4, 0.085)
+            elbow.add(watchBand, watchDial)
+          }
+
         elbow.add(cuff)
         const hand = new THREE.Group()
         hand.position.set(0, -0.45, 0.03)
@@ -615,6 +875,218 @@ export default function ThreeProductScroll() {
       network.visible = false
       stage.add(network)
 
+      const environments = []
+      if (REALISM_LEVEL === "T2") {
+        const buildEnvironment = (kind, index) => {
+          const environment = new THREE.Group()
+          environment.name = `environment-${kind}`
+          environment.position.x = CHAPTER_STOPS[index]
+
+          const wallMaterial = kind === "pharmacourse"
+            ? courseWallMat
+            : kind === "pos" ? posWallMat : hospitalWallMat
+          const wall = new THREE.Mesh(new THREE.BoxGeometry(9, 4.6, 0.18), wallMaterial)
+          wall.position.set(0, 1.7, -2.3)
+          environment.add(wall)
+
+          const skirting = new THREE.Mesh(new THREE.BoxGeometry(9, 0.14, 0.06), wallMaterial)
+          skirting.position.set(0, 0.07, -2.2)
+          environment.add(skirting)
+
+          const floor = new THREE.Mesh(new THREE.BoxGeometry(9, 0.12, 5), floorMat)
+          floor.position.set(0, -0.06, -0.5)
+          environment.add(floor)
+
+          const desktop = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.06, 1.05), woodMat)
+          desktop.position.set(0, DESK_TOP_Y, 1.15)
+          const deskPanel = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.6, 0.05), woodMat)
+          deskPanel.position.set(0, DESK_TOP_Y - 0.32, 1.62)
+          environment.add(desktop, deskPanel)
+          for (const side of [-1, 1]) {
+            const leg = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.6, 0.9), woodMat)
+            leg.position.set(side * 1.1, DESK_TOP_Y - 0.32, 1.15)
+            environment.add(leg)
+          }
+
+          const screenCanvas = document.createElement("canvas")
+          screenCanvas.width = 960
+          screenCanvas.height = 600
+          const context = screenCanvas.getContext("2d")
+          if (context) {
+            context.fillStyle = "#0b1f1a"
+            context.fillRect(0, 0, 960, 600)
+            const title = kind === "pharmacourse"
+              ? "Pharmacourse  |  Antimicrobial Stewardship"
+              : kind === "pos" ? "RemedacarePOS  |  Westlands Branch" : "RemedacareHMIS  |  Ward Overview"
+            const titleColor = kind === "pharmacourse" ? "#0f6e56" : kind === "pos" ? "#b87038" : "#2f6f8f"
+            context.fillStyle = titleColor
+            context.fillRect(0, 0, 960, 60)
+            context.fillStyle = "#ffffff"
+            context.font = "700 26px sans-serif"
+            context.fillText(title, 26, 40)
+
+            if (kind === "pharmacourse") {
+              context.fillStyle = "#c8e7da"
+              for (let row = 0; row < 4; row += 1) context.fillRect(40, 110 + row * 40, 420 - row * 30, 18)
+              context.fillStyle = "#2fd29a"
+              context.fillRect(40, 300, 500, 6)
+              context.fillStyle = "#ffffff"
+              context.font = "600 20px sans-serif"
+              context.fillText("Lesson 4 of 8  |  Progress 47%", 40, 340)
+              context.fillStyle = "#4bb6d8"
+              context.fillRect(560, 100, 360, 240)
+              context.fillStyle = "#0a1718"
+              context.font = "700 22px sans-serif"
+              context.fillText("Clinical Case 3", 580, 150)
+              context.fillText("Dosing review", 580, 190)
+              context.fillText("+2 CPD points", 580, 300)
+            } else if (kind === "pos") {
+              const rows = [
+                ["Amoxicillin 500mg", "x2", "360"],
+                ["Paracetamol 500mg", "x3", "90"],
+                ["ORS sachets", "x4", "160"],
+                ["Cetirizine 10mg", "x1", "120"],
+              ]
+              rows.forEach((row, rowIndex) => {
+                context.fillStyle = "rgba(255,255,255,0.08)"
+                context.fillRect(40, 90 + rowIndex * 60, 560, 46)
+                context.fillStyle = "#e8f5f0"
+                context.font = "600 20px sans-serif"
+                context.fillText(row[0], 60, 120 + rowIndex * 60)
+                context.fillText(row[1], 460, 120 + rowIndex * 60)
+                context.fillStyle = "#f2b45e"
+                context.fillText(row[2], 520, 120 + rowIndex * 60)
+              })
+              context.fillStyle = "#0f2a24"
+              context.fillRect(640, 90, 280, 200)
+              context.fillStyle = "#9fe8cf"
+              context.font = "600 20px sans-serif"
+              context.fillText("TOTAL (KES)", 660, 120)
+              context.fillStyle = "#ffffff"
+              context.font = "800 48px sans-serif"
+              context.fillText("1,240", 660, 180)
+              context.fillStyle = "#2fd29a"
+              context.fillRect(640, 320, 280, 60)
+              context.fillStyle = "#0a1718"
+              context.font = "700 24px sans-serif"
+              context.fillText("Pay with M-Pesa", 665, 360)
+            } else {
+              const cards = [["Inpatients", "142"], ["ICU 12/15", "80%"], ["Labs", "37"]]
+              cards.forEach((card, cardIndex) => {
+                context.fillStyle = "rgba(255,255,255,0.08)"
+                context.fillRect(40 + cardIndex * 300, 90, 260, 100)
+                context.fillStyle = "#9fc7dd"
+                context.font = "600 18px sans-serif"
+                context.fillText(card[0], 60 + cardIndex * 300, 120)
+                context.fillStyle = "#ffffff"
+                context.font = "800 38px sans-serif"
+                context.fillText(card[1], 60 + cardIndex * 300, 170)
+              })
+              context.strokeStyle = "#4bb6d8"
+              context.lineWidth = 3
+              context.beginPath()
+              for (let point = 0; point <= 60; point += 1) {
+                const x = 60 + point * 14
+                const y = 420 + Math.sin(point * 0.5) * 24
+                if (point === 0) context.moveTo(x, y)
+                else context.lineTo(x, y)
+              }
+              context.stroke()
+              context.fillStyle = "#e3fef6"
+              context.font = "600 20px sans-serif"
+              context.fillText("Patient flow", 40, 380)
+            }
+          }
+          const screenTexture = new THREE.CanvasTexture(screenCanvas)
+          screenTexture.colorSpace = THREE.SRGBColorSpace
+
+          const bezel = new THREE.Mesh(
+            new THREE.BoxGeometry(1.75, 1.15, 0.09),
+            makeMaterial(0x0d1718, { metalness: 0.6, roughness: 0.4 })
+          )
+          bezel.position.set(0, DESK_TOP_Y + 0.85, 0.75)
+          bezel.rotation.x = -0.08
+          const screen = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.0), new THREE.MeshBasicMaterial({ map: screenTexture }))
+          screen.position.set(0, DESK_TOP_Y + 0.85, 0.802)
+          screen.rotation.x = -0.08
+          const standNeck = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.2, 0.06), makeMaterial(0x1f3332, { metalness: 0.5, roughness: 0.5 }))
+          standNeck.position.set(0, DESK_TOP_Y + 0.28, 0.75)
+          const standFoot = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.04, 0.28), makeMaterial(0x1f3332, { metalness: 0.5, roughness: 0.5 }))
+          standFoot.position.set(0, DESK_TOP_Y + 0.18, 0.75)
+          environment.add(bezel, screen, standNeck, standFoot)
+          environment.userData.screenTexture = screenTexture
+
+          if (kind === "pharmacourse") {
+            const shelf = new THREE.Mesh(new THREE.BoxGeometry(2.8, 2.6, 0.35), shelfMat)
+            shelf.position.set(-2.8, 1.3, -2)
+            environment.add(shelf)
+            for (let row = 0; row < 4; row += 1) {
+              for (let book = 0; book < 12; book += 1) {
+                const bookMesh = new THREE.Mesh(
+                  new THREE.BoxGeometry(0.11, 0.32, 0.24),
+                  makeMaterial([0x1b8a62, 0xe08a4c, 0x2f6f8f, 0xf2e9d8, 0x9b4d4d][(row + book) % 5], { roughness: 0.7 })
+                )
+                bookMesh.position.set(-3.9 + book * 0.13, 0.32 + row * 0.5, -1.78)
+                environment.add(bookMesh)
+              }
+            }
+            const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.12, 0.28, 14), makeMaterial(0xf1ede4))
+            pot.position.set(2.6, 0.14, -1.3)
+            const leaves = new THREE.Mesh(new THREE.SphereGeometry(0.28, 16, 12), makeMaterial(0x3b8a5a, { roughness: 0.8 }))
+            leaves.scale.set(1, 1.2, 1)
+            leaves.position.set(2.6, 0.62, -1.3)
+            environment.add(pot, leaves)
+          } else if (kind === "pos") {
+            for (let row = 0; row < 3; row += 1) {
+              const rack = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.06, 0.35), shelfMat)
+              rack.position.set(0, 1.1 + row * 0.65, -2)
+              environment.add(rack)
+              for (let item = 0; item < 26; item += 1) {
+                const box = new THREE.Mesh(
+                  new THREE.BoxGeometry(0.15, 0.2, 0.1),
+                  makeMaterial([0xf7f4ee, 0x2fd29a, 0xe08a4c, 0x4bb6d8, 0xf2c14e][(item + row) % 5], { roughness: 0.6 })
+                )
+                box.position.set(-2.4 + item * 0.19, 1.2 + row * 0.65, -1.78)
+                environment.add(box)
+              }
+            }
+            const scannerBase = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.06, 0.16), makeMaterial(0x2a3138, { roughness: 0.6 }))
+            scannerBase.position.set(0.75, DESK_TOP_Y + 0.03, 1)
+            const scannerTop = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.14, 0.08), makeMaterial(0x2a3138))
+            scannerTop.position.set(0.75, DESK_TOP_Y + 0.12, 1)
+            environment.add(scannerBase, scannerTop)
+          } else {
+            const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 1.9, 8), makeMaterial(0x9aa6a6, { metalness: 0.7 }))
+            pole.position.set(2.2, 0.95, -0.9)
+            const monitor = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.44, 0.06), makeMaterial(0x1b232a))
+            monitor.position.set(2.2, 1.75, -0.9)
+            monitor.rotation.y = -0.5
+            const chart = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.1, 0.05), makeMaterial(0xf5f5ee))
+            chart.position.set(-2.4, 1.9, -2)
+            environment.add(pole, monitor, chart)
+            for (let row = 0; row < 6; row += 1) {
+              const rule = new THREE.Mesh(new THREE.BoxGeometry(1.35, 0.02, 0.02), makeMaterial(0x4b8b77))
+              rule.position.set(-2.4, 2.3 - row * 0.14, -1.97)
+              environment.add(rule)
+            }
+            const crossVertical = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.6, 0.05), makeMaterial(0x1b8a62, { emissive: 0x2fd29a, emissiveIntensity: 0.4 }))
+            crossVertical.position.set(0, 3.2, -2)
+            const crossHorizontal = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.16, 0.05), makeMaterial(0x1b8a62, { emissive: 0x2fd29a, emissiveIntensity: 0.4 }))
+            crossHorizontal.position.set(0, 3.2, -2)
+            environment.add(crossVertical, crossHorizontal)
+          }
+
+          return environment
+        }
+
+        ["pharmacourse", "pos", "hmis"].forEach((kind, index) => {
+          const environment = buildEnvironment(kind, index)
+          environment.visible = index === 0
+          environments.push(environment)
+          world.add(environment)
+        })
+      }
+
       const clonedMaterials = []
       const cloneChapterStage = (position, palette, chapterIndex) => {
         const chapterStage = stage.clone(true)
@@ -643,6 +1115,22 @@ export default function ThreeProductScroll() {
         chapterStage.getObjectByName("chapter-hospital").visible = chapterIndex === 2
         chapterStage.getObjectByName("chapter-molecule").visible = chapterIndex === 0
         chapterStage.getObjectByName("chapter-network").visible = chapterIndex === 2
+        if (REALISM_LEVEL === "T2") {
+          const hairGroup = chapterStage.getObjectByName("guide-hair")
+          if (hairGroup) {
+            hairGroup.children
+              .filter((child) => child.name.startsWith("hair-braid-"))
+              .forEach((braid) => { braid.visible = chapterIndex === 0 })
+            const bun = hairGroup.getObjectByName("hair-bun")
+            if (bun) bun.visible = chapterIndex === 2
+          }
+          const glasses = chapterStage.getObjectByName("extras-glasses")
+          if (glasses) glasses.visible = chapterIndex === 1
+          const headphones = chapterStage.getObjectByName("extras-headphones")
+          if (headphones) headphones.visible = chapterIndex === 0
+          const beard = chapterStage.getObjectByName("extras-beard")
+          if (beard) beard.visible = chapterIndex === 1
+        }
         chapterStage.userData.chapterIndex = chapterIndex
         return chapterStage
       }
@@ -684,6 +1172,16 @@ export default function ThreeProductScroll() {
         network: chapterStage.getObjectByName("chapter-network"),
         ring: chapterStage.getObjectByName("base-ring"),
       }))
+      const upperLidsByChapter = chapterParts.map((parts) => {
+        if (!parts.head || REALISM_LEVEL !== "T2") return null
+        const lids = []
+        parts.head.traverse((child) => {
+          if (child.isMesh && child.name.startsWith("guide-upper-eyelid-")) {
+            lids.push({ lid: child, restX: -0.28, restY: 0.052 })
+          }
+        })
+        return lids.length ? lids : null
+      })
 
       let isVisible = false
       let animationFrame
@@ -718,7 +1216,9 @@ export default function ThreeProductScroll() {
         const height = mount.clientHeight || 620
         const isMobile = window.innerWidth < 560
         camera.fov = isMobile ? 40 : 35
-        camera.position.z = isMobile ? 10.5 : 9
+        camera.position.z = isMobile
+          ? (REALISM_LEVEL === "T2" ? 10 : 10.5)
+          : (REALISM_LEVEL === "T2" ? 9.6 : 9)
         camera.aspect = width / height
         camera.updateProjectionMatrix()
         renderer.setSize(width, height)
@@ -777,14 +1277,36 @@ export default function ThreeProductScroll() {
           chapterStages.forEach((chapterStage, index) => {
             chapterStage.visible = index === visibleChapter
           })
+          if (REALISM_LEVEL === "T2") {
+            environments.forEach((environment, index) => {
+              environment.visible = index === visibleChapter
+            })
+          }
 
           chapterParts.forEach((parts, index) => {
             const actionPulse = Math.sin(seconds * 1.1 + index * 0.8) * motion
             parts.guide.position.y = 0
             parts.guide.rotation.y = Math.sin(seconds * 0.28 + index) * 0.025 * motion
-            parts.torso.scale.y = 1 + Math.sin(seconds * 1.2 + index) * 0.008 * motion
-            parts.head.rotation.y = Math.sin(seconds * 0.58 + index) * 0.035 * motion + (index === 1 ? 0.08 : -0.03)
-            parts.head.rotation.x = index === 2 ? Math.sin(seconds * 0.7) * 0.035 * motion : 0
+            const breath = Math.sin(seconds * 1.35 + index * 0.7)
+            parts.torso.scale.y = 1 + breath * (REALISM_LEVEL === "T2" ? 0.016 : 0.008) * motion
+            parts.torso.scale.z = 1 + breath * 0.008 * motion
+
+            if (REALISM_LEVEL === "T2") {
+              const blinkPhase = (seconds * 0.31 + index * 0.37) % 1
+              const blink = blinkPhase < 0.06 ? Math.sin((blinkPhase / 0.06) * Math.PI) : 0
+              upperLidsByChapter[index]?.forEach(({ lid, restX, restY }) => {
+                lid.rotation.x = restX - blink * 0.9
+                lid.position.y = restY - blink * 0.028
+              })
+            }
+
+            parts.head.rotation.y = Math.sin(seconds * 0.58 + index) * 0.035 * motion
+              + (index === 1 ? 0.08 : -0.03)
+              + Math.sin(seconds * 0.23 + index * 1.3) * 0.05 * motion
+            parts.head.rotation.x = index === 2
+              ? Math.sin(seconds * 0.7) * 0.035 * motion
+              : Math.sin(seconds * 0.52 + index) * 0.018 * motion
+            parts.head.rotation.z = Math.sin(seconds * 0.41 + index * 2) * 0.012 * motion
 
             let writingBlend = 0
             if (index === 1) {
@@ -818,8 +1340,10 @@ export default function ThreeProductScroll() {
               parts.head.rotation.x = writingBlend * 0.08
             }
             const speechOpen = 0.5 + 0.5 * Math.sin(seconds * 6.2 + index)
-            parts.mouth.scale.y = 0.48 + speechOpen * 0.9 * motion
-            parts.jaw.position.y = -0.045 - speechOpen * 0.045 * motion
+            parts.mouth.scale.y = (REALISM_LEVEL === "T2" ? 0.5 : 0.48)
+              + speechOpen * (REALISM_LEVEL === "T2" ? 0.55 : 0.9) * motion
+            parts.jaw.position.y = (REALISM_LEVEL === "T2" ? -0.05 : -0.045)
+              - speechOpen * (REALISM_LEVEL === "T2" ? 0.038 : 0.045) * motion
             parts.book.rotation.y = -0.3 + Math.sin(seconds * 0.92) * 0.18 * motion
             parts.posDashboard.rotation.y = 0.18 + Math.sin(seconds * 0.45) * 0.08 * motion
             parts.hospital.rotation.y = -0.18 + Math.sin(seconds * 0.68) * 0.07 * motion
@@ -845,8 +1369,16 @@ export default function ThreeProductScroll() {
         renderer.domElement.removeEventListener("pointercancel", handlePointerUp)
         resizeObserver.disconnect()
         visibilityObserver.disconnect()
-        scene.traverse((object) => object.geometry?.dispose())
-        materials.forEach((entry) => entry.dispose())
+        scene.traverse((object) => {
+          object.geometry?.dispose()
+          const objectMaterials = object.material
+            ? (Array.isArray(object.material) ? object.material : [object.material])
+            : []
+          objectMaterials.forEach((material) => {
+            material.map?.dispose()
+            material.dispose()
+          })
+        })
         renderer.dispose()
         mount.removeChild(renderer.domElement)
       }
