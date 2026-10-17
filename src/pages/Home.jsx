@@ -6,6 +6,7 @@ import SEO from "../components/SEO"
 import BlogEngagementStats from "../components/BlogEngagementStats"
 import ProductShowroom3D from "../components/ProductShowroom3D"
 import ThreeProductScroll from "../components/ThreeProductScroll"
+import HomepageScrollExperience from "../components/HomepageScrollExperience"
 import useHomeInteractions from "../hooks/useHomeInteractions"
 import { SITE_URL } from "../lib/siteConfig"
 import { formatBlogDate, getBlogCategoryLabel, getBlogCoverFallback, getBlogExcerpt } from "../lib/blogHelpers"
@@ -644,6 +645,7 @@ function Hero3DArt({ sharedScene = false }) {
     scene.add(warmLight)
 
     const orbit = { yaw: 0.45, pitch: 0.18, distance: 7.2 }
+    const pointer = { x: 0, y: 0 }
     const scrollProgress = { value: 0 }
     const heroSection = mount.closest(".hero-section")
     let pointerDown = false
@@ -662,9 +664,11 @@ function Hero3DArt({ sharedScene = false }) {
     updateScrollProgress()
 
     function updateCamera() {
-      const x = Math.sin(orbit.yaw) * Math.cos(orbit.pitch) * orbit.distance
-      const y = Math.sin(orbit.pitch) * orbit.distance + 1.7
-      const z = Math.cos(orbit.yaw) * Math.cos(orbit.pitch) * orbit.distance
+      const yaw = orbit.yaw + pointer.x * 0.1
+      const pitch = THREE.MathUtils.clamp(orbit.pitch + pointer.y * 0.07, -0.75, 0.75)
+      const x = Math.sin(yaw) * Math.cos(pitch) * orbit.distance
+      const y = Math.sin(pitch) * orbit.distance + 1.7
+      const z = Math.cos(yaw) * Math.cos(pitch) * orbit.distance
       camera.position.set(x, y, z)
       camera.lookAt(0, 1.6, 0)
     }
@@ -702,6 +706,9 @@ function Hero3DArt({ sharedScene = false }) {
     }
 
     const handlePointerMove = (event) => {
+      const bounds = renderer.domElement.getBoundingClientRect()
+      pointer.x = THREE.MathUtils.clamp(((event.clientX - bounds.left) / bounds.width - 0.5) * 2, -1, 1)
+      pointer.y = THREE.MathUtils.clamp(((event.clientY - bounds.top) / bounds.height - 0.5) * 2, -1, 1)
       if (!pointerDown) return
       const deltaX = (event.clientX - lastX) * 0.006
       const deltaY = (event.clientY - lastY) * 0.004
@@ -716,6 +723,12 @@ function Hero3DArt({ sharedScene = false }) {
       if (renderer.domElement.hasPointerCapture(event.pointerId)) {
         renderer.domElement.releasePointerCapture(event.pointerId)
       }
+    }
+
+    const handlePointerLeave = () => {
+      pointer.x = 0
+      pointer.y = 0
+      pointerDown = false
     }
 
     const handleWheel = (event) => {
@@ -734,7 +747,7 @@ function Hero3DArt({ sharedScene = false }) {
     renderer.domElement.addEventListener("pointerdown", handlePointerDown)
     renderer.domElement.addEventListener("pointermove", handlePointerMove)
     renderer.domElement.addEventListener("pointerup", handlePointerUp)
-    renderer.domElement.addEventListener("pointerleave", handlePointerUp)
+    renderer.domElement.addEventListener("pointerleave", handlePointerLeave)
     renderer.domElement.addEventListener("wheel", handleWheel, { passive: false })
     renderer.domElement.addEventListener("click", handleClick)
 
@@ -794,7 +807,7 @@ function Hero3DArt({ sharedScene = false }) {
       renderer.domElement.removeEventListener("pointerdown", handlePointerDown)
       renderer.domElement.removeEventListener("pointermove", handlePointerMove)
       renderer.domElement.removeEventListener("pointerup", handlePointerUp)
-      renderer.domElement.removeEventListener("pointerleave", handlePointerUp)
+      renderer.domElement.removeEventListener("pointerleave", handlePointerLeave)
       renderer.domElement.removeEventListener("wheel", handleWheel)
       renderer.domElement.removeEventListener("click", handleClick)
       if (renderer.domElement.parentNode === mount) mount.removeChild(renderer.domElement)
@@ -1140,6 +1153,7 @@ export default function Home() {
 
   return (
     <div className="home">
+      <HomepageScrollExperience />
       <SEO
         title="Pharmacourse | RemedacarePOS & RemedacareHMIS Kenya"
         description="Learn with Pharmacourse, simplify pharmacy operations with RemedacarePOS, and connect hospital workflows with RemedacareHMIS."
@@ -1303,7 +1317,7 @@ export default function Home() {
                 <section id="remedacareOS" className="product-section alt">
                   <div className="container">
                     <div className="hmis-showcase">
-                      <div className="hmis-visual-wrap">
+                      <div className="hmis-visual-wrap" onPointerMove={handleCard3DPointerMove} onPointerLeave={resetCard3DTilt}>
                         <div className="hmis-monitor-shell">
                           <div className="hmis-monitor-bezel">
                             <ProductMockup
@@ -1357,7 +1371,16 @@ export default function Home() {
                       <KineticHeading>{config.heading || "Accelerate your career with practical skills"}</KineticHeading>
                     </div>
 
-                    <div className="learning-scene" aria-hidden="true">
+                    <div className="learning-scene tilt-scene" aria-hidden="true" onPointerMove={handleCard3DPointerMove} onPointerLeave={resetCard3DTilt}>
+                      <div className="learning-core">
+                        <span className="learning-core-glow" />
+                        <span className="learning-core-cross" />
+                        <b>CPD</b>
+                        <small>LEARN · APPLY · GROW</small>
+                      </div>
+                      <span className="learning-signal learning-signal-one" />
+                      <span className="learning-signal learning-signal-two" />
+                      <span className="learning-signal learning-signal-three" />
                       <div className="learning-book"><span /><span /><i /></div>
                       <div className="learning-certificate"><Award size={28} /><i /><i /><b>CPD</b></div>
                       <div className="learning-pdf learning-pdf-one"><i /><i /><i /></div>
@@ -1400,7 +1423,7 @@ export default function Home() {
                         <KineticHeading>{config.heading || "Courses built for real-world practice"}</KineticHeading>
                       </div>
 
-                      <div className="course-artifact-stage">
+                      <div className="course-artifact-stage tilt-scene" onPointerMove={handleCard3DPointerMove} onPointerLeave={resetCard3DTilt}>
                         <div className={`course-artifact course-artifact-${activeCourseArtifact}`} aria-hidden="true">
                           <span className="artifact-orbit artifact-orbit-one" />
                           <span className="artifact-orbit artifact-orbit-two" />
@@ -1539,7 +1562,7 @@ export default function Home() {
                         <p>Insights on clinical practice, technology, and healthcare operations.</p>
                       </div>
 
-                      <div className="blog-story-scene" aria-hidden="true">
+                      <div className="blog-story-scene tilt-scene" aria-hidden="true" onPointerMove={handleCard3DPointerMove} onPointerLeave={resetCard3DTilt}>
                         <div className="blog-page blog-page-back"><i /><i /><i /><i /></div>
                         <div className="blog-page blog-page-mid"><i /><i /><i /><i /></div>
                         <div className="blog-page blog-page-front"><i /><i /><i /><i /></div>

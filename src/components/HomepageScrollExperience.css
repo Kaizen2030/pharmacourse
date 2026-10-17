@@ -5,7 +5,7 @@
   overflow: hidden;
   pointer-events: none;
   contain: strict;
-  opacity: 0.97;
+  opacity: 0.38;
   background:
     radial-gradient(circle at 50% 10%, rgba(128, 210, 170, 0.14), transparent 18%),
     radial-gradient(circle at 86% 24%, rgba(122, 180, 216, 0.12), transparent 24%);
@@ -18,9 +18,14 @@
   height: 100%;
 }
 
+.home > :not(.homepage-scroll-experience) {
+  position: relative;
+  z-index: 1;
+}
+
 @media (max-width: 640px) {
   .homepage-scroll-experience {
-    opacity: 0.88;
+    opacity: 0.18;
   }
 }
 

@@ -55,6 +55,8 @@ export default function ProductShowroom3D({ badge, subheading, children }) {
     setHovered(index)
   }, [])
 
+  const activeProduct = hovered >= 0 ? PRODUCTS[hovered] : PRODUCTS[0]
+
   useEffect(() => {
     const mount = mountRef.current
     if (!mount) return undefined
@@ -94,12 +96,35 @@ export default function ProductShowroom3D({ badge, subheading, children }) {
 
         {!failed && (
           <div className="showroom-stage">
+            <div className="showroom-stage-nav" role="tablist" aria-label="Choose a product">
+              {PRODUCTS.map((product, i) => (
+                <button
+                  key={product.key}
+                  type="button"
+                  className={`showroom-stage-tab showroom-stage-tab-${product.key} ${hovered === i ? "is-active" : ""}`}
+                  onMouseEnter={() => setHover(i)}
+                  onFocus={() => setHover(i)}
+                  onClick={() => navigate(product.href)}
+                  role="tab"
+                  aria-selected={hovered === i}
+                >
+                  <span>{product.index}</span>
+                  <strong>{product.title}</strong>
+                </button>
+              ))}
+            </div>
             <div
               ref={mountRef}
               className="showroom-canvas"
               role="img"
               aria-label="Interactive 3D scene: an open book for Pharmacourse, a glass cube holding a capsule for RemedacarePOS, and a connected network for RemedacareHMIS"
             />
+            <div className="showroom-stage-caption" aria-live="polite">
+              <span className="showroom-stage-caption-dot" />
+              <span>{activeProduct.kicker}</span>
+              <strong>{activeProduct.title}</strong>
+              <small>{hovered >= 0 ? "Click to explore" : "Hover a product to focus the scene"}</small>
+            </div>
             <span className="showroom-hint">Move your mouse · click an object to open it</span>
           </div>
         )}

@@ -576,6 +576,9 @@ export function createShowroom(mount, api) {
       c.col.visible = e > 0.01
       c.obj.group.position.y = c.obj.baseY + Math.sin(t * 1.3 + i * 1.7) * 0.07 * mo
       c.obj.update(dt, c.hover, mo)
+      c.col.scale.setScalar(1 + c.hover * 0.055)
+      c.col.position.z = c.hover * 0.18
+      c.col.rotation.y = damp(c.col.rotation.y, c.hover * (i === 1 ? -0.08 : 0.08), 4, dt)
       c.ped.plateMat.emissiveIntensity = 0.35 + c.hover * 1.1
       c.light.intensity = 14 + c.hover * 22
       c.blob.scale.setScalar(1 - Math.sin(t * 1.3 + i * 1.7) * 0.05 * mo - c.hover * 0.1)

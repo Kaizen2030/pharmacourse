@@ -6,6 +6,53 @@
     linear-gradient(180deg, #f8fbfa 0%, #f3f7f5 42%, #f8faf9 100%);
 }
 
+/* Unified depth response for the homepage's supporting 3D scenes. */
+.home .tilt-scene {
+  transform-style: preserve-3d;
+  transition: filter 260ms ease, translate 180ms ease-out, scale 180ms ease-out;
+  will-change: transform;
+}
+.home .tilt-scene:hover {
+  filter: saturate(1.08) contrast(1.02);
+  translate: 0 -4px;
+  scale: 1.012;
+}
+.home .learning-scene::after,
+.home .course-artifact-stage::after,
+.home .blog-story-scene::after,
+.home .hmis-visual-wrap::after {
+  content: "";
+  position: absolute;
+  inset: 8%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(47, 210, 154, 0.2), transparent 68%);
+  filter: blur(24px);
+  opacity: 0.56;
+  pointer-events: none;
+  transition: opacity 260ms ease, transform 260ms ease;
+}
+.home .tilt-scene:hover::after,
+.home .hmis-visual-wrap:hover::after {
+  opacity: 0.9;
+  transform: scale(1.08);
+}
+
+/* Keep content readable while the page scrolls. Scroll-linked blur made headings
+   look permanently out of focus on mobile browsers. */
+.home .kinetic-heading,
+.home .kinetic-heading-letter,
+.home .section-header > p,
+.home .product-heading > p {
+  animation: none !important;
+  filter: none !important;
+}
+.home .kinetic-heading-letter {
+  opacity: 1 !important;
+  transform: none !important;
+  text-shadow: none;
+}
+
 .home .container {
   width: calc(100% - clamp(2rem, 4vw, 4rem));
   margin: 0 auto;
@@ -4486,6 +4533,15 @@
 }
 
 @media (max-width: 640px) {
+  .home .features-section,
+  .home .courses-section {
+    padding-block: 3.25rem;
+  }
+  .home .features-section .section-header h2,
+  .home .courses-section .section-header h2 {
+    font-size: clamp(2rem, 9vw, 2.8rem);
+    line-height: 1.02;
+  }
   .home .learning-scene { height: 220px; }
   .home .learning-book { top: 78px; left: calc(50% - 78px); scale: 1.04; }
   .home .learning-certificate { top: 24px; left: calc(50% + 49px); scale: 0.94; }
@@ -4493,8 +4549,14 @@
   .home .learning-pdf-two { top: 57px; left: calc(50% - 157px); }
   .home .learning-orbit { top: 80px; left: calc(50% - 198px); width: 396px; }
   .home .scene-depth-word { font-size: clamp(4.6rem, 21vw, 7rem); }
-  .home .course-artifact-stage { min-height: 285px; }
-  .home .course-artifact { scale: 1.1; }
+  .home .learning-scene { height: 188px; margin-bottom: 1.25rem; }
+  .home .learning-book { top: 70px; scale: 0.88; }
+  .home .learning-certificate { top: 18px; scale: 0.82; }
+  .home .learning-pdf { top: 37px; scale: 0.76; }
+  .home .learning-pdf-two { top: 48px; }
+  .home .learning-orbit { top: 70px; scale: 0.82; }
+  .home .course-artifact-stage { min-height: 220px; margin-bottom: 0.8rem; }
+  .home .course-artifact { scale: 0.92; }
   .home .course-artifact-1 .artifact-leaf,
   .home .course-artifact-2 .artifact-podium,
   .home .course-artifact-3 .artifact-helix { scale: 1.08; }
@@ -5167,4 +5229,120 @@
   .home .hmis-monitor-base {
     display: none;
   }
+}
+
+/* New learning artefact direction: a calm glass lesson capsule with a clear
+   focal point, instead of a cluster of unrelated floating cards. */
+.home .features-section {
+  background:
+    radial-gradient(circle at 78% 36%, rgba(95, 226, 181, 0.22), transparent 24rem),
+    linear-gradient(135deg, #0b4538 0%, #0d302b 58%, #09251f 100%);
+}
+.home .learning-scene {
+  height: clamp(230px, 25vw, 310px);
+  max-width: 760px;
+  margin: 1.5rem auto 2.5rem;
+  isolation: isolate;
+}
+.home .learning-scene::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(70vw, 470px);
+  height: min(22vw, 150px);
+  border: 1px solid rgba(169, 255, 222, 0.35);
+  border-radius: 50%;
+  transform: translate(-50%, -50%) rotateX(68deg) rotateZ(-12deg);
+  box-shadow: 0 0 60px rgba(73, 220, 170, 0.18), inset 0 0 32px rgba(73, 220, 170, 0.1);
+  pointer-events: none;
+}
+.home .learning-scene::after {
+  inset: 18% 16%;
+  z-index: -1;
+  background: radial-gradient(circle, rgba(64, 213, 164, 0.32), transparent 66%);
+  filter: blur(30px);
+}
+.home .learning-core {
+  position: absolute;
+  z-index: 4;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: 112px;
+  height: 112px;
+  place-items: center;
+  border: 1px solid rgba(220, 255, 241, 0.74);
+  border-radius: 34% 66% 52% 48% / 52% 42% 58% 48%;
+  background: linear-gradient(145deg, rgba(233, 255, 246, 0.94), rgba(84, 196, 153, 0.74));
+  box-shadow: inset 10px 8px 20px rgba(255,255,255,0.36), inset -12px -14px 24px rgba(10, 87, 62, 0.3), 0 24px 38px rgba(0, 0, 0, 0.24), 0 0 52px rgba(66, 224, 170, 0.32);
+  transform: translate(-50%, -50%) rotate(-8deg) translateZ(80px);
+  animation: learningCoreFloat 5.2s ease-in-out infinite;
+}
+.home .learning-core b { color: #09644d; font-size: 1.28rem; letter-spacing: 0.08em; }
+.home .learning-core small { position: absolute; bottom: 20px; color: rgba(9, 100, 77, 0.72); font-size: 0.42rem; font-weight: 900; letter-spacing: 0.08em; }
+.home .learning-core-glow { position: absolute; width: 24px; height: 24px; top: 18px; right: 17px; border-radius: 50%; background: #fff; opacity: 0.62; filter: blur(4px); }
+.home .learning-core-cross,
+.home .learning-core-cross::after { position: absolute; width: 24px; height: 5px; border-radius: 99px; background: rgba(255,255,255,0.7); content: ""; }
+.home .learning-core-cross { transform: rotate(90deg); }
+.home .learning-signal { position: absolute; z-index: 3; width: 11px; height: 11px; border: 2px solid #a7f4d6; border-radius: 50%; background: #158d69; box-shadow: 0 0 0 6px rgba(47,210,154,0.12), 0 0 20px rgba(47,210,154,0.56); animation: learningSignalPulse 2.8s ease-in-out infinite; }
+.home .learning-signal-one { top: 29%; left: 35%; }
+.home .learning-signal-two { top: 64%; left: 67%; animation-delay: -0.9s; }
+.home .learning-signal-three { top: 23%; left: 66%; animation-delay: -1.7s; }
+@keyframes learningCoreFloat { 0%, 100% { translate: 0 0; rotate: -8deg; } 50% { translate: 0 -9px; rotate: -2deg; } }
+@keyframes learningSignalPulse { 0%, 100% { scale: 0.82; opacity: 0.55; } 50% { scale: 1.2; opacity: 1; } }
+.home .learning-book {
+  top: 50%;
+  left: 50%;
+  width: 190px;
+  height: 116px;
+  transform: translate(-50%, -34%) rotateX(56deg) rotateZ(-8deg) translateZ(24px);
+  animation: learningBookFloat 5.5s ease-in-out infinite;
+}
+.home .learning-book::before,
+.home .learning-book::after,
+.home .learning-book span {
+  background: linear-gradient(145deg, #f5fff9, #b3dfca);
+  box-shadow: inset 0 -9px 0 rgba(8, 47, 36, 0.12), 0 24px 35px rgba(0, 0, 0, 0.26);
+}
+.home .learning-certificate {
+  top: 18%;
+  left: calc(50% + 92px);
+  width: 104px;
+  height: 136px;
+  transform: rotateY(-22deg) rotateZ(7deg) translateZ(72px);
+}
+.home .learning-pdf {
+  top: 27%;
+  left: calc(50% - 188px);
+  width: 78px;
+  height: 104px;
+  transform: rotateY(22deg) rotateZ(-10deg) translateZ(54px);
+}
+.home .learning-pdf-two { left: calc(50% - 168px); transform: rotateY(18deg) rotateZ(-4deg) translateZ(28px); }
+.home .features-grid .feature-card { border-top-color: rgba(193, 255, 226, 0.22); }
+
+/* Course artefact becomes a single luminous core with a smaller, quieter orbit. */
+.home .course-artifact-stage {
+  min-height: clamp(210px, 24vw, 280px);
+  margin-bottom: 1rem;
+}
+.home .course-artifact {
+  width: 190px;
+  height: 145px;
+  filter: drop-shadow(0 24px 25px rgba(26, 101, 75, 0.16));
+}
+.home .artifact-core { box-shadow: 0 0 0 10px rgba(47, 210, 154, 0.08), 0 0 55px rgba(47, 210, 154, 0.42); }
+
+@media (max-width: 640px) {
+  .home .learning-scene { height: 205px; margin-top: 0.75rem; margin-bottom: 1.25rem; }
+  .home .learning-book { width: 156px; height: 96px; }
+  .home .learning-core { width: 88px; height: 88px; border-radius: 32% 68% 52% 48% / 52% 42% 58% 48%; }
+  .home .learning-core b { font-size: 1rem; }
+  .home .learning-core small { bottom: 14px; font-size: 0.32rem; }
+  .home .learning-certificate { left: calc(50% + 61px); width: 82px; height: 108px; }
+  .home .learning-pdf { left: calc(50% - 145px); width: 62px; height: 84px; }
+  .home .learning-pdf-two { left: calc(50% - 131px); }
+  .home .learning-scene::before { width: 360px; height: 110px; }
+  .home .course-artifact-stage { min-height: 200px; }
 }
