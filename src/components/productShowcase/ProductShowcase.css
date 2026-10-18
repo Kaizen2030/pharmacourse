@@ -258,3 +258,15 @@
   .ps-cta svg { width: 7px; height: 7px; }
 }
 
+/* The artwork is secondary to the product copy on small screens. Reduce its
+   middle column and return the reclaimed width to the anchored cards. */
+@media (max-width: 520px) {
+  .ps-stage { grid-template-columns: minmax(0, 1fr) minmax(68px, .82fr) minmax(0, 1fr); }
+  .ps-art { width: 108%; margin-left: -4%; }
+  .ps-tab { width: 36px; }
+  .ps-tab-in b { font-size: .35rem; }
+  .ps-panel-in, .ps-right .ps-panel-in { min-height: 108px; padding: .34rem .28rem .34rem .4rem; }
+  .ps-panel-in strong { font-size: .59rem; }
+  .ps-text { font-size: .4rem; }
+}
+

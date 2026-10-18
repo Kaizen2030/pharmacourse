@@ -338,3 +338,15 @@
   .cap-tab b { width: 13px; height: 12px; }
   .cap-tab i { height: 4px; }
 }
+
+/* Give mobile copy more room without changing the desktop scene. */
+@media (max-width: 520px) {
+  .cap-stage { inset: 4% 9% 19%; }
+  .cap-copy { width: 36%; left: 3%; }
+  .cap-copy h1 { font-size: clamp(1.35rem, 6.2vw, 2.15rem) !important; }
+  .cap-copy p { font-size: .62rem !important; }
+  .cap-call, .cap-call--learn, .cap-call--pos, .cap-call--practice, .cap-call--connect, .cap-call--hmis { width: clamp(112px, 28vw, 190px); }
+  .cap-call--pos, .cap-call--connect { left: 31%; }
+  .cap-call-head strong { font-size: .57rem; }
+  .cap-call-text { font-size: .5rem; }
+}
