@@ -191,12 +191,12 @@ function normalizeHomepageSection(sectionKey, sectionConfig) {
   }
 
   if (sectionKey === "ecosystem") {
-    if (/one company|connected products|three platforms/i.test(normalized.heading || "")) {
+    if (/^three distinct products:/i.test(normalized.heading || "") || /one company|connected products|three platforms|built for pharmacy in africa/i.test(normalized.heading || "")) {
       normalized.heading = DEFAULT_SECTIONS.ecosystem.heading
     }
 
-    if (/connected|work together|instead of disconnected/i.test(normalized.subheading || "")) {
-      normalized.subheading = DEFAULT_SECTIONS.ecosystem.subheading
+    if (/ai-powered pharmacy technology|connected|work together|instead of disconnected/i.test(normalized.subheading || "")) {
+      normalized.subheading = "Professional learning, pharmacy operations, and hospital management for healthcare teams."
     }
 
     normalized.badge_text = DEFAULT_SECTIONS.ecosystem.badge_text
