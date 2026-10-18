@@ -20,6 +20,12 @@
 .cb-edge--green { top: 0; height: 58%; background: linear-gradient(180deg, #1b8f68, #0f6e56); border-radius: 0 0 40px 0; }
 .cb-edge--dark { bottom: 0; height: 44%; background: var(--cb-dark); border-radius: 0 40px 0 0; }
 
+/* Keep the banner clean and product-led; the template's edge bars and
+   diagonal separators compete with the headline and capsule artwork. */
+.cb-edge,
+.cb-layer--dark,
+.cb-layer--green { display: none; }
+
 .cb-copy { position: relative; z-index: 3; width: 54%; box-sizing: border-box; padding: clamp(2rem, 4vw, 3.5rem) 1rem clamp(2rem, 4vw, 3.5rem) clamp(3.2rem, 5.5vw, 5rem); }
 .cb-copy h2 { margin: 0; display: grid; gap: 0.1rem; font-weight: 900; text-transform: uppercase; line-height: 1.02; letter-spacing: -0.01em; font-size: clamp(1.55rem, 2.75vw, 2.6rem); overflow-wrap: anywhere; }
 .cb-h-dark { color: var(--cb-dark); }
@@ -48,6 +54,7 @@
     radial-gradient(ellipse 60% 55% at 62% 50%, #ffffff 0%, rgba(255,255,255,0) 70%),
     linear-gradient(160deg, #eaf6ee 0%, #cfe9da 100%);
   display: grid; place-items: center;
+  clip-path: none;
 }
 .cb-hex {
   position: absolute; inset: 0; opacity: 0.9;
@@ -123,3 +130,10 @@
 @media (prefers-reduced-motion: reduce) {
   .cb-art, .cb-capsule { animation: none; transition: none; }
 }
+
+/* The clean split applies at every breakpoint, including the phone rules
+   that otherwise reintroduce the slanted layer clip. */
+.cb-edge,
+.cb-layer--dark,
+.cb-layer--green { display: none !important; }
+.cb-layer--art { clip-path: none !important; }
