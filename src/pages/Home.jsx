@@ -603,9 +603,9 @@ export default function Home() {
                 <section id="ecosystem" className="ecosystem-section">
                   <div className="container">
                     <div className="section-header">
-                      {config.badge_text && <span className="section-badge">{config.badge_text}</span>}
-                      <h2>{config.heading || "Choose the product that fits your team."}</h2>
-                      {config.subheading && <p>{config.subheading}</p>}
+                      <span className="section-badge">Our products</span>
+                      <h2>Choose the product<br />that fits your team.</h2>
+                      <p>Professional learning, pharmacy operations, and hospital information are separate tools for different needs.</p>
                     </div>
 
                     <div className="platform-grid">
