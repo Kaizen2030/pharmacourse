@@ -2531,6 +2531,209 @@
   background: rgba(255, 255, 255, 0.08);
 }
 
+/* White product cards with restrained analytics cues inspired by the reference dashboard. */
+.home .ecosystem-section {
+  background: #fff;
+}
+
+.home .ecosystem-section .section-header h2,
+.home .ecosystem-section .section-header > p {
+  color: #17372d;
+}
+
+.home .platform-grid {
+  gap: clamp(1rem, 1.8vw, 1.5rem);
+}
+
+.home .platform-card {
+  --platform-accent: #0f6e56;
+  --platform-soft: #e8f5f0;
+  min-height: 540px;
+  padding: clamp(1.35rem, 2.4vw, 2rem);
+  color: #17372d;
+  background: #fff !important;
+  border: 1px solid #d9e8e2;
+  border-top: 4px solid var(--platform-accent);
+  border-radius: 24px;
+  box-shadow: 0 12px 32px rgba(23, 55, 44, 0.07);
+}
+
+.home .platform-card:hover {
+  transform: translateY(-5px);
+  border-color: color-mix(in srgb, var(--platform-accent) 32%, #d9e8e2);
+  box-shadow: 0 20px 44px rgba(23, 55, 44, 0.12);
+}
+
+.home .platform-card::after {
+  right: -52px;
+  bottom: -84px;
+  width: 210px;
+  height: 210px;
+  border-color: var(--platform-accent);
+  opacity: 0.13;
+}
+
+.home .platform-card-learning {
+  --platform-accent: #0f6e56;
+  --platform-soft: #e8f5f0;
+}
+
+.home .platform-card-pos {
+  --platform-accent: #0b8062;
+  --platform-soft: #e6f5ef;
+  border-top-width: 4px;
+}
+
+.home .platform-card-hmis {
+  --platform-accent: #245777;
+  --platform-soft: #eaf2f8;
+}
+
+.home .platform-card-topline {
+  margin-bottom: 0;
+}
+
+.home .platform-index,
+.home .platform-kicker {
+  color: var(--platform-accent) !important;
+}
+
+.home .platform-mark {
+  width: 56px;
+  height: 56px;
+  padding: 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--platform-accent) 18%, #d9e8e2);
+  border-radius: 16px;
+  background: var(--platform-soft);
+  box-shadow: none;
+}
+
+.home .platform-card-preview {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 0.7rem;
+  width: 100%;
+  min-height: 122px;
+  margin-top: 1.7rem;
+  padding: 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--platform-accent) 17%, #e2ece8);
+  border-radius: 16px;
+  background: linear-gradient(180deg, #fff, var(--platform-soft));
+}
+
+.home .platform-preview-toolbar,
+.home .platform-preview-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  color: #58716a;
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.home .platform-preview-live {
+  color: var(--platform-accent);
+}
+
+.home .platform-preview-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.32rem;
+  height: 46px;
+  padding: 0.3rem 0.35rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--platform-accent) 18%, #d9e8e2);
+  background: repeating-linear-gradient(to top, transparent 0 14px, rgba(23, 55, 44, 0.06) 15px 16px);
+}
+
+.home .platform-preview-bars span {
+  flex: 1;
+  min-width: 0;
+  border-radius: 4px 4px 0 0;
+  background: var(--platform-accent);
+  opacity: 0.76;
+}
+
+.home .platform-preview-footer {
+  font-size: 0.6rem;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.home .platform-preview-footer strong,
+.home .platform-preview-metrics strong {
+  color: var(--platform-accent);
+  font-size: 0.9rem;
+  letter-spacing: -0.04em;
+}
+
+.home .platform-preview-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+
+.home .platform-preview-metrics span {
+  display: grid;
+  gap: 0.08rem;
+  padding: 0.45rem 0.4rem;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid rgba(11, 128, 98, 0.1);
+}
+
+.home .platform-preview-metrics small {
+  overflow: hidden;
+  color: #6a8179;
+  font-size: 0.5rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home .platform-preview-line {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.home .platform-preview-line i {
+  display: block;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--platform-accent);
+  opacity: 0.72;
+}
+
+.home .platform-card-copy {
+  margin: 1.55rem 0 1.5rem;
+}
+
+.home .platform-card h3 {
+  color: #17372d;
+}
+
+.home .platform-card-copy > p:last-child {
+  color: #5b7069 !important;
+}
+
+.home .platform-card .platform-link {
+  color: #fff !important;
+  background: var(--platform-accent) !important;
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--platform-accent) 18%, transparent);
+}
+
+@media (max-width: 640px) {
+  .home .platform-card {
+    min-height: 0;
+  }
+
+  .home .platform-card-preview {
+    margin-top: 1.25rem;
+  }
+}
+
 @media (max-width: 968px) {
   .home .product-grid,
   .home .product-grid.reverse {

@@ -698,6 +698,13 @@ export default function Home() {
                           <span className="platform-index">01 / LEARN</span>
                           <img src="/favicon.svg" alt="" className="platform-mark" />
                         </div>
+                        <div className="platform-card-preview" aria-hidden="true">
+                          <div className="platform-preview-toolbar"><span>CPD PROGRESS</span><span className="platform-preview-live">LIVE</span></div>
+                          <div className="platform-preview-chart platform-preview-bars">
+                            <span style={{ height: "38%" }} /><span style={{ height: "58%" }} /><span style={{ height: "48%" }} /><span style={{ height: "78%" }} /><span style={{ height: "66%" }} /><span style={{ height: "92%" }} />
+                          </div>
+                          <div className="platform-preview-footer"><span>Courses completed</span><strong>72%</strong></div>
+                        </div>
                         <div className="platform-card-copy">
                           <p className="platform-kicker">Professional development</p>
                           <h3>Pharmacourse</h3>
@@ -711,6 +718,11 @@ export default function Home() {
                           <span className="platform-index">02 / OPERATE</span>
                           <img src={remedacareposMark} alt="" className="platform-mark" />
                         </div>
+                        <div className="platform-card-preview" aria-hidden="true">
+                          <div className="platform-preview-toolbar"><span>OPERATIONS TODAY</span><span className="platform-preview-live">LIVE</span></div>
+                          <div className="platform-preview-metrics"><span><strong>248</strong><small>Dispensed</small></span><span><strong>96%</strong><small>In stock</small></span><span><strong>18</strong><small>Requests</small></span></div>
+                          <div className="platform-preview-line"><i style={{ width: "86%" }} /><i style={{ width: "63%" }} /><i style={{ width: "74%" }} /></div>
+                        </div>
                         <div className="platform-card-copy">
                           <p className="platform-kicker">Pharmacy operations</p>
                           <h3>RemedacarePOS</h3>
@@ -723,6 +735,13 @@ export default function Home() {
                         <div className="platform-card-topline">
                           <span className="platform-index">03 / MANAGE CARE</span>
                           <img src={remedacarehmisMark} alt="" className="platform-mark" />
+                        </div>
+                        <div className="platform-card-preview" aria-hidden="true">
+                          <div className="platform-preview-toolbar"><span>CARE OVERVIEW</span><span className="platform-preview-live">LIVE</span></div>
+                          <div className="platform-preview-chart platform-preview-bars">
+                            <span style={{ height: "54%" }} /><span style={{ height: "72%" }} /><span style={{ height: "44%" }} /><span style={{ height: "84%" }} /><span style={{ height: "67%" }} /><span style={{ height: "96%" }} />
+                          </div>
+                          <div className="platform-preview-footer"><span>Care pathways tracked</span><strong>1,284</strong></div>
                         </div>
                         <div className="platform-card-copy">
                           <p className="platform-kicker">Hospital management</p>
