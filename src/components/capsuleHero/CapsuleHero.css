@@ -290,3 +290,25 @@
   .cap-tab b { width: 15px; height: 14px; }
   .cap-tab i { height: 5px; }
 }
+
+/* Phone fit: the hero artwork gets its own bounded stage, then the callouts
+   flow below it. This keeps the approved capsule composition while preventing
+   labels from sitting on top of the plant or headline. */
+@media (max-width: 700px) {
+  .cap-hero { min-height: 0; display: flex; flex-direction: column; padding-bottom: 1.5rem; }
+  .cap-stage { position: relative; inset: auto; height: clamp(300px, 92vw, 410px); }
+  .cap-content { width: calc(100% - 1rem); min-height: 0; pointer-events: auto; }
+  .cap-copy { position: static; width: 100%; margin-top: .75rem; padding: 0 .5rem; }
+  .cap-copy h1 { max-width: 12ch !important; font-size: clamp(2rem, 10vw, 3rem) !important; }
+  .cap-copy p { max-width: 44ch !important; font-size: .78rem !important; }
+  .cap-callouts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; margin-top: 1rem; }
+  .cap-call, .cap-call--learn, .cap-call--pos, .cap-call--practice, .cap-call--connect, .cap-call--hmis { position: relative; inset: auto; width: auto; margin: 0 !important; translate: none; }
+  .cap-call--connect { grid-column: 1 / -1; }
+  .cap-call a { padding: .55rem .55rem .65rem; border-radius: 11px; }
+  .cap-call-head { gap: .35rem; }
+  .cap-call-head strong { font-size: .68rem; letter-spacing: .01em; }
+  .cap-call-icon svg { width: 18px; height: 18px; }
+  .cap-call-text { margin-top: .3rem; padding-left: .4rem; border-left-width: 2px; font-size: .6rem; line-height: 1.35; }
+  .cap-tab { height: 15px; margin-bottom: .3rem; }
+  .cap-tab b { width: 16px; height: 15px; }
+}

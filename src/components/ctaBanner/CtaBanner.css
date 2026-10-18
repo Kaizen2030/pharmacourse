@@ -107,6 +107,19 @@
   .cb-art { width: 126%; margin-left: -22%; }
   .cb-btn { font-size: .7rem; }
 }
+
+/* Keep the banner side-by-side on phones, but reserve enough width for each
+   heading line and enough height for the capsule art. */
+@media (max-width: 600px) {
+  .cb-card { grid-template-columns: minmax(0, 1.42fr) minmax(132px, .88fr); min-height: 320px; }
+  .cb-copy { padding: 1.5rem .55rem 1.5rem 2.25rem; }
+  .cb-copy h2 { font-size: clamp(1.15rem, 5.2vw, 1.55rem); line-height: 1.03; overflow-wrap: normal; word-break: normal; }
+  .cb-copy p { font-size: .72rem; line-height: 1.45; }
+  .cb-actions { gap: .45rem; }
+  .cb-btn { width: auto; justify-content: flex-start; padding: .55rem .6rem; font-size: .68rem; }
+  .cb-right { min-height: 320px; }
+  .cb-art { width: 125%; max-height: 270px; margin-left: -20%; }
+}
 @media (prefers-reduced-motion: reduce) {
   .cb-art, .cb-capsule { animation: none; transition: none; }
 }

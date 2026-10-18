@@ -128,7 +128,6 @@
   .ps-call { animation: none; opacity: 1; }
   .ps-leaf, .ps-sparkles { animation: none; }
 }
-
 /* Keep the three-product desktop composition on phones as a compact stage.
    This preserves the centre capsule and the left/right product rhythm instead
    of turning the section into three unrelated full-width cards. */
@@ -174,3 +173,51 @@
   .ps-text { font-size: .46rem; -webkit-line-clamp: 2; }
   .ps-cta { font-size: .4rem; }
 }
+
+/* Final mobile fit: the capsule stays prominent, while product cards get
+   full readable rows instead of being squeezed into the art column. */
+@media (max-width: 980px) {
+  .ps-stage {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto;
+    gap: .85rem;
+    min-height: 0;
+    align-items: stretch;
+  }
+  .ps-center {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    height: clamp(220px, 62vw, 340px);
+    min-height: 0;
+  }
+  .ps-art { width: min(100%, 340px); max-width: 100%; margin: 0 auto; height: 100%; object-fit: contain; }
+  .ps-call, .ps-call--learn, .ps-call--pos, .ps-call--hmis { width: 100%; max-width: none; min-width: 0; }
+  .ps-call--learn { grid-column: 1; grid-row: 2; }
+  .ps-call--pos { grid-column: 2; grid-row: 2; }
+  .ps-call--hmis { grid-column: 1 / -1; grid-row: 3; }
+  .ps-tab { width: 64px; }
+  .ps-tab-in b { font-size: .52rem; }
+  .ps-tab-in svg { width: 22px; height: 22px; }
+  .ps-panel-in, .ps-right .ps-panel-in { min-height: 142px; padding: .65rem .75rem .65rem 1rem; }
+  .ps-panel-in small { font-size: .5rem; letter-spacing: .05em; }
+  .ps-panel-in strong { font-size: .9rem; }
+  .ps-text { font-size: .64rem; line-height: 1.35; -webkit-line-clamp: 3; }
+  .ps-foot { flex-wrap: wrap; margin-top: .2rem; }
+  .ps-stat { font-size: .52rem; }
+  .ps-stat em { font-size: .86rem; }
+  .ps-cta { padding: .32rem .5rem; font-size: .53rem; }
+}
+@media (max-width: 520px) {
+  .ps-stage { grid-template-columns: 1fr; gap: .7rem; }
+  .ps-center { grid-column: 1; grid-row: 1; height: 235px; }
+  .ps-call--learn { grid-column: 1; grid-row: 2; }
+  .ps-call--pos { grid-column: 1; grid-row: 3; }
+  .ps-call--hmis { grid-column: 1; grid-row: 4; }
+  .ps-tab { width: 66px; }
+  .ps-panel-in, .ps-right .ps-panel-in { min-height: 126px; padding: .6rem .7rem .6rem .9rem; }
+  .ps-panel-in strong { font-size: .95rem; }
+  .ps-text { font-size: .65rem; -webkit-line-clamp: 3; }
+  .ps-cta { font-size: .52rem; }
+}
+
