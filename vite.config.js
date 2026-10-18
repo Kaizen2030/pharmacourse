@@ -9,7 +9,8 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       devOptions: {
-        enabled: true,
+        // Keep the local preview free of service-worker state. The PWA is still generated for production.
+        enabled: false,
         type: "module",
       },
       registerType: "prompt",

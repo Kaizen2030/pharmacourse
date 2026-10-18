@@ -4,19 +4,26 @@ import { registerSW } from "virtual:pwa-register"
 import "./index.css"
 import App from "./App"
 
-const updateSW = registerSW({
-  immediate: true,
-  onNeedRefresh() {
-    console.info("PWA update ready. Activating the latest portal shell.")
-    updateSW(true)
-  },
-  onOfflineReady() {
-    console.info("Patient portal is ready for offline shell access.")
-  },
-  onRegisterError(error) {
-    console.error("PWA registration error:", error)
-  },
-})
+if (import.meta.env.PROD) {
+  const updateSW = registerSW({
+    immediate: true,
+    onNeedRefresh() {
+      console.info("PWA update ready. Activating the latest portal shell.")
+      updateSW(true)
+    },
+    onOfflineReady() {
+      console.info("Patient portal is ready for offline shell access.")
+    },
+    onRegisterError(error) {
+      console.error("PWA registration error:", error)
+    },
+  })
+} else if ("serviceWorker" in navigator) {
+  // Remove a worker left by an older local preview so localhost cannot mask code changes.
+  navigator.serviceWorker.getRegistrations().then((registrations) => {
+    registrations.forEach((registration) => registration.unregister())
+  })
+}
 
 // Error handler for debugging
 window.addEventListener('error', (event) => {
