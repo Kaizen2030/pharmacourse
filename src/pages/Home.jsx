@@ -412,6 +412,7 @@ const ProductMockup = ({ type, videoUrl, imageSrc, imageAlt }) => {
 export default function Home() {
   const [courses, setCourses] = useState([])
   const [coursesError, setCoursesError] = useState(false)
+  const featuredCourses = courses.slice(0, 4)
   const [testimonials, setTestimonials] = useState([])
   const [testimonialsError, setTestimonialsError] = useState(false)
   const [latestPosts, setLatestPosts] = useState([])
@@ -722,8 +723,8 @@ export default function Home() {
                             setActiveCourseIndex((current) => (current === nextIndex ? current : nextIndex))
                           }}
                         >
-                          {courses.length > 0 ? (
-                            courses.map((course) => (
+                          {featuredCourses.length > 0 ? (
+                            featuredCourses.map((course) => (
                               <Link key={course.id} to={`/courses/${course.slug || course.id}`} className="course-card">
                                 <div className="course-thumb">
                                   {course.image_url ? (
@@ -758,7 +759,7 @@ export default function Home() {
                           )}
                         </div>
 
-                        {courses.length > 1 && (
+                        {featuredCourses.length > 1 && (
                           <div className="mobile-carousel-nav" aria-label="Course navigation">
                             <button
                               type="button"
@@ -771,7 +772,7 @@ export default function Home() {
                             </button>
 
                             <div className="mobile-carousel-dots">
-                              {courses.map((course, index) => (
+                              {featuredCourses.map((course, index) => (
                                 <button
                                   key={course.id}
                                   type="button"
@@ -787,8 +788,8 @@ export default function Home() {
                               type="button"
                               className="mobile-carousel-button"
                               aria-label="Next course"
-                              onClick={() => goToCourse(Math.min(courses.length - 1, activeCourseIndex + 1))}
-                              disabled={activeCourseIndex === courses.length - 1}
+                              onClick={() => goToCourse(Math.min(featuredCourses.length - 1, activeCourseIndex + 1))}
+                              disabled={activeCourseIndex === featuredCourses.length - 1}
                             >
                               <ChevronRight size={18} />
                             </button>
