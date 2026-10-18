@@ -13,9 +13,9 @@ import remedacareposMark from "../assets/remedacarepos-mark.png"
 import remedacareDashboard from "../assets/remedacare-dashboard.svg"
 import heroMoleculeModel from "../assets/hero-molecule-model.jpg"
 import heroDnaHelix from "../assets/hero-dna-helix.jpg"
-import heroDockingPocket from "../assets/hero-docking-pocket.svg"
-import heroCompoundScreen from "../assets/hero-compound-screen.svg"
-import heroLabInterface from "../assets/hero-lab-interface.svg"
+import heroProteinRibbon from "../assets/hero-protein-ribbon.svg"
+import heroMicroscopyField from "../assets/hero-microscopy-field.svg"
+import heroFutureLab from "../assets/hero-future-lab.svg"
 import {
   BookOpen,
   Download,
@@ -37,9 +37,9 @@ import "./Home.css"
 const WHATSAPP = "https://wa.me/254790059584?text=Hi%20Julius%2C%20I%27d%20like%20to%20book%20a%20demo%20of%20your%20platform."
 
 const HERO_LAB_STORIES = [
-  { image: heroDockingPocket, label: "Molecular docking", title: "Turn evidence into confident decisions." },
-  { image: heroCompoundScreen, label: "Compound screening", title: "Build skills that hold up in practice." },
-  { image: heroLabInterface, label: "Drug discovery lab", title: "Connect chemistry to better care." },
+  { image: heroProteinRibbon, label: "Protein structure", title: "Turn evidence into confident decisions." },
+  { image: heroMicroscopyField, label: "Microscopy research", title: "Build skills that hold up in practice." },
+  { image: heroFutureLab, label: "Future drug discovery", title: "Connect chemistry to better care." },
   { image: heroMoleculeModel, label: "Molecular structures", title: "See the systems behind better outcomes." },
   { image: heroDnaHelix, label: "Clinical evidence", title: "Keep your knowledge ready for the next patient." },
 ]
