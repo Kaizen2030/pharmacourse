@@ -2040,12 +2040,14 @@
 .home .hero-media-caption {
   position: absolute;
   z-index: 2;
-  left: clamp(1.25rem, 4vw, 3rem);
-  bottom: clamp(1.6rem, 3.5vw, 2.5rem);
+  left: auto !important;
+  right: clamp(1.25rem, 4vw, 3rem);
+  bottom: clamp(4.75rem, 7vw, 5.75rem);
   display: grid;
   gap: 0.25rem;
-  max-width: min(64vw, 520px);
+  max-width: min(34vw, 360px);
   color: #effff7;
+  text-align: right;
 }
 
 .home .hero-media-label {
@@ -2073,11 +2075,13 @@
 .home .hero-slide-controls {
   position: absolute;
   z-index: 2;
+  left: auto !important;
   right: clamp(1.25rem, 4vw, 3rem);
-  bottom: clamp(2.1rem, 4.3vw, 3.2rem);
+  bottom: clamp(1.75rem, 3vw, 2.5rem);
   display: flex;
   align-items: center;
   gap: 0.45rem;
+  justify-content: flex-end;
 }
 
 .home .hero-slide-controls button {
@@ -2110,7 +2114,8 @@
 
   .home .hero-media-caption {
     right: 1.25rem;
-    max-width: 72vw;
+    bottom: 5.25rem;
+    max-width: 70vw;
   }
 
   .home .hero-slide-controls {
