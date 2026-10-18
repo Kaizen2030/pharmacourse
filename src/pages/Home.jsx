@@ -8,6 +8,7 @@ import CapsuleHero from "../components/capsuleHero/CapsuleHero"
 import ProductShowcase from "../components/productShowcase/ProductShowcase"
 import FeaturesCapsule from "../components/capsuleSections/FeaturesCapsule"
 import FaqCapsule from "../components/capsuleSections/FaqCapsule"
+import CtaBanner from "../components/ctaBanner/CtaBanner"
 import { SITE_URL } from "../lib/siteConfig"
 import { formatBlogDate, getBlogCategoryLabel, getBlogCoverFallback, getBlogExcerpt } from "../lib/blogHelpers"
 import pharmacyosDashboard from "../assets/pharmacyos-dashboard.svg"
@@ -970,22 +971,14 @@ export default function Home() {
           case "cta":
             return (
               <AnimatedSection key={key} delay={0.9}>
-                <section id="cta" className="cta-section">
-                  <div className="container">
-                    <div className="cta-content">
-                      <h2>{config.heading || "Ready to transform your pharmacy practice?"}</h2>
-                      {config.subheading && <p>{config.subheading}</p>}
-                      <div className="cta-buttons">
-                        <Link to={config.primary_btn_url || "/register"} className="btn-primary">
-                          {config.primary_btn_text || "Start Learning Free"}
-                        </Link>
-                        <a href={config.secondary_btn_url || WHATSAPP} className="btn-whatsapp">
-                          {config.secondary_btn_text || "Book a Demo"}
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                </section>
+                <CtaBanner
+                  heading={config.heading}
+                  subheading={config.subheading}
+                  primaryText={config.primary_btn_text}
+                  primaryUrl={config.primary_btn_url}
+                  secondaryText={config.secondary_btn_text}
+                  secondaryUrl={config.secondary_btn_url || WHATSAPP}
+                />
               </AnimatedSection>
             )
 
