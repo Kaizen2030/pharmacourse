@@ -1,18 +1,21 @@
-import { Fragment, useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef } from "react"
 import { Link } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
 import { useInView } from "framer-motion"
 import SEO from "../components/SEO"
 import BlogEngagementStats from "../components/BlogEngagementStats"
-import ProductShowroom3D from "../components/ProductShowroom3D"
-import ThreeProductScroll from "../components/ThreeProductScroll"
-import HomepageScrollExperience from "../components/HomepageScrollExperience"
-import useHomeInteractions from "../hooks/useHomeInteractions"
 import { SITE_URL } from "../lib/siteConfig"
 import { formatBlogDate, getBlogCategoryLabel, getBlogCoverFallback, getBlogExcerpt } from "../lib/blogHelpers"
 import pharmacyosDashboard from "../assets/pharmacyos-dashboard.svg"
 import pharmacourseHeroVisual from "../assets/pharmacourse-hero-visual.svg"
+import remedacarehmisMark from "../assets/remedacarehmis-mark.png"
+import remedacareposMark from "../assets/remedacarepos-mark.png"
 import remedacareDashboard from "../assets/remedacare-dashboard.svg"
+import labResearchOne from "../assets/hero-research-photo-1.jpg"
+import labResearchTwo from "../assets/hero-research-photo-2.jpg"
+import labResearchThree from "../assets/hero-research-photo-3.jpg"
+import labResearchFour from "../assets/hero-research-photo-4.jpg"
+import labResearchFive from "../assets/hero-research-photo-5.jpg"
 import {
   BookOpen,
   Download,
@@ -30,10 +33,16 @@ import {
   ChevronRight,
 } from "lucide-react"
 import "./Home.css"
-import "./home-3d-upgrade.css"
 
 const WHATSAPP = "https://wa.me/254790059584?text=Hi%20Julius%2C%20I%27d%20like%20to%20book%20a%20demo%20of%20your%20platform."
-const HERO_ART_MODES = ["learn", "practice", "care"]
+
+const HERO_LAB_IMAGES = [
+  labResearchOne,
+  labResearchTwo,
+  labResearchThree,
+  labResearchFour,
+  labResearchFive,
+]
 
 const HOMEPAGE_BRAND_REPLACEMENTS = [
   { pattern: /RemedacareHMS/g, replacement: "RemedacareHMIS" },
@@ -46,7 +55,7 @@ const DEFAULT_SECTIONS = {
     enabled: true,
     order: 1,
     heading: "Better learning. Smarter pharmacy. Stronger hospitals.",
-    subheading: "Learn and grow with Pharmacourse. Run your pharmacy with RemedacarePOS. Manage hospital operations with RemedacareHMIS.",
+    subheading: "Pharmacourse is for professional learning. RemedacarePOS is for pharmacy operations. RemedacareHMIS is for hospital management.",
     badge_text: "Three distinct products",
     primary_btn_text: "Explore Products",
     primary_btn_url: "#ecosystem",
@@ -57,8 +66,8 @@ const DEFAULT_SECTIONS = {
   ecosystem: {
     enabled: true,
     order: 2,
-    heading: "Choose what your team needs.",
-    subheading: "Learn. Run a pharmacy. Manage hospital care.",
+    heading: "Choose the product that fits your team.",
+    subheading: "Professional learning, pharmacy management, and hospital information are separate tools for different needs.",
     badge_text: "Our products",
   },
   pharmacyOS: {
@@ -163,7 +172,7 @@ function normalizeHomepageSection(sectionKey, sectionConfig) {
   }
 
   if (sectionKey === "hero") {
-    if (/^three distinct products:/i.test(normalized.heading || "") || /transform pharmacy operations|connected ecosystem|integrated suite|purpose-built tools for pharmacy learning and care delivery/i.test(normalized.heading || "")) {
+    if (/transform pharmacy operations|connected ecosystem|integrated suite|purpose-built tools for pharmacy learning and care delivery/i.test(normalized.heading || "")) {
       normalized.heading = DEFAULT_SECTIONS.hero.heading
     }
 
@@ -182,11 +191,13 @@ function normalizeHomepageSection(sectionKey, sectionConfig) {
   }
 
   if (sectionKey === "ecosystem") {
-    if (/^three distinct products:/i.test(normalized.heading || "") || /one company|connected products|three platforms/i.test(normalized.heading || "")) {
+    if (/one company|connected products|three platforms/i.test(normalized.heading || "")) {
       normalized.heading = DEFAULT_SECTIONS.ecosystem.heading
     }
 
-    normalized.subheading = DEFAULT_SECTIONS.ecosystem.subheading
+    if (/connected|work together|instead of disconnected/i.test(normalized.subheading || "")) {
+      normalized.subheading = DEFAULT_SECTIONS.ecosystem.subheading
+    }
 
     normalized.badge_text = DEFAULT_SECTIONS.ecosystem.badge_text
   }
@@ -249,20 +260,6 @@ function scrollToSnapItem(trackRef, index) {
   })
 }
 
-function handleCard3DPointerMove(event) {
-  if (event.pointerType !== "mouse") return
-  const bounds = event.currentTarget.getBoundingClientRect()
-  const horizontal = (event.clientX - bounds.left) / bounds.width - 0.5
-  const vertical = (event.clientY - bounds.top) / bounds.height - 0.5
-  event.currentTarget.style.setProperty("--card-tilt-x", `${(-vertical * 7).toFixed(2)}deg`)
-  event.currentTarget.style.setProperty("--card-tilt-y", `${(horizontal * 9).toFixed(2)}deg`)
-}
-
-function resetCard3DTilt(event) {
-  event.currentTarget.style.setProperty("--card-tilt-x", "0deg")
-  event.currentTarget.style.setProperty("--card-tilt-y", "0deg")
-}
-
 const AnimatedSection = ({ children, delay = 0 }) => {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: "-100px" })
@@ -277,579 +274,6 @@ const AnimatedSection = ({ children, delay = 0 }) => {
       }}
     >
       {children}
-    </div>
-  )
-}
-
-function KineticLetters({ text }) {
-  const words = text.split(" ")
-  let letterIndex = 0
-
-  return (
-    <span aria-hidden="true">
-      {words.map((word, wordIndex) => (
-        <Fragment key={`${word}-${wordIndex}`}>
-          {wordIndex > 0 && <span className="kinetic-heading-space"> </span>}
-          <span className="kinetic-heading-word" style={{ "--word-index": wordIndex }}>
-            {Array.from(word).map((character, index) => (
-              <span
-                key={`${character}-${index}`}
-                className="kinetic-heading-letter"
-                style={{ "--letter-index": letterIndex++ }}
-              >
-                {character}
-              </span>
-            ))}
-          </span>
-        </Fragment>
-      ))}
-    </span>
-  )
-}
-
-function KineticHeading({ as = "h2", children, className = "" }) {
-  const text = `${children ?? ""}`
-  const headingClass = `kinetic-heading ${className}`.trim()
-
-  if (as === "h1") {
-    return <h1 className={headingClass} aria-label={text}><KineticLetters text={text} /></h1>
-  }
-
-  return <h2 className={headingClass} aria-label={text}><KineticLetters text={text} /></h2>
-}
-
-function ScrollKineticHeading({ children, className = "" }) {
-  const headingRef = useRef(null)
-  const isInView = useInView(headingRef, { once: false, amount: 0.12 })
-  const text = `${children ?? ""}`
-  const headingClass = `kinetic-heading scroll-kinetic-heading ${isInView ? "is-visible" : ""} ${className}`.trim()
-
-  return (
-    <h2 ref={headingRef} className={headingClass} aria-label={text}>
-      <KineticLetters text={text} />
-    </h2>
-  )
-}
-
-function ScrollShowroom({ children, className = "" }) {
-  const showroomRef = useRef(null)
-  const isInView = useInView(showroomRef, { once: false, amount: 0.18 })
-  const showroomClass = `scroll-showroom ${className} ${isInView ? "is-visible" : ""}`.trim()
-
-  return <div ref={showroomRef} className={showroomClass}>{children}</div>
-}
-
-function Hero3DArt({ sharedScene = false }) {
-  const mountRef = useRef(null)
-  const [mode, setMode] = useState("learn")
-  const modeRef = useRef("learn")
-
-  useEffect(() => {
-    modeRef.current = mode
-  }, [mode])
-
-  useEffect(() => {
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    if (sharedScene || reducedMotion) return undefined
-
-    const timer = window.setInterval(() => {
-      if (document.visibilityState !== "visible") return
-      setMode((current) => {
-        const index = HERO_ART_MODES.indexOf(current)
-        return HERO_ART_MODES[(index + 1) % HERO_ART_MODES.length]
-      })
-    }, 5200)
-
-    return () => window.clearInterval(timer)
-  }, [sharedScene])
-
-  useEffect(() => {
-    const mount = mountRef.current
-    if (!mount) return undefined
-
-    let cancelled = false
-    let disposeScene
-
-    const initializeScene = async () => {
-      const THREE = await import("three")
-      if (cancelled) return
-
-      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
-      const coarsePointer = window.matchMedia("(pointer: coarse)").matches
-
-      const scene = new THREE.Scene()
-    scene.background = new THREE.Color(0xe7f4f0)
-    scene.fog = new THREE.Fog(0xe7f4f0, 10, 22)
-
-    const camera = new THREE.PerspectiveCamera(32, mount.clientWidth / mount.clientHeight, 0.1, 100)
-    camera.position.set(0, 2.1, 7.2)
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, coarsePointer ? 1.25 : 2))
-    renderer.setSize(mount.clientWidth, mount.clientHeight)
-    mount.appendChild(renderer.domElement)
-
-    const ambient = new THREE.HemisphereLight(0xffffff, 0xdbece6, 1.4)
-    const keyLight = new THREE.DirectionalLight(0xffffff, 1.6)
-    keyLight.position.set(3, 6, 5)
-    scene.add(ambient, keyLight)
-
-    const floor = new THREE.Mesh(
-      new THREE.CylinderGeometry(5.2, 5.6, 0.5, 48),
-      new THREE.MeshStandardMaterial({ color: 0xe5f4ef, roughness: 0.96, metalness: 0.05 })
-    )
-    floor.position.y = -2.35
-    floor.visible = false
-    scene.add(floor)
-
-    const shelfBack = new THREE.Mesh(
-      new THREE.BoxGeometry(3.8, 2.6, 0.24),
-      new THREE.MeshStandardMaterial({ color: 0xdfece7, roughness: 0.8 })
-    )
-    shelfBack.position.set(0, 0.3, -2.6)
-    shelfBack.visible = false
-    scene.add(shelfBack)
-
-    const body = new THREE.Group()
-    body.position.y = -0.15
-    scene.add(body)
-
-    const skinMaterial = new THREE.MeshStandardMaterial({ color: 0x8f5a3e, roughness: 0.8 })
-    const coatMaterial = new THREE.MeshStandardMaterial({ color: 0xf5f7f9, roughness: 0.9 })
-    const shirtMaterial = new THREE.MeshStandardMaterial({ color: 0x9ebfe4, roughness: 0.7 })
-    const pantsMaterial = new THREE.MeshStandardMaterial({ color: 0x2e5d9e, roughness: 0.8 })
-    const hairMaterial = new THREE.MeshStandardMaterial({ color: 0x2d1f1a, roughness: 0.9 })
-    const labelMaterial = new THREE.MeshStandardMaterial({ color: 0x2c9d87, roughness: 0.7, metalness: 0.2 })
-    const capsuleMaterial = new THREE.MeshStandardMaterial({ color: 0xfd6a55, roughness: 0.5, metalness: 0.15 })
-    const metalMaterial = new THREE.MeshStandardMaterial({ color: 0xb5c6d4, roughness: 0.7, metalness: 0.6 })
-
-    const torso = new THREE.Mesh(new THREE.BoxGeometry(1.65, 1.8, 0.72), coatMaterial)
-    torso.position.y = 1.8
-    body.add(torso)
-
-    const shirt = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.15, 0.48), shirtMaterial)
-    shirt.position.set(0, 1.8, 0.18)
-    body.add(shirt)
-
-    const hips = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.7, 0.6), pantsMaterial)
-    hips.position.set(0, 0.8, 0)
-    body.add(hips)
-
-    const leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.38, 1.2, 0.42), pantsMaterial)
-    leftLeg.position.set(-0.27, -0.2, 0)
-    const rightLeg = leftLeg.clone()
-    rightLeg.position.x = 0.27
-    body.add(leftLeg, rightLeg)
-
-    const leftShoe = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.2, 0.7), new THREE.MeshStandardMaterial({ color: 0xf4e9d6, roughness: 0.9 }))
-    leftShoe.position.set(-0.27, -1.08, 0.12)
-    const rightShoe = leftShoe.clone()
-    rightShoe.position.x = 0.27
-    body.add(leftShoe, rightShoe)
-
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.56, 32, 32), skinMaterial)
-    head.position.set(0, 3.15, 0)
-    body.add(head)
-
-    const hair = new THREE.Mesh(new THREE.SphereGeometry(0.58, 24, 24), hairMaterial)
-    hair.position.set(0, 3.42, -0.04)
-    hair.scale.set(1.08, 0.85, 1.08)
-    body.add(hair)
-
-    const forehead = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.12, 0.72), hairMaterial)
-    forehead.position.set(0, 3.44, 0.25)
-    body.add(forehead)
-
-    const leftEye = new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 12), new THREE.MeshStandardMaterial({ color: 0x1a1a1a }))
-    leftEye.position.set(-0.16, 3.18, 0.46)
-    const rightEye = leftEye.clone()
-    rightEye.position.x = 0.16
-    body.add(leftEye, rightEye)
-
-    const smile = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.02, 8, 16, Math.PI), new THREE.MeshStandardMaterial({ color: 0xc36d7a }))
-    smile.rotation.z = Math.PI
-    smile.position.set(0, 2.98, 0.48)
-    body.add(smile)
-
-    const leftGlass = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.1, 0.08), new THREE.MeshStandardMaterial({ color: 0x2a374a, transparent: true, opacity: 0.8 }))
-    leftGlass.position.set(-0.18, 3.18, 0.52)
-    const rightGlass = leftGlass.clone()
-    rightGlass.position.x = 0.18
-    body.add(leftGlass, rightGlass)
-
-    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.24, 18), skinMaterial)
-    neck.position.set(0, 2.5, 0)
-    body.add(neck)
-
-    const coatCollar = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.18, 0.42), new THREE.MeshStandardMaterial({ color: 0xf0dfe5 }))
-    coatCollar.position.set(0, 2.32, 0.2)
-    body.add(coatCollar)
-
-    const leftArmPivot = new THREE.Group()
-    leftArmPivot.position.set(-1.02, 2.52, 0)
-    body.add(leftArmPivot)
-
-    const rightArmPivot = new THREE.Group()
-    rightArmPivot.position.set(1.02, 2.52, 0)
-    body.add(rightArmPivot)
-
-    const armGeometry = new THREE.CapsuleGeometry(0.17, 0.9, 6, 12)
-    const leftArm = new THREE.Mesh(armGeometry, skinMaterial)
-    leftArm.position.y = -0.55
-    leftArmPivot.add(leftArm)
-
-    const rightArm = new THREE.Mesh(armGeometry, skinMaterial)
-    rightArm.position.y = -0.55
-    rightArmPivot.add(rightArm)
-
-    const leftForearm = new THREE.Mesh(new THREE.CapsuleGeometry(0.14, 0.7, 5, 12), skinMaterial)
-    leftForearm.position.set(-0.12, -1.2, 0.12)
-    leftArmPivot.add(leftForearm)
-
-    const rightForearm = new THREE.Mesh(new THREE.CapsuleGeometry(0.14, 0.7, 5, 12), skinMaterial)
-    rightForearm.position.set(0.12, -1.2, 0.12)
-    rightArmPivot.add(rightForearm)
-
-    const stethoscope = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.02, 12, 36), metalMaterial)
-    stethoscope.rotation.x = Math.PI / 2
-    stethoscope.position.set(0, 2.2, 0.12)
-    body.add(stethoscope)
-
-    const stethoscopeTube = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 1.2, 12), metalMaterial)
-    stethoscopeTube.rotation.z = Math.PI / 2
-    stethoscopeTube.position.set(0.25, 1.42, 0.1)
-    body.add(stethoscopeTube)
-
-    const badge = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.22, 0.04), labelMaterial)
-    badge.position.set(0, 1.72, 0.39)
-    body.add(badge)
-
-    const clipboard = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.08, 0.06), new THREE.MeshStandardMaterial({ color: 0xf9fbff, roughness: 0.85 }))
-    clipboard.position.set(1.4, 1.6, 0.4)
-    clipboard.rotation.z = -0.4
-    clipboard.rotation.y = -0.4
-    clipboard.visible = false
-    body.add(clipboard)
-
-    const pillBottle = new THREE.Group()
-    const bottleBody = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.8, 20), new THREE.MeshStandardMaterial({ color: 0xf4a261, roughness: 0.6 }))
-    bottleBody.position.y = 0.55
-    const bottleCap = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.2, 18), new THREE.MeshStandardMaterial({ color: 0xe76f51, roughness: 0.8 }))
-    bottleCap.position.y = 1.1
-    const capsule = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.9, 18), capsuleMaterial)
-    capsule.rotation.z = Math.PI / 2
-    capsule.position.set(0.2, 0.6, -0.15)
-    pillBottle.add(bottleBody, bottleCap, capsule)
-    pillBottle.rotation.z = -0.4
-    pillBottle.position.set(1.4, 1.65, 0.3)
-    pillBottle.visible = false
-    body.add(pillBottle)
-
-    body.visible = false
-    const art = new THREE.Group()
-    art.position.set(0, 1.65, 0)
-    scene.add(art)
-
-    const coreMaterial = new THREE.MeshPhysicalMaterial({
-      color: 0x17a582,
-      roughness: 0.22,
-      metalness: 0.18,
-      clearcoat: 1,
-      clearcoatRoughness: 0.16,
-    })
-    const coralMaterial = new THREE.MeshPhysicalMaterial({ color: 0xff765e, roughness: 0.25, metalness: 0.12, clearcoat: 0.8 })
-    const goldMaterial = new THREE.MeshPhysicalMaterial({ color: 0xffc857, roughness: 0.25, metalness: 0.18, clearcoat: 0.8 })
-    const blueMaterial = new THREE.MeshPhysicalMaterial({ color: 0x528ad8, roughness: 0.24, metalness: 0.16, clearcoat: 0.8 })
-    const lineMaterial = new THREE.MeshBasicMaterial({ color: 0x4b9e91, transparent: true, opacity: 0.56 })
-
-    const centralForm = new THREE.Mesh(new THREE.TorusKnotGeometry(0.78, 0.25, 180, 24, 2, 3), coreMaterial)
-    centralForm.rotation.set(0.25, -0.4, 0.2)
-    art.add(centralForm)
-
-    const nucleus = new THREE.Mesh(new THREE.IcosahedronGeometry(0.42, 2), new THREE.MeshPhysicalMaterial({
-      color: 0xf5fff9,
-      roughness: 0.08,
-      metalness: 0.12,
-      transmission: 0.35,
-      thickness: 0.8,
-      clearcoat: 1,
-    }))
-    art.add(nucleus)
-
-    const orbitRings = []
-    ;[
-      { radius: 1.42, color: 0x28a78f, rotation: [0.3, 0.35, 0.1] },
-      { radius: 1.72, color: 0xf4b84b, rotation: [1.25, -0.42, 0.55] },
-      { radius: 1.15, color: 0xe76f5a, rotation: [0.72, 1.05, -0.6] },
-    ].forEach(({ radius, color, rotation }) => {
-      const ring = new THREE.Mesh(
-        new THREE.TorusGeometry(radius, 0.018, 12, 128),
-        new THREE.MeshStandardMaterial({ color, roughness: 0.32, metalness: 0.45, transparent: true, opacity: 0.82 })
-      )
-      ring.rotation.set(...rotation)
-      art.add(ring)
-      orbitRings.push(ring)
-    })
-
-    const atomPositions = [
-      new THREE.Vector3(-1.6, 0.62, 0.2),
-      new THREE.Vector3(1.48, 0.88, -0.15),
-      new THREE.Vector3(0.2, -1.48, 0.55),
-      new THREE.Vector3(-1.05, -0.9, -0.45),
-      new THREE.Vector3(1.18, -0.92, 0.25),
-    ]
-    const atomMaterials = [coralMaterial, goldMaterial, blueMaterial, coreMaterial, coralMaterial]
-    const atoms = atomPositions.map((position, index) => {
-      const atom = new THREE.Mesh(new THREE.SphereGeometry(index === 2 ? 0.28 : 0.2, 32, 24), atomMaterials[index])
-      atom.position.copy(position)
-      art.add(atom)
-      return atom
-    })
-
-    ;[
-      [0, 1], [0, 3], [1, 4], [2, 3], [2, 4], [0, 2],
-    ].forEach(([start, end], index) => {
-      const from = atomPositions[start]
-      const to = atomPositions[end]
-      const midpoint = from.clone().add(to).multiplyScalar(0.5)
-      midpoint.z += index % 2 ? 0.55 : -0.55
-      const curve = new THREE.QuadraticBezierCurve3(from, midpoint, to)
-      const line = new THREE.Mesh(new THREE.TubeGeometry(curve, 32, 0.014, 8, false), lineMaterial)
-      art.add(line)
-    })
-
-    const capsuleForms = [
-      { position: [-1.78, -0.18, 0.45], color: coralMaterial, rotation: [0.35, 0.2, -0.7] },
-      { position: [1.82, -0.1, -0.3], color: blueMaterial, rotation: [0.25, -0.4, 0.6] },
-      { position: [0.04, 1.82, -0.2], color: goldMaterial, rotation: [1.1, 0.3, 0.15] },
-    ].map(({ position, color, rotation }) => {
-      const capsuleForm = new THREE.Mesh(new THREE.CapsuleGeometry(0.17, 0.62, 8, 20), color)
-      capsuleForm.position.set(...position)
-      capsuleForm.rotation.set(...rotation)
-      art.add(capsuleForm)
-      return capsuleForm
-    })
-
-    const halo = new THREE.Mesh(
-      new THREE.TorusGeometry(2.15, 0.008, 8, 160),
-      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.45 })
-    )
-    halo.rotation.set(0.2, 0.1, 0.45)
-    art.add(halo)
-
-    const pointLight = new THREE.PointLight(0x63d9b4, 20, 8)
-    pointLight.position.set(-2.5, 2.4, 2.5)
-    scene.add(pointLight)
-    const warmLight = new THREE.PointLight(0xffa279, 12, 7)
-    warmLight.position.set(2.5, -1.4, 2)
-    scene.add(warmLight)
-
-    const orbit = { yaw: 0.45, pitch: 0.18, distance: 7.2 }
-    const pointer = { x: 0, y: 0 }
-    const scrollProgress = { value: 0 }
-    const heroSection = mount.closest(".hero-section")
-    let pointerDown = false
-    let lastX = 0
-    let lastY = 0
-
-    const updateScrollProgress = () => {
-      if (!heroSection) return
-      scrollProgress.value = THREE.MathUtils.clamp(
-        -heroSection.getBoundingClientRect().top / (window.innerHeight * 0.8),
-        0,
-        1
-      )
-    }
-    window.addEventListener("scroll", updateScrollProgress, { passive: true })
-    updateScrollProgress()
-
-    function updateCamera() {
-      const yaw = orbit.yaw + pointer.x * 0.1
-      const pitch = THREE.MathUtils.clamp(orbit.pitch + pointer.y * 0.07, -0.75, 0.75)
-      const x = Math.sin(yaw) * Math.cos(pitch) * orbit.distance
-      const y = Math.sin(pitch) * orbit.distance + 1.7
-      const z = Math.cos(yaw) * Math.cos(pitch) * orbit.distance
-      camera.position.set(x, y, z)
-      camera.lookAt(0, 1.6, 0)
-    }
-
-    function updateArtwork(time) {
-      const motionScale = reducedMotion ? 0 : 1
-      const selectedMode = HERO_ART_MODES.indexOf(modeRef.current)
-      const modeColors = [0x17a582, 0x528ad8, 0xff765e]
-      const seconds = time * 0.001
-      const scrollTurn = reducedMotion ? 0 : scrollProgress.value * Math.PI * 0.85
-      art.rotation.y = Math.sin(seconds * 0.28) * 0.13 * motionScale + selectedMode * 0.7 + scrollTurn
-      art.rotation.x = Math.sin(seconds * 0.36) * 0.06 * motionScale + scrollProgress.value * 0.52 * motionScale
-      art.position.y = 1.65 + Math.sin(seconds * 0.8) * 0.1 * motionScale
-      centralForm.rotation.x += 0.002 * motionScale
-      centralForm.rotation.z -= 0.0025 * motionScale
-      centralForm.scale.setScalar(1 - scrollProgress.value * 0.1 * motionScale + Math.sin(seconds * 1.8) * 0.035 * motionScale)
-      coreMaterial.color.setHex(modeColors[selectedMode] || modeColors[0])
-      orbitRings.forEach((ring, index) => {
-        ring.rotation.z += (index % 2 ? 0.0016 : -0.0012) * motionScale
-      })
-      atoms.forEach((atom, index) => {
-        atom.position.y = atomPositions[index].y + Math.sin(seconds * 1.2 + index) * 0.12 * motionScale
-      })
-      capsuleForms.forEach((capsuleForm, index) => {
-        capsuleForm.rotation.y += (index % 2 ? 0.003 : -0.002) * motionScale
-      })
-      pointLight.color.setHex(modeColors[selectedMode] || modeColors[0])
-    }
-
-    const handlePointerDown = (event) => {
-      pointerDown = true
-      lastX = event.clientX
-      lastY = event.clientY
-      renderer.domElement.setPointerCapture(event.pointerId)
-    }
-
-    const handlePointerMove = (event) => {
-      const bounds = renderer.domElement.getBoundingClientRect()
-      pointer.x = THREE.MathUtils.clamp(((event.clientX - bounds.left) / bounds.width - 0.5) * 2, -1, 1)
-      pointer.y = THREE.MathUtils.clamp(((event.clientY - bounds.top) / bounds.height - 0.5) * 2, -1, 1)
-      if (!pointerDown) return
-      const deltaX = (event.clientX - lastX) * 0.006
-      const deltaY = (event.clientY - lastY) * 0.004
-      orbit.yaw -= deltaX
-      orbit.pitch = THREE.MathUtils.clamp(orbit.pitch - deltaY, -0.75, 0.75)
-      lastX = event.clientX
-      lastY = event.clientY
-    }
-
-    const handlePointerUp = (event) => {
-      pointerDown = false
-      if (renderer.domElement.hasPointerCapture(event.pointerId)) {
-        renderer.domElement.releasePointerCapture(event.pointerId)
-      }
-    }
-
-    const handlePointerLeave = () => {
-      pointer.x = 0
-      pointer.y = 0
-      pointerDown = false
-    }
-
-    const handleWheel = (event) => {
-      if (!event.ctrlKey) return
-      event.preventDefault()
-      orbit.distance = THREE.MathUtils.clamp(orbit.distance + event.deltaY * 0.008, 5.5, 11.5)
-    }
-
-    const handleClick = () => {
-      setMode((current) => {
-        const index = HERO_ART_MODES.indexOf(current)
-        return HERO_ART_MODES[(index + 1) % HERO_ART_MODES.length]
-      })
-    }
-
-    renderer.domElement.addEventListener("pointerdown", handlePointerDown)
-    renderer.domElement.addEventListener("pointermove", handlePointerMove)
-    renderer.domElement.addEventListener("pointerup", handlePointerUp)
-    renderer.domElement.addEventListener("pointerleave", handlePointerLeave)
-    renderer.domElement.addEventListener("wheel", handleWheel, { passive: false })
-    renderer.domElement.addEventListener("click", handleClick)
-
-    let frameId = 0
-    let isIntersecting = false
-
-    const renderFrame = (time) => {
-      frameId = 0
-      if (cancelled || !isIntersecting || document.hidden) return
-      updateCamera()
-      updateArtwork(time)
-      renderer.render(scene, camera)
-      frameId = requestAnimationFrame(renderFrame)
-    }
-
-    const startRendering = () => {
-      if (!cancelled && isIntersecting && !document.hidden && !frameId) {
-        frameId = requestAnimationFrame(renderFrame)
-      }
-    }
-
-    const stopRendering = () => {
-      if (!frameId) return
-      cancelAnimationFrame(frameId)
-      frameId = 0
-    }
-
-    const observer = new IntersectionObserver(([entry]) => {
-      isIntersecting = Boolean(entry?.isIntersecting)
-      if (isIntersecting) startRendering()
-      else stopRendering()
-    }, { threshold: 0.12, rootMargin: "160px 0px" })
-    observer.observe(mount)
-
-    const visibilityHandler = () => {
-      if (document.hidden) stopRendering()
-      else startRendering()
-    }
-    document.addEventListener("visibilitychange", visibilityHandler)
-
-    const resizeObserver = new ResizeObserver(() => {
-      const width = mount.clientWidth || 420
-      const height = mount.clientHeight || 480
-      camera.aspect = width / height
-      camera.updateProjectionMatrix()
-      renderer.setSize(width, height, false)
-    })
-    resizeObserver.observe(mount)
-
-    disposeScene = () => {
-      cancelled = true
-      stopRendering()
-      observer.disconnect()
-      resizeObserver.disconnect()
-      document.removeEventListener("visibilitychange", visibilityHandler)
-      window.removeEventListener("scroll", updateScrollProgress)
-      renderer.domElement.removeEventListener("pointerdown", handlePointerDown)
-      renderer.domElement.removeEventListener("pointermove", handlePointerMove)
-      renderer.domElement.removeEventListener("pointerup", handlePointerUp)
-      renderer.domElement.removeEventListener("pointerleave", handlePointerLeave)
-      renderer.domElement.removeEventListener("wheel", handleWheel)
-      renderer.domElement.removeEventListener("click", handleClick)
-      if (renderer.domElement.parentNode === mount) mount.removeChild(renderer.domElement)
-      scene.traverse((child) => {
-        child.geometry?.dispose()
-        if (Array.isArray(child.material)) child.material.forEach((material) => material.dispose())
-        else child.material?.dispose()
-      })
-      renderer.dispose()
-      renderer.forceContextLoss()
-    }
-
-    }
-
-    initializeScene().catch((error) => console.error("Failed to initialize homepage 3D art:", error))
-    return () => {
-      cancelled = true
-      disposeScene?.()
-    }
-  }, [])
-
-  if (sharedScene) return null
-
-  return (
-    <div className="hero-3d-shell">
-      <div ref={mountRef} className="hero-3d-canvas" aria-label="Interactive three-dimensional healthcare molecular artwork" />
-      <div className="hero-3d-controls">
-        {[
-          { key: "learn", label: "Learn" },
-          { key: "practice", label: "Practice" },
-          { key: "care", label: "Care" },
-        ].map((item) => (
-          <button
-            key={item.key}
-            type="button"
-            className={mode === item.key ? "active" : ""}
-            onClick={() => setMode(item.key)}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
     </div>
   )
 }
@@ -994,11 +418,7 @@ const ProductMockup = ({ type, videoUrl, imageSrc, imageAlt }) => {
 }
 
 export default function Home() {
-  useHomeInteractions()
-
   const [courses, setCourses] = useState([])
-  const [activeCourseArtifact, setActiveCourseArtifact] = useState(0)
-  const [capsuleBurst, setCapsuleBurst] = useState(0)
   const [coursesError, setCoursesError] = useState(false)
   const [testimonials, setTestimonials] = useState([])
   const [testimonialsError, setTestimonialsError] = useState(false)
@@ -1053,7 +473,7 @@ export default function Home() {
           .select("*")
           .eq("is_published", true)
           .order("created_at", { ascending: false })
-          .limit(4)
+          .limit(5)
 
         if (courseLoadError) {
           console.error("Failed to load homepage courses:", courseLoadError)
@@ -1067,7 +487,7 @@ export default function Home() {
           .select("*")
           .eq("is_published", true)
           .order("published_at", { ascending: false })
-          .limit(3)
+          .limit(5)
 
         if (blogLoadError) {
           console.error("Failed to load homepage blog posts:", blogLoadError)
@@ -1104,10 +524,9 @@ export default function Home() {
     .sort((a, b) => (a[1].order || 999) - (b[1].order || 999))
 
   useEffect(() => {
-    const nodes = [
-      ...sortedSections.map(([key]) => document.getElementById(key)),
-      document.getElementById("three-products-scroll"),
-    ].filter(Boolean)
+    const nodes = sortedSections
+      .map(([key]) => document.getElementById(key))
+      .filter(Boolean)
 
     if (nodes.length === 0) return undefined
 
@@ -1151,9 +570,10 @@ export default function Home() {
     scrollToSnapItem(blogTrackRef, index)
   }
 
+  if (loading) return <div className="home-loading">Loading...</div>
+
   return (
     <div className="home">
-      <HomepageScrollExperience />
       <SEO
         title="Pharmacourse | RemedacarePOS & RemedacareHMIS Kenya"
         description="Learn with Pharmacourse, simplify pharmacy operations with RemedacarePOS, and connect hospital workflows with RemedacareHMIS."
@@ -1178,14 +598,6 @@ export default function Home() {
             title={key}
           />
         ))}
-        {sections.ecosystem?.enabled && (
-          <button
-            className={`section-dot ${activeSection === "three-products-scroll" ? "active" : ""}`}
-            onClick={() => document.getElementById("three-products-scroll")?.scrollIntoView({ behavior: "smooth" })}
-            title="3D product experience"
-            aria-label="Go to 3D product experience"
-          />
-        )}
       </div>
 
       {sortedSections.map(([key, config]) => {
@@ -1196,23 +608,29 @@ export default function Home() {
                 <section id="hero" className="hero-section">
                   <div className="container">
                     <div className="hero-content-top">
-                      <div className="hero-3d-layout">
-                        <div className="hero-copy-panel">
-                          {config.badge_text && <span className="hero-badge">{config.badge_text}</span>}
-                          <KineticHeading as="h1">{config.heading || DEFAULT_SECTIONS.hero.heading}</KineticHeading>
-                          <p>{config.subheading || ""}</p>
+                      <div className="hero-lab-slideshow" aria-hidden="true">
+                        {HERO_LAB_IMAGES.map((image, index) => (
+                          <div
+                            key={image}
+                            className="hero-lab-slide"
+                            style={{
+                              backgroundImage: `url("${image}")`,
+                              animationDelay: `${index * -7}s`,
+                            }}
+                          />
+                        ))}
+                      </div>
+                      {config.badge_text && <span className="hero-badge">{config.badge_text}</span>}
+                      <h1>{config.heading || DEFAULT_SECTIONS.hero.heading}</h1>
+                      <p>{config.subheading || ""}</p>
 
-                          <div className="hero-actions">
-                            <Link to="/courses" className="btn-primary">
-                              Explore Pharmacourse <ChevronRight size={17} />
-                            </Link>
-                            <a href="#ecosystem" className="hero-text-link">
-                              Meet the products <span aria-hidden="true">↓</span>
-                            </a>
-                          </div>
-                        </div>
-
-                        <Hero3DArt />
+                      <div className="hero-actions">
+                        <Link to="/courses" className="btn-primary">
+                          Explore Pharmacourse <ChevronRight size={17} />
+                        </Link>
+                        <a href="#ecosystem" className="hero-text-link">
+                          Meet the products <span aria-hidden="true">↓</span>
+                        </a>
                       </div>
                     </div>
                   </div>
@@ -1222,14 +640,58 @@ export default function Home() {
 
           case "ecosystem":
             return (
-              <Fragment key={key}>
-                <AnimatedSection delay={0.1}>
-                  <ProductShowroom3D badge={config.badge_text} subheading={config.subheading}>
-                    <ScrollKineticHeading>{config.heading || "Choose what your team needs."}</ScrollKineticHeading>
-                  </ProductShowroom3D>
-                </AnimatedSection>
-                <ThreeProductScroll />
-              </Fragment>
+              <AnimatedSection key={key} delay={0.1}>
+                <section id="ecosystem" className="ecosystem-section">
+                  <div className="container">
+                    <div className="section-header">
+                      {config.badge_text && <span className="section-badge">{config.badge_text}</span>}
+                      <h2>{config.heading || "Choose the product that fits your team."}</h2>
+                      {config.subheading && <p>{config.subheading}</p>}
+                    </div>
+
+                    <div className="platform-grid">
+                      <article className="platform-card platform-card-learning">
+                        <div className="platform-card-topline">
+                          <span className="platform-index">01 / LEARN</span>
+                          <img src="/favicon.svg" alt="" className="platform-mark" />
+                        </div>
+                        <div className="platform-card-copy">
+                          <p className="platform-kicker">Professional development</p>
+                          <h3>Pharmacourse</h3>
+                          <p>Practical CPD courses, clinical case simulations, and certificates designed for pharmacy professionals.</p>
+                        </div>
+                        <Link to="/courses" className="platform-link">Explore courses <ChevronRight size={16} /></Link>
+                      </article>
+
+                      <article className="platform-card platform-card-pos">
+                        <div className="platform-card-topline">
+                          <span className="platform-index">02 / OPERATE</span>
+                          <img src={remedacareposMark} alt="" className="platform-mark" />
+                        </div>
+                        <div className="platform-card-copy">
+                          <p className="platform-kicker">Pharmacy operations</p>
+                          <h3>RemedacarePOS</h3>
+                          <p>Dispensing, inventory, patient requests, claims, and branch operations for pharmacies.</p>
+                        </div>
+                        <Link to="/remedacarepos" className="platform-link">Explore RemedacarePOS <ChevronRight size={16} /></Link>
+                      </article>
+
+                      <article className="platform-card platform-card-hmis">
+                        <div className="platform-card-topline">
+                          <span className="platform-index">03 / MANAGE CARE</span>
+                          <img src={remedacarehmisMark} alt="" className="platform-mark" />
+                        </div>
+                        <div className="platform-card-copy">
+                          <p className="platform-kicker">Hospital management</p>
+                          <h3>RemedacareHMIS</h3>
+                          <p>Patient records, clinical departments, reporting, finance, and hospital operations in one HMIS.</p>
+                        </div>
+                        <Link to="/remedacarehmis" className="platform-link">Explore RemedacareHMIS <ChevronRight size={16} /></Link>
+                      </article>
+                    </div>
+                  </div>
+                </section>
+              </AnimatedSection>
             )
 
           case "pharmacyOS":
@@ -1240,50 +702,17 @@ export default function Home() {
                     <div className="product-grid reverse">
                       <div className="product-heading">
                         {config.badge_text && <span className="section-badge">{config.badge_text}</span>}
-                        <ScrollKineticHeading>{config.heading || "Everything your pharmacy needs. In one desktop app."}</ScrollKineticHeading>
+                        <h2>{config.heading || "Everything your pharmacy needs. In one desktop app."}</h2>
                         {config.subheading && <p>{config.subheading}</p>}
                       </div>
 
-                      <div className="product-visual product-visual-pos" onPointerMove={handleCard3DPointerMove} onPointerLeave={resetCard3DTilt}>
-                        <div className="pos-3d-scene">
-                          <div className="pos-terminal">
-                            <div className="pos-terminal-frame">
-                              <div className="pos-terminal-screen">
-                                <ProductMockup
-                                  type="pharmacyOS"
-                                  videoUrl={config.video_url}
-                                  imageSrc={config.image_url || pharmacyosDashboard}
-                                  imageAlt="RemedacarePOS dashboard showing branch overview, revenue, inventory insights and recent sales"
-                                />
-                              </div>
-                              <div className="pos-terminal-chin">
-                                <span>RemedacarePOS</span>
-                                <i aria-hidden="true" />
-                              </div>
-                            </div>
-                            <div className="pos-terminal-neck" />
-                            <div className="pos-terminal-base" />
-                          </div>
-
-                          <div className="pos-scene-status" aria-label="RemedacarePOS integrations">
-                            <div className="pos-status-card pos-status-payments" style={{ "--feature-index": 0 }}>
-                              <CreditCard size={17} aria-hidden="true" />
-                              <span><small>PAYMENTS</small><strong>M-Pesa ready</strong></span>
-                            </div>
-                            <div className="pos-status-card pos-status-stock" style={{ "--feature-index": 1 }}>
-                              <Package size={17} aria-hidden="true" />
-                              <span><small>INVENTORY</small><strong>Branch stock</strong></span>
-                            </div>
-                            <div className="pos-status-card pos-status-alerts" style={{ "--feature-index": 2 }}>
-                              <AlertTriangle size={17} aria-hidden="true" />
-                              <span><small>CONTROL</small><strong>Expiry alerts</strong></span>
-                            </div>
-                            <div className="pos-status-card pos-status-claims" style={{ "--feature-index": 3 }}>
-                              <Building2 size={17} aria-hidden="true" />
-                              <span><small>COMPLIANCE</small><strong>SHA · eTIMS · PPB</strong></span>
-                            </div>
-                          </div>
-                        </div>
+                      <div className="product-visual">
+                        <ProductMockup
+                          type="pharmacyOS"
+                          videoUrl={config.video_url}
+                          imageSrc={config.image_url || pharmacyosDashboard}
+                          imageAlt="RemedacarePOS dashboard showing branch overview, revenue, inventory insights and recent sales"
+                        />
                       </div>
 
                       <div className="product-features">
@@ -1294,7 +723,7 @@ export default function Home() {
                             { icon: AlertTriangle, text: "Telepharmacy and patient request workflow" },
                             { icon: CreditCard, text: "SHA, insurance, and compliance reporting" },
                           ].map((feature, idx) => (
-                            <div key={idx} className="feature-item" style={{ "--feature-index": idx }}>
+                            <div key={idx} className="feature-item">
                               <feature.icon size={20} />
                               <span>{feature.text}</span>
                             </div>
@@ -1316,36 +745,32 @@ export default function Home() {
               <AnimatedSection key={key} delay={0.3}>
                 <section id="remedacareOS" className="product-section alt">
                   <div className="container">
-                    <div className="hmis-showcase">
-                      <div className="hmis-visual-wrap" onPointerMove={handleCard3DPointerMove} onPointerLeave={resetCard3DTilt}>
-                        <div className="hmis-monitor-shell">
-                          <div className="hmis-monitor-bezel">
-                            <ProductMockup
-                              type="remedacareOS"
-                              videoUrl={config.video_url}
-                              imageSrc={config.image_url || remedacareDashboard}
-                              imageAlt="RemedacareHMIS dashboard showing patient, admissions, finance and pharmacy workflow panels"
-                            />
-                          </div>
-                          <div className="hmis-monitor-stand" aria-hidden="true" />
-                          <div className="hmis-monitor-base" aria-hidden="true" />
-                        </div>
+                    <div className="product-grid">
+                      <div className="product-heading">
+                        {config.badge_text && <span className="section-badge">{config.badge_text}</span>}
+                        <h2>{config.heading || "A complete hospital information system."}</h2>
+                        {config.subheading && <p>{config.subheading}</p>}
                       </div>
 
-                      <div className="hmis-story-card">
-                        {config.badge_text && <span className="section-badge">{config.badge_text}</span>}
-                        <ScrollKineticHeading>{config.heading || "A complete hospital information system."}</ScrollKineticHeading>
-                        {config.subheading && <p>{config.subheading}</p>}
+                      <div className="product-visual">
+                        <ProductMockup
+                          type="remedacareOS"
+                          videoUrl={config.video_url}
+                          imageSrc={config.image_url || remedacareDashboard}
+                          imageAlt="RemedacareHMIS dashboard showing patient, admissions, finance and pharmacy workflow panels"
+                        />
+                      </div>
 
-                        <div className="hmis-list">
+                      <div className="product-features">
+                        <div className="feature-list">
                           {[
                             { icon: ClipboardList, text: "Care pathways and chronic disease follow-up" },
                             { icon: BarChart3, text: "Finance, claims, and executive visibility" },
                             { icon: Users, text: "Antibiogram, AMS, and clinical decision support" },
                             { icon: Link2, text: "Seamless RemedacarePOS integration" },
                           ].map((feature, idx) => (
-                            <div key={idx} className="hmis-list-item" style={{ "--feature-index": idx }}>
-                              <feature.icon size={18} />
+                            <div key={idx} className="feature-item">
+                              <feature.icon size={20} />
                               <span>{feature.text}</span>
                             </div>
                           ))}
@@ -1368,25 +793,7 @@ export default function Home() {
                   <div className="container">
                     <div className="section-header">
                       {config.badge_text && <span className="section-badge">{config.badge_text}</span>}
-                      <KineticHeading>{config.heading || "Accelerate your career with practical skills"}</KineticHeading>
-                    </div>
-
-                    <div className="learning-scene tilt-scene" aria-hidden="true" onPointerMove={handleCard3DPointerMove} onPointerLeave={resetCard3DTilt}>
-                      <div className="learning-core">
-                        <span className="learning-core-glow" />
-                        <span className="learning-core-cross" />
-                        <b>CPD</b>
-                        <small>LEARN · APPLY · GROW</small>
-                      </div>
-                      <span className="learning-signal learning-signal-one" />
-                      <span className="learning-signal learning-signal-two" />
-                      <span className="learning-signal learning-signal-three" />
-                      <div className="learning-book"><span /><span /><i /></div>
-                      <div className="learning-certificate"><Award size={28} /><i /><i /><b>CPD</b></div>
-                      <div className="learning-pdf learning-pdf-one"><i /><i /><i /></div>
-                      <div className="learning-pdf learning-pdf-two"><i /><i /><i /></div>
-                      <span className="learning-orbit learning-orbit-one" />
-                      <span className="learning-orbit learning-orbit-two" />
+                      <h2>{config.heading || "Accelerate your career with practical skills"}</h2>
                     </div>
 
                     <div className="features-grid">
@@ -1395,12 +802,7 @@ export default function Home() {
                         { icon: Download, title: "Downloadable Resources", desc: "Clinical notes and reference materials included." },
                         { icon: Award, title: "CPD Certificates", desc: "Earn certificates for your professional portfolio." },
                       ].map((feature, idx) => (
-                        <div
-                          key={idx}
-                          className="feature-card"
-                          onPointerMove={handleCard3DPointerMove}
-                          onPointerLeave={resetCard3DTilt}
-                        >
+                        <div key={idx} className="feature-card">
                           <feature.icon size={24} />
                           <h3>{feature.title}</h3>
                           <p>{feature.desc}</p>
@@ -1420,37 +822,7 @@ export default function Home() {
                     <div className="container">
                       <div className="section-header">
                         {config.badge_text && <span className="section-badge">{config.badge_text}</span>}
-                        <KineticHeading>{config.heading || "Courses built for real-world practice"}</KineticHeading>
-                      </div>
-
-                      <div className="course-artifact-stage tilt-scene" onPointerMove={handleCard3DPointerMove} onPointerLeave={resetCard3DTilt}>
-                        <div className={`course-artifact course-artifact-${activeCourseArtifact}`} aria-hidden="true">
-                          <span className="artifact-orbit artifact-orbit-one" />
-                          <span className="artifact-orbit artifact-orbit-two" />
-                          <span className="artifact-core" />
-                          <span className="artifact-node artifact-node-one" />
-                          <span className="artifact-node artifact-node-two" />
-                          <span className="artifact-node artifact-node-three" />
-                          <span className="artifact-leaf" />
-                          <span className="artifact-podium"><i /><i /><i /></span>
-                          <span className="artifact-helix"><i /><i /><i /><i /><i /><i /></span>
-                        </div>
-                        <div className="course-artifact-controls" role="group" aria-label="Explore course themes">
-                          {["Molecule", "Botanical", "Practice", "DNA"].map((label, index) => (
-                            <button
-                              key={label}
-                              type="button"
-                              className={activeCourseArtifact === index ? "active" : ""}
-                              aria-pressed={activeCourseArtifact === index}
-                              onClick={() => {
-                                setActiveCourseArtifact(index)
-                                window.dispatchEvent(new CustomEvent("homepage-course-artifact", { detail: index }))
-                              }}
-                            >
-                              {label}
-                            </button>
-                          ))}
-                        </div>
+                        <h2>{config.heading || "Courses built for real-world practice"}</h2>
                       </div>
 
                       <div className="mobile-carousel-shell">
@@ -1464,13 +836,7 @@ export default function Home() {
                         >
                           {courses.length > 0 ? (
                             courses.map((course) => (
-                              <Link
-                                key={course.id}
-                                to={`/courses/${course.slug || course.id}`}
-                                className="course-card"
-                                onPointerMove={handleCard3DPointerMove}
-                                onPointerLeave={resetCard3DTilt}
-                              >
+                              <Link key={course.id} to={`/courses/${course.slug || course.id}`} className="course-card">
                                 <div className="course-thumb">
                                   {course.image_url ? (
                                     <img src={course.image_url} alt={course.title} className="course-thumb-img" />
@@ -1496,10 +862,6 @@ export default function Home() {
                           ) : coursesError ? (
                             <div className="empty-state">
                               <p>We could not load courses right now. <Link to="/courses">Browse all courses</Link>.</p>
-                            </div>
-                          ) : loading ? (
-                            <div className="empty-state">
-                              <p>Loading courses...</p>
                             </div>
                           ) : (
                             <div className="empty-state">
@@ -1558,16 +920,8 @@ export default function Home() {
                     <div className="container">
                       <div className="section-header">
                         <span className="section-badge">Latest from the Blog</span>
-                        <KineticHeading>Practical ideas for pharmacy teams</KineticHeading>
-                        <p>Insights on clinical practice, technology, and healthcare operations.</p>
-                      </div>
-
-                      <div className="blog-story-scene tilt-scene" aria-hidden="true" onPointerMove={handleCard3DPointerMove} onPointerLeave={resetCard3DTilt}>
-                        <div className="blog-page blog-page-back"><i /><i /><i /><i /></div>
-                        <div className="blog-page blog-page-mid"><i /><i /><i /><i /></div>
-                        <div className="blog-page blog-page-front"><i /><i /><i /><i /></div>
-                        <div className="blog-iv"><span /><i /><b /></div>
-                        <span className="blog-story-glint" />
+                        <h2>Fresh ideas for pharmacy practice and operations</h2>
+                        <p>Read quick, practical articles from the Pharmacourse team and contributors.</p>
                       </div>
 
                       <div className="mobile-carousel-shell">
@@ -1584,13 +938,7 @@ export default function Home() {
                               const categoryLabel = getBlogCategoryLabel(post.category)
 
                               return (
-                                <Link
-                                  key={post.id}
-                                  to={`/blog/${post.slug}`}
-                                  className="blog-preview-card"
-                                  onPointerMove={handleCard3DPointerMove}
-                                  onPointerLeave={resetCard3DTilt}
-                                >
+                                <Link key={post.id} to={`/blog/${post.slug}`} className="blog-preview-card">
                                   {post.cover_image_url ? (
                                     <img src={post.cover_image_url} alt={post.title} className="blog-preview-image" />
                                   ) : (
@@ -1625,10 +973,6 @@ export default function Home() {
                           ) : postsError ? (
                             <div className="empty-state">
                               <p>We could not load articles right now. <Link to="/blog">Browse all articles</Link>.</p>
-                            </div>
-                          ) : loading ? (
-                            <div className="empty-state">
-                              <p>Loading articles...</p>
                             </div>
                           ) : (
                             <div className="empty-state">
@@ -1693,17 +1037,12 @@ export default function Home() {
                   <div className="container">
                     <div className="section-header">
                       {config.badge_text && <span className="section-badge">{config.badge_text}</span>}
-                      <KineticHeading>{config.heading || "Learners who finished the course"}</KineticHeading>
+                      <h2>{config.heading || "Learners who finished the course"}</h2>
                     </div>
 
                     <div className="testimonials-grid">
                       {testimonials.map((testimonial) => (
-                        <div
-                          key={testimonial.id}
-                          className="testimonial-card"
-                          onPointerMove={handleCard3DPointerMove}
-                          onPointerLeave={resetCard3DTilt}
-                        >
+                        <div key={testimonial.id} className="testimonial-card">
                           <div className="testimonial-rating" aria-label={`${testimonial.rating || 5} star rating`}>
                             {"★".repeat(Math.max(1, Math.min(5, testimonial.rating || 5)))}
                           </div>
@@ -1741,14 +1080,14 @@ export default function Home() {
                   <div className="container">
                     <div className="section-header">
                       {config.badge_text && <span className="section-badge">{config.badge_text}</span>}
-                      <KineticHeading>{config.heading || "Need help getting started?"}</KineticHeading>
+                      <h2>{config.heading || "Need help getting started?"}</h2>
                     </div>
 
                     <div className="faq-grid">
-                      <details className="faq-card" onToggle={(event) => window.dispatchEvent(new CustomEvent("homepage-faq-toggle", { detail: event.currentTarget.open }))} onPointerMove={handleCard3DPointerMove} onPointerLeave={resetCard3DTilt}><summary>How can I access the courses?</summary><p>Browse the course list, register, and enroll. Introductory lessons are easy to start, and certificate access opens once you finish.</p></details>
-                      <details className="faq-card" onToggle={(event) => window.dispatchEvent(new CustomEvent("homepage-faq-toggle", { detail: event.currentTarget.open }))} onPointerMove={handleCard3DPointerMove} onPointerLeave={resetCard3DTilt}><summary>What if I do not understand a topic?</summary><p>Every course includes downloadable resources and support notes so you can review concepts anytime.</p></details>
-                      <details className="faq-card" onToggle={(event) => window.dispatchEvent(new CustomEvent("homepage-faq-toggle", { detail: event.currentTarget.open }))} onPointerMove={handleCard3DPointerMove} onPointerLeave={resetCard3DTilt}><summary>Can I study at my own pace?</summary><p>Yes. Lessons are self-paced and available anytime so you can learn around your schedule.</p></details>
-                      <details className="faq-card" onToggle={(event) => window.dispatchEvent(new CustomEvent("homepage-faq-toggle", { detail: event.currentTarget.open }))} onPointerMove={handleCard3DPointerMove} onPointerLeave={resetCard3DTilt}><summary>Who teaches the courses?</summary><p>Courses are created by experienced pharmacy educators and industry professionals.</p></details>
+                      <div className="faq-card"><h3>How can I access the courses?</h3><p>Browse the course list, register, and enroll. Introductory lessons are easy to start, and certificate access opens once you finish.</p></div>
+                      <div className="faq-card"><h3>What if I do not understand a topic?</h3><p>Every course includes downloadable resources and support notes so you can review concepts anytime.</p></div>
+                      <div className="faq-card"><h3>Can I study at my own pace?</h3><p>Yes. Lessons are self-paced and available anytime so you can learn around your schedule.</p></div>
+                      <div className="faq-card"><h3>Who teaches the courses?</h3><p>Courses are created by experienced pharmacy educators and industry professionals.</p></div>
                     </div>
                   </div>
                 </section>
@@ -1761,19 +1100,7 @@ export default function Home() {
                 <section id="cta" className="cta-section">
                   <div className="container">
                     <div className="cta-content">
-                      <button
-                        type="button"
-                        className={`cta-capsule-orbit${capsuleBurst ? " is-bursting" : ""}`}
-                        aria-label="Open the capsule"
-                        onClick={() => {
-                          setCapsuleBurst((current) => current + 1)
-                          window.dispatchEvent(new Event("homepage-cta-burst"))
-                        }}
-                      >
-                        <span key={`capsule-${capsuleBurst}`} className="cta-capsule"><i /></span>
-                        <span key={`confetti-${capsuleBurst}`} className="cta-capsule-confetti" aria-hidden="true"><i /><i /><i /><i /><i /><i /></span>
-                      </button>
-                      <KineticHeading>{config.heading || "Ready to transform your pharmacy practice?"}</KineticHeading>
+                      <h2>{config.heading || "Ready to transform your pharmacy practice?"}</h2>
                       {config.subheading && <p>{config.subheading}</p>}
                       <div className="cta-buttons">
                         <Link to={config.primary_btn_url || "/register"} className="btn-primary">
