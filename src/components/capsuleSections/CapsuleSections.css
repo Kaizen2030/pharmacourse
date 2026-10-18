@@ -78,7 +78,7 @@
 .cs-faq-question:hover .cs-pill b, .cs-faq-question.is-active .cs-pill b { color: #bcefd1; }
 .cs-faq-plus { display: grid; place-items: center; width: 29px; height: 29px; flex: none; border: 1px solid rgba(15,110,86,.25); border-radius: 50%; color: var(--cs-green); font-size: 1.15rem; line-height: 1; }
 .cs-faq-answer { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .35s ease; }
-.cs-faq-answer p { overflow: hidden; margin: 0; padding: 0 3.25rem 0 1rem; color: #5a7066; font-size: .9rem; line-height: 1.6; }
+.cs-faq-list .cs-faq-answer p { overflow: hidden; width: min(100%, 68ch); max-width: none; margin: 0; padding: 0 3.25rem 0 1rem; color: #5a7066; font-size: .9rem; line-height: 1.65; }
 .cs-faq-answer.is-open { grid-template-rows: 1fr; }
 .cs-faq-answer.is-open p { padding-top: .7rem; }
 .cs-faq-art { position: relative; min-height: 440px; display: grid; place-items: center; transform: rotateX(calc(var(--my) * -4deg)) rotateY(calc(var(--mx) * 7deg)) translate3d(calc(var(--mx) * 8px), calc(var(--my) * 6px), 0); transform-style: preserve-3d; transition: transform .55s cubic-bezier(.2,.8,.2,1); }
@@ -111,7 +111,7 @@
   .cs-title { text-align: left; }
   .cs-title small { justify-self: start; }
   .cs-faq-question .cs-pill { font-size: .78rem; }
-  .cs-faq-answer p { padding-right: 0; }
+  .cs-faq-list .cs-faq-answer p { padding-right: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   .cs-capsule, .cs-stage-shadow, .cs-grains, .cs-grain, .cs-lines, .cs-svg--tall { animation: none; }
