@@ -17,6 +17,7 @@ import heroPymolRibbon from "../assets/hero-pymol-ribbon.png"
 import heroPymolDocking from "../assets/hero-pymol-docking.png"
 import heroFluorescenceCells from "../assets/hero-fluorescence-cells.jpg"
 import heroFutureLab from "../assets/hero-future-lab.svg"
+import heroMagnificMicroscope from "../assets/hero-magnific-microscope.png"
 import {
   BookOpen,
   Download,
@@ -642,6 +643,24 @@ export default function Home() {
                             loading={index === 0 ? "eager" : "lazy"}
                           />
                         ))}
+                      </div>
+                      <div className="hero-science-screen" aria-hidden="true">
+                        <div className="hero-screen-topline">
+                          <span>PHARMACOURSE / LAB VIEW</span>
+                          <span className="hero-screen-live"><i /> LIVE</span>
+                        </div>
+                        <div className="hero-screen-visual">
+                          <img src={heroMagnificMicroscope} alt="" />
+                          <span className="hero-screen-crosshair hero-screen-crosshair-one" />
+                          <span className="hero-screen-crosshair hero-screen-crosshair-two" />
+                          <span className="hero-screen-focus">CELL RESPONSE <b>01</b></span>
+                        </div>
+                        <div className="hero-screen-readouts">
+                          <div><span>01 / OBSERVE</span><strong>Microscopy</strong><em>Live sample view</em></div>
+                          <div><span>02 / INTERPRET</span><strong>Clinical evidence</strong><em>Signal mapped</em></div>
+                          <div><span>03 / APPLY</span><strong>Practice ready</strong><em>Decision support</em></div>
+                        </div>
+                        <div className="hero-screen-scanline" />
                       </div>
                       {config.badge_text && <span className="hero-badge">{config.badge_text}</span>}
                       <h1>{config.heading || DEFAULT_SECTIONS.hero.heading}</h1>
