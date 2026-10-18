@@ -4,6 +4,7 @@ import { supabase } from "../lib/supabaseClient"
 import { useInView } from "framer-motion"
 import SEO from "../components/SEO"
 import BlogEngagementStats from "../components/BlogEngagementStats"
+import CapsuleHero from "../components/capsuleHero/CapsuleHero"
 import { SITE_URL } from "../lib/siteConfig"
 import { formatBlogDate, getBlogCategoryLabel, getBlogCoverFallback, getBlogExcerpt } from "../lib/blogHelpers"
 import pharmacyosDashboard from "../assets/pharmacyos-dashboard.svg"
@@ -591,56 +592,10 @@ export default function Home() {
         switch (key) {
           case "hero":
             return (
-              <section id="hero" className="medical-hero-static">
-                <div className="medical-container">
-                  <div className="medical-capsule capsule-tl" aria-hidden="true">
-                    <svg viewBox="0 0 200 100" fill="none"><rect x="10" y="10" width="180" height="80" rx="40" fill="#d9e8f5" /><path d="M100 10C140 10 190 30 190 50C190 70 140 90 100 90V10Z" fill="#81c784" /><path d="M100 10C140 10 190 30 190 50C190 70 140 90 100 90" stroke="#66bb6a" strokeWidth="2" /><circle cx="60" cy="50" r="15" fill="#c8e6c9" opacity=".6" /></svg>
-                  </div>
-                  <div className="medical-capsule capsule-tr" aria-hidden="true">
-                    <svg viewBox="0 0 200 100" fill="none"><rect x="10" y="10" width="180" height="80" rx="40" fill="#d9e8f5" /><path d="M100 10C140 10 190 30 190 50C190 70 140 90 100 90V10Z" fill="#81c784" /><path d="M100 10C140 10 190 30 190 50C190 70 140 90 100 90" stroke="#66bb6a" strokeWidth="2" /></svg>
-                  </div>
-                  <div className="medical-capsule capsule-br" aria-hidden="true">
-                    <svg viewBox="0 0 200 100" fill="none"><rect x="10" y="10" width="180" height="80" rx="40" fill="#d9e8f5" /><path d="M100 10C140 10 190 30 190 50C190 70 140 90 100 90V10Z" fill="#81c784" /><path d="M100 10C140 10 190 30 190 50C190 70 140 90 100 90" stroke="#66bb6a" strokeWidth="2" /></svg>
-                  </div>
-
-                  <div className="medical-center-art" aria-hidden="true">
-                    <svg viewBox="0 0 400 400" fill="none">
-                      <path d="M200 50L280 100V200L200 250L120 200V100L200 50Z" stroke="#c8e6c9" strokeWidth="1" /><path d="M200 150L280 200V300L200 350L120 300V200L200 150Z" stroke="#c8e6c9" strokeWidth="1" />
-                      <path d="M200 320C180 240 200 180 200 80" stroke="#66bb6a" strokeWidth="4" strokeLinecap="round" /><path d="M200 280C160 270 140 240 140 240M200 220C240 210 260 180 260 180" stroke="#66bb6a" strokeWidth="3" strokeLinecap="round" />
-                      <path d="M140 240C110 200 140 190 140 190C160 210 160 230 140 240Z" fill="#81c784" /><path d="M260 180C290 140 260 130 260 130C240 150 240 170 260 180Z" fill="#81c784" /><path d="M200 140C160 120 160 90 160 90C200 100 200 120 200 140Z" fill="#81c784" /><path d="M200 160C240 140 240 110 240 110C200 120 200 140 200 160Z" fill="#81c784" />
-                      <circle cx="120" cy="150" r="2" fill="#a5d6a7" /><circle cx="280" cy="220" r="2" fill="#a5d6a7" /><circle cx="150" cy="300" r="2" fill="#a5d6a7" /><circle cx="260" cy="120" r="2" fill="#a5d6a7" />
-                    </svg>
-                  </div>
-
-                  <div className="medical-block block-1">
-                    <div className="medical-title"><span className="medical-icon">✚</span>01 / LEARN</div>
-                    <strong>Pharmacourse</strong>
-                    <p>CPD courses, clinical cases and certificates designed for pharmacy professionals.</p>
-                  </div>
-                  <div className="medical-block block-2">
-                    <div className="medical-title"><span className="medical-icon">⌁</span>02 / OPERATE</div>
-                    <strong>RemedacarePOS</strong>
-                    <p>Dispensing, inventory, claims and branch operations in one connected workflow.</p>
-                  </div>
-                  <div className="medical-block block-3">
-                    <div className="medical-title"><span className="medical-icon">▣</span>03 / MANAGE CARE</div>
-                    <strong>RemedacareHMIS</strong>
-                    <p>Patient records, departments, reporting and hospital operations in one system.</p>
-                  </div>
-                  <div className="medical-block block-4">
-                    <div className="medical-title"><span className="medical-icon">✦</span>04 / CONNECT</div>
-                    <strong>One care system</strong>
-                    <p>Learning, pharmacy operations and hospital management working together.</p>
-                  </div>
-                  <div className="medical-block block-5">
-                    <div className="medical-title"><span className="medical-icon">▥</span>05 / READY</div>
-                    <strong>Practice with confidence</strong>
-                    <p>Built for the decisions healthcare teams make every day.</p>
-                  </div>
-
-                  <div className="medical-logo-block"><h1>REMEDACARE<br /><span>CARE</span> <b>+</b></h1></div>
-                </div>
-              </section>
+              <CapsuleHero key={key}>
+                <h1>Remedacare<br /><span>CARE +</span></h1>
+                <p>Learning, pharmacy operations and hospital management connected for better care.</p>
+              </CapsuleHero>
             )
           case "ecosystem":
             return (
@@ -1146,5 +1101,6 @@ export default function Home() {
     </div>
   )
 }
+
 
 

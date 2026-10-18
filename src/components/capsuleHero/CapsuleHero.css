@@ -1,0 +1,251 @@
+.cap-hero {
+  --cap-ink: #12382d;
+  --cap-green: #3f9e48;
+  --cap-green-deep: #0f6e56;
+  position: relative;
+  isolation: isolate;
+  min-height: clamp(820px, calc(100svh - 76px), 920px);
+  overflow: hidden;
+  color: var(--cap-ink);
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 55%, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0) 70%),
+    linear-gradient(135deg, #f3faea 0%, #e3f1d3 48%, #d2e8c0 100%);
+}
+
+/* honeycomb grid, drifts slightly with the pointer */
+.cap-hex {
+  position: absolute;
+  inset: -4%;
+  z-index: 0;
+  opacity: 0.9;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='98' viewBox='0 0 28 49'%3E%3Cg fill-rule='evenodd'%3E%3Cpath d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.5V0h-2v6.35L0 12.69v2.3zm0 18.5L12.98 41v8h-2v-6.85L0 35.81v-2.3zM15 0v7.5L27.99 15H28v-2.31h-.01L17 6.35V0h-2zm0 49v-8l12.99-7.5H28v2.31h-.01L17 42.15V49h-2z' fill='%2358963c' fill-opacity='0.16'/%3E%3C/g%3E%3C/svg%3E");
+  -webkit-mask-image: radial-gradient(ellipse 80% 75% at 50% 50%, #000 25%, transparent 78%);
+  mask-image: radial-gradient(ellipse 80% 75% at 50% 50%, #000 25%, transparent 78%);
+  transform: translate3d(calc(var(--px, 0) * -14px), calc(var(--py, 0) * -10px), 0);
+  transition: transform 0.4s ease-out;
+}
+.cap-glow {
+  position: absolute;
+  left: 50%;
+  top: 56%;
+  width: min(60vw, 760px);
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  z-index: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(190, 235, 120, 0.42), rgba(190, 235, 120, 0) 66%);
+  pointer-events: none;
+}
+.cap-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.cap-content {
+  position: relative;
+  z-index: 2;
+  width: min(1320px, calc(100% - clamp(1.5rem, 5vw, 5rem)));
+  min-height: inherit;
+  margin: 0 auto;
+  pointer-events: none;
+}
+.cap-content a, .cap-content .cap-copy { pointer-events: auto; }
+
+/* ---------- headline block (bottom-left, like the big title in the reference) ---------- */
+.cap-copy {
+  position: absolute;
+  left: 0;
+  bottom: clamp(2rem, 6vh, 4rem);
+  width: min(470px, 40%);
+}
+.cap-badge {
+  display: inline-block;
+  margin-bottom: 1rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(63, 158, 72, 0.35);
+  color: var(--cap-green-deep);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.home .cap-hero .cap-copy h1,
+.cap-hero .cap-copy h1 {
+  margin: 0 0 1rem;
+  max-width: 16ch;
+  color: var(--cap-green);
+  font-size: clamp(2rem, 3.1vw, 3.3rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+.home .cap-hero .cap-copy p,
+.cap-hero .cap-copy p {
+  margin: 0 0 1.1rem;
+  max-width: 100%;
+  color: rgba(18, 56, 45, 0.78);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+.cap-hero .cap-copy .hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.9rem 1.4rem;
+}
+
+/* ---------- callouts with the hexagon tab ---------- */
+.cap-callouts { list-style: none; margin: 0; padding: 0; }
+.cap-call {
+  position: absolute;
+  width: clamp(230px, 22vw, 300px);
+  opacity: 0;
+  animation: capIn 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  animation-delay: calc(0.9s + var(--i) * 0.18s);
+  translate: calc(var(--px, 0) * 8px) calc(var(--py, 0) * 6px);
+  transition: translate 0.4s ease-out;
+}
+@keyframes capIn { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+.cap-call a {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  padding-bottom: 0.2rem;
+}
+.cap-call--learn { left: 0; top: 34%; }
+.cap-call--pos { left: 50%; top: 5%; margin-left: -150px; }
+.cap-call--hmis { right: 0; top: 58%; }
+
+.cap-tab {
+  display: flex;
+  align-items: center;
+  height: 22px;
+  margin-bottom: 0.7rem;
+  gap: 3px;
+}
+.cap-tab i {
+  display: block;
+  height: 8px;
+  transform: skewX(-32deg);
+  background: linear-gradient(90deg, #7ccf6a, #4eb55a);
+}
+.cap-tab i:nth-child(1) { width: 38%; }
+.cap-tab i:nth-child(2) { width: 34%; background: linear-gradient(90deg, #2f9a52, #1f7f48); }
+.cap-tab b {
+  width: 24px;
+  height: 22px;
+  margin-left: auto;
+  background: linear-gradient(160deg, #6cc86a, #2f9a52);
+  clip-path: polygon(25% 3%, 75% 3%, 100% 50%, 75% 97%, 25% 97%, 0 50%);
+  transition: filter 0.25s, transform 0.25s;
+}
+.cap-call a:hover .cap-tab b, .cap-call a:focus-visible .cap-tab b { filter: drop-shadow(0 0 6px rgba(76, 200, 110, 0.9)); transform: scale(1.12) rotate(30deg); }
+
+.cap-call-head {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: var(--cap-green);
+}
+.cap-call-icon { display: grid; place-items: center; flex: none; color: #2e8f4a; }
+.cap-call-head strong {
+  color: #2f8c4a;
+  font-size: clamp(1.05rem, 1.5vw, 1.4rem);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+.cap-call-head em { font-style: normal; opacity: 0.7; margin-right: 0.15rem; }
+.cap-call-text {
+  display: block;
+  margin-top: 0.5rem;
+  padding-left: 0.75rem;
+  border-left: 3px solid rgba(76, 190, 100, 0.8);
+  color: rgba(18, 56, 45, 0.82);
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+.cap-call a:hover .cap-call-head strong { color: var(--cap-green-deep); }
+
+/* ---------- tablet + mobile: scene on top, copy and cards stacked below ---------- */
+@media (max-width: 1100px) {
+  .cap-hero { min-height: 0; display: flex; flex-direction: column; padding-bottom: 3rem; }
+  .cap-stage { position: relative; inset: auto; height: clamp(340px, 62vw, 520px); margin-top: 0.5rem; }
+  .cap-hex { opacity: 0.6; }
+  .cap-glow { top: 24%; width: 90vw; }
+  .cap-content { min-height: 0; width: min(900px, calc(100% - 2rem)); pointer-events: auto; }
+  .cap-copy { position: static; width: 100%; margin-top: 0.5rem; }
+  .cap-copy h1 { max-width: 18ch; font-size: clamp(2.1rem, 6vw, 3.4rem); }
+  .cap-copy p { font-size: 0.98rem; max-width: 60ch; }
+  .cap-callouts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.6rem; margin-top: 2rem; }
+  .cap-call { position: static; width: auto; margin: 0 !important; translate: none; }
+}
+@media (max-width: 700px) {
+  .cap-stage { height: clamp(320px, 100vw, 440px); }
+  .cap-callouts { grid-template-columns: 1fr; gap: 1.3rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cap-call { animation: none; opacity: 1; }
+  .cap-hex, .cap-call { transition: none; transform: none; }
+}
+
+/* Reference layout: two upper capsule clusters, a central plant capsule pair, and five hex-tab callouts. */
+.cap-hero {
+  --cap-ink: #12382d;
+  --cap-green: #0f6e56;
+  --cap-green-deep: #07533e;
+  min-height: clamp(680px, calc(100svh - 76px), 860px);
+  background:
+    radial-gradient(ellipse 70% 62% at 50% 56%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0) 70%),
+    linear-gradient(135deg, #f3faea 0%, #e5f3d9 48%, #d9ebcb 100%);
+}
+
+.cap-copy {
+  left: 3%;
+  bottom: clamp(2rem, 6vh, 4rem);
+  width: min(330px, 28%);
+}
+
+.cap-copy h1 {
+  max-width: 8ch !important;
+  margin: 0 0 0.65rem !important;
+  color: #15916e !important;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: clamp(2.6rem, 4.4vw, 4.6rem) !important;
+  font-weight: 900;
+  line-height: 0.86 !important;
+  letter-spacing: -0.08em !important;
+  text-transform: uppercase;
+}
+
+.cap-copy p {
+  max-width: 30ch !important;
+  margin-bottom: 0 !important;
+  color: rgba(18, 56, 45, 0.7) !important;
+  font-size: 0.78rem !important;
+  line-height: 1.4 !important;
+}
+
+.cap-copy .cap-badge { display: none; }
+
+.cap-call { width: clamp(240px, 23vw, 320px); }
+.cap-call--learn { left: 2%; top: 52%; }
+.cap-call--pos { left: 35%; top: 5%; margin-left: 0; }
+.cap-call--practice { right: 2%; top: 52%; }
+.cap-call--connect { left: 35%; top: 21%; }
+.cap-call--hmis { right: 2%; top: 72%; }
+
+.cap-call-head strong { color: #2f8c4a; font-size: clamp(0.95rem, 1.35vw, 1.22rem); }
+.cap-call-text { color: rgba(18, 56, 45, 0.78); font-size: 0.76rem; line-height: 1.4; }
+.cap-call--hmis .cap-call-head strong { color: #245777; }
+.cap-call--hmis .cap-tab i { background: linear-gradient(90deg, #8ab7cf, #4f86a6); }
+.cap-call--hmis .cap-tab b { background: linear-gradient(160deg, #76a8c4, #245777); }
+
+@media (max-width: 1100px) {
+  .cap-copy { width: 100%; }
+  .cap-copy h1 { max-width: 12ch !important; }
+}
