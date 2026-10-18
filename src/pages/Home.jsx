@@ -11,11 +11,11 @@ import pharmacourseHeroVisual from "../assets/pharmacourse-hero-visual.svg"
 import remedacarehmisMark from "../assets/remedacarehmis-mark.png"
 import remedacareposMark from "../assets/remedacarepos-mark.png"
 import remedacareDashboard from "../assets/remedacare-dashboard.svg"
-import labResearchOne from "../assets/hero-research-photo-1.jpg"
-import labResearchTwo from "../assets/hero-research-photo-2.jpg"
-import labResearchThree from "../assets/hero-research-photo-3.jpg"
-import labResearchFour from "../assets/hero-research-photo-4.jpg"
-import labResearchFive from "../assets/hero-research-photo-5.jpg"
+import heroProteinSurface from "../assets/hero-protein-surface.jpg"
+import heroMoleculeModel from "../assets/hero-molecule-model.jpg"
+import heroPills from "../assets/hero-pills.jpg"
+import heroMolecularNetwork from "../assets/hero-molecular-network.jpg"
+import heroDnaHelix from "../assets/hero-dna-helix.jpg"
 import {
   BookOpen,
   Download,
@@ -37,11 +37,11 @@ import "./Home.css"
 const WHATSAPP = "https://wa.me/254790059584?text=Hi%20Julius%2C%20I%27d%20like%20to%20book%20a%20demo%20of%20your%20platform."
 
 const HERO_LAB_STORIES = [
-  { image: labResearchOne, label: "Clinical learning", title: "Turn evidence into confident decisions." },
-  { image: labResearchTwo, label: "Pharmacy practice", title: "Build skills that hold up in practice." },
-  { image: labResearchThree, label: "Connected care", title: "See the systems behind better care." },
-  { image: labResearchFour, label: "Professional growth", title: "Keep your knowledge ready for the next patient." },
-  { image: labResearchFive, label: "Better outcomes", title: "Learn with the standards your work demands." },
+  { image: heroProteinSurface, label: "Protein science", title: "Turn evidence into confident decisions." },
+  { image: heroMoleculeModel, label: "Molecular structures", title: "Build skills that hold up in practice." },
+  { image: heroPills, label: "Pharmacy practice", title: "Connect chemistry to better care." },
+  { image: heroMolecularNetwork, label: "Connected care", title: "See the systems behind better outcomes." },
+  { image: heroDnaHelix, label: "Clinical evidence", title: "Keep your knowledge ready for the next patient." },
 ]
 
 const HOMEPAGE_BRAND_REPLACEMENTS = [
