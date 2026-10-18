@@ -36,12 +36,12 @@ import "./Home.css"
 
 const WHATSAPP = "https://wa.me/254790059584?text=Hi%20Julius%2C%20I%27d%20like%20to%20book%20a%20demo%20of%20your%20platform."
 
-const HERO_LAB_IMAGES = [
-  labResearchOne,
-  labResearchTwo,
-  labResearchThree,
-  labResearchFour,
-  labResearchFive,
+const HERO_LAB_STORIES = [
+  { image: labResearchOne, label: "Clinical learning", title: "Turn evidence into confident decisions." },
+  { image: labResearchTwo, label: "Pharmacy practice", title: "Build skills that hold up in practice." },
+  { image: labResearchThree, label: "Connected care", title: "See the systems behind better care." },
+  { image: labResearchFour, label: "Professional growth", title: "Keep your knowledge ready for the next patient." },
+  { image: labResearchFive, label: "Better outcomes", title: "Learn with the standards your work demands." },
 ]
 
 const HOMEPAGE_BRAND_REPLACEMENTS = [
@@ -427,10 +427,24 @@ export default function Home() {
   const [activeSection, setActiveSection] = useState("hero")
   const [activeCourseIndex, setActiveCourseIndex] = useState(0)
   const [activePostIndex, setActivePostIndex] = useState(0)
+  const [activeHeroSlide, setActiveHeroSlide] = useState(0)
+  const [heroPaused, setHeroPaused] = useState(false)
   const [sections, setSections] = useState(DEFAULT_SECTIONS)
   const [loading, setLoading] = useState(true)
   const courseTrackRef = useRef(null)
   const blogTrackRef = useRef(null)
+
+  useEffect(() => {
+    if (heroPaused || (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches)) {
+      return undefined
+    }
+
+    const timer = window.setInterval(() => {
+      setActiveHeroSlide((current) => (current + 1) % HERO_LAB_STORIES.length)
+    }, 6500)
+
+    return () => window.clearInterval(timer)
+  }, [heroPaused])
 
   useEffect(() => {
     async function loadData() {
@@ -607,16 +621,23 @@ export default function Home() {
               <AnimatedSection key={key}>
                 <section id="hero" className="hero-section">
                   <div className="container">
-                    <div className="hero-content-top">
+                    <div
+                      className="hero-content-top"
+                      onMouseEnter={() => setHeroPaused(true)}
+                      onMouseLeave={() => setHeroPaused(false)}
+                      onFocusCapture={() => setHeroPaused(true)}
+                      onBlurCapture={(event) => {
+                        if (!event.currentTarget.contains(event.relatedTarget)) setHeroPaused(false)
+                      }}
+                    >
                       <div className="hero-lab-slideshow" aria-hidden="true">
-                        {HERO_LAB_IMAGES.map((image, index) => (
-                          <div
-                            key={image}
-                            className="hero-lab-slide"
-                            style={{
-                              backgroundImage: `url("${image}")`,
-                              animationDelay: `${index * -7}s`,
-                            }}
+                        {HERO_LAB_STORIES.map((story, index) => (
+                          <img
+                            key={story.image}
+                            className={`hero-lab-slide ${activeHeroSlide === index ? "is-active" : ""}`}
+                            src={story.image}
+                            alt=""
+                            loading={index === 0 ? "eager" : "lazy"}
                           />
                         ))}
                       </div>
@@ -631,6 +652,26 @@ export default function Home() {
                         <a href="#ecosystem" className="hero-text-link">
                           Meet the products <span aria-hidden="true">↓</span>
                         </a>
+                      </div>
+
+                      <div className="hero-media-caption" aria-live="polite">
+                        <span className="hero-media-label">{HERO_LAB_STORIES[activeHeroSlide].label}</span>
+                        <span className="hero-media-title">{HERO_LAB_STORIES[activeHeroSlide].title}</span>
+                        <span className="hero-media-counter">{String(activeHeroSlide + 1).padStart(2, "0")} / {String(HERO_LAB_STORIES.length).padStart(2, "0")}</span>
+                      </div>
+
+                      <div className="hero-slide-controls" role="tablist" aria-label="Hero visuals">
+                        {HERO_LAB_STORIES.map((story, index) => (
+                          <button
+                            key={story.image}
+                            type="button"
+                            role="tab"
+                            aria-selected={activeHeroSlide === index}
+                            aria-label={`Show ${story.label}`}
+                            className={activeHeroSlide === index ? "is-active" : ""}
+                            onClick={() => setActiveHeroSlide(index)}
+                          />
+                        ))}
                       </div>
                     </div>
                   </div>
