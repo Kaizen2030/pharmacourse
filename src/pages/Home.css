@@ -2304,6 +2304,192 @@
   }
 }
 
+/* Static medical infographic hero: a flat 2D recreation of the supplied capsule reference. */
+.home .medical-hero-static {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  overflow: hidden;
+  padding: 2rem 1rem;
+  background: #eaf5ea;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.home .medical-hero-static::before {
+  position: absolute;
+  inset: 0;
+  opacity: 0.58;
+  background-image:
+    linear-gradient(30deg, transparent 48%, rgba(151, 207, 157, 0.2) 49%, transparent 50%),
+    linear-gradient(150deg, transparent 48%, rgba(151, 207, 157, 0.2) 49%, transparent 50%);
+  background-size: 72px 124px;
+  content: "";
+}
+
+.home .medical-container {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1100px;
+  height: min(760px, calc(100vh - 3rem));
+  min-height: 620px;
+}
+
+.home .medical-capsule {
+  position: absolute;
+  z-index: 3;
+  width: 220px;
+}
+
+.home .medical-capsule svg { display: block; width: 100%; height: auto; }
+.home .capsule-tl { top: 3%; left: 3%; transform: rotate(-7deg); }
+.home .capsule-tr { top: 3%; right: 3%; transform: rotate(7deg); }
+.home .capsule-br { bottom: 4%; left: 35%; transform: rotate(27deg); width: 245px; }
+
+.home .medical-center-art {
+  position: absolute;
+  z-index: 2;
+  top: 29%;
+  left: 50%;
+  width: 430px;
+  height: 430px;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.home .medical-center-art svg { width: 100%; height: 100%; }
+
+.home .medical-block {
+  position: absolute;
+  z-index: 5;
+  width: min(31%, 335px);
+  color: #4e784f;
+}
+
+.home .block-1 { top: 52%; left: 3%; text-align: left; }
+.home .block-2 { top: 5%; left: 35%; text-align: left; }
+.home .block-3 { top: 53%; right: 2%; text-align: left; }
+.home .block-4 { top: 22%; left: 35%; text-align: left; }
+.home .block-5 { right: 2%; bottom: 8%; text-align: left; }
+
+.home .medical-title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: fit-content;
+  margin-bottom: 0.28rem;
+  padding: 0.2rem 0.3rem 0.25rem;
+  border-top: 4px solid #0f6e56;
+  color: #0f6e56;
+  font-size: clamp(0.78rem, 1.2vw, 1.08rem);
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.home .medical-title::after {
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 9px solid #9bdc8b;
+  content: "";
+}
+
+.home .medical-icon {
+  display: inline-grid;
+  width: 1.25rem;
+  height: 1.25rem;
+  place-items: center;
+  border: 1px solid #4e9d65;
+  color: #0f6e56;
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
+.home .medical-block strong {
+  display: block;
+  margin: 0.2rem 0 0.25rem;
+  color: #0f6e56;
+  font-size: clamp(0.82rem, 1.25vw, 1.08rem);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.home .medical-block:nth-of-type(5) strong,
+.home .medical-block:nth-of-type(6) strong { color: #245777; }
+
+.home .medical-block p {
+  max-width: 33ch;
+  margin: 0;
+  color: #547956;
+  font-size: clamp(0.62rem, 0.85vw, 0.77rem);
+  line-height: 1.4;
+}
+
+.home .medical-logo-block {
+  position: absolute;
+  z-index: 6;
+  bottom: 5%;
+  left: 4%;
+}
+
+.home .medical-logo-block h1 {
+  margin: 0;
+  color: #15916e;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: clamp(2.45rem, 5vw, 4.5rem);
+  font-weight: 900;
+  line-height: 0.88;
+  letter-spacing: -0.08em;
+  text-transform: uppercase;
+}
+
+.home .medical-logo-block h1 span { color: #245777; }
+.home .medical-logo-block h1 b {
+  display: inline-grid;
+  width: 0.72em;
+  height: 0.72em;
+  place-items: center;
+  border: 3px solid #15916e;
+  color: #15916e;
+  font-size: 0.7em;
+  line-height: 1;
+  vertical-align: 0.08em;
+}
+
+@media (max-width: 900px) {
+  .home .medical-hero-static { min-height: auto; padding: 1rem 0.65rem; }
+  .home .medical-container { height: auto; min-height: 900px; }
+  .home .medical-capsule { width: 150px; }
+  .home .capsule-br { left: 34%; width: 175px; }
+  .home .medical-center-art { top: 31%; width: 320px; height: 320px; }
+  .home .medical-block { width: 42%; }
+  .home .block-1 { top: 49%; left: 3%; }
+  .home .block-2 { top: 6%; left: 34%; }
+  .home .block-3 { top: 50%; right: 3%; }
+  .home .block-4 { top: 23%; left: 34%; }
+  .home .block-5 { right: 3%; bottom: 15%; }
+  .home .medical-logo-block { bottom: 5%; left: 3%; }
+  .home .medical-logo-block h1 { font-size: 2.4rem; }
+}
+
+@media (max-width: 620px) {
+  .home .medical-container { min-height: 1040px; }
+  .home .medical-capsule { width: 120px; }
+  .home .capsule-tl { top: 2%; left: 1%; }
+  .home .capsule-tr { top: 2%; right: 1%; }
+  .home .capsule-br { bottom: 13%; left: 31%; width: 145px; }
+  .home .medical-center-art { top: 31%; width: 265px; height: 265px; }
+  .home .medical-block { width: 45%; }
+  .home .medical-block p { font-size: 0.62rem; }
+  .home .medical-title { font-size: 0.68rem; }
+  .home .medical-block strong { font-size: 0.75rem; }
+  .home .medical-logo-block h1 { font-size: 2rem; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .home .hero-content-top .hero-lab-slide {
     transition: none;
