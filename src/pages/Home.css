@@ -2320,6 +2320,273 @@
     #edf5f1;
 }
 
+/* Product infographic screen: the hero explains the three products in one connected composition. */
+.home .hero-science-screen {
+  top: 50%;
+  right: clamp(0.5rem, 2vw, 2rem);
+  width: min(50%, 620px);
+  height: auto;
+  aspect-ratio: 600 / 480;
+  padding: 0;
+  transform: translateY(-47%);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: #0a4f3d;
+}
+
+.home .hero-product-map {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border: 1px solid rgba(15, 110, 86, 0.2);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(151, 224, 187, 0.2) 0 20%, transparent 21%),
+    linear-gradient(135deg, #f9fffb 0%, #e8f6ef 50%, #f6fcf8 100%);
+  box-shadow: 0 26px 54px rgba(1, 41, 30, 0.2), 0 0 0 7px rgba(218, 248, 232, 0.14);
+}
+
+.home .hero-product-map::before {
+  position: absolute;
+  inset: 0;
+  opacity: 0.4;
+  background-image:
+    linear-gradient(rgba(15, 110, 86, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 110, 86, 0.07) 1px, transparent 1px);
+  background-size: 42px 42px;
+  content: "";
+  mask-image: radial-gradient(circle at 50% 52%, black, transparent 76%);
+}
+
+.home .hero-map-brand {
+  position: absolute;
+  z-index: 2;
+  top: 1.15rem;
+  left: 1.35rem;
+  color: #0f6e56;
+  font-size: clamp(0.65rem, 1vw, 0.8rem);
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.home .hero-map-brand span {
+  display: block;
+  margin-top: 0.18rem;
+  color: #69a98c;
+  font-size: 0.48rem;
+  letter-spacing: 0.14em;
+}
+
+.home .hero-map-card {
+  position: absolute;
+  z-index: 3;
+  width: 34%;
+  padding: 0.78rem 0.85rem;
+  border: 1px solid rgba(15, 110, 86, 0.19);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 10px 24px rgba(11, 79, 61, 0.08);
+  backdrop-filter: blur(8px);
+}
+
+.home .hero-map-card::before {
+  position: absolute;
+  top: 0.8rem;
+  left: -0.35rem;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: #0f6e56;
+  box-shadow: 0 0 0 4px rgba(15, 110, 86, 0.13);
+  content: "";
+}
+
+.home .hero-map-card-operate::before { background: #249a76; }
+.home .hero-map-card-care::before { background: #245777; box-shadow: 0 0 0 4px rgba(36, 87, 119, 0.13); }
+
+.home .hero-map-card-learn { top: 4.1rem; left: 1.2rem; }
+.home .hero-map-card-operate { top: 4.1rem; right: 1.2rem; }
+.home .hero-map-card-care { right: 1.2rem; bottom: 1.5rem; }
+
+.home .hero-map-index {
+  display: block;
+  color: #33856b;
+  font-size: 0.48rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.home .hero-map-card-care .hero-map-index { color: #28688d; }
+
+.home .hero-map-card strong {
+  display: block;
+  margin-top: 0.3rem;
+  color: #0a4f3d;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(0.95rem, 1.55vw, 1.28rem);
+  letter-spacing: -0.03em;
+}
+
+.home .hero-map-card-care strong { color: #173f56; }
+
+.home .hero-map-card p {
+  margin: 0.35rem 0 0;
+  color: #527167;
+  font-size: clamp(0.56rem, 0.8vw, 0.68rem);
+  line-height: 1.35;
+}
+
+.home .hero-map-card-care p { color: #557082; }
+
+.home .hero-map-core {
+  position: absolute;
+  z-index: 3;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  place-items: center;
+  width: 37%;
+  aspect-ratio: 1;
+  padding: 1rem;
+  transform: translate(-50%, -47%);
+  border: 1px solid rgba(15, 110, 86, 0.27);
+  border-radius: 50%;
+  background: rgba(235, 250, 242, 0.92);
+  box-shadow: 0 0 0 12px rgba(225, 248, 235, 0.64), 0 18px 36px rgba(15, 110, 86, 0.15);
+  text-align: center;
+}
+
+.home .hero-map-core-kicker {
+  color: #33856b;
+  font-size: clamp(0.45rem, 0.7vw, 0.58rem);
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.home .hero-map-core strong {
+  margin-top: 0.3rem;
+  color: #0a4f3d;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.15rem, 2.2vw, 1.75rem);
+  line-height: 0.96;
+  letter-spacing: -0.05em;
+}
+
+.home .hero-map-core strong em {
+  color: #15916e;
+  font-style: normal;
+}
+
+.home .hero-map-capsules {
+  position: absolute;
+  z-index: 0;
+  top: -25%;
+  left: -17%;
+  width: 134%;
+  max-width: none;
+  height: auto;
+}
+
+.home .hero-map-core {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 1rem 1rem 0.85rem;
+}
+
+.home .hero-map-core-kicker,
+.home .hero-map-core strong,
+.home .hero-map-core-mark {
+  position: relative;
+  z-index: 1;
+}
+
+.home .hero-map-core-mark {
+  display: flex;
+  gap: 0.25rem;
+  margin-top: 0.7rem;
+}
+
+.home .hero-map-core-mark span {
+  width: 0.38rem;
+  height: 0.38rem;
+  border-radius: 50%;
+  background: #0f6e56;
+}
+
+.home .hero-map-core-mark span:nth-child(2) { background: #46b789; }
+.home .hero-map-core-mark span:nth-child(3) { background: #245777; }
+
+.home .hero-map-pill {
+  position: absolute;
+  z-index: 4;
+  padding: 0.28rem 0.48rem;
+  border: 1px solid rgba(15, 110, 86, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  color: #39866d;
+  font-size: 0.46rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+}
+
+.home .hero-map-pill-evidence { top: 47%; left: 7%; }
+.home .hero-map-pill-operations { top: 48%; right: 5%; color: #26815f; }
+.home .hero-map-pill-care { right: 32%; bottom: 6%; color: #28688d; }
+
+.home .hero-map-node {
+  position: absolute;
+  z-index: 2;
+  width: 0.65rem;
+  height: 0.65rem;
+  border: 3px solid #d8f6e6;
+  border-radius: 50%;
+  background: #0f6e56;
+}
+
+.home .hero-map-node-one { top: 25%; left: 34%; }
+.home .hero-map-node-two { top: 25%; right: 34%; background: #249a76; }
+.home .hero-map-node-three { right: 34%; bottom: 24%; background: #245777; }
+
+.home .hero-map-lines {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.home .hero-map-lines path {
+  fill: none;
+  stroke: rgba(15, 110, 86, 0.5);
+  stroke-width: 1.4;
+  stroke-dasharray: 4 7;
+}
+
+@media (min-width: 841px) {
+  .home .hero-science-screen {
+    width: min(50%, 620px);
+  }
+
+  .home .hero-content-top h1 { max-width: min(44%, 560px); }
+  .home .hero-content-top > p { max-width: min(39%, 500px); }
+  .home .hero-content-top .hero-actions,
+  .home .hero-content-top .hero-media-footer { max-width: min(45%, 560px); }
+}
+
+@media (max-width: 1080px) and (min-width: 841px) {
+  .home .hero-map-card { width: 36%; padding: 0.62rem; }
+  .home .hero-map-card p { font-size: 0.55rem; }
+  .home .hero-map-brand { top: 0.85rem; left: 1rem; }
+  .home .hero-map-card-learn,
+  .home .hero-map-card-operate { top: 3.6rem; }
+  .home .hero-map-card-care { bottom: 1rem; }
+}
+
 .home .product-section#remedacareOS {
   background:
     radial-gradient(ellipse at 90% 42%, rgba(70, 120, 165, 0.12), transparent 40%),

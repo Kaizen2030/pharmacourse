@@ -17,7 +17,7 @@ import heroPymolRibbon from "../assets/hero-pymol-ribbon.png"
 import heroPymolDocking from "../assets/hero-pymol-docking.png"
 import heroFluorescenceCells from "../assets/hero-fluorescence-cells.jpg"
 import heroFutureLab from "../assets/hero-future-lab.svg"
-import heroMagnificMicroscope from "../assets/hero-magnific-microscope.png"
+import heroCapsules from "../assets/hero-capsules.svg"
 import {
   BookOpen,
   Download,
@@ -645,22 +645,41 @@ export default function Home() {
                         ))}
                       </div>
                       <div className="hero-science-screen" aria-hidden="true">
-                        <div className="hero-screen-topline">
-                          <span>PHARMACOURSE / LAB VIEW</span>
-                          <span className="hero-screen-live"><i /> LIVE</span>
+                        <div className="hero-product-map">
+                          <div className="hero-map-brand">REMEDACARE <span>HEALTHCARE SYSTEMS</span></div>
+                          <div className="hero-map-card hero-map-card-learn">
+                            <span className="hero-map-index">01 / LEARN</span>
+                            <strong>Pharmacourse</strong>
+                            <p>CPD courses, clinical cases and certificates for pharmacy professionals.</p>
+                          </div>
+                          <div className="hero-map-card hero-map-card-operate">
+                            <span className="hero-map-index">02 / OPERATE</span>
+                            <strong>RemedacarePOS</strong>
+                            <p>Dispensing, inventory, claims and branch operations in one workflow.</p>
+                          </div>
+                          <div className="hero-map-card hero-map-card-care">
+                            <span className="hero-map-index">03 / MANAGE CARE</span>
+                            <strong>RemedacareHMIS</strong>
+                            <p>Patient records, departments, reporting and hospital operations connected.</p>
+                          </div>
+                          <div className="hero-map-core">
+                            <img className="hero-map-capsules" src={heroCapsules} alt="" />
+                            <span className="hero-map-core-kicker">ONE CONNECTED SYSTEM</span>
+                            <strong>Better care<br /><em>starts here.</em></strong>
+                            <div className="hero-map-core-mark"><span /><span /><span /></div>
+                          </div>
+                          <div className="hero-map-pill hero-map-pill-evidence">EVIDENCE</div>
+                          <div className="hero-map-pill hero-map-pill-operations">OPERATIONS</div>
+                          <div className="hero-map-pill hero-map-pill-care">CARE</div>
+                          <span className="hero-map-node hero-map-node-one" />
+                          <span className="hero-map-node hero-map-node-two" />
+                          <span className="hero-map-node hero-map-node-three" />
+                          <svg className="hero-map-lines" viewBox="0 0 600 480" preserveAspectRatio="none" focusable="false">
+                            <path d="M188 126 C240 154 236 185 282 212" />
+                            <path d="M421 126 C372 154 370 185 322 212" />
+                            <path d="M420 356 C372 334 368 303 322 278" />
+                          </svg>
                         </div>
-                        <div className="hero-screen-visual">
-                          <img src={heroMagnificMicroscope} alt="" />
-                          <span className="hero-screen-crosshair hero-screen-crosshair-one" />
-                          <span className="hero-screen-crosshair hero-screen-crosshair-two" />
-                          <span className="hero-screen-focus">CELL RESPONSE <b>01</b></span>
-                        </div>
-                        <div className="hero-screen-readouts">
-                          <div><span>01 / OBSERVE</span><strong>Microscopy</strong><em>Live sample view</em></div>
-                          <div><span>02 / INTERPRET</span><strong>Clinical evidence</strong><em>Signal mapped</em></div>
-                          <div><span>03 / APPLY</span><strong>Practice ready</strong><em>Decision support</em></div>
-                        </div>
-                        <div className="hero-screen-scanline" />
                       </div>
                       {config.badge_text && <span className="hero-badge">{config.badge_text}</span>}
                       <h1>{config.heading || DEFAULT_SECTIONS.hero.heading}</h1>
