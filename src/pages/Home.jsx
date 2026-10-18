@@ -6,6 +6,8 @@ import SEO from "../components/SEO"
 import BlogEngagementStats from "../components/BlogEngagementStats"
 import CapsuleHero from "../components/capsuleHero/CapsuleHero"
 import ProductShowcase from "../components/productShowcase/ProductShowcase"
+import FeaturesCapsule from "../components/capsuleSections/FeaturesCapsule"
+import FaqCapsule from "../components/capsuleSections/FaqCapsule"
 import { SITE_URL } from "../lib/siteConfig"
 import { formatBlogDate, getBlogCategoryLabel, getBlogCoverFallback, getBlogExcerpt } from "../lib/blogHelpers"
 import pharmacyosDashboard from "../assets/pharmacyos-dashboard.svg"
@@ -695,28 +697,7 @@ export default function Home() {
           case "features":
             return (
               <AnimatedSection key={key} delay={0.4}>
-                <section id="features" className="features-section">
-                  <div className="container">
-                    <div className="section-header">
-                      {config.badge_text && <span className="section-badge">{config.badge_text}</span>}
-                      <h2>{config.heading || "Accelerate your career with practical skills"}</h2>
-                    </div>
-
-                    <div className="features-grid">
-                      {[
-                        { icon: BookOpen, title: "Self-Paced Learning", desc: "Learn at your own speed with short, focused modules." },
-                        { icon: Download, title: "Downloadable Resources", desc: "Clinical notes and reference materials included." },
-                        { icon: Award, title: "CPD Certificates", desc: "Earn certificates for your professional portfolio." },
-                      ].map((feature, idx) => (
-                        <div key={idx} className="feature-card">
-                          <feature.icon size={24} />
-                          <h3>{feature.title}</h3>
-                          <p>{feature.desc}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </section>
+                <FeaturesCapsule badge={config.badge_text} heading={config.heading} />
               </AnimatedSection>
             )
 
@@ -982,21 +963,7 @@ export default function Home() {
           case "faq":
             return (
               <AnimatedSection key={key} delay={0.8}>
-                <section id="faq" className="faq-section">
-                  <div className="container">
-                    <div className="section-header">
-                      {config.badge_text && <span className="section-badge">{config.badge_text}</span>}
-                      <h2>{config.heading || "Need help getting started?"}</h2>
-                    </div>
-
-                    <div className="faq-grid">
-                      <div className="faq-card"><h3>How can I access the courses?</h3><p>Browse the course list, register, and enroll. Introductory lessons are easy to start, and certificate access opens once you finish.</p></div>
-                      <div className="faq-card"><h3>What if I do not understand a topic?</h3><p>Every course includes downloadable resources and support notes so you can review concepts anytime.</p></div>
-                      <div className="faq-card"><h3>Can I study at my own pace?</h3><p>Yes. Lessons are self-paced and available anytime so you can learn around your schedule.</p></div>
-                      <div className="faq-card"><h3>Who teaches the courses?</h3><p>Courses are created by experienced pharmacy educators and industry professionals.</p></div>
-                    </div>
-                  </div>
-                </section>
+                <FaqCapsule badge={config.badge_text} heading={config.heading} />
               </AnimatedSection>
             )
 
