@@ -221,3 +221,40 @@
   .ps-cta { font-size: .52rem; }
 }
 
+/* Keep the desktop three-column rhythm on phones. The centre artwork remains
+   between the anchored product cards instead of moving to a separate stack. */
+@media (max-width: 520px) {
+  .ps-stage {
+    display: grid;
+    grid-template-columns: minmax(0, .9fr) minmax(78px, 1.15fr) minmax(0, .9fr);
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+    gap: .35rem 0;
+    min-height: 420px;
+    align-items: center;
+  }
+  .ps-center { grid-column: 2; grid-row: 1 / 4; height: 100%; min-height: 0; }
+  .ps-art { width: 135%; max-width: none; height: auto; margin-left: -17.5%; }
+  .ps-call, .ps-call--learn, .ps-call--pos, .ps-call--hmis { width: 100%; max-width: none; min-width: 0; align-self: center; }
+  .ps-call--learn { grid-column: 1; grid-row: 1; }
+  .ps-call--pos { grid-column: 3; grid-row: 2; }
+  .ps-call--hmis { grid-column: 1; grid-row: 3; }
+  .ps-tab { width: 30px; }
+  .ps-tab-in { inset: 2px; gap: .1rem; }
+  .ps-tab-in b { font-size: .32rem; letter-spacing: 0; max-width: 7ch; }
+  .ps-tab-in svg { width: 14px; height: 14px; }
+  .ps-left .ps-tab-in { padding-left: 2px; }
+  .ps-right .ps-tab-in { padding-right: 2px; }
+  .ps-panel { margin-left: -3px; }
+  .ps-right .ps-panel { margin-left: 0; margin-right: -3px; }
+  .ps-panel-in, .ps-right .ps-panel-in { min-height: 102px; gap: .1rem; padding: .3rem .24rem .3rem .36rem; }
+  .ps-right .ps-panel-in { padding-left: .36rem; padding-right: .24rem; }
+  .ps-panel-in small { font-size: .31rem; letter-spacing: 0; }
+  .ps-panel-in strong { font-size: .55rem; line-height: 1.02; }
+  .ps-text { font-size: .38rem; line-height: 1.18; -webkit-line-clamp: 3; }
+  .ps-foot { display: block; margin-top: .08rem; }
+  .ps-stat { font-size: .35rem; }
+  .ps-stat em { font-size: .58rem; }
+  .ps-cta { margin-top: .12rem; padding: .18rem .24rem; font-size: .32rem; }
+  .ps-cta svg { width: 7px; height: 7px; }
+}
+

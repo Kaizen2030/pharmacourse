@@ -312,3 +312,29 @@
   .cap-tab { height: 15px; margin-bottom: .3rem; }
   .cap-tab b { width: 16px; height: 15px; }
 }
+
+/* Keep the desktop hero composition on phones. The scene, copy and five
+   callouts share one scaled canvas; only their type and spacing are reduced. */
+@media (max-width: 700px) {
+  .cap-hero { min-height: clamp(650px, 175vw, 790px); display: block; padding-bottom: 0; }
+  .cap-stage { position: absolute; inset: 0; height: auto; }
+  .cap-content { width: calc(100% - 1rem); min-height: inherit; pointer-events: none; }
+  .cap-copy { position: absolute; left: 2%; bottom: 2.5%; width: 31%; margin: 0; padding: 0; pointer-events: auto; }
+  .cap-copy h1 { max-width: 8ch !important; font-size: clamp(1.45rem, 7vw, 2.6rem) !important; line-height: .88 !important; }
+  .cap-copy p { max-width: 21ch !important; font-size: .58rem !important; line-height: 1.35 !important; }
+  .cap-callouts { display: block; margin: 0; }
+  .cap-call, .cap-call--learn, .cap-call--pos, .cap-call--practice, .cap-call--connect, .cap-call--hmis { position: absolute; width: clamp(92px, 23vw, 180px); margin: 0 !important; translate: none; pointer-events: auto; }
+  .cap-call--learn { left: 2%; top: 52%; }
+  .cap-call--pos { left: 35%; top: 5%; }
+  .cap-call--practice { right: 2%; top: 52%; }
+  .cap-call--connect { left: 35%; top: 21%; }
+  .cap-call--hmis { right: 2%; top: 72%; }
+  .cap-call a { padding: .38rem .42rem .48rem; border-radius: 9px; }
+  .cap-call-head { gap: .25rem; }
+  .cap-call-head strong { font-size: .54rem; letter-spacing: 0; }
+  .cap-call-icon svg { width: 15px; height: 15px; }
+  .cap-call-text { margin-top: .22rem; padding-left: .3rem; font-size: .48rem; line-height: 1.25; }
+  .cap-tab { height: 12px; margin-bottom: .2rem; }
+  .cap-tab b { width: 13px; height: 12px; }
+  .cap-tab i { height: 4px; }
+}

@@ -207,3 +207,59 @@
   .cs-faq-list .cs-faq-answer p { font-size: .72rem; line-height: 1.5; }
 }
 
+/* Match the desktop relationship on narrow screens: the capsule scene stays
+   in the middle column and each callout keeps its desktop anchor. */
+@media (max-width: 520px) {
+  .cs-features .cs-stage {
+    display: grid;
+    grid-template-columns: minmax(0, .9fr) minmax(0, 1.25fr) minmax(0, .9fr);
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+    gap: .35rem;
+    aspect-ratio: 1000 / 690;
+    min-height: 400px;
+    margin-inline: 0;
+  }
+  .cs-features .cs-scene {
+    position: relative;
+    inset: auto;
+    grid-column: 2;
+    grid-row: 1 / 4;
+    aspect-ratio: auto;
+    min-height: 0;
+    align-self: stretch;
+  }
+  .cs-features .cs-svg { width: 100%; height: 100%; }
+  .cs-features .cs-callout,
+  .cs-features .cs-callout--a,
+  .cs-features .cs-callout--b,
+  .cs-features .cs-callout--c {
+    position: relative;
+    inset: auto;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    width: auto;
+    align-self: center;
+    padding: .32rem .28rem;
+    border: 1px solid rgba(15,110,86,.16);
+    border-radius: 8px;
+    background: rgba(255,255,255,.9);
+    box-shadow: 0 5px 12px rgba(15,80,60,.07);
+  }
+  .cs-features .cs-callout--a { grid-column: 1; grid-row: 2; }
+  .cs-features .cs-callout--b { grid-column: 3; grid-row: 2; }
+  .cs-features .cs-callout--c { grid-column: 1; grid-row: 3; }
+  .cs-features .cs-pill { width: 100%; box-sizing: border-box; padding: .3rem .3rem; font-size: .47rem; gap: .2rem; border-radius: 3px 7px 7px 3px; }
+  .cs-features .cs-callout p { margin: .25rem 0 0; font-size: .45rem; line-height: 1.25; }
+
+  .cs-faq-body { grid-template-columns: minmax(0, 1.3fr) minmax(105px, .7fr); gap: .45rem; }
+  .cs-faq-art { order: initial; min-height: 260px; }
+  .cs-svg--tall { width: min(100%, 155px); }
+  .cs-art-label { top: 6%; right: -3%; padding: .32rem .4rem; font-size: .46rem; }
+  .cs-faq-question { gap: .25rem; }
+  .cs-faq-question .cs-pill { padding: .42rem .4rem; font-size: .56rem; }
+  .cs-faq-question .cs-pill b { font-size: .46rem; }
+  .cs-faq-plus { width: 18px; height: 18px; font-size: .75rem; }
+  .cs-faq-list .cs-faq-answer p { padding-left: .4rem; font-size: .57rem; line-height: 1.35; }
+}
+
