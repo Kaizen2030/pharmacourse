@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react"
+﻿import { useEffect, useState, useRef } from "react"
 import { Link } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
 import { useInView } from "framer-motion"
@@ -11,12 +11,6 @@ import pharmacourseHeroVisual from "../assets/pharmacourse-hero-visual.svg"
 import remedacarehmisMark from "../assets/remedacarehmis-mark.png"
 import remedacareposMark from "../assets/remedacarepos-mark.png"
 import remedacareDashboard from "../assets/remedacare-dashboard.svg"
-import heroMoleculeModel from "../assets/hero-molecule-model.jpg"
-import heroDnaHelix from "../assets/hero-dna-helix.jpg"
-import heroPymolRibbon from "../assets/hero-pymol-ribbon.png"
-import heroPymolDocking from "../assets/hero-pymol-docking.png"
-import heroFluorescenceCells from "../assets/hero-fluorescence-cells.jpg"
-import heroFutureLab from "../assets/hero-future-lab.svg"
 import heroCapsules from "../assets/hero-capsules.svg"
 import {
   BookOpen,
@@ -37,15 +31,6 @@ import {
 import "./Home.css"
 
 const WHATSAPP = "https://wa.me/254790059584?text=Hi%20Julius%2C%20I%27d%20like%20to%20book%20a%20demo%20of%20your%20platform."
-
-const HERO_LAB_STORIES = [
-  { image: heroPymolRibbon, label: "Protein structure", title: "Turn evidence into confident decisions." },
-  { image: heroPymolDocking, label: "Molecular docking", title: "Build skills that hold up in practice." },
-  { image: heroFluorescenceCells, label: "Microscopy research", title: "Read the signals behind better care." },
-  { image: heroFutureLab, label: "Future drug discovery", title: "Connect chemistry to better care." },
-  { image: heroMoleculeModel, label: "Molecular structures", title: "See the systems behind better outcomes." },
-  { image: heroDnaHelix, label: "Clinical evidence", title: "Keep your knowledge ready for the next patient." },
-]
 
 const HOMEPAGE_BRAND_REPLACEMENTS = [
   { pattern: /RemedacareHMS/g, replacement: "RemedacareHMIS" },
@@ -430,24 +415,10 @@ export default function Home() {
   const [activeSection, setActiveSection] = useState("hero")
   const [activeCourseIndex, setActiveCourseIndex] = useState(0)
   const [activePostIndex, setActivePostIndex] = useState(0)
-  const [activeHeroSlide, setActiveHeroSlide] = useState(0)
-  const [heroPaused, setHeroPaused] = useState(false)
   const [sections, setSections] = useState(DEFAULT_SECTIONS)
   const [loading, setLoading] = useState(true)
   const courseTrackRef = useRef(null)
   const blogTrackRef = useRef(null)
-
-  useEffect(() => {
-    if (heroPaused || (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches)) {
-      return undefined
-    }
-
-    const timer = window.setInterval(() => {
-      setActiveHeroSlide((current) => (current + 1) % HERO_LAB_STORIES.length)
-    }, 6500)
-
-    return () => window.clearInterval(timer)
-  }, [heroPaused])
 
   useEffect(() => {
     async function loadData() {
@@ -622,105 +593,54 @@ export default function Home() {
           case "hero":
             return (
               <AnimatedSection key={key}>
-                <section id="hero" className="hero-section">
+                <section id="hero" className="hero-section hero-infographic-section">
                   <div className="container">
-                    <div
-                      className="hero-content-top"
-                      onMouseEnter={() => setHeroPaused(true)}
-                      onMouseLeave={() => setHeroPaused(false)}
-                      onFocusCapture={() => setHeroPaused(true)}
-                      onBlurCapture={(event) => {
-                        if (!event.currentTarget.contains(event.relatedTarget)) setHeroPaused(false)
-                      }}
-                    >
-                      <div className="hero-lab-slideshow" aria-hidden="true">
-                        {HERO_LAB_STORIES.map((story, index) => (
-                          <img
-                            key={story.image}
-                            className={`hero-lab-slide ${activeHeroSlide === index ? "is-active" : ""}`}
-                            src={story.image}
-                            alt=""
-                            loading={index === 0 ? "eager" : "lazy"}
-                          />
-                        ))}
+                    <div className="hero-infographic">
+                      <div className="hero-info-card hero-info-card-top-left">
+                        <span className="hero-info-number">01 / LEARN</span>
+                        <strong>Pharmacourse</strong>
+                        <p>CPD courses, clinical cases and certificates for pharmacy professionals.</p>
                       </div>
-                      <div className="hero-science-screen" aria-hidden="true">
-                        <div className="hero-product-map">
-                          <div className="hero-map-brand">REMEDACARE <span>HEALTHCARE SYSTEMS</span></div>
-                          <div className="hero-map-card hero-map-card-learn">
-                            <span className="hero-map-index">01 / LEARN</span>
-                            <strong>Pharmacourse</strong>
-                            <p>CPD courses, clinical cases and certificates for pharmacy professionals.</p>
-                          </div>
-                          <div className="hero-map-card hero-map-card-operate">
-                            <span className="hero-map-index">02 / OPERATE</span>
-                            <strong>RemedacarePOS</strong>
-                            <p>Dispensing, inventory, claims and branch operations in one workflow.</p>
-                          </div>
-                          <div className="hero-map-card hero-map-card-care">
-                            <span className="hero-map-index">03 / MANAGE CARE</span>
-                            <strong>RemedacareHMIS</strong>
-                            <p>Patient records, departments, reporting and hospital operations connected.</p>
-                          </div>
-                          <div className="hero-map-core">
-                            <img className="hero-map-capsules" src={heroCapsules} alt="" />
-                            <span className="hero-map-core-kicker">ONE CONNECTED SYSTEM</span>
-                            <strong>Better care<br /><em>starts here.</em></strong>
-                            <div className="hero-map-core-mark"><span /><span /><span /></div>
-                          </div>
-                          <div className="hero-map-pill hero-map-pill-evidence">EVIDENCE</div>
-                          <div className="hero-map-pill hero-map-pill-operations">OPERATIONS</div>
-                          <div className="hero-map-pill hero-map-pill-care">CARE</div>
-                          <span className="hero-map-node hero-map-node-one" />
-                          <span className="hero-map-node hero-map-node-two" />
-                          <span className="hero-map-node hero-map-node-three" />
-                          <svg className="hero-map-lines" viewBox="0 0 600 480" preserveAspectRatio="none" focusable="false">
-                            <path d="M188 126 C240 154 236 185 282 212" />
-                            <path d="M421 126 C372 154 370 185 322 212" />
-                            <path d="M420 356 C372 334 368 303 322 278" />
-                          </svg>
-                        </div>
+                      <div className="hero-info-card hero-info-card-top-right">
+                        <span className="hero-info-number">02 / OPERATE</span>
+                        <strong>RemedacarePOS</strong>
+                        <p>Dispensing, inventory, claims and branch operations in one workflow.</p>
                       </div>
-                      {config.badge_text && <span className="hero-badge">{config.badge_text}</span>}
-                      <h1>{config.heading || DEFAULT_SECTIONS.hero.heading}</h1>
-                      <p>{config.subheading || ""}</p>
-
-                      <div className="hero-actions">
-                        <Link to="/courses" className="btn-primary">
-                          Explore Pharmacourse <ChevronRight size={17} />
-                        </Link>
-                        <a href="#ecosystem" className="hero-text-link">
-                          Meet the products <span aria-hidden="true">↓</span>
-                        </a>
+                      <div className="hero-info-card hero-info-card-middle-left">
+                        <span className="hero-info-number">03 / PRACTICE</span>
+                        <strong>Ready for work</strong>
+                        <p>Learn with practical scenarios built around real pharmacy decisions.</p>
                       </div>
-
-                      <div className="hero-media-footer">
-                        <div className="hero-media-caption" aria-live="polite">
-                          <span className="hero-media-label">{HERO_LAB_STORIES[activeHeroSlide].label}</span>
-                          <span className="hero-media-title">{HERO_LAB_STORIES[activeHeroSlide].title}</span>
-                          <span className="hero-media-counter">{String(activeHeroSlide + 1).padStart(2, "0")} / {String(HERO_LAB_STORIES.length).padStart(2, "0")}</span>
-                        </div>
-
-                        <div className="hero-slide-controls" role="tablist" aria-label="Hero visuals">
-                          {HERO_LAB_STORIES.map((story, index) => (
-                            <button
-                              key={story.image}
-                              type="button"
-                              role="tab"
-                              aria-selected={activeHeroSlide === index}
-                              aria-label={`Show ${story.label}`}
-                              className={activeHeroSlide === index ? "is-active" : ""}
-                              onClick={() => setActiveHeroSlide(index)}
-                            />
-                          ))}
-                        </div>
+                      <div className="hero-info-card hero-info-card-middle-right">
+                        <span className="hero-info-number">04 / CONNECT</span>
+                        <strong>One care system</strong>
+                        <p>Move from professional learning to connected pharmacy and hospital workflows.</p>
+                      </div>
+                      <div className="hero-info-card hero-info-card-bottom-right">
+                        <span className="hero-info-number">05 / MANAGE CARE</span>
+                        <strong>RemedacareHMIS</strong>
+                        <p>Patient records, departments, reporting and hospital operations connected.</p>
+                      </div>
+                      <div className="hero-infographic-title">
+                        <span>REMEDACARE</span>
+                        <strong>CONNECTED<br /><em>CARE</em></strong>
+                        <small>Learning, operations and hospital management in one healthcare system.</small>
+                      </div>
+                      <div className="hero-infographic-capsules">
+                        <img src={heroCapsules} alt="" />
+                      </div>
+                      <div className="hero-infographic-lines" aria-hidden="true">
+                        <i className="hero-info-line line-one" /><i className="hero-info-line line-two" /><i className="hero-info-line line-three" /><i className="hero-info-line line-four" /><i className="hero-info-line line-five" />
+                      </div>
+                      <div className="hero-infographic-cta">
+                        <Link to="/courses" className="btn-primary">Explore Pharmacourse <ChevronRight size={17} /></Link>
+                        <a href="#ecosystem" className="hero-text-link">Meet the products <span aria-hidden="true">↓</span></a>
                       </div>
                     </div>
                   </div>
                 </section>
               </AnimatedSection>
             )
-
           case "ecosystem":
             return (
               <AnimatedSection key={key} delay={0.1}>
@@ -1146,7 +1066,7 @@ export default function Home() {
                       {testimonials.map((testimonial) => (
                         <div key={testimonial.id} className="testimonial-card">
                           <div className="testimonial-rating" aria-label={`${testimonial.rating || 5} star rating`}>
-                            {"★".repeat(Math.max(1, Math.min(5, testimonial.rating || 5)))}
+                            {"â˜…".repeat(Math.max(1, Math.min(5, testimonial.rating || 5)))}
                           </div>
                           <p>"{getTruncatedReview(testimonial.review_text)}"</p>
                           <div className="testimonial-author">
@@ -1225,3 +1145,4 @@ export default function Home() {
     </div>
   )
 }
+

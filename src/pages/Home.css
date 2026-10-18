@@ -2587,6 +2587,235 @@
   .home .hero-map-card-care { bottom: 1rem; }
 }
 
+/* Full hero replacement: a single medical infographic screen, matching the supplied reference composition. */
+.home .hero-infographic-section {
+  padding: clamp(1rem, 3vw, 2.5rem) 0 clamp(2rem, 4vw, 3.5rem);
+  background: #ffffff;
+}
+
+.home .hero-infographic-section .container {
+  max-width: 1400px;
+}
+
+.home .hero-infographic {
+  position: relative;
+  min-height: clamp(600px, 59vw, 790px);
+  overflow: hidden;
+  border: 1px solid rgba(15, 110, 86, 0.13);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 50% 46%, rgba(143, 220, 176, 0.24), transparent 27%),
+    radial-gradient(circle at 91% 23%, rgba(202, 242, 216, 0.72), transparent 20%),
+    linear-gradient(135deg, #f9fff8 0%, #edf9ef 50%, #f8fdf7 100%);
+  box-shadow: 0 24px 70px rgba(15, 110, 86, 0.13);
+}
+
+.home .hero-infographic::before {
+  position: absolute;
+  inset: 0;
+  opacity: 0.36;
+  background-image:
+    linear-gradient(rgba(15, 110, 86, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 110, 86, 0.06) 1px, transparent 1px);
+  background-size: 46px 46px;
+  content: "";
+  mask-image: radial-gradient(circle at 50% 46%, black 0%, transparent 72%);
+}
+
+.home .hero-info-card {
+  position: absolute;
+  z-index: 4;
+  width: min(27%, 330px);
+  padding: 0.78rem 0.95rem 0.85rem;
+  border-top: 3px solid #77cda1;
+  border-radius: 0 0 12px 12px;
+  background: rgba(255, 255, 255, 0.58);
+  color: #0a4f3d;
+}
+
+.home .hero-info-card::before {
+  position: absolute;
+  top: -0.42rem;
+  left: 0.2rem;
+  width: 0.8rem;
+  height: 0.8rem;
+  border: 4px solid #f3fff6;
+  border-radius: 50%;
+  background: #15916e;
+  box-shadow: 0 0 0 1px rgba(15, 110, 86, 0.28);
+  content: "";
+}
+
+.home .hero-info-card-top-left { top: 9%; left: 5%; }
+.home .hero-info-card-top-right { top: 9%; right: 5%; border-color: #15916e; }
+.home .hero-info-card-middle-left { top: 42%; left: 3%; border-color: #9bdcba; }
+.home .hero-info-card-middle-right { top: 43%; right: 3%; border-color: #7aaac5; }
+.home .hero-info-card-bottom-right { right: 5%; bottom: 10%; border-color: #245777; }
+
+.home .hero-info-card-middle-right::before,
+.home .hero-info-card-bottom-right::before { background: #245777; }
+
+.home .hero-info-number {
+  display: block;
+  color: #39866d;
+  font-size: 0.53rem;
+  font-weight: 900;
+  letter-spacing: 0.13em;
+}
+
+.home .hero-info-card-middle-right .hero-info-number,
+.home .hero-info-card-bottom-right .hero-info-number { color: #28688d; }
+
+.home .hero-info-card strong {
+  display: block;
+  margin-top: 0.32rem;
+  color: #0a4f3d;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1rem, 1.8vw, 1.45rem);
+  letter-spacing: -0.04em;
+}
+
+.home .hero-info-card-middle-right strong,
+.home .hero-info-card-bottom-right strong { color: #173f56; }
+
+.home .hero-info-card p {
+  max-width: 31ch;
+  margin: 0.34rem 0 0;
+  color: #527167;
+  font-size: clamp(0.59rem, 0.85vw, 0.72rem);
+  line-height: 1.4;
+}
+
+.home .hero-info-card-middle-right p,
+.home .hero-info-card-bottom-right p { color: #557082; }
+
+.home .hero-infographic-capsules {
+  position: absolute;
+  z-index: 2;
+  top: 25%;
+  left: 50%;
+  width: min(44%, 550px);
+  transform: translateX(-50%);
+}
+
+.home .hero-infographic-capsules img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 20px 18px rgba(9, 79, 59, 0.16));
+}
+
+.home .hero-infographic-title {
+  position: absolute;
+  z-index: 5;
+  bottom: 8%;
+  left: 5%;
+  width: min(32%, 360px);
+  color: #0a4f3d;
+}
+
+.home .hero-infographic-title > span {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: #15916e;
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+}
+
+.home .hero-infographic-title strong {
+  display: block;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2rem, 4.7vw, 4.4rem);
+  line-height: 0.86;
+  letter-spacing: -0.07em;
+}
+
+.home .hero-infographic-title em {
+  color: #15916e;
+  font-style: normal;
+}
+
+.home .hero-infographic-title small {
+  display: block;
+  max-width: 28ch;
+  margin-top: 0.8rem;
+  color: #527167;
+  font-size: clamp(0.67rem, 0.95vw, 0.8rem);
+  line-height: 1.4;
+}
+
+.home .hero-infographic-lines {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  pointer-events: none;
+}
+
+.home .hero-info-line {
+  position: absolute;
+  display: block;
+  height: 1px;
+  border-top: 1px dashed rgba(15, 110, 86, 0.5);
+  transform-origin: left center;
+}
+
+.home .hero-info-line::after {
+  position: absolute;
+  right: -0.25rem;
+  top: -0.27rem;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: #77cda1;
+  content: "";
+}
+
+.home .line-one { top: 29%; left: 25%; width: 18%; transform: rotate(22deg); }
+.home .line-two { top: 29%; left: 58%; width: 17%; transform: rotate(-21deg); }
+.home .line-three { top: 49%; left: 23%; width: 17%; transform: rotate(-13deg); }
+.home .line-four { top: 50%; left: 62%; width: 13%; transform: rotate(15deg); }
+.home .line-five { top: 72%; left: 60%; width: 13%; transform: rotate(-13deg); }
+
+.home .hero-infographic-cta {
+  position: absolute;
+  z-index: 6;
+  right: 5%;
+  bottom: 4.5%;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.home .hero-infographic-cta .btn-primary {
+  color: #effff6;
+  background: #0f6e56;
+  box-shadow: 0 12px 24px rgba(15, 110, 86, 0.18);
+}
+
+.home .hero-infographic-cta .hero-text-link { color: #0f6e56; }
+
+@media (max-width: 840px) {
+  .home .hero-infographic {
+    min-height: 820px;
+  }
+
+  .home .hero-info-card {
+    width: 42%;
+  }
+
+  .home .hero-info-card-top-left { top: 6%; left: 4%; }
+  .home .hero-info-card-top-right { top: 6%; right: 4%; }
+  .home .hero-info-card-middle-left { top: 32%; left: 4%; }
+  .home .hero-info-card-middle-right { top: 32%; right: 4%; }
+  .home .hero-info-card-bottom-right { right: 4%; bottom: 17%; }
+  .home .hero-infographic-capsules { top: 47%; width: 70%; }
+  .home .hero-infographic-title { bottom: 5%; left: 4%; width: 44%; }
+  .home .hero-infographic-cta { right: 4%; bottom: 5%; flex-direction: column; align-items: flex-end; gap: 0.55rem; }
+  .home .hero-infographic-cta .btn-primary { padding: 0.72rem 0.9rem; }
+  .home .hero-info-line { display: none; }
+}
+
 .home .product-section#remedacareOS {
   background:
     radial-gradient(ellipse at 90% 42%, rgba(70, 120, 165, 0.12), transparent 40%),
