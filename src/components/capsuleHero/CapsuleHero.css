@@ -113,7 +113,14 @@
   display: block;
   color: inherit;
   text-decoration: none;
-  padding-bottom: 0.2rem;
+  padding: 0.6rem 0.7rem 0.7rem;
+  border: 1px solid rgba(7, 63, 49, 0.13);
+  border-radius: 14px;
+  background: linear-gradient(105deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.56));
+  box-shadow: 0 12px 24px rgba(7, 63, 49, 0.08);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+  transition: background 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
 }
 .cap-call--learn { left: 0; top: 34%; }
 .cap-call--pos { left: 50%; top: 5%; margin-left: -150px; }
@@ -170,6 +177,11 @@
   line-height: 1.55;
 }
 .cap-call a:hover .cap-call-head strong { color: var(--cap-green-deep); }
+.cap-call a:hover, .cap-call a:focus-visible {
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 16px 30px rgba(7, 63, 49, 0.13);
+  transform: translateY(-2px);
+}
 
 /* ---------- tablet + mobile: scene on top, copy and cards stacked below ---------- */
 @media (max-width: 1100px) {
@@ -213,7 +225,7 @@
 .cap-copy h1 {
   max-width: 8ch !important;
   margin: 0 0 0.65rem !important;
-  color: #15916e !important;
+  color: #073f31 !important;
   font-family: Arial, Helvetica, sans-serif;
   font-size: clamp(2.6rem, 4.4vw, 4.6rem) !important;
   font-weight: 900;
@@ -225,7 +237,8 @@
 .cap-copy p {
   max-width: 30ch !important;
   margin-bottom: 0 !important;
-  color: rgba(18, 56, 45, 0.7) !important;
+  color: #1d4638 !important;
+  font-weight: 550;
   font-size: 0.78rem !important;
   line-height: 1.4 !important;
 }
@@ -239,8 +252,8 @@
 .cap-call--connect { left: 35%; top: 21%; }
 .cap-call--hmis { right: 2%; top: 72%; }
 
-.cap-call-head strong { color: #2f8c4a; font-size: clamp(0.95rem, 1.35vw, 1.22rem); }
-.cap-call-text { color: rgba(18, 56, 45, 0.78); font-size: 0.76rem; line-height: 1.4; }
+.cap-call-head strong { color: #073f31; font-size: clamp(0.95rem, 1.35vw, 1.22rem); text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7); }
+.cap-call-text { color: #1d4638; font-weight: 520; font-size: 0.76rem; line-height: 1.4; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6); }
 .cap-call--hmis .cap-call-head strong { color: #245777; }
 .cap-call--hmis .cap-tab i { background: linear-gradient(90deg, #8ab7cf, #4f86a6); }
 .cap-call--hmis .cap-tab b { background: linear-gradient(160deg, #76a8c4, #245777); }
