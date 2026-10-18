@@ -5,6 +5,7 @@ import { useInView } from "framer-motion"
 import SEO from "../components/SEO"
 import BlogEngagementStats from "../components/BlogEngagementStats"
 import CapsuleHero from "../components/capsuleHero/CapsuleHero"
+import ProductShowcase from "../components/productShowcase/ProductShowcase"
 import { SITE_URL } from "../lib/siteConfig"
 import { formatBlogDate, getBlogCategoryLabel, getBlogCoverFallback, getBlogExcerpt } from "../lib/blogHelpers"
 import pharmacyosDashboard from "../assets/pharmacyos-dashboard.svg"
@@ -598,80 +599,7 @@ export default function Home() {
               </CapsuleHero>
             )
           case "ecosystem":
-            return (
-              <AnimatedSection key={key} delay={0.1}>
-                <section id="ecosystem" className="ecosystem-section">
-                  <div className="container">
-                    <div className="section-header">
-                      <span className="section-badge">Our products</span>
-                      <h2>Choose the product<br />that fits your team.</h2>
-                      <p>Professional learning, pharmacy operations, and hospital information are separate tools for different needs.</p>
-                    </div>
-
-                    <div className="platform-grid">
-                      <article className="platform-card platform-card-learning">
-                        <div className="platform-card-topline">
-                          <span className="platform-index">01 / LEARN</span>
-                          <img src="/favicon.svg" alt="" className="platform-mark" />
-                        </div>
-                        <div className="platform-card-preview" aria-hidden="true">
-                          <div className="platform-preview-toolbar"><span>CPD PROGRESS</span><span className="platform-preview-live">LIVE</span></div>
-                          <div className="platform-preview-chart platform-preview-bars">
-                            <span style={{ height: "38%" }} /><span style={{ height: "58%" }} /><span style={{ height: "48%" }} /><span style={{ height: "78%" }} /><span style={{ height: "66%" }} /><span style={{ height: "92%" }} />
-                          </div>
-                          <div className="platform-preview-footer"><span>Courses completed</span><strong>72%</strong></div>
-                        </div>
-                        <div className="platform-card-copy">
-                          <p className="platform-kicker">Professional development</p>
-                          <h3>Pharmacourse</h3>
-                          <p>Practical CPD courses, clinical case simulations, and certificates designed for pharmacy professionals.</p>
-                        </div>
-                        <Link to="/courses" className="platform-link">Explore courses <ChevronRight size={16} /></Link>
-                      </article>
-
-                      <article className="platform-card platform-card-pos">
-                        <div className="platform-card-topline">
-                          <span className="platform-index">02 / OPERATE</span>
-                          <img src={remedacareposMark} alt="" className="platform-mark" />
-                        </div>
-                        <div className="platform-card-preview" aria-hidden="true">
-                          <div className="platform-preview-toolbar"><span>OPERATIONS TODAY</span><span className="platform-preview-live">LIVE</span></div>
-                          <div className="platform-preview-metrics"><span><strong>248</strong><small>Dispensed</small></span><span><strong>96%</strong><small>In stock</small></span><span><strong>18</strong><small>Requests</small></span></div>
-                          <div className="platform-preview-line"><i style={{ width: "86%" }} /><i style={{ width: "63%" }} /><i style={{ width: "74%" }} /></div>
-                        </div>
-                        <div className="platform-card-copy">
-                          <p className="platform-kicker">Pharmacy operations</p>
-                          <h3>RemedacarePOS</h3>
-                          <p>Dispensing, inventory, patient requests, claims, and branch operations for pharmacies.</p>
-                        </div>
-                        <Link to="/remedacarepos" className="platform-link">Explore RemedacarePOS <ChevronRight size={16} /></Link>
-                      </article>
-
-                      <article className="platform-card platform-card-hmis">
-                        <div className="platform-card-topline">
-                          <span className="platform-index">03 / MANAGE CARE</span>
-                          <img src={remedacarehmisMark} alt="" className="platform-mark" />
-                        </div>
-                        <div className="platform-card-preview" aria-hidden="true">
-                          <div className="platform-preview-toolbar"><span>CARE OVERVIEW</span><span className="platform-preview-live">LIVE</span></div>
-                          <div className="platform-preview-chart platform-preview-bars">
-                            <span style={{ height: "54%" }} /><span style={{ height: "72%" }} /><span style={{ height: "44%" }} /><span style={{ height: "84%" }} /><span style={{ height: "67%" }} /><span style={{ height: "96%" }} />
-                          </div>
-                          <div className="platform-preview-footer"><span>Care pathways tracked</span><strong>1,284</strong></div>
-                        </div>
-                        <div className="platform-card-copy">
-                          <p className="platform-kicker">Hospital management</p>
-                          <h3>RemedacareHMIS</h3>
-                          <p>Patient records, clinical departments, reporting, finance, and hospital operations in one HMIS.</p>
-                        </div>
-                        <Link to="/remedacarehmis" className="platform-link">Explore RemedacareHMIS <ChevronRight size={16} /></Link>
-                      </article>
-                    </div>
-                  </div>
-                </section>
-              </AnimatedSection>
-            )
-
+            return <ProductShowcase key={key} />
           case "pharmacyOS":
             return (
               <AnimatedSection key={key} delay={0.2}>
@@ -1101,6 +1029,7 @@ export default function Home() {
     </div>
   )
 }
+
 
 
 
