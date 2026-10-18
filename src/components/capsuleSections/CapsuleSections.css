@@ -117,3 +117,43 @@
   .cs-capsule, .cs-stage-shadow, .cs-grains, .cs-grain, .cs-lines, .cs-svg--tall { animation: none; }
   .cs-scene, .cs-faq-art, .cs-faq-question .cs-pill { transition: none; }
 }
+
+/* Keep the desktop relationship between art and callouts on narrow screens.
+   The whole stage scales; only type and padding become denser. */
+@media (max-width: 860px) {
+  .cs-section { padding: 4rem 0; }
+  .cs-title { text-align: center; }
+  .cs-title small { justify-self: center; }
+  .cs-stage { display: block; aspect-ratio: 1000 / 560; margin-inline: 0; }
+  .cs-scene { position: absolute; inset: 0; }
+  .cs-features .cs-svg { aspect-ratio: auto; }
+  .cs-features .cs-lines { display: none; }
+  .cs-features .cs-callout { position: absolute; width: 27%; padding: 0; border-left: 0; }
+  .cs-features .cs-callout--a { left: 1%; top: 37%; }
+  .cs-features .cs-callout--b { right: 1%; top: 42%; }
+  .cs-features .cs-callout--c { left: 8%; bottom: 0; }
+  .cs-features .cs-pill { padding: .38rem .45rem; font-size: .58rem; border-radius: 3px 9px 9px 3px; }
+  .cs-features .cs-callout p { margin-top: .3rem; font-size: .54rem; line-height: 1.3; }
+  .cs-faq-body { grid-template-columns: minmax(0, 1.3fr) minmax(112px, .7fr); gap: .35rem; align-items: center; }
+  .cs-faq-art { order: initial; min-height: 300px; }
+  .cs-svg--tall { width: min(100%, 185px); }
+  .cs-art-label { top: 7%; right: -4%; padding: .38rem .5rem; font-size: .48rem; letter-spacing: .04em; }
+  .cs-faq-list { gap: .48rem; }
+  .cs-callout--faq { padding-bottom: .48rem; }
+  .cs-faq-question { gap: .35rem; }
+  .cs-faq-question .cs-pill { padding: .5rem .5rem; font-size: .61rem; border-radius: 3px 12px 12px 3px; }
+  .cs-faq-question .cs-pill b { font-size: .5rem; }
+  .cs-faq-plus { width: 20px; height: 20px; font-size: .85rem; }
+  .cs-faq-list .cs-faq-answer p { padding-left: .5rem; padding-right: 0; font-size: .62rem; line-height: 1.4; }
+  .cs-faq-answer.is-open p { padding-top: .35rem; }
+}
+@media (max-width: 520px) {
+  .cs-section { padding: 3.4rem 0; }
+  .cs-wrap, .cs-faq .cs-wrap { width: calc(100% - 1rem); }
+  .cs-title strong { font-size: clamp(1.8rem, 9vw, 2.7rem); }
+  .cs-title span { font-size: .78rem; }
+  .cs-stage { margin-inline: -.25rem; }
+  .cs-faq-body { grid-template-columns: minmax(0, 1.32fr) minmax(102px, .68fr); }
+  .cs-faq-art { min-height: 270px; }
+  .cs-svg--tall { width: 150px; }
+}
