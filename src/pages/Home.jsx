@@ -11,7 +11,7 @@ import pharmacourseHeroVisual from "../assets/pharmacourse-hero-visual.svg"
 import remedacarehmisMark from "../assets/remedacarehmis-mark.png"
 import remedacareposMark from "../assets/remedacarepos-mark.png"
 import remedacareDashboard from "../assets/remedacare-dashboard.svg"
-import heroCapsules from "../assets/hero-capsules.svg"
+import heroMedicalInfographic from "../assets/hero-medical-infographic.svg"
 import {
   BookOpen,
   Download,
@@ -626,15 +626,11 @@ export default function Home() {
                         <strong>CONNECTED<br /><em>CARE</em></strong>
                         <small>Learning, operations and hospital management in one healthcare system.</small>
                       </div>
-                      <div className="hero-infographic-capsules">
-                        <img src={heroCapsules} alt="" />
+                      <div className="hero-infographic-art">
+                        <img src={heroMedicalInfographic} alt="" />
                       </div>
                       <div className="hero-infographic-lines" aria-hidden="true">
                         <i className="hero-info-line line-one" /><i className="hero-info-line line-two" /><i className="hero-info-line line-three" /><i className="hero-info-line line-four" /><i className="hero-info-line line-five" />
-                      </div>
-                      <div className="hero-infographic-cta">
-                        <Link to="/courses" className="btn-primary">Explore Pharmacourse <ChevronRight size={17} /></Link>
-                        <a href="#ecosystem" className="hero-text-link">Meet the products <span aria-hidden="true">↓</span></a>
                       </div>
                     </div>
                   </div>
