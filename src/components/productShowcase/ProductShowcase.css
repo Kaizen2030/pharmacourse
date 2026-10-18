@@ -270,3 +270,19 @@
   .ps-text { font-size: .4rem; }
 }
 
+/* Give the trapezoid panels the readable width they need. The capsule keeps
+   its centre anchor, but its column is deliberately lighter on phones. */
+@media (max-width: 520px) {
+  .ps-stage { grid-template-columns: minmax(0, 1.1fr) minmax(52px, .6fr) minmax(0, 1.1fr); min-height: 400px; }
+  .ps-art { width: 122%; max-width: none; margin-left: -11%; }
+  .ps-tab { width: 34px; }
+  .ps-tab-in b { font-size: .34rem; }
+  .ps-panel-in, .ps-right .ps-panel-in { min-height: 116px; padding: .36rem .3rem .36rem .44rem; }
+  .ps-panel-in small { font-size: .34rem; }
+  .ps-panel-in strong { font-size: .65rem; }
+  .ps-text { font-size: .45rem; line-height: 1.22; -webkit-line-clamp: 3; }
+  .ps-stat { font-size: .38rem; }
+  .ps-stat em { font-size: .62rem; }
+  .ps-cta { padding: .2rem .27rem; font-size: .36rem; }
+}
+
