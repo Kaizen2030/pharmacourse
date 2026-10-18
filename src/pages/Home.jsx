@@ -654,24 +654,26 @@ export default function Home() {
                         </a>
                       </div>
 
-                      <div className="hero-media-caption" aria-live="polite">
-                        <span className="hero-media-label">{HERO_LAB_STORIES[activeHeroSlide].label}</span>
-                        <span className="hero-media-title">{HERO_LAB_STORIES[activeHeroSlide].title}</span>
-                        <span className="hero-media-counter">{String(activeHeroSlide + 1).padStart(2, "0")} / {String(HERO_LAB_STORIES.length).padStart(2, "0")}</span>
-                      </div>
+                      <div className="hero-media-footer">
+                        <div className="hero-media-caption" aria-live="polite">
+                          <span className="hero-media-label">{HERO_LAB_STORIES[activeHeroSlide].label}</span>
+                          <span className="hero-media-title">{HERO_LAB_STORIES[activeHeroSlide].title}</span>
+                          <span className="hero-media-counter">{String(activeHeroSlide + 1).padStart(2, "0")} / {String(HERO_LAB_STORIES.length).padStart(2, "0")}</span>
+                        </div>
 
-                      <div className="hero-slide-controls" role="tablist" aria-label="Hero visuals">
-                        {HERO_LAB_STORIES.map((story, index) => (
-                          <button
-                            key={story.image}
-                            type="button"
-                            role="tab"
-                            aria-selected={activeHeroSlide === index}
-                            aria-label={`Show ${story.label}`}
-                            className={activeHeroSlide === index ? "is-active" : ""}
-                            onClick={() => setActiveHeroSlide(index)}
-                          />
-                        ))}
+                        <div className="hero-slide-controls" role="tablist" aria-label="Hero visuals">
+                          {HERO_LAB_STORIES.map((story, index) => (
+                            <button
+                              key={story.image}
+                              type="button"
+                              role="tab"
+                              aria-selected={activeHeroSlide === index}
+                              aria-label={`Show ${story.label}`}
+                              className={activeHeroSlide === index ? "is-active" : ""}
+                              onClick={() => setActiveHeroSlide(index)}
+                            />
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
