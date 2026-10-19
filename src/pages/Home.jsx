@@ -444,7 +444,7 @@ export default function Home() {
 
     const requests = [
       supabase.from("homepage_content").select("*").eq("enabled", true).order("order_index"),
-      supabase.from("courses").select("*").eq("is_published", true).order("created_at", { ascending: false }).limit(5),
+      supabase.from("courses").select("*").eq("is_published", true).order("created_at", { ascending: false }).limit(4),
       supabase.from("blog_posts").select("*").eq("is_published", true).order("published_at", { ascending: false }).limit(5),
       supabase.from("testimonials").select("id, author_name, author_title, author_photo_url, rating, review_text").eq("is_published", true).order("created_at", { ascending: false }).limit(6),
     ]
