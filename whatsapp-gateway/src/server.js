@@ -24,6 +24,7 @@ const app = express()
 const sessions = new Map()
 const jobs = new Map()
 const lastBroadcastAt = new Map()
+const scheduledClaims = new Set()
 const logger = pino({ level: process.env.LOG_LEVEL || "warn" })
 
 function normalizeNumber(value) {
@@ -210,6 +211,80 @@ async function getOptedInRecipients(courseId) {
       return []
     }
   })
+}
+
+async function processScheduledTips() {
+  const now = new Date().toISOString()
+  const { data: tips, error: tipError } = await supabase
+    .from("tutor_whatsapp_posts")
+    .select("id, course_id, instructor_id, title, body, scheduled_for")
+    .eq("tip_status", "scheduled")
+    .lte("scheduled_for", now)
+    .order("scheduled_for", { ascending: true })
+    .limit(20)
+  if (tipError) return
+
+  for (const tip of tips || []) {
+    if (!tip.instructor_id || scheduledClaims.has(tip.id)) continue
+    const session = sessions.get(tip.instructor_id)
+    if (!session || session.status !== "connected" || !session.socket) continue
+    scheduledClaims.add(tip.id)
+    try {
+      const tutor = await getTutorById(tip.instructor_id)
+      if (!tutor) continue
+      const course = await getOwnedCourse(tutor.id, tip.course_id)
+      const allRecipients = await getOptedInRecipients(course.id)
+      if (!allRecipients.length) continue
+      const { data: alreadySent } = await supabase
+        .from("tutor_tip_deliveries")
+        .select("learner_id")
+        .eq("tip_id", tip.id)
+        .eq("status", "sent")
+      const alreadySentIds = new Set((alreadySent || []).map((row) => row.learner_id))
+      const recipients = allRecipients.filter((recipient) => !alreadySentIds.has(recipient.id)).slice(0, 200)
+      if (!recipients.length) {
+        await supabase.from("tutor_whatsapp_posts").update({ tip_status: "sent", is_published: true, sent_at: new Date().toISOString() }).eq("id", tip.id)
+        continue
+      }
+      let deliveryIds = new Map()
+      const { data: deliveries, error: deliveryError } = await supabase
+        .from("tutor_tip_deliveries")
+        .upsert(recipients.map((recipient) => ({
+          tip_id: tip.id,
+          course_id: course.id,
+          learner_id: recipient.id,
+          recipient_number: recipient.number,
+          status: "queued",
+          attempts: 0,
+          error: null,
+          queued_at: new Date().toISOString(),
+        })), { onConflict: "tip_id,learner_id" })
+        .select("id, learner_id")
+      if (!deliveryError) deliveryIds = new Map((deliveries || []).map((delivery) => [delivery.learner_id, delivery.id]))
+
+      let sent = 0
+      let failed = 0
+      for (const recipient of recipients) {
+        try {
+          await session.socket.sendMessage(`${recipient.number}@s.whatsapp.net`, { text: `${tip.body}\n\n${OPT_OUT_FOOTER.trim()}` })
+          sent += 1
+          const deliveryId = deliveryIds.get(recipient.id)
+          if (deliveryId) await supabase.from("tutor_tip_deliveries").update({ status: "sent", attempts: 1, sent_at: new Date().toISOString(), error: null }).eq("id", deliveryId)
+        } catch {
+          failed += 1
+          const deliveryId = deliveryIds.get(recipient.id)
+          if (deliveryId) await supabase.from("tutor_tip_deliveries").update({ status: "failed", attempts: 1, error: "WhatsApp send failed" }).eq("id", deliveryId)
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1200))
+      }
+      await supabase.from("tutor_whatsapp_posts").update({ tip_status: "sent", is_published: true, sent_at: new Date().toISOString() }).eq("id", tip.id)
+      await supabase.from("whatsapp_broadcast_log").insert({ instance_id: session.id, course_id: course.id, sent, failed, created_by: tutor.id })
+    } catch (error) {
+      console.error(`Scheduled tip ${tip.id} failed:`, error.message)
+    } finally {
+      scheduledClaims.delete(tip.id)
+    }
+  }
 }
 
 app.use(cors({
@@ -400,6 +475,8 @@ setInterval(() => {
     if (job.status === "complete" || job.status === "failed") jobs.delete(id)
   }
 }, 60 * 60 * 1000).unref()
+
+setInterval(() => void processScheduledTips().catch((error) => console.error("Scheduled tip worker failed:", error.message)), 60 * 1000).unref()
 
 async function restoreSessions() {
   let folders = []
