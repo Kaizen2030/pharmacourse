@@ -28,6 +28,8 @@ dev-dist
 # Local backups and scratch files
 *.backup
 *.zip
+*.rar
+*.map
 tmp_*.py
 temp_*.txt
 

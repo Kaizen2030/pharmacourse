@@ -4,6 +4,11 @@ import tailwindcss from "@tailwindcss/vite"
 import { VitePWA } from "vite-plugin-pwa"
 
 export default defineConfig({
+  // Never publish source maps: production users receive only the compiled bundle.
+  build: {
+    sourcemap: false,
+    minify: "oxc",
+  },
   plugins: [
     react(),
     tailwindcss(),
