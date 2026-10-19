@@ -4,7 +4,7 @@ import { supabase } from "../../lib/supabaseClient"
 import { useAuth } from "../../context/AuthContext"
 import {
   BookOpen, Home, LogOut, Plus, Edit2, Trash2, Eye, EyeOff,
-  Save, GripVertical, AlertCircle, RefreshCw, FlaskConical, Users, Award, ExternalLink, Video, Building2, Tags, BarChart3
+  Save, GripVertical, AlertCircle, RefreshCw, FlaskConical, Users, Award, ExternalLink, Video, Building2, Tags, BarChart3, MessageSquare, Search
 } from "lucide-react"
 import Pagination from "../../components/Pagination"
 import BlogContentRenderer from "../../components/BlogContentRenderer"
@@ -210,6 +210,13 @@ export default function AdminDashboard() {
             <BarChart3 size={20} />
             <span>Analytics</span>
           </button>
+          <button
+            className={`menu-item ${activeTab === "tips" ? "active" : ""}`}
+            onClick={() => setActiveTab("tips")}
+          >
+            <MessageSquare size={20} />
+            <span>Tips & WhatsApp</span>
+          </button>
           {isSuperAdmin && (
             <button
               className={`menu-item ${activeTab === "team-plans" ? "active" : ""}`}
@@ -284,6 +291,7 @@ export default function AdminDashboard() {
         {activeTab === "testimonials" && <TestimonialsTab />}
         {activeTab === "leaderboard" && <LeaderboardTab />}
         {activeTab === "analytics" && <WebsiteAnalyticsTab />}
+        {activeTab === "tips" && <AdminTipsTab />}
         {isSuperAdmin && activeTab === "team-plans" && <TeamPlansTab />}
         {activeTab === "homepage" && <HomepageTab />}
         {activeTab === "quizzes" && <QuizManagementTab />}
@@ -296,6 +304,86 @@ export default function AdminDashboard() {
 }
 
 // ─── COURSES TAB ─────────────────────────────────────────────────────────────
+
+function AdminTipsTab() {
+  const [posts, setPosts] = useState([])
+  const [deliveryRows, setDeliveryRows] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+  const [search, setSearch] = useState("")
+  const [status, setStatus] = useState("all")
+
+  useEffect(() => { void loadTips() }, [])
+
+  async function loadTips() {
+    setLoading(true)
+    setError("")
+    const [postsResult, deliveriesResult] = await Promise.all([
+      supabase.from("tutor_whatsapp_posts").select("id, course_id, instructor_id, title, body, is_published, tip_status, scheduled_for, sent_at, created_at").order("created_at", { ascending: false }),
+      supabase.from("tutor_tip_deliveries").select("tip_id, status").limit(10000),
+    ])
+    if (postsResult.error) {
+      setError(postsResult.error.message)
+      setPosts([])
+    } else {
+      const rawPosts = postsResult.data || []
+      const courseIds = [...new Set(rawPosts.map((post) => post.course_id).filter(Boolean))]
+      const instructorIds = [...new Set(rawPosts.map((post) => post.instructor_id).filter(Boolean))]
+      const [coursesResult, instructorsResult] = await Promise.all([
+        courseIds.length ? supabase.from("courses").select("id, title").in("id", courseIds) : Promise.resolve({ data: [] }),
+        instructorIds.length ? supabase.from("instructors").select("id, name").in("id", instructorIds) : Promise.resolve({ data: [] }),
+      ])
+      const courses = new Map((coursesResult.data || []).map((course) => [course.id, course.title]))
+      const instructors = new Map((instructorsResult.data || []).map((instructor) => [instructor.id, instructor.name]))
+      setPosts(rawPosts.map((post) => ({ ...post, courseTitle: courses.get(post.course_id) || "Unassigned course", instructorName: instructors.get(post.instructor_id) || "Unassigned tutor" })))
+    }
+    setDeliveryRows(deliveriesResult.error ? [] : (deliveriesResult.data || []))
+    setLoading(false)
+  }
+
+  const deliveryStats = new Map()
+  deliveryRows.forEach((row) => {
+    const current = deliveryStats.get(row.tip_id) || {}
+    current[row.status] = (current[row.status] || 0) + 1
+    deliveryStats.set(row.tip_id, current)
+  })
+  const getStatus = (post) => post.tip_status || (post.is_published ? "sent" : "draft")
+  const visiblePosts = posts.filter((post) => {
+    const haystack = `${post.title} ${post.courseTitle} ${post.instructorName}`.toLowerCase()
+    return (status === "all" || getStatus(post) === status) && haystack.includes(search.trim().toLowerCase())
+  })
+  const counts = {
+    all: posts.length,
+    draft: posts.filter((post) => getStatus(post) === "draft").length,
+    scheduled: posts.filter((post) => getStatus(post) === "scheduled").length,
+    sent: posts.filter((post) => getStatus(post) === "sent").length,
+    failed: deliveryRows.filter((row) => row.status === "failed").length,
+  }
+
+  return (
+    <div className="admin-tab-content">
+      <div className="admin-page-header">
+        <div><h1>Tips & WhatsApp</h1><p>Review tutor tips, scheduled messages, and delivery outcomes across courses.</p></div>
+        <button type="button" className="btn btn-outline" onClick={() => void loadTips()} disabled={loading}><RefreshCw size={16} /> Refresh</button>
+      </div>
+      {error ? <div className="admin-error"><AlertCircle size={16} /> {error}</div> : null}
+      <div className="admin-stats-grid" style={{ marginBottom: "1.25rem" }}>
+        {[["All tips", counts.all, "all"], ["Drafts", counts.draft, "draft"], ["Scheduled", counts.scheduled, "scheduled"], ["Sent", counts.sent, "sent"], ["Failed deliveries", counts.failed, "all"]].map(([label, value, nextStatus]) => (
+          <button key={label} type="button" className={`admin-stat-card${status === nextStatus ? " active" : ""}`} onClick={() => setStatus(nextStatus)}><span>{label}</span><strong>{value}</strong></button>
+        ))}
+      </div>
+      <div className="admin-toolbar" style={{ marginBottom: "1rem" }}>
+        <label className="admin-search" style={{ flex: 1, minWidth: 240 }}><Search size={16} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by tip, course, or tutor" /></label>
+        <select value={status} onChange={(event) => setStatus(event.target.value)} aria-label="Filter tips by status"><option value="all">All statuses</option><option value="draft">Drafts</option><option value="scheduled">Scheduled</option><option value="sent">Sent</option></select>
+      </div>
+      {loading ? <div className="admin-loading">Loading tips…</div> : visiblePosts.length === 0 ? <div className="empty-state"><p>No tips match this filter.</p></div> : (
+        <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Tip</th><th>Course</th><th>Tutor</th><th>Status</th><th>Delivery</th><th>Timing</th></tr></thead><tbody>
+          {visiblePosts.map((post) => { const delivery = deliveryStats.get(post.id) || {}; return <tr key={post.id}><td><strong>{post.title}</strong><small>{post.body?.slice(0, 90)}{post.body?.length > 90 ? "…" : ""}</small></td><td>{post.courseTitle}</td><td>{post.instructorName}</td><td><span className={`admin-status-badge ${getStatus(post)}`}>{getStatus(post)}</span></td><td>{delivery.sent || 0} sent · {delivery.failed || 0} failed</td><td>{post.scheduled_for ? new Date(post.scheduled_for).toLocaleString() : post.sent_at ? new Date(post.sent_at).toLocaleString() : "—"}</td></tr> })}
+        </tbody></table></div>
+      )}
+    </div>
+  )
+}
 
 function AdminUsersTab() {
   const { user } = useAuth()
