@@ -318,10 +318,13 @@ function AdminTipsTab() {
   async function loadTips() {
     setLoading(true)
     setError("")
-    const [postsResult, deliveriesResult] = await Promise.all([
+    let [postsResult, deliveriesResult] = await Promise.all([
       supabase.from("tutor_whatsapp_posts").select("id, course_id, instructor_id, title, body, is_published, tip_status, scheduled_for, sent_at, created_at").order("created_at", { ascending: false }),
       supabase.from("tutor_tip_deliveries").select("tip_id, status").limit(10000),
     ])
+    if (postsResult.error && /tip_status|scheduled_for|sent_at/i.test(postsResult.error.message || "")) {
+      postsResult = await supabase.from("tutor_whatsapp_posts").select("id, course_id, instructor_id, title, body, is_published, created_at").order("created_at", { ascending: false })
+    }
     if (postsResult.error) {
       setError(postsResult.error.message)
       setPosts([])
