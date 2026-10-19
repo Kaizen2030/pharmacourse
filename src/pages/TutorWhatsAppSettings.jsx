@@ -86,9 +86,16 @@ export default function TutorWhatsAppSettings() {
 
   useEffect(() => {
     if (!instructor?.id || !form.whatsapp_number.trim() || !gatewayConfigured) return undefined
-    void refreshGateway(instructor.id)
-    const interval = window.setInterval(() => void refreshGateway(instructor.id), 3000)
-    return () => window.clearInterval(interval)
+    const poll = () => {
+      if (!document.hidden) void refreshGateway(instructor.id)
+    }
+    poll()
+    const interval = window.setInterval(poll, 30000)
+    document.addEventListener("visibilitychange", poll)
+    return () => {
+      window.clearInterval(interval)
+      document.removeEventListener("visibilitychange", poll)
+    }
   }, [instructor?.id, form.whatsapp_number, refreshGateway])
 
   async function createTutorProfile() {

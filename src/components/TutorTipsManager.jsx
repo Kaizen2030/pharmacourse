@@ -8,6 +8,8 @@ export default function TutorTipsManager({ courseId, courseTitle, courseSlug, in
   const [posts, setPosts] = useState([])
   const [title, setTitle] = useState("")
   const [body, setBody] = useState("")
+  const [tipStatus, setTipStatus] = useState("draft")
+  const [scheduledFor, setScheduledFor] = useState("")
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState("")
   const [copiedId, setCopiedId] = useState("")
@@ -37,6 +39,10 @@ export default function TutorTipsManager({ courseId, courseTitle, courseSlug, in
   async function add(event) {
     event.preventDefault()
     if (!title.trim() || !body.trim()) return
+    if (tipStatus === "scheduled" && !scheduledFor) {
+      setError("Choose a date and time for the scheduled tip.")
+      return
+    }
     setBusy(true)
     setError("")
     setSendMessage("")
@@ -46,14 +52,39 @@ export default function TutorTipsManager({ courseId, courseTitle, courseSlug, in
       instructor_id: instructorId,
       title: title.trim().slice(0, 120),
       body: body.trim().slice(0, 1500),
-      is_published: true,
+      is_published: tipStatus === "sent",
+      tip_status: tipStatus,
+      scheduled_for: tipStatus === "scheduled" ? new Date(scheduledFor).toISOString() : null,
+      sent_at: tipStatus === "sent" ? new Date().toISOString() : null,
     }
 
-    const { data: inserted, error: insertError } = await supabase
+    let { data: inserted, error: insertError } = await supabase
       .from("tutor_whatsapp_posts")
       .insert(payload)
       .select()
       .single()
+
+    const workflowColumnsMissing = insertError && /tip_status|scheduled_for|sent_at/i.test(insertError.message || "")
+    if (workflowColumnsMissing && tipStatus === "draft") {
+      const legacyResult = await supabase
+        .from("tutor_whatsapp_posts")
+        .insert({
+          course_id: payload.course_id,
+          instructor_id: payload.instructor_id,
+          title: payload.title,
+          body: payload.body,
+          is_published: false,
+        })
+        .select()
+        .single()
+      inserted = legacyResult.data
+      insertError = legacyResult.error
+    }
+    if (workflowColumnsMissing && tipStatus !== "draft") {
+      setError("Run supabase/tutor_tips_v2_setup.sql before scheduling or publishing workflow tips.")
+      setBusy(false)
+      return
+    }
 
     if (insertError) {
       setError(insertError.message)
@@ -62,15 +93,21 @@ export default function TutorTipsManager({ courseId, courseTitle, courseSlug, in
     }
 
     try {
-      if (gatewayInstanceId) {
+      if (tipStatus === "sent" && gatewayInstanceId) {
         const text = formatTipForWhatsApp(inserted, courseTitle, `${SITE_URL}/courses/${courseSlug || courseId}`)
-        const result = await waGateway.broadcast(gatewayInstanceId, courseId, text)
+        const result = await waGateway.broadcast(gatewayInstanceId, courseId, text, inserted.id)
         setSendMessage(`Saved, published, and sent to ${result.recipients} opted-in learners.${result.skipped ? ` ${result.skipped} more were not included (200 per broadcast limit).` : ""}`)
+      } else if (tipStatus === "scheduled") {
+        setSendMessage("Tip saved and scheduled. It will stay hidden from the course page until it is published.")
+      } else if (tipStatus === "draft") {
+        setSendMessage("Draft saved. It is hidden from the course page until you publish it.")
       } else {
-        setSendMessage("Saved and published to this course page.")
+        setSendMessage("Published to this course page. Connect WhatsApp when you are ready to send it to opted-in learners.")
       }
       setTitle("")
       setBody("")
+      setTipStatus("draft")
+      setScheduledFor("")
       await load()
     } catch (sendError) {
       setSendMessage(`Saved and published, but sending failed: ${sendError.message}`)
@@ -81,7 +118,19 @@ export default function TutorTipsManager({ courseId, courseTitle, courseSlug, in
   }
 
   async function togglePublished(post) {
-    const { error: updateError } = await supabase.from("tutor_whatsapp_posts").update({ is_published: !post.is_published }).eq("id", post.id)
+    const nextPublished = !post.is_published
+    let { error: updateError } = await supabase
+      .from("tutor_whatsapp_posts")
+      .update({
+        is_published: nextPublished,
+        tip_status: nextPublished ? "sent" : "draft",
+        sent_at: nextPublished ? new Date().toISOString() : null,
+      })
+      .eq("id", post.id)
+    if (updateError && /tip_status|sent_at/i.test(updateError.message || "")) {
+      const legacyUpdate = await supabase.from("tutor_whatsapp_posts").update({ is_published: nextPublished }).eq("id", post.id)
+      updateError = legacyUpdate.error
+    }
     if (updateError) setError(updateError.message)
     else await load()
   }
@@ -110,8 +159,10 @@ export default function TutorTipsManager({ courseId, courseTitle, courseSlug, in
     setSendMessage("")
     try {
       const text = formatTipForWhatsApp(post, courseTitle, `${SITE_URL}/courses/${courseSlug || courseId}`)
-      const result = await waGateway.broadcast(gatewayInstanceId, courseId, text)
+      const result = await waGateway.broadcast(gatewayInstanceId, courseId, text, post.id)
       setSendMessage(`Sending started for ${result.recipients} opted-in learners.${result.skipped ? ` ${result.skipped} more were not included (200 per broadcast limit).` : ""}`)
+      await supabase.from("tutor_whatsapp_posts").update({ tip_status: "sent", is_published: true, sent_at: new Date().toISOString() }).eq("id", post.id)
+      await load()
     } catch (sendError) {
       setSendMessage(sendError.message)
     } finally {
@@ -144,12 +195,34 @@ export default function TutorTipsManager({ courseId, courseTitle, courseSlug, in
       <form onSubmit={add} style={{ display: "grid", gap: "0.6rem" }}>
         <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Tip title" maxLength={120} />
         <textarea value={body} onChange={(event) => setBody(event.target.value)} placeholder="Write the tip (max 1500 characters)" rows={4} maxLength={1500} />
+        <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: "0.6rem" }}>
+          <label style={{ display: "grid", gap: ".3rem", fontSize: ".8rem", color: "var(--text-500)" }}>
+            Workflow
+            <select value={tipStatus} onChange={(event) => setTipStatus(event.target.value)}>
+              <option value="draft">Save as draft</option>
+              <option value="scheduled">Schedule for later</option>
+              <option value="sent">Publish now</option>
+            </select>
+          </label>
+          {tipStatus === "scheduled" ? (
+            <label style={{ display: "grid", gap: ".3rem", fontSize: ".8rem", color: "var(--text-500)" }}>
+              Send at
+              <input type="datetime-local" value={scheduledFor} onChange={(event) => setScheduledFor(event.target.value)} />
+            </label>
+          ) : <span />}
+        </div>
         <button type="submit" className="btn btn-primary" disabled={busy || !title.trim() || !body.trim()} style={{ justifySelf: "start" }}>{busy ? "Saving…" : "Add tip"}</button>
       </form>
       {posts.map((post) => (
         <div key={post.id} style={{ border: "1px solid var(--border)", borderRadius: 8, padding: "0.8rem", display: "grid", gap: "0.4rem", opacity: post.is_published ? 1 : 0.6 }}>
-          <strong>{post.title}</strong>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".6rem", flexWrap: "wrap" }}>
+            <strong>{post.title}</strong>
+            <span style={{ display: "inline-flex", padding: ".2rem .5rem", borderRadius: 999, background: post.tip_status === "sent" || post.is_published ? "rgba(15, 110, 86, .1)" : "rgba(96, 112, 104, .1)", color: "var(--text-700)", fontSize: ".72rem", fontWeight: 700, textTransform: "capitalize" }}>
+              {post.tip_status || (post.is_published ? "sent" : "draft")}
+            </span>
+          </div>
           <span style={{ whiteSpace: "pre-line", fontSize: "0.9rem", color: "var(--text-700)" }}>{post.body}</span>
+          {post.scheduled_for ? <span style={{ color: "var(--text-500)", fontSize: ".8rem" }}>Scheduled for {new Date(post.scheduled_for).toLocaleString()}</span> : null}
           <div style={{ display: "flex", gap: "0.8rem", flexWrap: "wrap", fontSize: "0.82rem" }}>
             <button type="button" className="btn btn-outline" onClick={() => void copy(post)}>{copiedId === post.id ? "Copied" : "Copy for WhatsApp"}</button>
             {gatewayInstanceId && post.is_published ? <button type="button" className="btn btn-outline" onClick={() => void sendToOptedIn(post)} disabled={Boolean(sendingId)}>{sendingId === post.id ? "Starting…" : "Send to opted-in learners"}</button> : null}

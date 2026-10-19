@@ -320,6 +320,36 @@ app.post("/instances/:id/broadcast", requireOwnedInstance, async (request, respo
     const recipients = allRecipients.slice(0, 200)
     const skipped = allRecipients.length - recipients.length
     if (recipients.length === 0) return response.status(400).json({ error: "There are no opted-in learners enrolled in this course." })
+    const tipId = typeof request.body?.tipId === "string" ? request.body.tipId : null
+    let deliveryIds = new Map()
+    if (tipId) {
+      const { data: tip, error: tipError } = await supabase
+        .from("tutor_whatsapp_posts")
+        .select("id, course_id")
+        .eq("id", tipId)
+        .eq("course_id", course.id)
+        .maybeSingle()
+      if (tipError) throw tipError
+      if (!tip) return response.status(400).json({ error: "This tip is not assigned to the selected course." })
+      const { data: deliveries, error: deliveryError } = await supabase
+        .from("tutor_tip_deliveries")
+        .upsert(recipients.map((recipient) => ({
+          tip_id: tip.id,
+          course_id: course.id,
+          learner_id: recipient.id,
+          recipient_number: recipient.number,
+          status: "queued",
+          attempts: 0,
+          error: null,
+          queued_at: new Date().toISOString(),
+        })), { onConflict: "tip_id,learner_id" })
+        .select("id, learner_id")
+      if (deliveryError) {
+        console.error("Tip delivery queue write failed:", deliveryError.message)
+      } else {
+        deliveryIds = new Map((deliveries || []).map((delivery) => [delivery.learner_id, delivery.id]))
+      }
+    }
     const jobId = crypto.randomUUID()
     const job = { id: jobId, ownerId: request.user.id, instanceId: session.id, status: "queued", sent: 0, failed: 0 }
     jobs.set(jobId, job)
@@ -331,8 +361,12 @@ app.post("/instances/:id/broadcast", requireOwnedInstance, async (request, respo
         try {
           await session.socket.sendMessage(`${recipient.number}@s.whatsapp.net`, { text: text + OPT_OUT_FOOTER })
           job.sent += 1
+          const deliveryId = deliveryIds.get(recipient.id)
+          if (deliveryId) await supabase.from("tutor_tip_deliveries").update({ status: "sent", attempts: 1, sent_at: new Date().toISOString(), error: null }).eq("id", deliveryId)
         } catch {
           job.failed += 1
+          const deliveryId = deliveryIds.get(recipient.id)
+          if (deliveryId) await supabase.from("tutor_tip_deliveries").update({ status: "failed", attempts: 1, error: "WhatsApp send failed" }).eq("id", deliveryId)
         }
         await new Promise((resolve) => setTimeout(resolve, 1200))
       }
