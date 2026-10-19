@@ -8,9 +8,13 @@ import { createClient } from "@supabase/supabase-js"
 
 const port = Number(process.env.PORT || 8787)
 const authDirectory = process.env.WHATSAPP_AUTH_DIR || "./data/whatsapp-auth"
-const allowedOrigins = new Set((process.env.APP_ORIGINS || "http://localhost:5173")
+function normalizeOrigin(origin) {
+  return String(origin || "").trim().replace(/\/+$/, "")
+}
+
+const allowedOrigins = new Set((process.env.APP_ORIGINS || "https://pharmacourse.co.ke,https://www.pharmacourse.co.ke,http://localhost:5173")
   .split(",")
-  .map((origin) => origin.trim())
+  .map(normalizeOrigin)
   .filter(Boolean))
 
 if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -21,6 +25,15 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SER
   auth: { autoRefreshToken: false, persistSession: false },
 })
 const app = express()
+const corsOptions = {
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.has(normalizeOrigin(origin))) return callback(null, true)
+    return callback(null, false)
+  },
+  methods: ["GET", "POST", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "ngrok-skip-browser-warning"],
+  optionsSuccessStatus: 204,
+}
 const sessions = new Map()
 const jobs = new Map()
 const lastBroadcastAt = new Map()
@@ -287,12 +300,8 @@ async function processScheduledTips() {
   }
 }
 
-app.use(cors({
-  origin(origin, callback) {
-    if (!origin || allowedOrigins.has(origin)) return callback(null, true)
-    return callback(new Error("Origin is not allowed"))
-  },
-}))
+app.use(cors(corsOptions))
+app.options(/.*/, cors(corsOptions))
 app.use(express.json({ limit: "16kb" }))
 app.get("/health", (_request, response) => response.json({ ok: true }))
 app.use("/", authorizeTutor)

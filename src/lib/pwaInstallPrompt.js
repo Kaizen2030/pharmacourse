@@ -12,6 +12,10 @@ function notify() {
 }
 
 function handleBeforeInstallPrompt(event) {
+  // Do not suppress the browser banner on routes that do not render our
+  // install UI. The native prompt can only be deferred when a component is
+  // actually subscribed and can call prompt() later.
+  if (listeners.size === 0) return
   event.preventDefault()
   deferredInstallPrompt = event
   notify()
