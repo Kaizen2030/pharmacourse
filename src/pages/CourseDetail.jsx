@@ -57,42 +57,34 @@ export default function CourseDetail() {
 
         setCourse(c)
 
-        if (c.instructor_id) {
-          const { data: instructorData, error: instructorErr } = await supabase
-            .from("instructors")
-            .select("*")
-            .eq("id", c.instructor_id)
-            .maybeSingle()
-
-          if (instructorErr) {
-            console.error("Instructor load error:", instructorErr)
-          } else {
-            setInstructor(instructorData || null)
-          }
-        }
-
-        const { data: mods, error: modsErr } = await supabase
+        const instructorRequest = c.instructor_id
+          ? supabase.from("instructors").select("*").eq("id", c.instructor_id).maybeSingle()
+          : Promise.resolve({ data: null, error: null })
+        const modulesRequest = supabase
           .from("course_modules")
           .select("*")
           .eq("course_id", c.id)
           .order("order_index")
+        const enrollmentRequest = user?.id
+          ? supabase.from("course_enrollments").select("id").eq("user_id", user.id).eq("course_id", c.id).maybeSingle()
+          : Promise.resolve({ data: null, error: null })
 
-        if (modsErr) console.error("Modules error:", modsErr)
-        setModules(mods || [])
+        const [instructorResult, modulesResult, enrollmentResult] = await Promise.all([
+          instructorRequest,
+          modulesRequest,
+          enrollmentRequest,
+        ])
 
-        if (user?.id) {
-          const { data: enrollmentData, error: enrollErr } = await supabase
-            .from("course_enrollments")
-            .select("id")
-            .eq("user_id", user.id)
-            .eq("course_id", c.id)
-            .maybeSingle()
+        if (instructorResult.error) console.error("Instructor load error:", instructorResult.error)
+        else setInstructor(instructorResult.data || null)
 
-          if (enrollErr) {
-            console.error("Enrollment check error:", enrollErr)
-          } else if (enrollmentData) {
-            setEnrolled(true)
-          }
+        if (modulesResult.error) console.error("Modules error:", modulesResult.error)
+        setModules(modulesResult.data || [])
+
+        if (enrollmentResult.error) {
+          console.error("Enrollment check error:", enrollmentResult.error)
+        } else if (enrollmentResult.data) {
+          setEnrolled(true)
         }
       } catch (err) {
         console.error("Unexpected error:", err)

@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useCallback, useContext, useEffect, useState } from "react"
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react"
 import { supabase } from "../lib/supabaseClient"
 
 const AuthContext = createContext({})
@@ -18,6 +18,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  const profileRequests = useRef(new Map())
   const isAdmin = profile?.role === "admin"
   const isSuperAdmin = isAdmin && profile?.admin_role === "super"
   const isContentAdmin = isAdmin && profile?.admin_role === "content"
@@ -33,38 +34,49 @@ export function AuthProvider({ children }) {
   }, [])
 
   const ensureProfile = useCallback(async (nextUser) => {
-    const existingProfile = await fetchProfile(nextUser.id)
-    if (existingProfile) return existingProfile
+    const existingRequest = profileRequests.current.get(nextUser.id)
+    if (existingRequest) return existingRequest
 
-    const fullName =
-      nextUser.user_metadata?.full_name ??
-      nextUser.user_metadata?.name ??
-      [nextUser.user_metadata?.given_name, nextUser.user_metadata?.family_name]
-        .filter(Boolean)
-        .join(" ")
+    const request = (async () => {
+      const existingProfile = await fetchProfile(nextUser.id)
+      if (existingProfile) return existingProfile
 
-    const profilePayload = {
-      id: nextUser.id,
-      email: nextUser.email ?? "",
-      full_name: fullName,
-      professional_id: nextUser.user_metadata?.professional_id ?? "",
-      role: "student",
+      const fullName =
+        nextUser.user_metadata?.full_name ??
+        nextUser.user_metadata?.name ??
+        [nextUser.user_metadata?.given_name, nextUser.user_metadata?.family_name]
+          .filter(Boolean)
+          .join(" ")
+
+      const profilePayload = {
+        id: nextUser.id,
+        email: nextUser.email ?? "",
+        full_name: fullName,
+        professional_id: nextUser.user_metadata?.professional_id ?? "",
+        role: "student",
+      }
+
+      const { error } = await withTimeout(
+        supabase.from("user_profiles").insert(profilePayload),
+        "Timed out while creating your profile."
+      )
+
+      if (error && error.code !== "23505") throw error
+      return fetchProfile(nextUser.id)
+    })()
+
+    profileRequests.current.set(nextUser.id, request)
+    try {
+      return await request
+    } finally {
+      profileRequests.current.delete(nextUser.id)
     }
-
-    const { error } = await withTimeout(
-      supabase.from("user_profiles").insert(profilePayload),
-      "Timed out while creating your profile."
-    )
-
-    if (error && error.code !== "23505") throw error
-
-    return fetchProfile(nextUser.id)
   }, [fetchProfile])
 
   useEffect(() => {
     let isActive = true
 
-    async function applySession(session) {
+    async function applySession(session, isInitial = false) {
       if (!isActive) return
 
       const nextUser = session?.user ?? null
@@ -75,6 +87,8 @@ export function AuthProvider({ children }) {
         setLoading(false)
         return
       }
+
+      if (!isInitial) setLoading(false)
 
       try {
         const nextProfile = await ensureProfile(nextUser)
@@ -97,7 +111,7 @@ export function AuthProvider({ children }) {
         )
 
         if (error) throw error
-        await applySession(data?.session ?? null)
+        await applySession(data?.session ?? null, true)
       } catch (error) {
         console.error("[Auth] Load failed:", error)
         if (!isActive) return
@@ -110,8 +124,7 @@ export function AuthProvider({ children }) {
     restoreSession()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
-      setLoading(true)
-      void applySession(session)
+      window.setTimeout(() => { void applySession(session, false) }, 0)
     })
 
     return () => {

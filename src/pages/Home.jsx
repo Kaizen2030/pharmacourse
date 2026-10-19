@@ -13,8 +13,6 @@ import { SITE_URL } from "../lib/siteConfig"
 import { formatBlogDate, getBlogCategoryLabel, getBlogCoverFallback, getBlogExcerpt } from "../lib/blogHelpers"
 import pharmacyosDashboard from "../assets/pharmacyos-dashboard.svg"
 import pharmacourseHeroVisual from "../assets/pharmacourse-hero-visual.svg"
-import remedacarehmisMark from "../assets/remedacarehmis-mark.png"
-import remedacareposMark from "../assets/remedacarepos-mark.png"
 import remedacareDashboard from "../assets/remedacare-dashboard.svg"
 import {
   BookOpen,
@@ -124,6 +122,21 @@ const DEFAULT_SECTIONS = {
     secondary_btn_text: "Book a Demo",
     secondary_btn_url: WHATSAPP,
   },
+}
+
+const HOME_CACHE_KEY = "pharmacourse.homepage.cache.v1"
+
+function readHomepageCache() {
+  if (typeof window === "undefined") return null
+  try {
+    const raw = window.localStorage.getItem(HOME_CACHE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (!parsed || typeof parsed !== "object") return null
+    return parsed
+  } catch {
+    return null
+  }
 }
 
 function normalizeHomepageText(value) {
@@ -410,37 +423,48 @@ const ProductMockup = ({ type, videoUrl, imageSrc, imageAlt }) => {
 }
 
 export default function Home() {
-  const [courses, setCourses] = useState([])
+  const homepageCacheRef = useRef(readHomepageCache())
+  const initialHomepage = homepageCacheRef.current
+  const [courses, setCourses] = useState(() => Array.isArray(initialHomepage?.courses) ? initialHomepage.courses : [])
   const [coursesError, setCoursesError] = useState(false)
   const featuredCourses = courses.slice(0, 4)
-  const [testimonials, setTestimonials] = useState([])
+  const [testimonials, setTestimonials] = useState(() => Array.isArray(initialHomepage?.testimonials) ? initialHomepage.testimonials : [])
   const [testimonialsError, setTestimonialsError] = useState(false)
-  const [latestPosts, setLatestPosts] = useState([])
+  const [latestPosts, setLatestPosts] = useState(() => Array.isArray(initialHomepage?.latestPosts) ? initialHomepage.latestPosts : [])
   const [postsError, setPostsError] = useState(false)
   const [activeSection, setActiveSection] = useState("hero")
   const [activeCourseIndex, setActiveCourseIndex] = useState(0)
   const [activePostIndex, setActivePostIndex] = useState(0)
-  const [sections, setSections] = useState(DEFAULT_SECTIONS)
-  const [loading, setLoading] = useState(true)
+  const [sections, setSections] = useState(() => ({ ...DEFAULT_SECTIONS, ...(initialHomepage?.sections || {}) }))
   const courseTrackRef = useRef(null)
   const blogTrackRef = useRef(null)
 
   useEffect(() => {
-    async function loadData() {
-      try {
-        const { data: sectionData, error: sectionError } = await supabase
-          .from("homepage_content")
-          .select("*")
-          .eq("enabled", true)
-          .order("order_index")
+    let active = true
 
-        if (sectionError) {
-          console.error("Failed to load homepage sections:", sectionError)
-        }
+    const requests = [
+      supabase.from("homepage_content").select("*").eq("enabled", true).order("order_index"),
+      supabase.from("courses").select("*").eq("is_published", true).order("created_at", { ascending: false }).limit(5),
+      supabase.from("blog_posts").select("*").eq("is_published", true).order("published_at", { ascending: false }).limit(5),
+      supabase.from("testimonials").select("id, author_name, author_title, author_photo_url, rating, review_text").eq("is_published", true).order("created_at", { ascending: false }).limit(6),
+    ]
 
-        if (!sectionError && sectionData && sectionData.length > 0) {
+    Promise.allSettled(requests).then((results) => {
+      if (!active) return
+      const [sectionResult, courseResult, blogResult, testimonialResult] = results
+      const cache = {
+        sections: homepageCacheRef.current?.sections || {},
+        courses: homepageCacheRef.current?.courses || [],
+        latestPosts: homepageCacheRef.current?.latestPosts || [],
+        testimonials: homepageCacheRef.current?.testimonials || [],
+        savedAt: new Date().toISOString(),
+      }
+
+      if (sectionResult.status === "fulfilled") {
+        const { data: sectionData, error: sectionError } = sectionResult.value
+        if (sectionError) console.error("Failed to load homepage sections:", sectionError)
+        if (!sectionError && sectionData?.length) {
           const sectionsObj = {}
-
           sectionData.forEach((s) => {
             sectionsObj[s.section_key] = normalizeHomepageSection(s.section_key, {
               enabled: s.enabled,
@@ -457,59 +481,35 @@ export default function Home() {
               image_url: s.image_url,
             })
           })
-
+          cache.sections = sectionsObj
           setSections((prev) => ({ ...prev, ...sectionsObj }))
         }
-
-        const { data: courseData, error: courseLoadError } = await supabase
-          .from("courses")
-          .select("*")
-          .eq("is_published", true)
-          .order("created_at", { ascending: false })
-          .limit(5)
-
-        if (courseLoadError) {
-          console.error("Failed to load homepage courses:", courseLoadError)
-          setCoursesError(true)
-        } else {
-          setCourses(courseData || [])
-        }
-
-        const { data: blogData, error: blogLoadError } = await supabase
-          .from("blog_posts")
-          .select("*")
-          .eq("is_published", true)
-          .order("published_at", { ascending: false })
-          .limit(5)
-
-        if (blogLoadError) {
-          console.error("Failed to load homepage blog posts:", blogLoadError)
-          setPostsError(true)
-        } else {
-          setLatestPosts(blogData || [])
-        }
-
-        const { data: testimonialData, error: testimonialLoadError } = await supabase
-          .from("testimonials")
-          .select("id, author_name, author_title, author_photo_url, rating, review_text")
-          .eq("is_published", true)
-          .order("created_at", { ascending: false })
-          .limit(6)
-
-        if (testimonialLoadError) {
-          console.error("Failed to load homepage testimonials:", testimonialLoadError)
-          setTestimonialsError(true)
-        } else {
-          setTestimonials(testimonialData || [])
-        }
-      } catch (err) {
-        console.error("Error loading data:", err)
-      } finally {
-        setLoading(false)
       }
-    }
 
-    loadData()
+      if (courseResult.status === "fulfilled") {
+        const { data, error } = courseResult.value
+        if (error) { console.error("Failed to load homepage courses:", error); setCoursesError(true) }
+        else { cache.courses = data || []; setCourses(data || []) }
+      } else setCoursesError(true)
+
+      if (blogResult.status === "fulfilled") {
+        const { data, error } = blogResult.value
+        if (error) { console.error("Failed to load homepage blog posts:", error); setPostsError(true) }
+        else { cache.latestPosts = data || []; setLatestPosts(data || []) }
+      } else setPostsError(true)
+
+      if (testimonialResult.status === "fulfilled") {
+        const { data, error } = testimonialResult.value
+        if (error) { console.error("Failed to load homepage testimonials:", error); setTestimonialsError(true) }
+        else { cache.testimonials = data || []; setTestimonials(data || []) }
+      } else setTestimonialsError(true)
+
+      try { window.localStorage.setItem(HOME_CACHE_KEY, JSON.stringify(cache)) } catch { /* storage is optional */ }
+    }).catch((error) => {
+      if (active) console.error("Error loading homepage data:", error)
+    })
+
+    return () => { active = false }
   }, [])
 
   const sortedSections = Object.entries(sections)
@@ -562,8 +562,6 @@ export default function Home() {
     setActivePostIndex(index)
     scrollToSnapItem(blogTrackRef, index)
   }
-
-  if (loading) return <div className="home-loading">Loading...</div>
 
   return (
     <div className="home">

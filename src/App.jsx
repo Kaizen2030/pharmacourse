@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { lazy, Suspense, useEffect } from "react"
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom"
 import { AuthProvider } from "./context/AuthContext"
 import WebsiteAnalyticsTracker from "./components/WebsiteAnalyticsTracker"
@@ -6,45 +6,50 @@ import ChatWidget from "./components/ChatWidget"
 import Footer from "./components/Footer"
 import Navbar from "./components/Navbar"
 import PatientLayout from "./components/PatientLayout"
-import Blog from "./pages/Blog"
-import BlogPost from "./pages/BlogPost"
-import CaseSimulation from "./pages/CaseSimulation"
-import Certificate from "./pages/Certificate"
-import Community from "./pages/Community"
-import CompleteProfile from "./pages/CompleteProfile"
-import CourseDetail from "./pages/CourseDetail"
-import CoursePlayer from "./pages/CoursePlayer"
-import Courses from "./pages/Courses"
-import Dashboard from "./pages/Dashboard"
-import DesktopAccountActivate from "./pages/DesktopAccountActivate"
-import ForgotPassword from "./pages/ForgotPassword"
-import Home from "./pages/Home"
-import Login from "./pages/Login"
-import PatientAppointment from "./pages/patient/PatientAppointment"
-import PatientForgotPassword from "./pages/patient/PatientForgotPassword"
-import PatientHome from "./pages/patient/PatientHome"
-import PatientLogin from "./pages/patient/PatientLogin"
-import PatientPrescription from "./pages/patient/PatientPrescription"
-import PatientRegister from "./pages/patient/PatientRegister"
-import PatientResetPassword from "./pages/patient/PatientResetPassword"
-import PatientTrack from "./pages/patient/PatientTrack"
-import PatientPortal from "./pages/PatientPortal"
-import PatientPortalOperations from "./pages/PatientPortalOperations"
 import PatientInstallPrompt from "./components/PatientInstallPrompt"
-import PatientPortalFlyer from "./pages/PatientPortalFlyer"
-import PharmacyOS from "./pages/Pharmacyos"
-import Register from "./pages/Register"
-import RemedacareOS from "./pages/Remedacareos"
-import ResetPassword from "./pages/ResetPassword"
-import ResetRedirect from "./pages/ResetRedirect"
-import TeamPlans from "./pages/TeamPlans"
-import TutorWhatsAppSettings from "./pages/TutorWhatsAppSettings"
-import WhatsAppSettings from "./pages/WhatsAppSettings"
-import VerifyCertificate from "./pages/VerifyCertificate"
-import Workshops from "./pages/Workshops"
-import AdminDashboard from "./pages/admin/AdminDashboard"
-import CourseForm from "./pages/admin/CourseForm"
-import SimulationAdmin from "./pages/admin/SimulationAdmin"
+
+const Blog = lazy(() => import("./pages/Blog"))
+const BlogPost = lazy(() => import("./pages/BlogPost"))
+const CaseSimulation = lazy(() => import("./pages/CaseSimulation"))
+const Certificate = lazy(() => import("./pages/Certificate"))
+const Community = lazy(() => import("./pages/Community"))
+const CompleteProfile = lazy(() => import("./pages/CompleteProfile"))
+const CourseDetail = lazy(() => import("./pages/CourseDetail"))
+const CoursePlayer = lazy(() => import("./pages/CoursePlayer"))
+const Courses = lazy(() => import("./pages/Courses"))
+const Dashboard = lazy(() => import("./pages/Dashboard"))
+const DesktopAccountActivate = lazy(() => import("./pages/DesktopAccountActivate"))
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"))
+const Home = lazy(() => import("./pages/Home"))
+const Login = lazy(() => import("./pages/Login"))
+const PatientAppointment = lazy(() => import("./pages/patient/PatientAppointment"))
+const PatientForgotPassword = lazy(() => import("./pages/patient/PatientForgotPassword"))
+const PatientHome = lazy(() => import("./pages/patient/PatientHome"))
+const PatientLogin = lazy(() => import("./pages/patient/PatientLogin"))
+const PatientPrescription = lazy(() => import("./pages/patient/PatientPrescription"))
+const PatientRegister = lazy(() => import("./pages/patient/PatientRegister"))
+const PatientResetPassword = lazy(() => import("./pages/patient/PatientResetPassword"))
+const PatientTrack = lazy(() => import("./pages/patient/PatientTrack"))
+const PatientPortal = lazy(() => import("./pages/PatientPortal"))
+const PatientPortalOperations = lazy(() => import("./pages/PatientPortalOperations"))
+const PatientPortalFlyer = lazy(() => import("./pages/PatientPortalFlyer"))
+const PharmacyOS = lazy(() => import("./pages/Pharmacyos"))
+const Register = lazy(() => import("./pages/Register"))
+const RemedacareOS = lazy(() => import("./pages/Remedacareos"))
+const ResetPassword = lazy(() => import("./pages/ResetPassword"))
+const ResetRedirect = lazy(() => import("./pages/ResetRedirect"))
+const TeamPlans = lazy(() => import("./pages/TeamPlans"))
+const TutorWhatsAppSettings = lazy(() => import("./pages/TutorWhatsAppSettings"))
+const WhatsAppSettings = lazy(() => import("./pages/WhatsAppSettings"))
+const VerifyCertificate = lazy(() => import("./pages/VerifyCertificate"))
+const Workshops = lazy(() => import("./pages/Workshops"))
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"))
+const CourseForm = lazy(() => import("./pages/admin/CourseForm"))
+const SimulationAdmin = lazy(() => import("./pages/admin/SimulationAdmin"))
+
+function RouteFallback() {
+  return <div className="route-loading" role="status" aria-live="polite"><span className="route-loading-bar" />Loading page…</div>
+}
 
 function MediaProtection() {
   useEffect(() => {
@@ -117,7 +122,8 @@ function AppShell() {
       <WebsiteAnalyticsTracker />
       {isPatientRoute ? <PatientInstallPrompt /> : null}
       {!isPatientRoute && !isFlyerRoute && !isActivationRoute ? <Navbar /> : null}
-      <Routes>
+      <Suspense fallback={<RouteFallback />}>
+        <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -174,7 +180,8 @@ function AppShell() {
         <Route path="/reset/remedacare" element={<ResetRedirect app="remedacarehms" />} />
         <Route path="/reset/remedacarehmis" element={<ResetRedirect app="remedacarehms" />} />
         <Route path="/reset/pharmacyos" element={<ResetRedirect app="remedacarepos" />} />
-      </Routes>
+        </Routes>
+      </Suspense>
       {!isPatientRoute && !isFlyerRoute && !isActivationRoute ? <Footer /> : null}
       {!isPatientRoute && !isFlyerRoute && !isActivationRoute ? <ChatWidget /> : null}
     </>

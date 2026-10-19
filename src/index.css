@@ -1434,3 +1434,29 @@ code {
     grid-template-columns: 1fr;
   }
 }
+
+.route-loading {
+  position: relative;
+  min-height: 18rem;
+  display: grid;
+  place-items: center;
+  color: var(--text-500, #607068);
+  background: #fff;
+}
+
+.route-loading-bar {
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: 3px;
+  overflow: hidden;
+  background: linear-gradient(90deg, transparent, #0f6e56, transparent);
+  transform-origin: left;
+  animation: routeLoading 1.1s ease-in-out infinite;
+}
+
+@keyframes routeLoading {
+  0% { transform: translateX(-100%) scaleX(.35); }
+  55% { transform: translateX(35%) scaleX(.75); }
+  100% { transform: translateX(100%) scaleX(.35); }
+}
