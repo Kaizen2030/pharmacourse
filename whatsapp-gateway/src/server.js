@@ -12,10 +12,12 @@ function normalizeOrigin(origin) {
   return String(origin || "").trim().replace(/\/+$/, "")
 }
 
-const allowedOrigins = new Set((process.env.APP_ORIGINS || "https://pharmacourse.co.ke,https://www.pharmacourse.co.ke,http://localhost:5173")
+const defaultOrigins = ["https://pharmacourse.co.ke", "https://www.pharmacourse.co.ke", "http://localhost:5173"]
+const configuredOrigins = (process.env.APP_ORIGINS || "")
   .split(",")
   .map(normalizeOrigin)
-  .filter(Boolean))
+  .filter(Boolean)
+const allowedOrigins = new Set([...defaultOrigins, ...configuredOrigins].map(normalizeOrigin))
 
 if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required")
