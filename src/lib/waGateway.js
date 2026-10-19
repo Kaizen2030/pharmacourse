@@ -31,5 +31,7 @@ export const waGateway = {
   remove: (id) => request(`/instances/${encodeURIComponent(id)}`, { method: "DELETE" }),
   send: (id, courseId, to, text) => request(`/instances/${encodeURIComponent(id)}/send`, { method: "POST", body: { courseId, to, text } }),
   broadcast: (id, courseId, text, tipId = null) => request(`/instances/${encodeURIComponent(id)}/broadcast`, { method: "POST", body: { courseId, text, tipId } }),
+  resolveGroup: (id, inviteUrl) => request(`/instances/${encodeURIComponent(id)}/groups/resolve`, { method: "POST", body: { inviteUrl } }),
+  postToGroup: (id, courseId, text, tipId = null) => request(`/instances/${encodeURIComponent(id)}/groups/post`, { method: "POST", body: { courseId, text, tipId } }),
   job: (jobId) => request(`/jobs/${encodeURIComponent(jobId)}`),
 }

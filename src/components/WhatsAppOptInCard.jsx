@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { supabase } from "../lib/supabaseClient"
 import { resolveWhatsApp, waShareLink } from "../lib/tutorWhatsApp"
 
-export default function WhatsAppOptInCard({ course, instructor }) {
+export default function WhatsAppOptInCard({ course, instructor, enrolled = false }) {
   const [posts, setPosts] = useState([])
   const config = resolveWhatsApp(course, instructor, course?.title)
 
@@ -21,6 +21,8 @@ export default function WhatsAppOptInCard({ course, instructor }) {
   }, [course?.id])
 
   if (!config) return null
+  // Class group links are for enrolled learners only (the JoinGroupCard handles the protected link).
+  const hideLink = config.mode === "group" && !enrolled
 
   return (
     <div className="whatsapp-optin-card compact" style={{ flexDirection: "column", alignItems: "stretch" }}>
@@ -29,9 +31,13 @@ export default function WhatsAppOptInCard({ course, instructor }) {
           <p className="whatsapp-optin-title">{config.title}</p>
           <p className="whatsapp-optin-text">{config.blurb}</p>
         </div>
-        <a href={config.href} target="_blank" rel="noreferrer noopener" className="btn btn-primary whatsapp-optin-button" style={{ background: "#128C7E", boxShadow: "0 8px 18px rgba(37, 211, 102, 0.18)" }}>
-          {config.cta}
-        </a>
+        {hideLink ? (
+          <span style={{ fontSize: "0.85rem", color: "var(--text-500)" }}>Enroll to get the class group invite.</span>
+        ) : (
+          <a href={config.href} target="_blank" rel="noreferrer noopener" className="btn btn-primary whatsapp-optin-button" style={{ background: "#128C7E", boxShadow: "0 8px 18px rgba(37, 211, 102, 0.18)" }}>
+            {config.cta}
+          </a>
+        )}
       </div>
 
       {posts.length > 0 ? (

@@ -3,6 +3,7 @@ import { supabase } from "../lib/supabaseClient"
 import { formatTipForWhatsApp } from "../lib/tutorWhatsApp"
 import { SITE_URL } from "../lib/siteConfig"
 import { waGateway } from "../lib/waGateway"
+import TutorGroupPanel from "./TutorGroupPanel"
 
 export default function TutorTipsManager({ courseId, courseTitle, courseSlug, instructorId = null, gatewayInstanceId = "" }) {
   const [posts, setPosts] = useState([])
@@ -16,6 +17,7 @@ export default function TutorTipsManager({ courseId, courseTitle, courseSlug, in
   const [sendingId, setSendingId] = useState("")
   const [sendMessage, setSendMessage] = useState("")
   const [studentCount, setStudentCount] = useState(0)
+  const [group, setGroup] = useState(null)
 
   const load = useCallback(async () => {
     const { data, error: loadError } = await supabase
@@ -95,8 +97,13 @@ export default function TutorTipsManager({ courseId, courseTitle, courseSlug, in
     try {
       if (tipStatus === "sent" && gatewayInstanceId) {
         const text = formatTipForWhatsApp(inserted, courseTitle, `${SITE_URL}/courses/${courseSlug || courseId}`)
-        const result = await waGateway.broadcast(gatewayInstanceId, courseId, text, inserted.id)
-        setSendMessage(`Saved, published, and sent to ${result.recipients} opted-in learners.${result.skipped ? ` ${result.skipped} more were not included (200 per broadcast limit).` : ""}`)
+        if (group?.group_jid) {
+          await waGateway.postToGroup(gatewayInstanceId, courseId, text, inserted.id)
+          setSendMessage("Saved, published, and posted to your class WhatsApp group.")
+        } else {
+          const result = await waGateway.broadcast(gatewayInstanceId, courseId, text, inserted.id)
+          setSendMessage(`Saved, published, and sent to ${result.recipients} opted-in learners.${result.skipped ? ` ${result.skipped} more were not included (200 per broadcast limit).` : ""}`)
+        }
       } else if (tipStatus === "scheduled") {
         setSendMessage("Tip saved and scheduled. It will stay hidden from the course page until it is published.")
       } else if (tipStatus === "draft") {
@@ -153,6 +160,23 @@ export default function TutorTipsManager({ courseId, courseTitle, courseSlug, in
     }
   }
 
+  async function postToClassGroup(post) {
+    if (!window.confirm(`Post "${post.title}" into the class WhatsApp group?`)) return
+    setSendingId(post.id)
+    setSendMessage("")
+    try {
+      const text = formatTipForWhatsApp(post, courseTitle, `${SITE_URL}/courses/${courseSlug || courseId}`)
+      await waGateway.postToGroup(gatewayInstanceId, courseId, text, post.id)
+      await supabase.from("tutor_whatsapp_posts").update({ tip_status: "sent", is_published: true, sent_at: new Date().toISOString() }).eq("id", post.id)
+      setSendMessage("Posted to the class group.")
+      await load()
+    } catch (sendError) {
+      setSendMessage(sendError.message)
+    } finally {
+      setSendingId("")
+    }
+  }
+
   async function sendToOptedIn(post) {
     if (!window.confirm(`Send "${post.title}" to opted-in learners enrolled in ${courseTitle}?`)) return
     setSendingId(post.id)
@@ -185,6 +209,7 @@ export default function TutorTipsManager({ courseId, courseTitle, courseSlug, in
           {studentCount} students
         </span>
       </div>
+      <TutorGroupPanel courseId={courseId} gatewayInstanceId={gatewayInstanceId} onChange={setGroup} />
       <div>
         <h3 style={{ margin: 0, fontSize: "1rem" }}>WhatsApp tips</h3>
         <p style={{ margin: "0.3rem 0 0", color: "var(--text-500)", fontSize: "0.85rem" }}>
@@ -225,7 +250,8 @@ export default function TutorTipsManager({ courseId, courseTitle, courseSlug, in
           {post.scheduled_for ? <span style={{ color: "var(--text-500)", fontSize: ".8rem" }}>Scheduled for {new Date(post.scheduled_for).toLocaleString()}</span> : null}
           <div style={{ display: "flex", gap: "0.8rem", flexWrap: "wrap", fontSize: "0.82rem" }}>
             <button type="button" className="btn btn-outline" onClick={() => void copy(post)}>{copiedId === post.id ? "Copied" : "Copy for WhatsApp"}</button>
-            {gatewayInstanceId && post.is_published ? <button type="button" className="btn btn-outline" onClick={() => void sendToOptedIn(post)} disabled={Boolean(sendingId)}>{sendingId === post.id ? "Starting…" : "Send to opted-in learners"}</button> : null}
+            {gatewayInstanceId && group?.group_jid ? <button type="button" className="btn btn-primary" onClick={() => void postToClassGroup(post)} disabled={Boolean(sendingId)}>{sendingId === post.id ? "Posting…" : "Post to class group"}</button> : null}
+            {gatewayInstanceId && post.is_published ? <button type="button" className="btn btn-outline" onClick={() => void sendToOptedIn(post)} disabled={Boolean(sendingId)}>{sendingId === post.id ? "Starting…" : "Message opted-in learners privately"}</button> : null}
             <button type="button" className="btn btn-outline" onClick={() => void togglePublished(post)}>{post.is_published ? "Hide from course page" : "Publish"}</button>
             <button type="button" className="btn btn-outline" onClick={() => void remove(post)}>Delete</button>
           </div>

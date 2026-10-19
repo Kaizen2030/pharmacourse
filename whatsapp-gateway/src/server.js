@@ -122,6 +122,14 @@ function requireOwnedInstance(request, response, next) {
   next()
 }
 
+function authorizeWorker(request, response, next) {
+  const secret = process.env.GATEWAY_WORKER_SECRET
+  if (!secret || request.get("x-worker-secret") !== secret) {
+    return response.status(401).json({ error: "Worker authentication failed." })
+  }
+  next()
+}
+
 async function startInstance(tutor) {
   const existing = sessions.get(tutor.id)
   if (existing && ["connecting", "awaiting_scan", "connected"].includes(existing.status)) return existing
@@ -306,6 +314,28 @@ app.use(cors(corsOptions))
 app.options(/.*/, cors(corsOptions))
 app.use(express.json({ limit: "16kb" }))
 app.get("/health", (_request, response) => response.json({ ok: true }))
+
+app.post("/internal/instances/:id/send", authorizeWorker, async (request, response) => {
+  try {
+    const tutor = await getTutorById(request.params.id)
+    if (!tutor) return response.status(404).json({ error: "Tutor instance was not found." })
+    const session = sessions.get(tutor.id)
+    if (session?.status !== "connected" || !session.socket) return response.status(503).json({ error: "Connect the tutor's WhatsApp account first." })
+    const course = await getOwnedCourse(tutor.id, request.body?.courseId)
+    const text = String(request.body?.text || "").trim().slice(0, 1500)
+    const recipientNumber = normalizeNumber(request.body?.to)
+    if (!text) return response.status(400).json({ error: "Message cannot be empty." })
+    const recipients = await getOptedInRecipients(course.id)
+    if (!recipients.some((recipient) => recipient.number === recipientNumber)) {
+      return response.status(403).json({ error: "Only an opted-in learner enrolled in this course can receive a message." })
+    }
+    await session.socket.sendMessage(`${recipientNumber}@s.whatsapp.net`, { text: text + OPT_OUT_FOOTER })
+    response.json({ ok: true })
+  } catch (error) {
+    response.status(400).json({ error: error.message || "Message was not sent." })
+  }
+})
+
 app.use("/", authorizeTutor)
 
 app.get("/instances", (request, response) => {
@@ -333,6 +363,60 @@ app.get("/instances/:id/qr", requireOwnedInstance, async (request, response) => 
     response.json({ ...publicInstance(session), qr })
   } catch (error) {
     response.status(500).json({ error: error.message || "Could not load pairing QR." })
+  }
+})
+
+function getInviteCode(inviteUrl) {
+  const value = String(inviteUrl || "").trim()
+  const match = value.match(/^https:\/\/chat\.whatsapp\.com\/([A-Za-z0-9]+)(?:[/?#].*)?$/)
+  if (!match) throw new Error("Paste a valid WhatsApp group invite link.")
+  return match[1]
+}
+
+app.post("/instances/:id/groups/resolve", requireOwnedInstance, async (request, response) => {
+  try {
+    const session = sessions.get(request.params.id)
+    if (session?.status !== "connected" || !session.socket) return response.status(503).json({ error: "Connect your WhatsApp account first." })
+    const code = getInviteCode(request.body?.inviteUrl)
+    const info = await session.socket.groupGetInviteInfo(code)
+    const metadata = await session.socket.groupMetadata(info.id)
+    const ownNumber = String(session.socket.user?.id || "").split(":")[0].replace(/\D/g, "")
+    const isMember = (metadata.participants || []).some((participant) => String(participant.id || "").split(":")[0].replace(/\D/g, "") === ownNumber)
+    if (!isMember) return response.status(403).json({ error: "The linked WhatsApp number must already be a member of this group." })
+    response.json({ jid: info.id, subject: metadata.subject || info.subject || "" })
+  } catch (error) {
+    response.status(400).json({ error: error.message || "Could not resolve this WhatsApp group." })
+  }
+})
+
+app.post("/instances/:id/groups/post", requireOwnedInstance, async (request, response) => {
+  try {
+    const session = sessions.get(request.params.id)
+    if (session?.status !== "connected" || !session.socket) return response.status(503).json({ error: "Connect your WhatsApp account first." })
+    const course = await getOwnedCourse(request.tutor.id, request.body?.courseId)
+    const { data: group, error: groupError } = await supabase
+      .from("course_whatsapp_groups")
+      .select("group_jid")
+      .eq("course_id", course.id)
+      .maybeSingle()
+    if (groupError) throw groupError
+    if (!group?.group_jid) return response.status(400).json({ error: "Connect the class group before posting tips." })
+    const text = String(request.body?.text || "").trim().slice(0, 1500)
+    if (!text) return response.status(400).json({ error: "Message cannot be empty." })
+    if (request.body?.tipId) {
+      const { data: tip, error: tipError } = await supabase
+        .from("tutor_whatsapp_posts")
+        .select("id")
+        .eq("id", request.body.tipId)
+        .eq("course_id", course.id)
+        .maybeSingle()
+      if (tipError) throw tipError
+      if (!tip) return response.status(400).json({ error: "This tip is not assigned to the selected course." })
+    }
+    await session.socket.sendMessage(group.group_jid, { text })
+    response.json({ ok: true })
+  } catch (error) {
+    response.status(400).json({ error: error.message || "The group message was not sent." })
   }
 })
 

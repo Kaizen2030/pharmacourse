@@ -4,6 +4,7 @@ import { supabase } from "../lib/supabaseClient"
 import { useAuth } from "../context/AuthContext"
 import ProgressBar from "../components/ProgressBar"
 import SEO from "../components/SEO"
+import { GroupLink } from "../components/JoinGroupCard"
 import { BookOpen, Award, Clock, User, ChevronRight, ArrowRight, FlaskConical } from "lucide-react"
 
 export default function Dashboard() {
@@ -522,6 +523,7 @@ export default function Dashboard() {
                           <p style={{ fontSize: ".82rem", color: "var(--text-500)", margin: 0 }}>
                             {p?.completed || 0} / {p?.total || 0} lessons completed
                           </p>
+                          <GroupLink courseId={e.course_id} />
                         </div>
 
                         {/* Progress bar */}

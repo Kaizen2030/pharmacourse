@@ -4,6 +4,8 @@ import { supabase } from "../lib/supabaseClient"
 import { useAuth } from "../context/AuthContext"
 import SEO from "../components/SEO"
 import WhatsAppOptInCard from "../components/WhatsAppOptInCard"
+import JoinGroupCard from "../components/JoinGroupCard"
+import { fetchMyCourseGroup } from "../lib/courseGroup"
 
 function getInstructorInitials(name) {
   const parts = `${name || ""}`
@@ -28,6 +30,7 @@ export default function CourseDetail() {
   const [openMod, setOpenMod] = useState(null)
   const [loadError, setLoadError] = useState(null)
   const [bioExpanded, setBioExpanded] = useState(false)
+  const [justEnrolled, setJustEnrolled] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -117,9 +120,18 @@ export default function CourseDetail() {
     setEnrolled(true)
     setEnrolling(false)
 
-    if (modules.length > 0) {
+    let hasGroup = false
+    try { hasGroup = Boolean((await fetchMyCourseGroup(course.id))?.invite_url) } catch { hasGroup = false }
+    if (hasGroup) {
+      setJustEnrolled(true)
+      window.scrollTo({ top: 0, behavior: "smooth" })
+    } else if (modules.length > 0) {
       navigate(`/learn/${course.id}/${modules[0].id}`)
     }
+  }
+
+  function startLearning() {
+    if (modules.length > 0) navigate(`/learn/${course.id}/${modules[0].id}`)
   }
 
   const shouldShowBioToggle = useMemo(() => {
@@ -170,6 +182,12 @@ export default function CourseDetail() {
 
       <div className="detail-layout">
         <div className="detail-main">
+          {justEnrolled ? (
+            <JoinGroupCard courseId={course.id} highlight>
+              <button type="button" className="btn btn-outline" onClick={startLearning} style={{ justifySelf: "start" }}>Continue to lesson 1</button>
+            </JoinGroupCard>
+          ) : null}
+          {enrolled || isAdmin ? <JoinGroupCard courseId={course.id} /> : null}
           <span className="detail-badge">{course.category}</span>
           <h1>{course.title}</h1>
           <p>{course.description}</p>
@@ -275,7 +293,7 @@ export default function CourseDetail() {
             </div>
           ))}
 
-          <WhatsAppOptInCard course={course} instructor={instructor} />
+          <WhatsAppOptInCard course={course} instructor={instructor} enrolled={enrolled || isAdmin} />
         </div>
 
         <aside className="detail-sidebar">
