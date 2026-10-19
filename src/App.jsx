@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect } from "react"
-import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom"
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom"
 import { AuthProvider } from "./context/AuthContext"
+import { useAuth } from "./context/AuthContext"
 import WebsiteAnalyticsTracker from "./components/WebsiteAnalyticsTracker"
 import ChatWidget from "./components/ChatWidget"
 import Footer from "./components/Footer"
@@ -49,6 +50,14 @@ const SimulationAdmin = lazy(() => import("./pages/admin/SimulationAdmin"))
 
 function RouteFallback() {
   return <div className="route-loading" role="status" aria-live="polite"><span className="route-loading-bar" />Loading page…</div>
+}
+
+function AdminRoute({ children }) {
+  const { user, loading, isAdmin } = useAuth()
+
+  if (loading) return <RouteFallback />
+  if (!user || !isAdmin) return <Navigate to="/dashboard" replace />
+  return children
 }
 
 function MediaProtection() {
@@ -149,10 +158,10 @@ function AppShell() {
         <Route path="/remedacareos" element={<RemedacareOS />} />
         <Route path="/remedacarehmis" element={<RemedacareOS />} />
         <Route path="/community" element={<Community />} />
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/admin/courses/new" element={<CourseForm />} />
-        <Route path="/admin/courses/:id/edit" element={<CourseForm />} />
-        <Route path="/admin/simulations" element={<SimulationAdmin />} />
+        <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+        <Route path="/admin/courses/new" element={<AdminRoute><CourseForm /></AdminRoute>} />
+        <Route path="/admin/courses/:id/edit" element={<AdminRoute><CourseForm /></AdminRoute>} />
+        <Route path="/admin/simulations" element={<AdminRoute><SimulationAdmin /></AdminRoute>} />
 
         <Route path="/patient-portal" element={<PatientPortal />} />
         {/* Deliberately unlinked preview route. POS staff authentication still applies inside the app. */}

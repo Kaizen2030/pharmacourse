@@ -43,7 +43,7 @@ export default function SEO({
   useEffect(() => {
     const fullTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME
     const canonicalUrl = getCanonicalUrl(path)
-    const robotsValue = noindex ? "noindex, nofollow" : "index, follow"
+    const robotsValue = `${noindex ? "noindex, nofollow" : "index, follow"}, noarchive`
 
     document.title = fullTitle
 

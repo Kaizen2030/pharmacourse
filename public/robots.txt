@@ -1,5 +1,11 @@
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /learn/
+Disallow: /tutor/
+Disallow: /whatsapp-settings
+Disallow: /patient/
 Disallow: /pos/
 Disallow: /patient/portal/operations-preview
 
