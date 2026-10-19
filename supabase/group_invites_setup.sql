@@ -12,15 +12,18 @@ create table if not exists public.course_whatsapp_groups (
   updated_at    timestamptz not null default now()
 );
 alter table public.course_whatsapp_groups enable row level security;
+grant select, insert, update, delete on public.course_whatsapp_groups to authenticated;
 
 -- helper: is the current user the tutor of this course (or an admin)?
 create or replace function public.is_course_tutor(p_course uuid)
 returns boolean language sql stable security definer set search_path = public as $$
-  select exists (
+  select public.is_admin()
+    or exists (
     select 1 from public.courses c
     join public.instructors i on i.id = c.instructor_id
-    where c.id = p_course and i.linked_user_id = auth.uid()
-  ) or coalesce((select role = 'admin' from public.user_profiles where id = auth.uid()), false);
+    where c.id = p_course
+      and (c.instructor_id = auth.uid() or i.linked_user_id = auth.uid())
+  );
 $$;
 
 drop policy if exists "tutor manages group" on public.course_whatsapp_groups;
@@ -41,6 +44,7 @@ create table if not exists public.whatsapp_group_invites (
   unique (course_id, user_id)
 );
 alter table public.whatsapp_group_invites enable row level security;
+grant select on public.whatsapp_group_invites to authenticated;
 
 drop policy if exists "learner sees own invite" on public.whatsapp_group_invites;
 create policy "learner sees own invite" on public.whatsapp_group_invites
