@@ -5,7 +5,8 @@
   "engines": { "node": ">=20" },
   "scripts": {
     "start": "node --env-file=.env src/server.js",
-    "check": "node --check src/server.js"
+    "worker": "node --env-file=.env invite-worker.js",
+    "check": "node --check src/server.js && node --check invite-worker.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.103.2",
