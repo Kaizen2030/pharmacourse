@@ -23,7 +23,16 @@ function fail(error: string, status: number) {
 }
 
 function normalizePhone(value: unknown) {
-  return String(value || "").replace(/[^\d+]/g, "")
+  const digits = String(value || "").replace(/\D/g, "")
+  if (!digits) return ""
+  // Treat Kenyan local and international formats as the same number.
+  if (digits.startsWith("254") && digits.length === 12) return `0${digits.slice(3)}`
+  if (digits.startsWith("7") && digits.length === 9) return `0${digits}`
+  return digits
+}
+
+function normalizeEmail(value: unknown) {
+  return String(value || "").trim().toLowerCase()
 }
 
 async function buildIceServers() {
@@ -102,7 +111,7 @@ async function getUser(req: Request, url: string, anonKey: string) {
 async function getAppointment(admin: ReturnType<typeof createClient>, appointmentId: string) {
   const { data, error } = await admin
     .from("appointments")
-    .select("id, pharmacy_id, patient_id, patient_phone, appointment_type, slot_datetime, status")
+    .select("*")
     .eq("id", appointmentId)
     .maybeSingle()
 
@@ -123,8 +132,13 @@ async function isAppointmentPatient(admin: ReturnType<typeof createClient>, appo
   const metadata = user.user_metadata || {}
   const accountPhone = normalizePhone(metadata.patient_phone || metadata.phone || metadata.patientPhone)
   const appointmentPhone = normalizePhone(appointment.patient_phone)
+  const accountEmail = normalizeEmail(user.email || metadata.email)
+  const appointmentEmail = normalizeEmail(appointment.patient_email)
+  const accountPatientId = String(metadata.patient_id || metadata.patientId || "")
 
   if (accountPhone && appointmentPhone && accountPhone === appointmentPhone) return true
+  if (accountEmail && appointmentEmail && accountEmail === appointmentEmail) return true
+  if (accountPatientId && appointment.patient_id && accountPatientId === String(appointment.patient_id)) return true
   if (!appointment.patient_id) return false
 
   const { data, error } = await admin

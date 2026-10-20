@@ -58,7 +58,7 @@ export default function PatientAppointment() {
   const [submitMessage, setSubmitMessage] = useState({ type: "", message: "" })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const autoLookupDoneRef = useRef(false)
-  const { loading: authLoading, isAuthenticated, patientPhone, fullName } = usePatientPortalAuth()
+  const { loading: authLoading, isAuthenticated, user, patientPhone, fullName } = usePatientPortalAuth()
   const loginPath = createPatientPath("/patient/login")
   const registerPath = createPatientPath("/patient/register")
   const availableSlots = slotOptions.filter((slot) => !bookedSlots.includes(slot.value))
@@ -163,6 +163,16 @@ export default function PatientAppointment() {
     }
 
     setPatient(data.patient)
+    // Keep the signed-in account linked to the verified POS patient record so
+    // the consultation function can authorize the same appointment later.
+    void pharmacyosClient.auth.updateUser({
+      data: {
+        patient_phone: data.patient.phone || normalizedPhone,
+        patient_id: String(data.patient.id || ""),
+        full_name: data.patient.full_name || fullName || "",
+        primary_pharmacy_id: String(pharmacyId || ""),
+      },
+    })
     savePatientPortalSession(pharmacyId, {
       phone: data.patient.phone || normalizedPhone,
       fullName: data.patient.full_name,
@@ -170,7 +180,7 @@ export default function PatientAppointment() {
     })
     setLookupMessage({ type: "success", message: `Welcome back ${data.patient.full_name}. Choose your appointment details below.` })
     setIsLookingUp(false)
-  }, [isAuthenticated, patientPhone, pharmacyId])
+  }, [isAuthenticated, patientPhone, fullName, pharmacyId])
 
   async function handleSubmit(event) {
     event.preventDefault()
@@ -199,6 +209,7 @@ export default function PatientAppointment() {
       pharmacy_id: pharmacyId,
       patient_id: patient.id,
       patient_phone: patient.phone,
+      patient_email: user?.email || null,
       patient_name: patient.full_name,
       appointment_type: appointmentType,
       slot_datetime: slotDateTime.toISOString(),
