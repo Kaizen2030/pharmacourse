@@ -26,7 +26,43 @@ function normalizePhone(value: unknown) {
   return String(value || "").replace(/[^\d+]/g, "")
 }
 
-function buildIceServers() {
+async function buildIceServers() {
+  const cloudflareKeyId = Deno.env.get("CLOUDFLARE_TURN_KEY_ID") || ""
+  const cloudflareApiToken = Deno.env.get("CLOUDFLARE_TURN_API_TOKEN") || ""
+
+  if (cloudflareKeyId && cloudflareApiToken) {
+    try {
+      const response = await fetch(
+        `https://rtc.live.cloudflare.com/v1/turn/keys/${encodeURIComponent(cloudflareKeyId)}/credentials/generate-ice-servers`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${cloudflareApiToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ ttl: 14400 }),
+        },
+      )
+
+      if (response.ok) {
+        const payload = await response.json()
+        const cloudflareServers = Array.isArray(payload?.iceServers)
+          ? payload.iceServers.map((server: any) => ({
+              ...server,
+              urls: Array.isArray(server?.urls)
+                ? server.urls.filter((url: string) => !String(url).includes(":53"))
+                : server?.urls,
+            }))
+          : []
+        if (cloudflareServers.length) return cloudflareServers
+      } else {
+        console.error("[consult] Cloudflare TURN credential request failed", response.status)
+      }
+    } catch (error) {
+      console.error("[consult] Cloudflare TURN credential request failed", error)
+    }
+  }
+
   const servers: Array<{ urls: string | string[]; username?: string; credential?: string }> = publicStunUrls.map((urls) => ({ urls }))
   const turnUrls = (Deno.env.get("TURN_URLS") || "")
     .split(",")
@@ -129,12 +165,12 @@ async function getOrCreateSession(admin: ReturnType<typeof createClient>, appoin
   return data
 }
 
-function sessionPayload(session: Record<string, any>, role: "patient" | "staff") {
+async function sessionPayload(session: Record<string, any>, role: "patient" | "staff") {
   return {
     appointmentId: session.appointment_id,
     role,
     topic: `consult:${session.appointment_id}:${session.signal_secret}`,
-    iceServers: buildIceServers(),
+    iceServers: await buildIceServers(),
     startedAt: session.started_at,
   }
 }
@@ -172,7 +208,7 @@ Deno.serve(async (req) => {
     if (action === "start") {
       if (!staff) return fail("forbidden", 403)
       const session = await getOrCreateSession(admin, appointment, user.id)
-      return response(sessionPayload(session, "staff"))
+      return response(await sessionPayload(session, "staff"))
     }
 
     if (action === "end") {
@@ -204,7 +240,7 @@ Deno.serve(async (req) => {
       if (error) throw error
     }
 
-    return response(sessionPayload(session, "patient"))
+    return response(await sessionPayload(session, "patient"))
   } catch (error) {
     console.error("[consult] request failed", error)
     return fail("server_error", 500)

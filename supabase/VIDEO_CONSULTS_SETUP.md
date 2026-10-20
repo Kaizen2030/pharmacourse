@@ -8,15 +8,14 @@ insert into public.consult_staff (user_id, pharmacy_id)
 values ('STAFF_AUTH_USER_UUID', 'PHARMACY_UUID');
 ```
 
-3. Deploy the `consult` Edge Function from this repository. Set these function secrets:
+3. Create a Cloudflare Realtime TURN key, then deploy the `consult` Edge Function from this repository. Set these function secrets:
 
 ```text
 APP_ORIGIN=https://www.pharmacourse.co.ke
-TURN_URLS=turn:your-turn-host:3478?transport=udp,turns:your-turn-host:5349?transport=tcp
-TURN_USERNAME=your-turn-username
-TURN_CREDENTIAL=your-turn-credential
+CLOUDFLARE_TURN_KEY_ID=your-cloudflare-turn-key-id
+CLOUDFLARE_TURN_API_TOKEN=your-cloudflare-api-token
 ```
 
-`TURN_*` values belong in Supabase Edge Function secrets, never in Vite or the browser. If they are omitted, the function returns public STUN servers only; some users behind strict NATs will then be unable to connect. Use a production TURN provider or a maintained coturn deployment for reliable calls.
+The Edge Function exchanges the Cloudflare key for short-lived browser credentials. Keep both Cloudflare values in Supabase Edge Function secrets, never in Vite or the browser. If Cloudflare secrets are omitted, the function falls back to public STUN servers only; some users behind strict NATs will then be unable to connect. The function also supports a self-hosted or other provider through `TURN_URLS`, `TURN_USERNAME`, and `TURN_CREDENTIAL` if you later replace Cloudflare.
 
 The room is available to signed-in patients at `/patient/consult/:appointmentId`. The pharmacist side should call the same `consult` function with the staff session and render `ConsultRoom` with `role="staff"`.
