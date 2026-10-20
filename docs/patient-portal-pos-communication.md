@@ -2,6 +2,8 @@
 
 The patient portal is part of the Pharmacourse web app. It uses the PharmacyOS Supabase project configured by `src/lib/pharmacyPosSupabase.js`. The RemedacarePOS desktop app uses the same project in `src/supabase.js` (`https://npybtjtilzjsgcxgesxy.supabase.co`).
 
+The refreshed `src.zip` is the frontend source archive. It contains the patient portal and room UI. The database SQL and Edge Function are kept separately under `supabase/` because they are deployed to Supabase rather than copied into the browser bundle.
+
 ## Shared workflow
 
 1. A signed-in patient books an appointment from `/patient/appointment`.
