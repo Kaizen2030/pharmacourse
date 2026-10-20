@@ -2,8 +2,8 @@
 -- Room = one appointment. Only METADATA is stored. No recordings, no chat logs.
 
 -- 1) Who counts as pharmacy staff.
---    >>> REPLACE the body of consult_is_staff() with your real POS staff lookup
---    >>> if you already have a staff/profiles table. It fails closed (nobody is staff) until filled.
+--    Existing POS staff in web_users are accepted automatically when that table
+--    is present. consult_staff remains available for a manual allow-list.
 create table if not exists public.consult_staff (
   user_id     uuid not null references auth.users(id) on delete cascade,
   pharmacy_id text not null,
@@ -29,6 +29,25 @@ as $$
           select 1 from public.pharmacies ph
           where ph.id::text = p_pharmacy_id
             and ph.parent_pharmacy_id::text = cs.pharmacy_id
+        )
+      )
+  )
+  or exists (
+    select 1
+    from public.web_users wu
+    where wu.auth_user_id = p_user_id
+      and coalesce(wu.approved, true) = true
+      and (
+        wu.branch_pharmacy_id::text = p_pharmacy_id
+        or (wu.branch_pharmacy_id is null and wu.pharmacy_id::text = p_pharmacy_id)
+        or exists (
+          select 1
+          from public.pharmacies ph
+          where ph.id::text = p_pharmacy_id
+            and (
+              ph.parent_pharmacy_id::text = wu.pharmacy_id::text
+              or ph.parent_pharmacy_id::text = wu.branch_pharmacy_id::text
+            )
         )
       )
   );
