@@ -26,6 +26,7 @@ const ForgotPassword = lazyWithReload(() => import("./pages/ForgotPassword"))
 const Home = lazyWithReload(() => import("./pages/Home"))
 const Login = lazyWithReload(() => import("./pages/Login"))
 const PatientAppointment = lazyWithReload(() => import("./pages/patient/PatientAppointment"))
+const PatientConsult = lazyWithReload(() => import("./pages/patient/PatientConsult"))
 const PatientForgotPassword = lazyWithReload(() => import("./pages/patient/PatientForgotPassword"))
 const PatientHome = lazyWithReload(() => import("./pages/patient/PatientHome"))
 const PatientLogin = lazyWithReload(() => import("./pages/patient/PatientLogin"))
@@ -184,6 +185,7 @@ function AppShell() {
           <Route path="register" element={<PatientRegister />} />
           <Route path="prescription" element={<PatientPrescription />} />
           <Route path="appointment" element={<PatientAppointment />} />
+          <Route path="consult/:appointmentId" element={<PatientConsult />} />
           <Route path="track" element={<PatientTrack />} />
         </Route>
 

@@ -1607,6 +1607,29 @@ export default function PatientTrack() {
                     </div>
                     {appointment.condition_summary ? <p className="patient-list-text">{appointment.condition_summary}</p> : null}
                     {appointment.pharmacist_response ? <p className="patient-list-text">Pharmacist note: {appointment.pharmacist_response}</p> : null}
+                    {String(appointment.appointment_type || "").toLowerCase() === "video_consultation" && !["cancelled", "canceled", "completed", "closed", "no_show"].includes(String(appointment.status || "").toLowerCase()) ? (
+                      <div
+                        style={{
+                          marginTop: "0.8rem",
+                          padding: "0.95rem 1rem",
+                          borderRadius: "18px",
+                          border: "1px solid rgba(15, 110, 86, 0.14)",
+                          background: "linear-gradient(180deg, rgba(232,245,240,0.95), rgba(244,250,247,0.98))",
+                          display: "grid",
+                          gap: "0.6rem",
+                        }}
+                      >
+                        <div className="patient-list-text">Your private video room opens when the pharmacist starts this appointment.</div>
+                        <Link
+                          to={createPatientPath(`/patient/consult/${appointment.id}`, { section: "appointments" })}
+                          className="patient-button"
+                          style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}
+                        >
+                          <Video size={16} />
+                          Open secure video room
+                        </Link>
+                      </div>
+                    ) : null}
                     {appointment.video_link ? (
                       <div
                         style={{
