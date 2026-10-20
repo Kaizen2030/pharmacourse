@@ -16,6 +16,16 @@ CLOUDFLARE_TURN_KEY_ID=your-cloudflare-turn-key-id
 CLOUDFLARE_TURN_API_TOKEN=your-cloudflare-api-token
 ```
 
+The patient portal and POS use the PharmacyOS project ref `npybtjtilzjsgcxgesxy`, so deploy explicitly to that project:
+
+```bash
+npx supabase functions deploy consult --project-ref npybtjtilzjsgcxgesxy
+npx supabase secrets set --project-ref npybtjtilzjsgcxgesxy \
+  APP_ORIGIN=https://www.pharmacourse.co.ke \
+  CLOUDFLARE_TURN_KEY_ID=your-cloudflare-turn-key-id \
+  CLOUDFLARE_TURN_API_TOKEN=your-cloudflare-api-token
+```
+
 The Edge Function exchanges the Cloudflare key for short-lived browser credentials. Keep both Cloudflare values in Supabase Edge Function secrets, never in Vite or the browser. If Cloudflare secrets are omitted, the function falls back to public STUN servers only; some users behind strict NATs will then be unable to connect. The function also supports a self-hosted or other provider through `TURN_URLS`, `TURN_USERNAME`, and `TURN_CREDENTIAL` if you later replace Cloudflare.
 
 The room is available to signed-in patients at `/patient/consult/:appointmentId`. The pharmacist side should call the same `consult` function with the staff session and render `ConsultRoom` with `role="staff"`.

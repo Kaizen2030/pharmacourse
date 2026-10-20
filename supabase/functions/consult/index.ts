@@ -208,6 +208,14 @@ Deno.serve(async (req) => {
     if (action === "start") {
       if (!staff) return fail("forbidden", 403)
       const session = await getOrCreateSession(admin, appointment, user.id)
+      if (String(appointment.status || "").toLowerCase() !== "in_progress") {
+        const { error } = await admin
+          .from("appointments")
+          .update({ status: "in_progress", updated_at: new Date().toISOString() })
+          .eq("id", appointmentId)
+          .in("status", ["pending", "confirmed"])
+        if (error) throw error
+      }
       return response(await sessionPayload(session, "staff"))
     }
 
