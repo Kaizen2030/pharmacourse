@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react"
 import { supabase } from "../lib/supabaseClient"
 import { isGroupInviteUrl } from "../lib/courseGroup"
 import { waGateway } from "../lib/waGateway"
+import { confirmDialog } from "../lib/dialog"
 
 const labelStyle = { display: "grid", gap: ".3rem", fontSize: ".8rem", color: "var(--text-500)" }
 
@@ -65,7 +66,7 @@ export default function TutorGroupPanel({ courseId, gatewayInstanceId = "", onCh
   }
 
   async function inviteEveryone() {
-    if (!window.confirm("Queue the group invite for every student already enrolled? Students without a WhatsApp number and consent are skipped.")) return
+    if (!(await confirmDialog({ title: "Invite current students?", message: "Queue the group invite for every student already enrolled. Students without a WhatsApp number and consent are skipped.", confirmLabel: "Queue invites" }))) return
     setError(""); setNote(""); setBusy(true)
     const { data, error: rpcError } = await supabase.rpc("queue_group_invites_for_course", { p_course: courseId })
     if (rpcError) setError(rpcError.message)

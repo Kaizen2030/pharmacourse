@@ -6,6 +6,9 @@ import SEO from "../components/SEO"
 import WhatsAppOptInCard from "../components/WhatsAppOptInCard"
 import JoinGroupCard from "../components/JoinGroupCard"
 import { fetchMyCourseGroup } from "../lib/courseGroup"
+import { alertDialog } from "../lib/dialog"
+import { normalizePhone } from "../lib/tutorWhatsApp"
+import { SUPPORT_WA_NUMBER, waLink } from "../lib/whatsappConfig"
 
 function getInstructorInitials(name) {
   const parts = `${name || ""}`
@@ -104,6 +107,13 @@ export default function CourseDetail() {
       return
     }
 
+    // Paid courses cannot be self-enrolled. The database also blocks this (see
+    // supabase/enrollment_guard.sql); this check just gives a clear message.
+    if (isPaidCourse && !isAdmin) {
+      await alertDialog("Payment needed", "This course is paid. Use the “Pay & enroll on WhatsApp” button and your tutor will activate your access.")
+      return
+    }
+
     setEnrolling(true)
 
     const { error } = await supabase
@@ -112,14 +122,14 @@ export default function CourseDetail() {
 
     if (error) {
       console.error("Enroll error:", error)
-      alert(`Enrollment failed: ${error.message}\n\nCode: ${error.code}`)
       setEnrolling(false)
+      await alertDialog("Enrollment failed", error.code === "P0001" || /payment/i.test(error.message || "") ? "This course needs payment before enrollment." : error.message)
       return
     }
 
     setEnrolled(true)
     setEnrolling(false)
-
+    // Show the class-group invite first. No group set up for this course -> straight to lesson 1.
     let hasGroup = false
     try { hasGroup = Boolean((await fetchMyCourseGroup(course.id))?.invite_url) } catch { hasGroup = false }
     if (hasGroup) {
@@ -137,6 +147,12 @@ export default function CourseDetail() {
   const shouldShowBioToggle = useMemo(() => {
     return `${instructor?.bio || ""}`.trim().length > 180
   }, [instructor?.bio])
+
+  const isPaidCourse = Boolean(course) && !course.is_free && Number(course.price) > 0
+  const payNumber = normalizePhone(instructor?.whatsapp_number) || SUPPORT_WA_NUMBER
+  const payLink = course
+    ? waLink(`Hi, I want to enroll in "${course.title}" (KES ${course.price}). My account email is ${user?.email || "(not signed in)"}.`, payNumber)
+    : ""
 
   if (loadError) {
     return (
@@ -187,7 +203,6 @@ export default function CourseDetail() {
               <button type="button" className="btn btn-outline" onClick={startLearning} style={{ justifySelf: "start" }}>Continue to lesson 1</button>
             </JoinGroupCard>
           ) : null}
-          {enrolled || isAdmin ? <JoinGroupCard courseId={course.id} /> : null}
           <span className="detail-badge">{course.category}</span>
           <h1>{course.title}</h1>
           <p>{course.description}</p>
@@ -318,6 +333,16 @@ export default function CourseDetail() {
                 <Link to={`/certificate/${course.id}`} className="btn btn-outline" style={{ width: "100%" }}>
                   Preview Certificate
                 </Link>
+              </div>
+            ) : isPaidCourse ? (
+              <div style={{ display: "grid", gap: "0.6rem", marginBottom: "1rem" }}>
+                {!user ? <Link to="/register" className="btn btn-outline" style={{ width: "100%" }}>Register first</Link> : null}
+                {payLink ? (
+                  <a href={payLink} target="_blank" rel="noreferrer noopener" className="btn btn-primary" style={{ width: "100%" }}>Pay &amp; enroll on WhatsApp</a>
+                ) : (
+                  <button type="button" className="btn btn-primary" disabled style={{ width: "100%" }}>Contact us to enroll</button>
+                )}
+                <small style={{ color: "var(--text-500)", textAlign: "center" }}>Your tutor activates access once payment is confirmed.</small>
               </div>
             ) : (
               <button onClick={handleEnroll} disabled={enrolling} className="btn btn-primary" style={{ width: "100%", marginBottom: "1rem" }}>

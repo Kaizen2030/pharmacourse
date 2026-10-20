@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
+import { useSearchParams } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
 import CourseCard from "../components/CourseCard"
 import SEO from "../components/SEO"
@@ -27,11 +28,27 @@ export default function Courses() {
   const [courses, setCourses] = useState([])
   const [categoryTabs, setCategoryTabs] = useState(["All"])
   const [loading, setLoading] = useState(true)
-  const [page, setPage] = useState(1)
   const [totalCourses, setTotalCourses] = useState(0)
-  const [activeCategory, setActiveCategory] = useState("All")
-  const [priceFilter, setPriceFilter] = useState("all")
-  const [searchQuery, setSearchQuery] = useState("")
+  // Filters live in the URL so a filtered list can be shared (e.g. on WhatsApp).
+  const [searchParams, setSearchParams] = useSearchParams()
+  const page = Math.max(1, Number.parseInt(searchParams.get("page") || "1", 10) || 1)
+  const activeCategory = searchParams.get("category") || "All"
+  const priceFilter = ["free", "paid"].includes(searchParams.get("price")) ? searchParams.get("price") : "all"
+  const urlQuery = searchParams.get("q") || ""
+  const [searchQuery, setSearchQuery] = useState(urlQuery)
+  const requestId = useRef(0)
+
+  const updateParams = useCallback((changes, { resetPage = true } = {}) => {
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current)
+      Object.entries(changes).forEach(([key, value]) => {
+        if (value === null || value === "" || value === "All" || value === "all") next.delete(key)
+        else next.set(key, String(value))
+      })
+      if (resetPage) next.delete("page")
+      return next
+    }, { replace: true })
+  }, [setSearchParams])
   const categoryTabsRef = useRef(null)
   const [categoryScrollState, setCategoryScrollState] = useState({
     hasOverflow: false,
@@ -39,18 +56,28 @@ export default function Courses() {
     canScrollRight: false,
   })
 
-  async function loadCourses(targetPage) {
+  const loadCourses = useCallback(async () => {
+    const currentRequest = ++requestId.current
     setLoading(true)
 
-    const from = (targetPage - 1) * PAGE_SIZE
+    const from = (page - 1) * PAGE_SIZE
     const to = from + PAGE_SIZE - 1
 
-    const { data, count, error } = await supabase
+    let query = supabase
       .from("courses")
       .select("*", { count: "exact" })
       .eq("is_published", true)
+    if (activeCategory !== "All") query = query.ilike("category", activeCategory.replace(/[%_,()]/g, " ").trim())
+    if (priceFilter === "free") query = query.eq("is_free", true)
+    if (priceFilter === "paid") query = query.eq("is_free", false)
+    const cleanQuery = urlQuery.replace(/[%_,()]/g, " ").trim()
+    if (cleanQuery) query = query.ilike("title", `%${cleanQuery}%`)
+
+    const { data, count, error } = await query
       .order("created_at", { ascending: false })
       .range(from, to)
+
+    if (currentRequest !== requestId.current) return // a newer request replaced this one
 
     if (error) {
       console.error("Failed to load courses:", error)
@@ -62,7 +89,7 @@ export default function Courses() {
     }
 
     setLoading(false)
-  }
+  }, [page, activeCategory, priceFilter, urlQuery])
 
   async function loadCategories() {
     const [managedResponse, usedResponse] = await Promise.all([
@@ -99,39 +126,32 @@ export default function Courses() {
   }
 
   useEffect(() => {
-    loadCourses(page)
-  }, [page])
+    loadCourses()
+  }, [loadCourses])
+
+  // Debounce typing into the URL (one request per pause, not per keystroke).
+  useEffect(() => {
+    if (searchQuery.trim() === urlQuery) return undefined
+    const timer = window.setTimeout(() => updateParams({ q: searchQuery.trim() }), 350)
+    return () => window.clearTimeout(timer)
+  }, [searchQuery, urlQuery, updateParams])
+
+  // Keep the input in sync if the URL changes (back button, shared link).
+  useEffect(() => { setSearchQuery(urlQuery) }, [urlQuery])
 
   useEffect(() => {
     loadCategories()
   }, [])
 
   const totalPages = Math.max(1, Math.ceil(totalCourses / PAGE_SIZE))
-  const normalizedSearchQuery = searchQuery.trim().toLowerCase()
-
-  const filteredCourses = courses.filter((course) => {
-    const matchesCategory =
-      activeCategory === "All" ||
-      normalizeValue(course.category) === normalizeValue(activeCategory)
-
-    const matchesPrice =
-      priceFilter === "all" ||
-      (priceFilter === "free" && course.is_free) ||
-      (priceFilter === "paid" && !course.is_free)
-
-    const matchesSearch = (course.title || "").toLowerCase().includes(normalizedSearchQuery)
-
-    return matchesCategory && matchesPrice && matchesSearch
-  })
-
-  const hasActiveFilters =
-    activeCategory !== "All" || priceFilter !== "all" || normalizedSearchQuery.length > 0
+  const hasActiveFilters = activeCategory !== "All" || priceFilter !== "all" || urlQuery.length > 0
 
   useEffect(() => {
-    if (activeCategory !== "All" && !categoryTabs.includes(activeCategory)) {
-      setActiveCategory("All")
+    // Ignore categories that no longer exist (only once the list has loaded).
+    if (categoryTabs.length > 1 && activeCategory !== "All" && !categoryTabs.some((tab) => normalizeValue(tab) === normalizeValue(activeCategory))) {
+      updateParams({ category: null })
     }
-  }, [activeCategory, categoryTabs])
+  }, [activeCategory, categoryTabs, updateParams])
 
   useEffect(() => {
     const rail = categoryTabsRef.current
@@ -160,7 +180,7 @@ export default function Courses() {
   }, [categoryTabs])
 
   function togglePriceFilter(nextFilter) {
-    setPriceFilter((currentFilter) => (currentFilter === nextFilter ? "all" : nextFilter))
+    updateParams({ price: priceFilter === nextFilter ? null : nextFilter })
   }
 
   function scrollCategoryTabs(direction) {
@@ -188,12 +208,8 @@ export default function Courses() {
       </div>
 
       <div className="container-wide" style={{ paddingTop: "2rem" }}>
-        {loading ? (
+        {loading && courses.length === 0 && categoryTabs.length <= 1 && !hasActiveFilters ? (
           <p style={{ color: "var(--text-500)" }}>Loading courses...</p>
-        ) : courses.length === 0 ? (
-          <div className="card" style={{ padding: "3rem", textAlign: "center" }}>
-            <p style={{ color: "var(--text-500)" }}>No courses published yet. Check back soon.</p>
-          </div>
         ) : (
           <>
             <div className="card courses-filter-bar">
@@ -227,7 +243,7 @@ export default function Courses() {
                             role="tab"
                             aria-selected={isActive}
                             className={`btn ${isActive ? "btn-primary" : "btn-outline"}`}
-                            onClick={() => setActiveCategory(category)}
+                            onClick={() => updateParams({ category })}
                           >
                             {category}
                           </button>
@@ -290,22 +306,25 @@ export default function Courses() {
                 </div>
 
                 <p className="courses-filter-summary">
-                  Showing {filteredCourses.length} of {courses.length} courses on this page
+                  {loading ? "Searching…" : `${totalCourses} ${totalCourses === 1 ? "course" : "courses"} found`}
+                  {hasActiveFilters ? (
+                    <button type="button" className="btn btn-ghost btn-sm" style={{ marginLeft: "0.5rem" }} onClick={() => { setSearchQuery(""); setSearchParams({}, { replace: true }) }}>Clear filters</button>
+                  ) : null}
                 </p>
               </div>
             </div>
 
-            {filteredCourses.length === 0 ? (
+            {!loading && courses.length === 0 ? (
               <div className="card" style={{ padding: "2.5rem", textAlign: "center" }}>
                 <p style={{ color: "var(--text-500)" }}>
                   {hasActiveFilters
-                    ? "No courses match the filters on this page."
-                    : "No courses available on this page."}
+                    ? "No courses match these filters."
+                    : "No courses published yet. Check back soon."}
                 </p>
               </div>
             ) : (
-              <div className="courses-full-grid">
-                {filteredCourses.map((course) => (
+              <div className="courses-full-grid" style={loading ? { opacity: 0.55, transition: "opacity .15s" } : undefined}>
+                {courses.map((course) => (
                   <CourseCard key={course.id} course={course} compact />
                 ))}
               </div>
@@ -316,7 +335,7 @@ export default function Courses() {
               totalPages={totalPages}
               totalItems={totalCourses}
               pageSize={PAGE_SIZE}
-              onPageChange={setPage}
+              onPageChange={(nextPage) => { updateParams({ page: nextPage > 1 ? nextPage : null }, { resetPage: false }); window.scrollTo({ top: 0, behavior: "smooth" }) }}
               label="courses"
             />
           </>

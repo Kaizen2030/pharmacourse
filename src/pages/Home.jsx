@@ -4,6 +4,7 @@ import { supabase } from "../lib/supabaseClient"
 import { useInView } from "framer-motion"
 import SEO from "../components/SEO"
 import BlogEngagementStats from "../components/BlogEngagementStats"
+import TrustStrip from "../components/TrustStrip"
 import CapsuleHero from "../components/capsuleHero/CapsuleHero"
 import ProductShowcase from "../components/productShowcase/ProductShowcase"
 import FeaturesCapsule from "../components/capsuleSections/FeaturesCapsule"
@@ -705,6 +706,7 @@ export default function Home() {
             return (
               <AnimatedSection key={key} delay={0.5}>
                 <>
+                  <div className="container" style={{ paddingTop: "2rem" }}><TrustStrip /></div>
                   <section id="courses" className="courses-section">
                     <div className="container">
                       <div className="section-header">

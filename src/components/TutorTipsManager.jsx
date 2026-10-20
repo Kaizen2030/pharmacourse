@@ -3,6 +3,7 @@ import { supabase } from "../lib/supabaseClient"
 import { formatTipForWhatsApp } from "../lib/tutorWhatsApp"
 import { SITE_URL } from "../lib/siteConfig"
 import { waGateway } from "../lib/waGateway"
+import { confirmDialog } from "../lib/dialog"
 import TutorGroupPanel from "./TutorGroupPanel"
 
 export default function TutorTipsManager({ courseId, courseTitle, courseSlug, instructorId = null, gatewayInstanceId = "" }) {
@@ -143,7 +144,7 @@ export default function TutorTipsManager({ courseId, courseTitle, courseSlug, in
   }
 
   async function remove(post) {
-    if (!window.confirm("Delete this tip?")) return
+    if (!(await confirmDialog({ title: "Delete this tip?", message: "This cannot be undone.", confirmLabel: "Delete", danger: true }))) return
     const { error: deleteError } = await supabase.from("tutor_whatsapp_posts").delete().eq("id", post.id)
     if (deleteError) setError(deleteError.message)
     else await load()
@@ -161,7 +162,7 @@ export default function TutorTipsManager({ courseId, courseTitle, courseSlug, in
   }
 
   async function postToClassGroup(post) {
-    if (!window.confirm(`Post "${post.title}" into the class WhatsApp group?`)) return
+    if (!(await confirmDialog({ title: "Post to class group?", message: `"${post.title}" will be posted into the class WhatsApp group.`, confirmLabel: "Post" }))) return
     setSendingId(post.id)
     setSendMessage("")
     try {
@@ -178,7 +179,7 @@ export default function TutorTipsManager({ courseId, courseTitle, courseSlug, in
   }
 
   async function sendToOptedIn(post) {
-    if (!window.confirm(`Send "${post.title}" to opted-in learners enrolled in ${courseTitle}?`)) return
+    if (!(await confirmDialog({ title: "Send privately?", message: `Send "${post.title}" as a private message to opted-in learners enrolled in ${courseTitle}?`, confirmLabel: "Send" }))) return
     setSendingId(post.id)
     setSendMessage("")
     try {

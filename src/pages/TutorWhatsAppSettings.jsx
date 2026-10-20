@@ -6,6 +6,7 @@ import WhatsAppFields from "../components/WhatsAppFields"
 import TutorTipsManager from "../components/TutorTipsManager"
 import { waPayload } from "../lib/tutorWhatsApp"
 import { gatewayConfigured, waGateway } from "../lib/waGateway"
+import { confirmDialog } from "../lib/dialog"
 import SEO from "../components/SEO"
 
 export default function TutorWhatsAppSettings() {
@@ -172,7 +173,7 @@ export default function TutorWhatsAppSettings() {
   }
 
   async function disconnectWhatsApp() {
-    if (!instructor || !window.confirm("Unlink this WhatsApp device from your tutor account?")) return
+    if (!instructor || !(await confirmDialog({ title: "Unlink WhatsApp?", message: "Tips and invites stop sending until you link a device again.", confirmLabel: "Unlink", danger: true }))) return
     setGatewayBusy(true)
     try {
       await waGateway.remove(instructor.id)

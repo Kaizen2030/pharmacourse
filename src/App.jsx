@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from "react"
+import { Suspense, useEffect } from "react"
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom"
 import { AuthProvider } from "./context/AuthContext"
 import { useAuth } from "./context/AuthContext"
@@ -8,48 +8,50 @@ import Footer from "./components/Footer"
 import Navbar from "./components/Navbar"
 import PatientLayout from "./components/PatientLayout"
 import PatientInstallPrompt from "./components/PatientInstallPrompt"
+import DialogHost from "./components/DialogHost"
+import lazyWithReload from "./lib/lazyWithReload"
 
-const Blog = lazy(() => import("./pages/Blog"))
-const BlogPost = lazy(() => import("./pages/BlogPost"))
-const CaseSimulation = lazy(() => import("./pages/CaseSimulation"))
-const Certificate = lazy(() => import("./pages/Certificate"))
-const Community = lazy(() => import("./pages/Community"))
-const CompleteProfile = lazy(() => import("./pages/CompleteProfile"))
-const CourseDetail = lazy(() => import("./pages/CourseDetail"))
-const CoursePlayer = lazy(() => import("./pages/CoursePlayer"))
-const Courses = lazy(() => import("./pages/Courses"))
-const Dashboard = lazy(() => import("./pages/Dashboard"))
-const DesktopAccountActivate = lazy(() => import("./pages/DesktopAccountActivate"))
-const ForgotPassword = lazy(() => import("./pages/ForgotPassword"))
-const Home = lazy(() => import("./pages/Home"))
-const Login = lazy(() => import("./pages/Login"))
-const PatientAppointment = lazy(() => import("./pages/patient/PatientAppointment"))
-const PatientForgotPassword = lazy(() => import("./pages/patient/PatientForgotPassword"))
-const PatientHome = lazy(() => import("./pages/patient/PatientHome"))
-const PatientLogin = lazy(() => import("./pages/patient/PatientLogin"))
-const PatientPrescription = lazy(() => import("./pages/patient/PatientPrescription"))
-const PatientRegister = lazy(() => import("./pages/patient/PatientRegister"))
-const PatientResetPassword = lazy(() => import("./pages/patient/PatientResetPassword"))
-const PatientTrack = lazy(() => import("./pages/patient/PatientTrack"))
-const PatientPortal = lazy(() => import("./pages/PatientPortal"))
-const PatientPortalOperations = lazy(() => import("./pages/PatientPortalOperations"))
-const PatientPortalFlyer = lazy(() => import("./pages/PatientPortalFlyer"))
-const PharmacyOS = lazy(() => import("./pages/Pharmacyos"))
-const Register = lazy(() => import("./pages/Register"))
-const RemedacareOS = lazy(() => import("./pages/Remedacareos"))
-const ResetPassword = lazy(() => import("./pages/ResetPassword"))
-const ResetRedirect = lazy(() => import("./pages/ResetRedirect"))
-const TeamPlans = lazy(() => import("./pages/TeamPlans"))
-const TutorWhatsAppSettings = lazy(() => import("./pages/TutorWhatsAppSettings"))
-const WhatsAppSettings = lazy(() => import("./pages/WhatsAppSettings"))
-const VerifyCertificate = lazy(() => import("./pages/VerifyCertificate"))
-const Workshops = lazy(() => import("./pages/Workshops"))
-const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"))
-const CourseForm = lazy(() => import("./pages/admin/CourseForm"))
-const SimulationAdmin = lazy(() => import("./pages/admin/SimulationAdmin"))
+const Blog = lazyWithReload(() => import("./pages/Blog"))
+const BlogPost = lazyWithReload(() => import("./pages/BlogPost"))
+const CaseSimulation = lazyWithReload(() => import("./pages/CaseSimulation"))
+const Certificate = lazyWithReload(() => import("./pages/Certificate"))
+const Community = lazyWithReload(() => import("./pages/Community"))
+const CompleteProfile = lazyWithReload(() => import("./pages/CompleteProfile"))
+const CourseDetail = lazyWithReload(() => import("./pages/CourseDetail"))
+const CoursePlayer = lazyWithReload(() => import("./pages/CoursePlayer"))
+const Courses = lazyWithReload(() => import("./pages/Courses"))
+const Dashboard = lazyWithReload(() => import("./pages/Dashboard"))
+const DesktopAccountActivate = lazyWithReload(() => import("./pages/DesktopAccountActivate"))
+const ForgotPassword = lazyWithReload(() => import("./pages/ForgotPassword"))
+const Home = lazyWithReload(() => import("./pages/Home"))
+const Login = lazyWithReload(() => import("./pages/Login"))
+const PatientAppointment = lazyWithReload(() => import("./pages/patient/PatientAppointment"))
+const PatientForgotPassword = lazyWithReload(() => import("./pages/patient/PatientForgotPassword"))
+const PatientHome = lazyWithReload(() => import("./pages/patient/PatientHome"))
+const PatientLogin = lazyWithReload(() => import("./pages/patient/PatientLogin"))
+const PatientPrescription = lazyWithReload(() => import("./pages/patient/PatientPrescription"))
+const PatientRegister = lazyWithReload(() => import("./pages/patient/PatientRegister"))
+const PatientResetPassword = lazyWithReload(() => import("./pages/patient/PatientResetPassword"))
+const PatientTrack = lazyWithReload(() => import("./pages/patient/PatientTrack"))
+const PatientPortal = lazyWithReload(() => import("./pages/PatientPortal"))
+const PatientPortalOperations = lazyWithReload(() => import("./pages/PatientPortalOperations"))
+const PatientPortalFlyer = lazyWithReload(() => import("./pages/PatientPortalFlyer"))
+const PharmacyOS = lazyWithReload(() => import("./pages/Pharmacyos"))
+const Register = lazyWithReload(() => import("./pages/Register"))
+const RemedacareOS = lazyWithReload(() => import("./pages/Remedacareos"))
+const ResetPassword = lazyWithReload(() => import("./pages/ResetPassword"))
+const ResetRedirect = lazyWithReload(() => import("./pages/ResetRedirect"))
+const TeamPlans = lazyWithReload(() => import("./pages/TeamPlans"))
+const TutorWhatsAppSettings = lazyWithReload(() => import("./pages/TutorWhatsAppSettings"))
+const WhatsAppSettings = lazyWithReload(() => import("./pages/WhatsAppSettings"))
+const VerifyCertificate = lazyWithReload(() => import("./pages/VerifyCertificate"))
+const Workshops = lazyWithReload(() => import("./pages/Workshops"))
+const AdminDashboard = lazyWithReload(() => import("./pages/admin/AdminDashboard"))
+const CourseForm = lazyWithReload(() => import("./pages/admin/CourseForm"))
+const SimulationAdmin = lazyWithReload(() => import("./pages/admin/SimulationAdmin"))
 
 function RouteFallback() {
-  return <div className="route-loading" role="status" aria-live="polite"><span className="route-loading-bar" />Loading page…</div>
+  return <div className="route-loading" role="status" aria-live="polite"><span className="route-loading-bar" />Loading pageâ€¦</div>
 }
 
 function AdminRoute({ children }) {
@@ -128,6 +130,7 @@ function AppShell() {
   return (
     <>
       <MediaProtection />
+      <DialogHost />
       <WebsiteAnalyticsTracker />
       {isPatientRoute ? <PatientInstallPrompt /> : null}
       {!isPatientRoute && !isFlyerRoute && !isActivationRoute ? <Navbar /> : null}
