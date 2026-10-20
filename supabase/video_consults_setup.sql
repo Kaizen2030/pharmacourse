@@ -36,7 +36,6 @@ as $$
     select 1
     from public.web_users wu
     where wu.auth_user_id = p_user_id
-      and coalesce(wu.approved, true) = true
       and (
         wu.branch_pharmacy_id::text = p_pharmacy_id
         or (wu.branch_pharmacy_id is null and wu.pharmacy_id::text = p_pharmacy_id)
