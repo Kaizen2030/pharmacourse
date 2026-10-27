@@ -1,4 +1,4 @@
-import{r as l,j as e}from"./react-vendor-Sj-fKh7-.js";import{u as M,H as Q,s as p,y as V,i as X}from"./main-B18U3Qko.js";import{R as J}from"./RowsPager-Dawk0gR7.js";import{B as K}from"./BarcodeScanField-CQehjr5g.js";import{D as Y}from"./DrugThumb-VqcHMuOZ.js";import"./vendor-C1llKZRd.js";import"./modulepreload-polyfill-B5Qt9EMX.js";import"./supabase-vendor-DcQCxN5G.js";import"./storage-vendor-CNNOFhKO.js";const v=50;function Z(o=new Date){return o.toLocaleDateString("en-GB")}function ee(o){return`
+import{r as l,j as e}from"./react-vendor-Sj-fKh7-.js";import{u as M,H as Q,s as p,y as V,i as X}from"./main-C0tPEwNY.js";import{R as J}from"./RowsPager-Dawk0gR7.js";import{B as K}from"./BarcodeScanField-CQehjr5g.js";import{D as Y}from"./DrugThumb-VqcHMuOZ.js";import"./vendor-C1llKZRd.js";import"./modulepreload-polyfill-B5Qt9EMX.js";import"./supabase-vendor-DcQCxN5G.js";import"./storage-vendor-CNNOFhKO.js";const v=50;function Z(o=new Date){return o.toLocaleDateString("en-GB")}function ee(o){return`
     <!doctype html>
     <html>
       <head>
