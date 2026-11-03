@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom"
 import "./CourseCard.css"
+import { hasCourseModules, tutorApplicationLink } from "../lib/courseAvailability"
 
 const CATEGORY_GRADIENTS = {
   clinical: ["#0F6E56", "#1D9E75"],
@@ -12,7 +13,8 @@ function getCategoryGradient(category) {
 }
 
 export default function CourseCard({ course, compact = false }) {
-  const price = course.is_free ? "Free" : `KES ${course.price || 0}`
+  const hasModules = hasCourseModules(course)
+  const price = hasModules ? (course.is_free ? "Free" : `KES ${course.price || 0}`) : "Coming soon"
   const categoryLabel = course.category || "Pharmacy"
   const [gradientStart, gradientEnd] = getCategoryGradient(course.category)
 
@@ -60,6 +62,33 @@ export default function CourseCard({ course, compact = false }) {
             <span className="course-card-price">{price}</span>
             <span className="course-card-rating">4.8</span>
           </div>
+
+          {!hasModules ? (
+            <div className="course-card-actions">
+              {course.is_available ? (
+                <Link
+                  to={`/courses/${course.slug || course.id}`}
+                  className="btn btn-primary btn-sm"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  Apply to Enrol
+                </Link>
+              ) : (
+                <button type="button" className="btn btn-outline btn-sm" disabled>
+                  Coming soon · No modules
+                </button>
+              )}
+              <a
+                href={tutorApplicationLink(course)}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="btn btn-outline btn-sm"
+                onClick={(event) => event.stopPropagation()}
+              >
+                Apply as Tutor
+              </a>
+            </div>
+          ) : null}
         </div>
       </div>
     </Link>

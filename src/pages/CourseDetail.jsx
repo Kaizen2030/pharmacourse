@@ -9,6 +9,7 @@ import { fetchMyCourseGroup } from "../lib/courseGroup"
 import { alertDialog } from "../lib/dialog"
 import { normalizePhone } from "../lib/tutorWhatsApp"
 import { SUPPORT_WA_NUMBER, waLink } from "../lib/whatsappConfig"
+import { courseApplicationLink, tutorApplicationLink } from "../lib/courseAvailability"
 
 function getInstructorInitials(name) {
   const parts = `${name || ""}`
@@ -149,6 +150,8 @@ export default function CourseDetail() {
   }, [instructor?.bio])
 
   const isPaidCourse = Boolean(course) && !course.is_free && Number(course.price) > 0
+  const hasModules = modules.length > 0
+  const isComingSoon = !hasModules
   const payNumber = normalizePhone(instructor?.whatsapp_number) || SUPPORT_WA_NUMBER
   const payLink = course
     ? waLink(`Hi, I want to enroll in "${course.title}" (KES ${course.price}). My account email is ${user?.email || "(not signed in)"}.`, payNumber)
@@ -210,7 +213,7 @@ export default function CourseDetail() {
           <div className="detail-stats">
             <div className="detail-stat"><strong>{modules.length}</strong> modules</div>
             <div className="detail-stat"><strong>{modules.length}</strong> lessons</div>
-            <div className="detail-stat"><strong>{course.is_free ? "Free" : `KES ${course.price}`}</strong></div>
+            <div className="detail-stat"><strong>{isComingSoon ? "Coming soon" : course.is_free ? "Free" : `KES ${course.price}`}</strong></div>
           </div>
 
           {instructor ? (
@@ -320,7 +323,7 @@ export default function CourseDetail() {
                 "Course"
               )}
             </div>
-            <p className="sidebar-price">{course.is_free ? "Free" : `KES ${course.price}`}</p>
+            <p className="sidebar-price">{isComingSoon ? "Coming soon" : course.is_free ? "Free" : `KES ${course.price}`}</p>
             {enrolled ? (
               <Link to={`/learn/${course.id}/${modules[0]?.id}`} className="btn btn-primary" style={{ width: "100%", marginBottom: "1rem" }}>
                 Continue Learning
@@ -334,6 +337,23 @@ export default function CourseDetail() {
                   Preview Certificate
                 </Link>
               </div>
+            ) : isComingSoon ? (
+              <div style={{ display: "grid", gap: "0.6rem", marginBottom: "1rem" }}>
+                <button type="button" className="btn btn-outline" disabled style={{ width: "100%" }}>
+                  {course.is_available ? "Applications open" : "Coming soon · No modules"}
+                </button>
+                {course.is_available ? (
+                  <a href={courseApplicationLink({ ...course, whatsapp_number: course.whatsapp_number || instructor?.whatsapp_number }, user?.email)} target="_blank" rel="noreferrer noopener" className="btn btn-primary" style={{ width: "100%" }}>
+                    Apply to Enrol
+                  </a>
+                ) : null}
+                <a href={tutorApplicationLink({ ...course, whatsapp_number: course.whatsapp_number || instructor?.whatsapp_number })} target="_blank" rel="noreferrer noopener" className="btn btn-outline" style={{ width: "100%" }}>
+                  Apply as Tutor
+                </a>
+                <small style={{ color: "var(--text-500)", textAlign: "center" }}>
+                  {course.is_available ? "Send an application on WhatsApp and we will confirm the next steps." : "This course is not available yet because its modules are still being prepared."}
+                </small>
+              </div>
             ) : isPaidCourse ? (
               <div style={{ display: "grid", gap: "0.6rem", marginBottom: "1rem" }}>
                 {!user ? <Link to="/register" className="btn btn-outline" style={{ width: "100%" }}>Register first</Link> : null}
@@ -346,7 +366,7 @@ export default function CourseDetail() {
               </div>
             ) : (
               <button onClick={handleEnroll} disabled={enrolling} className="btn btn-primary" style={{ width: "100%", marginBottom: "1rem" }}>
-                {enrolling ? "Enrolling..." : user ? "Enroll Now - Free" : "Register to Enroll"}
+                {enrolling ? "Enrolling..." : user ? "Enroll Now" : "Register to Enrol"}
               </button>
             )}
             <ul className="sidebar-includes">

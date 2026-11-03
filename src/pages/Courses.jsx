@@ -84,7 +84,17 @@ export default function Courses() {
       setCourses([])
       setTotalCourses(0)
     } else {
-      setCourses(data || [])
+      const courseRows = data || []
+      const courseIds = courseRows.map((course) => course.id)
+      const { data: moduleRows, error: moduleError } = courseIds.length
+        ? await supabase.from("course_modules").select("course_id").in("course_id", courseIds)
+        : { data: [], error: null }
+      if (moduleError) console.error("Failed to load course module counts:", moduleError)
+      const moduleCounts = (moduleRows || []).reduce((counts, module) => ({
+        ...counts,
+        [module.course_id]: (counts[module.course_id] || 0) + 1,
+      }), {})
+      setCourses(courseRows.map((course) => ({ ...course, module_count: moduleCounts[course.id] || 0 })))
       setTotalCourses(count || 0)
     }
 

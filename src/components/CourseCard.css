@@ -178,6 +178,20 @@
   color: var(--text-500);
 }
 
+.course-card-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.course-card-actions .btn {
+  min-width: 0;
+  padding-inline: 0.55rem;
+  text-align: center;
+  white-space: normal;
+}
+
 @media (max-width: 640px) {
   .course-card-udemy.compact {
     border-radius: 14px;

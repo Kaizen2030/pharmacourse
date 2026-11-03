@@ -256,7 +256,7 @@ export default function CourseForm() {
 
   const [form, setForm] = useState({
     title:"", slug:"", short_desc:"", description:"", category:"Microbiology",
-    is_free:true, price:"0", is_published:false, cover_url:"", tags:[],
+    is_free:true, price:"0", is_published:false, is_available:false, cover_url:"", tags:[],
     instructor_id:"", whatsapp_enabled:null, whatsapp_mode:"", whatsapp_url:"",
     whatsapp_number:"", whatsapp_title:"", whatsapp_blurb:""
   })
@@ -278,7 +278,7 @@ export default function CourseForm() {
       if (c) setForm({
         title: c.title, slug: c.slug, short_desc: c.short_desc||"",
         description: c.description||"", category: c.category||"Microbiology",
-        is_free: c.is_free, price: c.price||"0", is_published: c.is_published,
+        is_free: c.is_free, price: c.price||"0", is_published: c.is_published, is_available: c.is_available ?? false,
         cover_url: c.cover_url||"", tags: c.tags||[],
         instructor_id: c.instructor_id||"", whatsapp_enabled: c.whatsapp_enabled ?? null,
         whatsapp_mode: c.whatsapp_mode||"", whatsapp_url: c.whatsapp_url||"",
@@ -671,6 +671,23 @@ export default function CourseForm() {
                 <p style={{ fontSize:".75rem", color:"var(--text-500)", marginTop:".4rem" }}>
                   {form.is_published ? "This course is visible to enrolled students" : "Save as draft before publishing"}
                 </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="card" style={{ padding:"1.5rem", borderLeft:"4px solid var(--green)" }}>
+            <div style={{ display:"flex", alignItems:"flex-start", gap:"1rem" }}>
+              <span style={{ fontSize:"1.5rem", marginTop:".15rem" }}>🚀</span>
+              <div style={{ flex:1 }}>
+                <label className="label" style={{ fontSize:".85rem", fontWeight:600, marginBottom:".8rem", display:"block", color:"var(--text-900)" }}>
+                  Application Availability
+                </label>
+                <div style={{ display:"flex", alignItems:"center", gap:".6rem", padding:".7rem 1rem", background:"var(--bg)", borderRadius:8, border:"1px solid var(--border)" }}>
+                  <input type="checkbox" checked={form.is_available} onChange={e => setForm(f => ({ ...f, is_available:e.target.checked }))} style={{ width:"auto", accentColor:"var(--green)", cursor:"pointer" }} />
+                  <span style={{ fontSize:".9rem", fontWeight:500, color:"var(--text-900)", flex:1 }}>Accept applications for courses without modules</span>
+                  <span style={{ fontSize:".75rem", fontWeight:600, color: form.is_available ? "var(--green)" : "var(--text-500)", textTransform:"uppercase" }}>{form.is_available ? "Ready" : "Coming soon"}</span>
+                </div>
+                <p style={{ fontSize:".75rem", color:"var(--text-500)", marginTop:".4rem" }}>Turn this on only when learners may apply, even if the curriculum is still being arranged.</p>
               </div>
             </div>
           </div>

@@ -4831,7 +4831,7 @@ function CourseEditorModal({ course, onClose, onSave }) {
   const { user } = useAuth()  // ← FIXED: get current user
   const [formData, setFormData] = useState(
     course.id === "new"
-      ? { title: "", slug: "", description: "", short_desc: "", price: 0, is_free: false, is_published: false, category: "", image_url: "" }
+      ? { title: "", slug: "", description: "", short_desc: "", price: 0, is_free: false, is_published: false, is_available: false, category: "", image_url: "" }
       : course
   )
   const [modules, setModules] = useState([])
@@ -5007,6 +5007,13 @@ function CourseEditorModal({ course, onClose, onSave }) {
                   ))}
                 </datalist>
               </div>
+            </div>
+            <div className="form-group">
+              <label>
+                <input type="checkbox" checked={Boolean(formData.is_available)} onChange={e => setFormData({ ...formData, is_available: e.target.checked })} />
+                {" "}Accept applications when no modules are available
+              </label>
+              <small style={{ color: "var(--text-500)" }}>When enabled, learners can apply to this published course instead of seeing only “Coming soon”.</small>
             </div>
             <div className="form-group">
               <label>Short Description</label>
