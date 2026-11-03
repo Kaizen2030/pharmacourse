@@ -6,6 +6,6 @@ alter table public.courses
   add column if not exists is_available boolean not null default false;
 
 comment on column public.courses.is_available is
-  'When true, a published course without modules can accept learner applications.';
+  'When true, a published course still being prepared can accept learner applications.';
 
 commit;

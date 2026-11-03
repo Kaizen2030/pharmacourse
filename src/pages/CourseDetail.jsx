@@ -340,7 +340,7 @@ export default function CourseDetail() {
             ) : isComingSoon ? (
               <div style={{ display: "grid", gap: "0.6rem", marginBottom: "1rem" }}>
                 <button type="button" className="btn btn-outline" disabled style={{ width: "100%" }}>
-                  {course.is_available ? "Applications open" : "Coming soon · No modules"}
+                  {course.is_available ? "Applications open" : "Coming soon"}
                 </button>
                 {course.is_available ? (
                   <a href={courseApplicationLink({ ...course, whatsapp_number: course.whatsapp_number || instructor?.whatsapp_number }, user?.email)} target="_blank" rel="noreferrer noopener" className="btn btn-primary" style={{ width: "100%" }}>
@@ -351,7 +351,7 @@ export default function CourseDetail() {
                   Apply as Tutor
                 </a>
                 <small style={{ color: "var(--text-500)", textAlign: "center" }}>
-                  {course.is_available ? "Send an application on WhatsApp and we will confirm the next steps." : "This course is not available yet because its modules are still being prepared."}
+                  {course.is_available ? "Send an application on WhatsApp and we will confirm the next steps." : "This course is not available yet. We are preparing the learning content."}
                 </small>
               </div>
             ) : isPaidCourse ? (

@@ -83,7 +83,7 @@ export default function CoursePlayer() {
         if (modsErr) throw modsErr
 
         if (!mods || mods.length === 0) {
-          setError("No modules found for this course")
+          setError("This course has no learning content yet")
           setLoading(false)
           return
         }

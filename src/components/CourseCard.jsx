@@ -75,7 +75,7 @@ export default function CourseCard({ course, compact = false }) {
                 </Link>
               ) : (
                 <button type="button" className="btn btn-outline btn-sm" disabled>
-                  Coming soon · No modules
+                  Coming soon
                 </button>
               )}
               <a

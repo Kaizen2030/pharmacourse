@@ -5011,7 +5011,7 @@ function CourseEditorModal({ course, onClose, onSave }) {
             <div className="form-group">
               <label>
                 <input type="checkbox" checked={Boolean(formData.is_available)} onChange={e => setFormData({ ...formData, is_available: e.target.checked })} />
-                {" "}Accept applications when no modules are available
+                {" "}Accept applications while this course is still being prepared
               </label>
               <small style={{ color: "var(--text-500)" }}>When enabled, learners can apply to this published course instead of seeing only “Coming soon”.</small>
             </div>
@@ -5111,7 +5111,7 @@ function CourseEditorModal({ course, onClose, onSave }) {
                 <button className="btn-secondary" onClick={addModule}><Plus size={14} /> Add Module</button>
               </div>
               {modules.length === 0 ? (
-                <p style={{ color: "var(--text-500)" }}>No modules yet. Add your first module to get started!</p>
+                <p style={{ color: "var(--text-500)" }}>No curriculum yet. Add your first module to get started!</p>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
                   {modules.map((mod, idx) => (

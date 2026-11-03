@@ -684,7 +684,7 @@ export default function CourseForm() {
                 </label>
                 <div style={{ display:"flex", alignItems:"center", gap:".6rem", padding:".7rem 1rem", background:"var(--bg)", borderRadius:8, border:"1px solid var(--border)" }}>
                   <input type="checkbox" checked={form.is_available} onChange={e => setForm(f => ({ ...f, is_available:e.target.checked }))} style={{ width:"auto", accentColor:"var(--green)", cursor:"pointer" }} />
-                  <span style={{ fontSize:".9rem", fontWeight:500, color:"var(--text-900)", flex:1 }}>Accept applications for courses without modules</span>
+                  <span style={{ fontSize:".9rem", fontWeight:500, color:"var(--text-900)", flex:1 }}>Accept applications for courses still being prepared</span>
                   <span style={{ fontSize:".75rem", fontWeight:600, color: form.is_available ? "var(--green)" : "var(--text-500)", textTransform:"uppercase" }}>{form.is_available ? "Ready" : "Coming soon"}</span>
                 </div>
                 <p style={{ fontSize:".75rem", color:"var(--text-500)", marginTop:".4rem" }}>Turn this on only when learners may apply, even if the curriculum is still being arranged.</p>
@@ -707,7 +707,7 @@ export default function CourseForm() {
           {modules.length === 0 ? (
             <div className="card" style={{ padding:"2.5rem", textAlign:"center" }}>
               <p style={{ fontSize:"2rem", marginBottom:".75rem" }}>📦</p>
-              <p style={{ color:"var(--text-500)", fontSize:".95rem" }}>No modules yet. Click "+ Add module" to start building the curriculum.</p>
+              <p style={{ color:"var(--text-500)", fontSize:".95rem" }}>No curriculum yet. Click "+ Add module" to start building the course.</p>
             </div>
           ) : (
             <div onDragOver={e => e.preventDefault()} onDrop={handleModDrop}>
