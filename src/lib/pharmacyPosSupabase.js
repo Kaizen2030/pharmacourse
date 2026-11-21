@@ -1,11 +1,15 @@
 import { createClient } from "@supabase/supabase-js"
 
-const pharmacyPosUrl =
-  import.meta.env.VITE_PHARMACYOS_SUPABASE_URL ||
-  "https://npybtjtilzjsgcxgesxy.supabase.co"
+// RemedacarePOS Supabase project (patient portal data). Set in .env and in Vercel; the build refuses to run
+// without them (see vite.config.js), so a misconfigured deploy can never point the portal somewhere else.
+const pharmacyPosUrl = String(import.meta.env.VITE_PHARMACYOS_SUPABASE_URL || "").trim()
+const pharmacyPosAnonKey = String(import.meta.env.VITE_PHARMACYOS_SUPABASE_ANON_KEY || "").trim()
 
-const pharmacyPosAnonKey =
-  import.meta.env.VITE_PHARMACYOS_SUPABASE_ANON_KEY ||
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5weWJ0anRpbHpqc2djeGdlc3h5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NjQxMzgsImV4cCI6MjA5MTE0MDEzOH0.C6K-lBJ-R6DdEqeqTTHCWjNhhxXmBSYTzfr6xTZAIlw"
+if (!pharmacyPosUrl || !pharmacyPosAnonKey) {
+  console.error("Patient portal is not configured: set VITE_PHARMACYOS_SUPABASE_URL and VITE_PHARMACYOS_SUPABASE_ANON_KEY.")
+}
 
-export const pharmacyPosSupabase = createClient(pharmacyPosUrl, pharmacyPosAnonKey)
+export const pharmacyPosSupabase = createClient(
+  pharmacyPosUrl || "http://pharmacy-pos-not-configured.invalid",
+  pharmacyPosAnonKey || "pharmacy-pos-not-configured",
+)

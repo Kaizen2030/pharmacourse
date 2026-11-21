@@ -8,6 +8,7 @@ import { usePatientPortalAuth } from "../../hooks/usePatientPortalAuth"
 import { pharmacyosClient } from "../../lib/pharmacyosClient"
 import { fetchPatientPortalUpdates } from "../../lib/patientPortalUpdates"
 import PatientAccountNotice from "../../components/PatientAccountNotice"
+import { usePatientPortalLive } from "../../lib/patientPortalRealtime"
 import {
   clearPatientPortalProfileDraft,
   clearPatientPortalSession,
@@ -983,19 +984,22 @@ export default function PatientTrack() {
     }
   }, [authLoading, isAuthenticated, patientPhone, loadTrackingData])
 
+  const liveState = usePatientPortalLive(() => { void loadTrackingData({ silent: true }) }, Boolean(!authLoading && isAuthenticated && patientPhone))
+
   useEffect(() => {
     if (!isAuthenticated || !patientPhone) {
       return undefined
     }
 
+    // While live updates are connected, polling is only a safety net.
     const intervalId = window.setInterval(() => {
       void loadTrackingData({ silent: true })
-    }, 30000)
+    }, liveState === "live" ? 120000 : 30000)
 
     return () => {
       window.clearInterval(intervalId)
     }
-  }, [isAuthenticated, patientPhone, loadTrackingData])
+  }, [isAuthenticated, patientPhone, loadTrackingData, liveState])
 
   useEffect(() => {
     setVisibleCounts({
@@ -1035,7 +1039,7 @@ export default function PatientTrack() {
             <p>Track your latest prescription responses, delivery status, appointment replies, and branch notices from one calm dashboard.</p>
             <div className="patient-track-hero-pills">
               <span className="patient-track-hero-pill">{unreadCount ? `${unreadCount} unread updates` : "No unread updates"}</span>
-              <span className="patient-track-hero-pill">Refreshed every 30 seconds</span>
+              <span className="patient-track-hero-pill">{liveState === "live" ? "Live updates on" : "Refreshed every 30 seconds"}</span>
               <span className="patient-track-hero-pill">Current branch: {branchName}</span>
             </div>
           </div>

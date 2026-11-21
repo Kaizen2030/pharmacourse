@@ -3,6 +3,21 @@ import react from "@vitejs/plugin-react"
 import tailwindcss from "@tailwindcss/vite"
 import { VitePWA } from "vite-plugin-pwa"
 
+// The patient portal talks to the RemedacarePOS Supabase project. A build without those settings must stop
+// here (Vercel then keeps the previous deployment live) instead of shipping a site pointed at nothing.
+function requirePharmacyPosEnv() {
+  return {
+    name: "require-pharmacy-pos-env",
+    configResolved(config) {
+      if (config.command !== "build") return
+      const missing = ["VITE_PHARMACYOS_SUPABASE_URL", "VITE_PHARMACYOS_SUPABASE_ANON_KEY"].filter((key) => !String(config.env[key] || "").trim())
+      if (missing.length) {
+        throw new Error(`Missing ${missing.join(" and ")}. Add them to .env locally and to the Vercel project's Environment Variables (see .env.example).`)
+      }
+    },
+  }
+}
+
 export default defineConfig({
   // Never publish source maps: production users receive only the compiled bundle.
   build: {
@@ -10,6 +25,7 @@ export default defineConfig({
     minify: "oxc",
   },
   plugins: [
+    requirePharmacyPosEnv(),
     react(),
     tailwindcss(),
     VitePWA({
