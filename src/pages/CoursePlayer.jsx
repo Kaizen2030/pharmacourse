@@ -25,6 +25,8 @@ export default function CoursePlayer() {
   const [quizPassed, setQuizPassed] = useState(false)
   const [quizAvailable, setQuizAvailable] = useState(false)
   const [quizLoading, setQuizLoading] = useState(false)
+  const [quizMeta, setQuizMeta] = useState(null)
+  const [quizMessage, setQuizMessage] = useState("")
   const videoRef = useRef(null)
   const lastTimeRef = useRef(0)
   const saveIntervalRef = useRef(null)
@@ -155,33 +157,22 @@ export default function CoursePlayer() {
   }, [resumePosition, currentModule])
 
   async function savePosition(position) {
-    if (!user?.id || !lessonId || position <= 0) return
-    if (completedIdsRef.current.has(lessonId)) return
+    if (!user?.id || !lessonId || !courseId) return null
+    if (completedIdsRef.current.has(lessonId)) return null
     try {
-      const { data: existing } = await supabase
-        .from("course_progress")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("module_id", lessonId)
-        .eq("course_id", courseId)
-        .maybeSingle()
-
-      if (existing?.id) {
-        await supabase
-          .from("course_progress")
-          .update({ last_position: Math.floor(position) })
-          .eq("id", existing.id)
-      } else {
-        await supabase.from("course_progress").insert({
-          user_id: user.id,
-          course_id: courseId,
-          module_id: lessonId,
-          completed: false,
-          last_position: Math.floor(position)
-        })
+      const { data, error } = await supabase.rpc("record_watch_heartbeat", {
+        p_course: courseId,
+        p_module: lessonId,
+        p_position: Math.max(Math.floor(position || 0), 0),
+      })
+      if (error) throw error
+      if (data) {
+        if (data.watched_seconds >= data.required_seconds) setVideoWatched(true)
       }
+      return data
     } catch (err) {
-      console.error("Error saving position:", err)
+      console.error("Error saving watch progress:", err)
+      return null
     }
   }
 
@@ -191,32 +182,15 @@ export default function CoursePlayer() {
       return false
     }
     try {
-      const { error } = await supabase
-        .from("course_progress")
-        .upsert(
-          {
-            user_id: user.id,
-            course_id: courseId,
-            module_id: moduleId,
-            completed: true,
-            last_position: 0,
-            completed_at: new Date().toISOString(),
-          },
-          {
-            onConflict: "user_id,course_id,module_id",
-            ignoreDuplicates: false,
-          }
-        )
-
+      const { error } = await supabase.rpc("complete_module", { p_course: courseId, p_module: moduleId })
       if (error) {
-        console.error("Supabase upsert error:", error)
-        alert(`Error saving progress: ${error.message || JSON.stringify(error)}`)
+        alert(error.message || "This module could not be completed yet.")
         return false
       }
       return true
     } catch (err) {
-      console.error("Unexpected error writing completion:", err)
-      alert(`Unexpected error: ${err.message || err}`)
+      console.error("Unexpected error completing module:", err)
+      alert("This module could not be completed right now. Please try again.")
       return false
     }
   }
@@ -267,7 +241,7 @@ export default function CoursePlayer() {
       if (!isAdmin && video && !video.paused && video.currentTime > 0 && !completedIdsRef.current.has(lessonId)) {
         savePosition(video.currentTime)
       }
-    }, 10000)
+    }, 15000)
 
     const saveOnPause = () => {
       if (!isAdmin && !completedIdsRef.current.has(lessonId)) savePosition(video.currentTime)
@@ -328,6 +302,31 @@ export default function CoursePlayer() {
     if (isAdmin || (currentModule && !currentModule.video_url)) setVideoWatched(true)
   }, [currentModule, isAdmin])
 
+  // Embedded players do not report playback, so while the lesson is open and the tab is visible the page sends a
+  // heartbeat every 15 s. The server credits real elapsed time only, and decides when the module may complete.
+  useEffect(() => {
+    const url = currentModule?.video_url || ""
+    const isEmbed = /drive\.google\.com|youtube\.com|youtu\.be|vimeo\.com/i.test(url)
+    if (!isEmbed || isAdmin || !user?.id || completedIdsRef.current.has(lessonId)) return undefined
+
+    let cancelled = false
+    const beat = async () => {
+      if (cancelled || document.visibilityState !== "visible") return
+      const data = await savePosition(0)
+      if (cancelled || !data) return
+      const pct = data.required_seconds > 0
+        ? Math.min(Math.floor((data.watched_seconds / data.required_seconds) * 90), 100)
+        : 100
+      setWatchProgress(pct)
+    }
+    beat()
+    const interval = setInterval(beat, 15000)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
+  }, [currentModule?.id, lessonId, isAdmin, user?.id])
+
   useEffect(() => {
     async function loadLessonExtras() {
       if (!currentModule?.id) return
@@ -347,37 +346,26 @@ export default function CoursePlayer() {
       }
 
       try {
-        const { data: quizData, error: quizError } = await supabase
-          .from("lesson_quizzes")
-          .select("id, lesson_id, title, passing_score, quiz_questions(*)")
-          .eq("lesson_id", currentModule.id)
-          .maybeSingle()
-
-        if (quizError || !quizData) {
+        const { data: quizData, error: quizError } = await supabase.rpc("get_lesson_quiz", { p_lesson: currentModule.id })
+        setUserAnswers({})
+        setQuizSubmitted(false)
+        setQuizScore(null)
+        setQuizPassed(false)
+        setQuizMessage("")
+        if (quizError || !quizData || !Array.isArray(quizData.questions) || quizData.questions.length === 0) {
           setQuizAvailable(false)
           setQuizQuestions([])
-        } else if (Array.isArray(quizData.quiz_questions) && quizData.quiz_questions.length > 0) {
-          setQuizAvailable(true)
-          setQuizQuestions(
-            quizData.quiz_questions.map(q => ({
-              ...q,
-              quiz_id: q.quiz_id || q.quizId || quizData.id,
-              lesson_id: q.lesson_id || quizData.lesson_id,
-              module_id: q.module_id || quizData.module_id,
-            }))
-          )
-          setUserAnswers({})
-          setQuizSubmitted(false)
-          setQuizScore(null)
-          setQuizPassed(false)
+          setQuizMeta(null)
         } else {
-          setQuizAvailable(false)
-          setQuizQuestions([])
+          setQuizAvailable(true)
+          setQuizMeta({ id: quizData.id, passing_score: quizData.passing_score, title: quizData.title })
+          setQuizQuestions(quizData.questions)
         }
       } catch (err) {
         console.error("Error loading quiz:", err)
         setQuizAvailable(false)
         setQuizQuestions([])
+        setQuizMeta(null)
       } finally {
         setQuizLoading(false)
       }
@@ -441,44 +429,20 @@ export default function CoursePlayer() {
       return
     }
 
-    let correct = 0
-    quizQuestions.forEach(q => {
-      const userAnswer = userAnswers[q.id]
-      const answerText = String(userAnswer || "").trim()
-      const correctAnswer = q.correct_answer ?? q.correctAnswer ?? q.correct_option ?? q.correctOption
-      const optionMatch = Array.isArray(q.options)
-        ? q.options.find(opt => String(opt.text || opt.label || opt.value || "").trim() === answerText)
-        : null
-      const isCorrect = correctAnswer
-        ? String(correctAnswer).trim() === answerText
-        : !!optionMatch && (optionMatch.is_correct || optionMatch.isCorrect)
-      if (isCorrect) correct += 1
-    })
-
-    const score = quizQuestions.length ? Math.round((correct / quizQuestions.length) * 100) : 0
-    const passed = score >= 70
-
-    setQuizScore(score)
+    if (!quizMeta?.id) return
+    const { data: result, error: submitError } = await supabase.rpc("submit_quiz", { p_quiz: quizMeta.id, p_answers: userAnswers })
+    if (submitError || !result) {
+      setQuizMessage(submitError?.message || "Your answers could not be submitted. Please try again.")
+      return
+    }
+    const passed = !!result.passed
+    setQuizMessage("")
+    setQuizScore(result.score)
     setQuizPassed(passed)
     setQuizSubmitted(true)
 
-    if (user?.id) {
-      try {
-        await supabase.from("user_quiz_attempts").insert({
-          user_id: user.id,
-          quiz_id: quizQuestions[0]?.quiz_id || null,
-          module_id: currentModule.id,
-          score,
-          passed,
-          answers: userAnswers,
-          completed_at: new Date().toISOString(),
-        })
-      } catch (err) {
-        console.error("Error saving quiz attempt:", err)
-      }
-    }
-
-    if (passed && !completedIds.has(lessonId)) {
+    // Complete straight away only if the lesson has been watched; otherwise the student finishes watching first.
+    if (passed && (videoWatched || isAdmin) && !completedIds.has(lessonId)) {
       const success = await writeCompletionToDB(lessonId)
       if (success) {
         const newDoneIds = new Set([...completedIdsRef.current, lessonId])
@@ -627,26 +591,6 @@ export default function CoursePlayer() {
                           if (isAdmin || completedIdsRef.current.has(lessonId)) {
                             setVideoWatched(true)
                             setWatchProgress(100)
-                            return
-                          }
-                          if (currentModule.duration) {
-                            const totalMs = currentModule.duration * 60 * 1000
-                            const alreadyWatchedMs = resumePosition * 1000
-                            const remaining = Math.max(totalMs * 0.9 - alreadyWatchedMs, 0)
-                            const startPct = resumePosition > 0
-                              ? Math.min(Math.floor((resumePosition / (currentModule.duration * 60)) * 100), 89)
-                              : 0
-                            setWatchProgress(startPct)
-                            const interval = setInterval(() => {
-                              setWatchProgress(prev => {
-                                const next = Math.min(prev + 1, 100)
-                                if (next >= 90) { setVideoWatched(true); clearInterval(interval) }
-                                return next
-                              })
-                            }, totalMs / 100)
-                            setTimeout(() => setVideoWatched(true), remaining)
-                          } else {
-                            setTimeout(() => setVideoWatched(true), 2 * 60 * 1000)
                           }
                         }}
                       />
@@ -834,7 +778,7 @@ export default function CoursePlayer() {
                         Lesson Quiz
                       </span>
                       <h3 style={{ margin: "0.5rem 0 0", fontSize: "1.2rem" }}>
-                        Pass with 70% to complete this module.
+                        Pass with {quizMeta?.passing_score ?? 70}% to complete this module.
                       </h3>
                     </div>
                     <div style={{ fontWeight: 700, color: "#0F6E56" }}>
@@ -892,6 +836,9 @@ export default function CoursePlayer() {
                         </div>
                       ))}
 
+                      {quizMessage && (
+                        <p role="alert" style={{ margin: 0, color: "#991b1b" }}>{quizMessage}</p>
+                      )}
                       <button
                         type="button"
                         className="btn btn-primary"

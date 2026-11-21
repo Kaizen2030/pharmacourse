@@ -65,3 +65,65 @@ create policy "Admins can manage course modules" on public.course_modules for al
 
 create policy "Users can read own simulation responses" on public.simulation_responses for select to authenticated using (user_id = auth.uid());
 create policy "Users can create own simulation responses" on public.simulation_responses for insert to authenticated with check (user_id = auth.uid());
+
+-- Phase 1 tables (courses, enrollments, progress, quizzes, attempts, certificates), live rules of 2026-11-23.
+alter table public.course_modules add column duration_minutes numeric, add column description text;
+create table public.course_enrollments (id uuid primary key default gen_random_uuid(), user_id uuid, course_id uuid,
+  enrollment_date timestamptz default now(), completion_date timestamptz, status text default 'enrolled',
+  created_at timestamptz default now(), completed_at timestamptz);
+create table public.course_progress (id uuid primary key default gen_random_uuid(), user_id uuid, course_id uuid, module_id uuid,
+  progress_percentage numeric default 0, last_accessed_at timestamptz, created_at timestamptz default now(), updated_at timestamptz default now(),
+  last_position integer default 0, completed boolean default false, completed_at timestamptz, unique (user_id, course_id, module_id));
+create table public.lesson_quizzes (id uuid primary key default gen_random_uuid(), lesson_id uuid, title text, passing_score integer,
+  time_limit_minutes integer, created_at timestamptz default now(), course_id uuid, pass_score integer);
+create table public.quiz_questions (id uuid primary key default gen_random_uuid(), quiz_id uuid, question_text text, question_type text,
+  options jsonb, correct_answer text, explanation text, points integer, order_index integer, created_at timestamptz default now());
+create table public.user_quiz_attempts (id uuid primary key default gen_random_uuid(), user_id uuid, quiz_id uuid, score integer, passed boolean,
+  answers jsonb, started_at timestamptz, completed_at timestamptz, created_at timestamptz default now());
+create table public.certificates (id uuid primary key default gen_random_uuid(), user_id uuid, course_id uuid, issued_date timestamptz default now(),
+  certificate_code text, verification_url text, score numeric, created_at timestamptz default now());
+
+do $$ declare t text; begin
+  foreach t in array array['course_enrollments','course_progress','lesson_quizzes','quiz_questions','user_quiz_attempts','certificates'] loop
+    execute format('alter table public.%I enable row level security', t);
+  end loop;
+end $$;
+grant select on public.course_enrollments to anon; grant insert, select, update on public.course_enrollments to authenticated;
+grant select on public.course_progress to anon; grant insert, select, update on public.course_progress to authenticated;
+grant select on public.lesson_quizzes to anon; grant select, insert, update, delete on public.lesson_quizzes to authenticated;
+grant select on public.quiz_questions to anon; grant select, insert, update, delete on public.quiz_questions to authenticated;
+grant select, insert, update, delete, references, trigger, truncate on public.user_quiz_attempts to authenticated;
+grant select on public.certificates to anon; grant insert, select on public.certificates to authenticated;
+
+create policy "Users can read own enrollments" on public.course_enrollments for select to authenticated using (user_id = auth.uid());
+create policy "Admins can manage enrollments" on public.course_enrollments for all to authenticated using (is_admin()) with check (is_admin());
+
+create policy "Users can read own progress" on public.course_progress for select to authenticated using (user_id = auth.uid());
+create policy "Users can insert own progress" on public.course_progress for insert to authenticated with check (
+  user_id = auth.uid() and (exists (select 1 from course_enrollments ce where ce.user_id = auth.uid() and ce.course_id = course_progress.course_id)
+    or exists (select 1 from courses c where c.id = course_progress.course_id and c.instructor_id = auth.uid()) or is_admin()));
+create policy "Users can update own progress" on public.course_progress for update to authenticated using (user_id = auth.uid()) with check (
+  user_id = auth.uid() and (exists (select 1 from course_enrollments ce where ce.user_id = auth.uid() and ce.course_id = course_progress.course_id)
+    or exists (select 1 from courses c where c.id = course_progress.course_id and c.instructor_id = auth.uid()) or is_admin()));
+create policy "Admins can manage progress" on public.course_progress for all to authenticated using (is_admin()) with check (is_admin());
+
+create policy "Students can read quizzes" on public.lesson_quizzes for select to public using (true);
+create policy "Admins can write quizzes" on public.lesson_quizzes for all to authenticated using (is_admin()) with check (is_admin());
+create policy "Students can read questions" on public.quiz_questions for select to public using (true);
+create policy "public read questions" on public.quiz_questions for select to public using (true);
+create policy "Anyone can read questions" on public.quiz_questions for select to public using (true);
+create policy "Admins can write questions" on public.quiz_questions for all to authenticated using (is_admin()) with check (is_admin());
+
+create policy "Users own their attempts" on public.user_quiz_attempts for all to public using (auth.uid() = user_id);
+create policy "Users insert their attempts" on public.user_quiz_attempts for insert to public with check (auth.uid() = user_id);
+create policy "users manage attempts" on public.user_quiz_attempts for all to public using (auth.uid() = user_id);
+create policy "Users can manage their attempts" on public.user_quiz_attempts for all to public using (auth.uid() = user_id);
+
+create policy "Users can read own certificates" on public.certificates for select to authenticated using (user_id = auth.uid());
+create policy "Users can create own certificates" on public.certificates for insert to authenticated with check (
+  user_id = auth.uid()
+  and exists (select 1 from course_enrollments ce where ce.user_id = auth.uid() and ce.course_id = certificates.course_id and coalesce(ce.status, 'enrolled') = 'enrolled')
+  and (select count(*) from course_modules cm where cm.course_id = certificates.course_id) > 0
+  and (select count(*) from course_progress cp where cp.user_id = auth.uid() and cp.course_id = certificates.course_id and cp.completed = true)
+      >= (select count(*) from course_modules cm where cm.course_id = certificates.course_id));
+create policy "Admins can manage certificates" on public.certificates for all to authenticated using (is_admin()) with check (is_admin());
