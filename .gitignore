@@ -37,3 +37,8 @@ temp_*.txt
 homepage-fullpage.png
 mobile-*.png
 video-check-*.png
+
+# Local database security snapshots (schema and rules): never commit
+supabase/security_snapshot*.json
+
+supabase/tests/node_modules/

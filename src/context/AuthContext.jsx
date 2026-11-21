@@ -150,7 +150,7 @@ export function AuthProvider({ children }) {
 
     if (profileError) {
       if (profileError.message?.toLowerCase().includes("permission denied")) {
-        throw new Error("Supabase denied profile updates. Re-run supabase/rls_reset.sql in the Supabase SQL Editor, then try again.")
+        throw new Error("Your profile could not be saved right now. Please try again, or contact support if it keeps happening.")
       }
 
       throw profileError

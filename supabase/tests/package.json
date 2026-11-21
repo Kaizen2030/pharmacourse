@@ -1,0 +1,12 @@
+{
+  "name": "pharmacourse-db-tests",
+  "private": true,
+  "type": "module",
+  "description": "Runs the Pharmacourse security SQL on PGlite (Postgres in WebAssembly) and tries to bypass it. Test-only; not part of the website build.",
+  "scripts": {
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.3.16"
+  }
+}

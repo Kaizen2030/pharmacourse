@@ -427,13 +427,11 @@ function AdminUsersTab() {
     setError("")
     setMessage("")
 
-    const { error } = await supabase
-      .from("user_profiles")
-      .update({ role: "admin" })
-      .eq("id", targetProfile.id)
+    // Roles change only through the database function (super admins, audited).
+    const { error } = await supabase.rpc("admin_set_role", { p_user_id: targetProfile.id, p_level: "content" })
 
     if (error) {
-      setError(`${error.message}. If this is a permissions issue, run the updated admin profile policy in supabase/rls_reset.sql.`)
+      setError(error.message)
     } else {
       setMessage(`${targetProfile.email || targetProfile.full_name || "User"} is now an admin.`)
       await loadProfiles()
@@ -461,10 +459,7 @@ function AdminUsersTab() {
     setError("")
     setMessage("")
 
-    const { error } = await supabase
-      .from("user_profiles")
-      .update({ role: "student" })
-      .eq("id", targetProfile.id)
+    const { error } = await supabase.rpc("admin_set_role", { p_user_id: targetProfile.id, p_level: "student" })
 
     if (error) {
       setError(error.message)
@@ -814,13 +809,11 @@ function ScalableAdminUsersTab() {
     setError("")
     setMessage("")
 
-    const { error: promoteError } = await supabase
-      .from("user_profiles")
-      .update({ role: "admin", admin_role: nextAdminRole })
-      .eq("id", targetProfile.id)
+    // Roles change only through the database function (super admins, audited).
+    const { error: promoteError } = await supabase.rpc("admin_set_role", { p_user_id: targetProfile.id, p_level: nextAdminRole })
 
     if (promoteError) {
-      setError(`${promoteError.message}. If this is a permissions issue, run the updated admin profile policy in supabase/rls_reset.sql.`)
+      setError(promoteError.message)
     } else {
       setMessage(`${targetProfile.email || targetProfile.full_name || "User"} is now a ${getAdminRoleLabel(nextAdminRole)}.`)
       setSelectedAdminRoles((current) => {
@@ -851,10 +844,7 @@ function ScalableAdminUsersTab() {
     setError("")
     setMessage("")
 
-    const { error: demoteError } = await supabase
-      .from("user_profiles")
-      .update({ role: "student", admin_role: null })
-      .eq("id", targetProfile.id)
+    const { error: demoteError } = await supabase.rpc("admin_set_role", { p_user_id: targetProfile.id, p_level: "student" })
 
     if (demoteError) {
       setError(demoteError.message)
@@ -5160,7 +5150,7 @@ function CertificateSettingsTab() {
       .maybeSingle()
 
     if (error) {
-      setError(`${error.message}. Re-run supabase/rls_reset.sql to create certificate settings.`)
+      setError("Certificate settings could not be loaded. Please try again.")
       setForm(DEFAULT_CERTIFICATE_SETTINGS)
     } else {
       setForm(normalizeCertificateSettings(data))
