@@ -7,6 +7,7 @@ import { usePatient } from "../../components/PatientLayout"
 import { usePatientPortalAuth } from "../../hooks/usePatientPortalAuth"
 import { pharmacyosClient } from "../../lib/pharmacyosClient"
 import { fetchPatientPortalUpdates } from "../../lib/patientPortalUpdates"
+import PatientAccountNotice from "../../components/PatientAccountNotice"
 import {
   clearPatientPortalProfileDraft,
   clearPatientPortalSession,
@@ -1025,6 +1026,7 @@ export default function PatientTrack() {
 
   return (
     <div className="patient-page">
+      <PatientAccountNotice />
       <section className="patient-card patient-card-muted patient-hero">
         <span className="patient-badge">Tracking and notifications</span>
         <div className="patient-track-hero-grid">

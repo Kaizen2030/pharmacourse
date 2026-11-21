@@ -1,3 +1,8 @@
+-- SUPERSEDED - DO NOT RUN.
+-- The patient portal database now lives in the RemedacarePOS repo:
+--   supabase/migrations/20261122000000_patient_portal_security.sql (docs/sql/14_patient_portal_security.sql)
+-- Running this older script would re-open patient records to anyone who knows a phone number.
+
 -- Patient portal core tables for PharmaCourse / RemedaCare
 -- Run this in the Supabase SQL editor after the auth baseline and patient portal lookup helpers.
 

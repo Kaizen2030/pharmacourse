@@ -31,7 +31,7 @@ export default function PatientPrescription() {
   const [fieldErrors, setFieldErrors] = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const autoLookupDoneRef = useRef(false)
-  const { loading: authLoading, isAuthenticated, patientPhone, fullName } = usePatientPortalAuth()
+  const { loading: authLoading, isAuthenticated, patientPhone, fullName, user } = usePatientPortalAuth()
   const loginPath = createPatientPath("/patient/login")
   const registerPath = createPatientPath("/patient/register")
 
@@ -178,10 +178,21 @@ export default function PatientPrescription() {
     let prescriptionImageUrl = null
 
     if (prescriptionFile) {
-      const filePath = `${pharmacyId}/${patient.id}/${Date.now()}-${sanitizeFileName(prescriptionFile.name)}`
+      if (!user?.id) {
+        setSubmitMessage({ type: "error", message: "Please sign in again before attaching a prescription photo." })
+        setIsSubmitting(false)
+        return
+      }
+      if (prescriptionFile.size > 10 * 1024 * 1024) {
+        setSubmitMessage({ type: "error", message: "The photo is larger than 10 MB. Take a smaller photo and try again." })
+        setIsSubmitting(false)
+        return
+      }
+      // Private bucket: only this patient and the pharmacy's staff can open the file.
+      const filePath = `${pharmacyId}/${user.id}/${Date.now()}-${sanitizeFileName(prescriptionFile.name)}`
       const uploadResult = await pharmacyosClient.storage
         .from("prescription-photos")
-        .upload(filePath, prescriptionFile, { upsert: false })
+        .upload(filePath, prescriptionFile, { upsert: false, contentType: prescriptionFile.type || undefined })
 
       if (uploadResult.error) {
         setSubmitMessage({ type: "error", message: uploadResult.error.message || "Photo upload failed." })
@@ -189,8 +200,8 @@ export default function PatientPrescription() {
         return
       }
 
-      const { data: publicUrlData } = pharmacyosClient.storage.from("prescription-photos").getPublicUrl(filePath)
-      prescriptionImageUrl = publicUrlData.publicUrl || null
+      // Stored as a reference, not a public link; the pharmacy opens it with a short-lived signed link.
+      prescriptionImageUrl = `storage://prescription-photos/${filePath}`
     }
 
     const { error } = await pharmacyosClient.from("prescription_requests").insert({
