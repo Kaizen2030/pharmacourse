@@ -25,6 +25,19 @@ if (import.meta.env.PROD) {
 
 // A tab opened before a deploy asks for page files that no longer exist on Vercel (their names change every build).
 // Reload once to pick up the new build instead of showing a broken page. The guard stops a reload loop.
+// One-time clean-up: older offline caches could hold a web page saved under a style file's name (broken styles).
+// Clear them once per browser; the fixed service worker refills them correctly.
+try {
+  if ("caches" in window && localStorage.getItem("pc-cache-clean") !== "2") {
+    Promise.all(["html-cache", "asset-cache"].map((name) => caches.delete(name)))
+      .then((deleted) => {
+        localStorage.setItem("pc-cache-clean", "2")
+        if (deleted.some(Boolean)) window.location.reload() // once: the flag above stops a second reload
+      })
+      .catch(() => {})
+  }
+} catch { /* storage blocked */ }
+
 // Saved page copies are cleared first, so the reload really fetches the new build. At most one try per 30 seconds.
 window.addEventListener("vite:preloadError", (event) => {
   let last = 0
