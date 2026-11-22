@@ -1,24 +1,31 @@
-// M-Pesa STK Push (Safaricom Daraja). Deploy with:  supabase functions deploy payments-mpesa --no-verify-jwt
-// (JWT is checked in code for learner calls; Safaricom's callback carries no Supabase token.)
+// M-Pesa STK Push (Safaricom Daraja). Deployed automatically by .github/workflows/deploy-functions.yml (no JWT check
+// at the gateway: learner calls are checked in code; Safaricom's callback carries no Supabase token).
 //
-// Secrets (supabase secrets set ...):
-//   MPESA_ENV=sandbox|production   MPESA_CONSUMER_KEY   MPESA_CONSUMER_SECRET
-//   MPESA_SHORTCODE (Paybill or Till)   MPESA_PASSKEY   MPESA_TRANSACTION_TYPE=CustomerPayBillOnline|CustomerBuyGoodsOnline
-//   MPESA_CALLBACK_TOKEN (a long random string)   APP_ORIGIN=https://www.pharmacourse.co.ke
+// Keys: paste them in Admin > Learning > Payments > Payment methods > M-Pesa (saved encrypted in Supabase Vault).
+// Edge Function secrets with the same meaning also work and take priority:
+//   MPESA_ENV  MPESA_CONSUMER_KEY  MPESA_CONSUMER_SECRET  MPESA_SHORTCODE  MPESA_PASSKEY  MPESA_TRANSACTION_TYPE  MPESA_CALLBACK_TOKEN
 //
 // Learner calls (POST, with their Supabase session):
 //   { action: "stk", payment_id }    send the prompt for that pending payment
 //   { action: "query", payment_id }  ask Safaricom for the result (if the callback is late or lost)
-// Safaricom calls: POST ?callback=<MPESA_CALLBACK_TOKEN>. The result is re-checked with Safaricom before confirming.
-import { confirmPayment, cors, failPayment, json, loadOwnPendingPayment, requireUser, serviceClient, timingSafeEqual } from "../_shared/payments.ts"
+//   { action: "health" }             admin page: are the keys present? (never returns them)
+// Safaricom calls: POST ?callback=<token>. The result is re-checked with Safaricom before confirming.
+import { confirmPayment, cors, failPayment, json, loadOwnPendingPayment, providerConfig, requireUser, serviceClient, timingSafeEqual } from "../_shared/payments.ts"
 
-const env = (k: string) => Deno.env.get(k) || ""
-const BASE = env("MPESA_ENV") === "production" ? "https://api.safaricom.co.ke" : "https://sandbox.safaricom.co.ke"
+type Cfg = { env?: string; consumer_key?: string; consumer_secret?: string; shortcode?: string; passkey?: string; transaction_type?: string; callback_token?: string }
 
-async function accessToken() {
-  const basic = btoa(`${env("MPESA_CONSUMER_KEY")}:${env("MPESA_CONSUMER_SECRET")}`)
-  const res = await fetch(`${BASE}/oauth/v1/generate?grant_type=client_credentials`, { headers: { Authorization: `Basic ${basic}` } })
-  if (!res.ok) throw new Error("M-Pesa sign-in failed.")
+async function loadConfig(): Promise<Cfg> {
+  return await providerConfig("mpesa_stk", {
+    env: "MPESA_ENV", consumer_key: "MPESA_CONSUMER_KEY", consumer_secret: "MPESA_CONSUMER_SECRET", shortcode: "MPESA_SHORTCODE",
+    passkey: "MPESA_PASSKEY", transaction_type: "MPESA_TRANSACTION_TYPE", callback_token: "MPESA_CALLBACK_TOKEN",
+  })
+}
+const ready = (c: Cfg) => Boolean(c.consumer_key && c.consumer_secret && c.shortcode && c.passkey && c.callback_token)
+const base = (c: Cfg) => (c.env === "production" ? "https://api.safaricom.co.ke" : "https://sandbox.safaricom.co.ke")
+
+async function accessToken(c: Cfg) {
+  const res = await fetch(`${base(c)}/oauth/v1/generate?grant_type=client_credentials`, { headers: { Authorization: `Basic ${btoa(`${c.consumer_key}:${c.consumer_secret}`)}` } })
+  if (!res.ok) throw new Error("M-Pesa sign-in failed. Check the consumer key and secret.")
   return (await res.json()).access_token as string
 }
 
@@ -28,24 +35,21 @@ function stamp() {
   return `${d.getUTCFullYear()}${p(d.getUTCMonth() + 1)}${p(d.getUTCDate())}${p(d.getUTCHours())}${p(d.getUTCMinutes())}${p(d.getUTCSeconds())}`
 }
 
-function callbackUrl() {
-  const url = `${env("SUPABASE_URL").replace(/\/+$/, "")}/functions/v1/payments-mpesa?callback=${encodeURIComponent(env("MPESA_CALLBACK_TOKEN"))}`
-  return url
-}
+const callbackUrl = (c: Cfg) => `${(Deno.env.get("SUPABASE_URL") || "").replace(/\/+$/, "")}/functions/v1/payments-mpesa?callback=${encodeURIComponent(c.callback_token || "")}`
 
-async function stkQuery(checkoutId: string) {
+async function stkQuery(c: Cfg, checkoutId: string) {
   const ts = stamp()
-  const res = await fetch(`${BASE}/mpesa/stkpushquery/v1/query`, {
+  const res = await fetch(`${base(c)}/mpesa/stkpushquery/v1/query`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${await accessToken()}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ BusinessShortCode: env("MPESA_SHORTCODE"), Password: btoa(`${env("MPESA_SHORTCODE")}${env("MPESA_PASSKEY")}${ts}`), Timestamp: ts, CheckoutRequestID: checkoutId }),
+    headers: { Authorization: `Bearer ${await accessToken(c)}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ BusinessShortCode: c.shortcode, Password: btoa(`${c.shortcode}${c.passkey}${ts}`), Timestamp: ts, CheckoutRequestID: checkoutId }),
   })
   return await res.json().catch(() => ({}))
 }
 
-async function settleFromQuery(payment: { id: string; checkout_id: string | null; amount_kes: number }, callbackMeta?: Record<string, unknown>) {
+async function settleFromQuery(c: Cfg, payment: { id: string; checkout_id: string | null; amount_kes: number }, callbackMeta?: Record<string, unknown>) {
   if (!payment.checkout_id) return { status: "pending" }
-  const q = await stkQuery(payment.checkout_id)
+  const q = await stkQuery(c, payment.checkout_id)
   const code = String(q.ResultCode ?? "")
   if (code === "0") {
     const receipt = String(callbackMeta?.MpesaReceiptNumber || q.MpesaReceiptNumber || `STK-${payment.checkout_id.slice(-10)}`)
@@ -64,11 +68,12 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors })
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405)
   const url = new URL(req.url)
+  const c = await loadConfig()
 
   // Safaricom callback ------------------------------------------------------------------------------------------
   if (url.searchParams.has("callback")) {
     const ack = new Response(JSON.stringify({ ResultCode: 0, ResultDesc: "Accepted" }), { headers: { "Content-Type": "application/json" } })
-    if (!env("MPESA_CALLBACK_TOKEN") || !timingSafeEqual(url.searchParams.get("callback") || "", env("MPESA_CALLBACK_TOKEN"))) return ack
+    if (!c.callback_token || !timingSafeEqual(url.searchParams.get("callback") || "", c.callback_token)) return ack
     try {
       const body = await req.json()
       const cb = body?.Body?.stkCallback
@@ -76,49 +81,45 @@ Deno.serve(async (req) => {
       const { data: payment } = await serviceClient().from("payments").select("id, checkout_id, amount_kes, status").eq("checkout_id", cb.CheckoutRequestID).maybeSingle()
       if (!payment || payment.status !== "pending") return ack
       const meta = Object.fromEntries((cb.CallbackMetadata?.Item || []).map((i: { Name: string; Value: unknown }) => [i.Name, i.Value]))
-      // Never trust the callback body alone: confirm the result with Safaricom first.
-      await settleFromQuery(payment, meta)
+      await settleFromQuery(c, payment, meta) // never trust the callback body alone
     } catch (error) {
       console.error("mpesa callback error", (error as Error).message)
     }
     return ack
   }
 
-  // Learner calls ------------------------------------------------------------------------------------------------
   let body: { action?: string; payment_id?: string }
   try { body = await req.json() } catch { return json({ error: "Bad request" }, 400) }
-  // Setup check for the admin settings page: says only whether the keys are present, never their values.
-  if (body.action === "health") return json({ configured: Boolean(env("MPESA_CONSUMER_KEY") && env("MPESA_CONSUMER_SECRET") && env("MPESA_SHORTCODE") && env("MPESA_PASSKEY") && env("MPESA_CALLBACK_TOKEN")), env: env("MPESA_ENV") || "sandbox" })
+  if (body.action === "health") return json({ configured: ready(c), env: c.env || "sandbox" })
+
   const user = await requireUser(req)
   if (!user) return json({ error: "Please sign in again." }, 401)
   if (!body.payment_id) return json({ error: "Missing payment." }, 400)
-  if (!env("MPESA_CONSUMER_KEY") || !env("MPESA_SHORTCODE") || !env("MPESA_PASSKEY") || !env("MPESA_CALLBACK_TOKEN")) {
-    return json({ error: "M-Pesa is not set up yet. Choose another payment method." }, 503)
-  }
+  if (!ready(c)) return json({ error: "M-Pesa is not set up yet. Choose another payment method." }, 503)
 
   try {
     const payment = await loadOwnPendingPayment(body.payment_id, user.id, "mpesa_stk")
     if (body.action === "query") {
       if (payment.status !== "pending") return json({ status: payment.status })
-      return json(await settleFromQuery(payment))
+      return json(await settleFromQuery(c, payment))
     }
     if (payment.status !== "pending") return json({ error: "This payment is no longer open. Start a new checkout." }, 409)
     if (!payment.phone) return json({ error: "Missing phone number." }, 400)
 
     const ts = stamp()
-    const res = await fetch(`${BASE}/mpesa/stkpush/v1/processrequest`, {
+    const res = await fetch(`${base(c)}/mpesa/stkpush/v1/processrequest`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${await accessToken()}`, "Content-Type": "application/json" },
+      headers: { Authorization: `Bearer ${await accessToken(c)}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        BusinessShortCode: env("MPESA_SHORTCODE"),
-        Password: btoa(`${env("MPESA_SHORTCODE")}${env("MPESA_PASSKEY")}${ts}`),
+        BusinessShortCode: c.shortcode,
+        Password: btoa(`${c.shortcode}${c.passkey}${ts}`),
         Timestamp: ts,
-        TransactionType: env("MPESA_TRANSACTION_TYPE") || "CustomerPayBillOnline",
+        TransactionType: c.transaction_type || "CustomerPayBillOnline",
         Amount: Math.ceil(Number(payment.amount_kes)),
         PartyA: payment.phone,
-        PartyB: env("MPESA_SHORTCODE"),
+        PartyB: c.shortcode,
         PhoneNumber: payment.phone,
-        CallBackURL: callbackUrl(),
+        CallBackURL: callbackUrl(c),
         AccountReference: "Pharmacourse",
         TransactionDesc: "Course payment",
       }),

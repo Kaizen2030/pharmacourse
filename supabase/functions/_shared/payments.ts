@@ -56,3 +56,19 @@ export function timingSafeEqual(a: string, b: string) {
   for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i)
   return diff === 0
 }
+
+// Provider keys: saved by a super admin in Admin (encrypted in Supabase Vault), or set as Edge Function secrets.
+// Edge Function secrets win when both exist. Values never leave the server.
+export async function providerConfig(provider: "mpesa_stk" | "paystack", envMap: Record<string, string>) {
+  const fromEnv: Record<string, string> = {}
+  for (const [key, envName] of Object.entries(envMap)) {
+    const v = Deno.env.get(envName)
+    if (v) fromEnv[key] = v
+  }
+  let fromVault: Record<string, string> = {}
+  try {
+    const { data } = await serviceClient().rpc("get_payment_config", { p_provider: provider })
+    if (data && typeof data === "object") fromVault = data as Record<string, string>
+  } catch { /* Vault not set up: env only */ }
+  return { ...fromVault, ...fromEnv }
+}

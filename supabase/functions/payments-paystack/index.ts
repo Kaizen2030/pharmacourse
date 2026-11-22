@@ -1,15 +1,15 @@
 // Paystack (cards, and other methods Paystack offers in Kenya). Deploy with:
 //   supabase functions deploy payments-paystack --no-verify-jwt
-// Secrets: PAYSTACK_SECRET_KEY   SITE_URL=https://www.pharmacourse.co.ke   APP_ORIGIN=https://www.pharmacourse.co.ke
+// Key: paste it in Admin > Payments > Payment methods > Card (saved encrypted in Supabase Vault), or set PAYSTACK_SECRET_KEY.
+// Other settings: SITE_URL=https://www.pharmacourse.co.ke   APP_ORIGIN=https://www.pharmacourse.co.ke
 // In the Paystack dashboard set the webhook URL to: https://<project>.supabase.co/functions/v1/payments-paystack
 //
 // Learner calls (POST, with their Supabase session):
 //   { action: "init", payment_id }    returns the Paystack page to send the learner to
 //   { action: "verify", payment_id }  checks the result after the learner comes back
 // Paystack webhook: verified with the x-paystack-signature HMAC, then re-checked with the verify API before confirming.
-import { confirmPayment, cors, failPayment, json, loadOwnPendingPayment, requireUser, serviceClient, timingSafeEqual } from "../_shared/payments.ts"
+import { confirmPayment, cors, failPayment, json, loadOwnPendingPayment, providerConfig, requireUser, serviceClient, timingSafeEqual } from "../_shared/payments.ts"
 
-const SECRET = Deno.env.get("PAYSTACK_SECRET_KEY") || ""
 const SITE = (Deno.env.get("SITE_URL") || "https://www.pharmacourse.co.ke").replace(/\/+$/, "")
 
 async function hmacSha512Hex(key: string, message: string) {
@@ -18,7 +18,7 @@ async function hmacSha512Hex(key: string, message: string) {
   return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, "0")).join("")
 }
 
-async function verifyAndSettle(paymentId: string) {
+async function verifyAndSettle(SECRET: string, paymentId: string) {
   const res = await fetch(`https://api.paystack.co/transaction/verify/${encodeURIComponent(paymentId)}`, { headers: { Authorization: `Bearer ${SECRET}` } })
   const body = await res.json().catch(() => ({}))
   const tx = body?.data
@@ -38,6 +38,8 @@ async function verifyAndSettle(paymentId: string) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors })
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405)
+  // Key pasted in Admin (encrypted in Supabase Vault) or the PAYSTACK_SECRET_KEY Edge Function secret.
+  const SECRET = (await providerConfig("paystack", { secret_key: "PAYSTACK_SECRET_KEY" })).secret_key || ""
 
   // Paystack webhook ---------------------------------------------------------------------------------------------
   const signature = req.headers.get("x-paystack-signature")
@@ -49,7 +51,7 @@ Deno.serve(async (req) => {
     try {
       const event = JSON.parse(raw)
       const ref = String(event?.data?.reference || "")
-      if (event?.event === "charge.success" && /^[0-9a-f-]{36}$/i.test(ref)) await verifyAndSettle(ref)
+      if (event?.event === "charge.success" && /^[0-9a-f-]{36}$/i.test(ref)) await verifyAndSettle(SECRET, ref)
     } catch (error) {
       console.error("paystack webhook error", (error as Error).message)
     }
@@ -70,7 +72,7 @@ Deno.serve(async (req) => {
     const payment = await loadOwnPendingPayment(body.payment_id, user.id, "paystack")
     if (body.action === "verify") {
       if (payment.status !== "pending") return json({ status: payment.status })
-      return json(await verifyAndSettle(payment.id))
+      return json(await verifyAndSettle(SECRET, payment.id))
     }
     if (payment.status !== "pending") return json({ error: "This payment is no longer open. Start a new checkout." }, 409)
 

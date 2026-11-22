@@ -33,43 +33,29 @@ Run `supabase/security/2026-12-01_phase10b_payment_details.sql` once. Then in **
 At checkout, learners see the details with copy buttons (and their own email filled in as the account number).
 When they enter the M-Pesa code, the payment appears under **To confirm**; check your M-Pesa statement and click **Confirm**.
 
-## 2. M-Pesa prompt (Safaricom Daraja)
+## 2. M-Pesa prompt and cards: paste your keys in Admin (no developer)
 
-1. Create an app at https://developer.safaricom.co.ke and get the consumer key and secret. Start in the sandbox.
-2. For production, apply for "Lipa na M-Pesa Online" on your Paybill or Till to get the passkey.
-3. Set the secrets (Supabase CLI, in this folder):
+**One-time server setup (about 3 minutes, once ever)**
+1. supabase.com > Account > Access tokens > Generate new token, copy it.
+2. GitHub > the pharmacourse repo > Settings > Secrets and variables > Actions > New repository secret:
+   name , value: the token.
+3. GitHub > Actions > **Deploy Supabase functions** > Run workflow. Later updates deploy by themselves.
+4. Run  in the Supabase SQL editor.
 
-```
-supabase secrets set --project-ref nnjiutikutsjvggakvvv \
-  MPESA_ENV=sandbox \
-  MPESA_CONSUMER_KEY=... MPESA_CONSUMER_SECRET=... \
-  MPESA_SHORTCODE=174379 MPESA_PASSKEY=... \
-  MPESA_TRANSACTION_TYPE=CustomerPayBillOnline \
-  MPESA_CALLBACK_TOKEN=<a long random string> \
-  APP_ORIGIN=https://www.pharmacourse.co.ke
-supabase functions deploy payments-mpesa --project-ref nnjiutikutsjvggakvvv --no-verify-jwt
-```
+**M-Pesa prompt (Safaricom Daraja)**: Admin > Learning > Payments > Payment methods > M-Pesa > Edit
+1. Choose Test (sandbox) or Live, and Paybill or Till; type your shortcode (sandbox: 174379).
+2. Paste the consumer key, consumer secret and passkey from developer.safaricom.co.ke, then **Save keys securely**.
+3. The box turns green. Switch M-Pesa on. The callback link Safaricom uses is created automatically.
 
-Use `CustomerBuyGoodsOnline` for a Till. The callback URL is built automatically and carries `MPESA_CALLBACK_TOKEN`;
-every callback is re-checked with Safaricom (STK query) before a payment is confirmed.
-4. Open **Payment methods → M-Pesa → Edit**: the box turns green when the server keys are found.
-5. Test with the sandbox number, then switch `MPESA_ENV=production` with your live keys, and turn on **M-Pesa** in admin.
+**Cards (Paystack)**: Payment methods > Card or other methods > Edit
+1. Paste the secret key (sk_test_... first, sk_live_... when approved) and **Save keys securely**.
+2. Copy the webhook URL shown and paste it in Paystack > Settings > API Keys & Webhooks.
+3. The box turns green. Switch the method on.
 
-## 3. Cards (Paystack)
-
-1. Create a Paystack business account for Kenya (KES). Copy the secret key (test first, then live).
-2. In Paystack → Settings → API keys & webhooks, set the webhook URL to
-   `https://nnjiutikutsjvggakvvv.supabase.co/functions/v1/payments-paystack`
-3. Set the secrets and deploy:
-
-```
-supabase secrets set --project-ref nnjiutikutsjvggakvvv PAYSTACK_SECRET_KEY=sk_test_... \
-  SITE_URL=https://www.pharmacourse.co.ke APP_ORIGIN=https://www.pharmacourse.co.ke
-supabase functions deploy payments-paystack --project-ref nnjiutikutsjvggakvvv --no-verify-jwt
-```
-
-Webhooks are checked with Paystack's signature and then re-verified with Paystack's API before confirming.
-4. Turn on **Card or other methods** in admin.
+**Where the keys go**: encrypted in Supabase Vault. Only a super admin can save or remove them; the admin page only
+ever shows "Saved ••••1234". Visitors, learners, tutors and other admins cannot read them, and only the payment
+server (server key) can use them. Keys are never in the website code or in GitHub.
+(Advanced: Edge Function secrets such as MPESA_CONSUMER_KEY or PAYSTACK_SECRET_KEY still work and take priority.)
 
 ## How a payment is protected
 
@@ -79,7 +65,7 @@ Webhooks are checked with Paystack's signature and then re-verified with Paystac
 - A payment for less than the amount due is marked failed and gives no access.
 - A manual M-Pesa code or bank reference can only be used once.
 - Every confirmation, refund and cancellation is written to the audit log.
-- Keys live only in Edge Function secrets, never in the website code.
+- Keys are stored encrypted in Supabase Vault (or Edge Function secrets), never in the website code.
 
 ## Daily checks
 

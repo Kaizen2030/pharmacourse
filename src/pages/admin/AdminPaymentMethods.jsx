@@ -4,6 +4,7 @@ import { supabase } from "../../lib/supabaseClient"
 import { friendlyError } from "../../lib/friendlyError"
 import { confirmDialog } from "../../lib/dialog"
 import { REFERENCE_RULES, buildInstructions, missingDetails, paymentRows, summary } from "../../lib/paymentMethods"
+import AdminPaymentKeys from "./AdminPaymentKeys"
 import "./admin-payment-methods.css"
 
 const ICON = { mpesa_stk: Smartphone, paystack: CreditCard, mpesa_manual: Smartphone, bank_transfer: Building2, whatsapp: MessageCircle }
@@ -242,33 +243,7 @@ function MethodEditor({ row, health, onClose, onSaved }) {
               </label>
             ) : null}
 
-            {!manual ? (
-              <div className="pm-server">
-                <div className={`pm-server-state ${health?.configured ? "ok" : "no"}`}>
-                  {health?.configured ? <><CheckCircle2 size={18} aria-hidden="true" /> Server connected{health.env ? ` (${health.env})` : ""}. You can switch this method on.</>
-                    : health?.reachable === false ? <>The payment server for {row.label} is not deployed yet.</> : <>The server keys are not set yet.</>}
-                </div>
-                <p className="pm-step-title">How to connect {row.key === "mpesa_stk" ? "M-Pesa prompts" : "Paystack"}</p>
-                <ol className="pm-steps">
-                  {row.key === "mpesa_stk" ? (
-                    <>
-                      <li>Create an app at <a href="https://developer.safaricom.co.ke" target="_blank" rel="noreferrer">developer.safaricom.co.ke <ExternalLink size={12} /></a> and copy the consumer key and secret.</li>
-                      <li>Ask Safaricom for <strong>Lipa na M-Pesa Online</strong> on your Paybill or Till to get the passkey.</li>
-                      <li>Give the keys to your developer to add as server secrets and deploy <code>payments-mpesa</code> (steps in <code>docs/payments-setup.md</code>).</li>
-                      <li>Come back here: this box turns green, then switch the method on.</li>
-                    </>
-                  ) : (
-                    <>
-                      <li>Create a Paystack business account for Kenya at <a href="https://paystack.com" target="_blank" rel="noreferrer">paystack.com <ExternalLink size={12} /></a>.</li>
-                      <li>In Paystack settings, copy the secret key and set the webhook URL your developer gives you.</li>
-                      <li>Your developer adds the key as a server secret and deploys <code>payments-paystack</code> (steps in <code>docs/payments-setup.md</code>).</li>
-                      <li>Come back here: this box turns green, then switch the method on.</li>
-                    </>
-                  )}
-                </ol>
-                <p className="al-muted small">Keys are never entered on this page; they stay on the payment server so nobody can copy them from the website.</p>
-              </div>
-            ) : null}
+            {!manual ? <AdminPaymentKeys provider={row.key} label={row.label} health={health} /> : null}
 
             <details className="pm-more">
               <summary>Name and description shown to learners</summary>
@@ -300,7 +275,7 @@ function MethodEditor({ row, health, onClose, onSaved }) {
         {error ? <p role="alert" className="al-alert" style={{ margin: "0 1.4rem" }}>{error}</p> : null}
         <div className="pm-modal-foot">
           <button type="button" className="al-btn" onClick={onClose}>Cancel</button>
-          <button type="submit" className="al-btn primary" disabled={busy}>{busy ? "Saving…" : "Save"}</button>
+          <button type="submit" className="al-btn primary" disabled={busy}>{busy ? "Saving…" : manual ? "Save" : "Save name and description"}</button>
         </div>
       </form>
     </div>
