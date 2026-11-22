@@ -581,3 +581,8 @@
     font-size: 0.72rem;
   }
 }
+
+/* 2026-11 polish */
+.analytics-hero h2 { font-size: clamp(1.5rem, 2.4vw, 2rem); max-width: none; line-height: 1.15; }
+.analytics-hero p { max-width: 60ch; }
+.analytics-note { padding: 0.7rem 0.95rem; border-radius: 12px; background: #f3f7f5; border: 1px solid #e0e9e4; color: #4b5d55; font-size: 0.88rem; }

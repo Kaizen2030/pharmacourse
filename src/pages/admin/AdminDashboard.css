@@ -1967,3 +1967,47 @@
 }
 .admin-page-header h1 { font-size: clamp(1.5rem, 2.4vw, 1.9rem); font-weight: 600; line-height: 1.15; }
 .admin-tab-content { padding-top: 1.5rem; }
+
+/* ---- Sections with sub-tabs ---- */
+.menu-item-text { display: grid; gap: 1px; min-width: 0; }
+.menu-item-text small { font-size: 0.72rem; font-weight: 500; color: #8a9a92; }
+.menu-item.active .menu-item-text small { color: rgba(10, 92, 62, 0.7); }
+.admin-menu .menu-item { padding-top: 0.7rem; padding-bottom: 0.7rem; }
+
+.admin-section-head {
+  display: grid; gap: 1rem; margin-bottom: 1.25rem; padding-bottom: 1rem;
+  border-bottom: 1px solid #e3ebe7;
+}
+.admin-section-head h1 { margin: 0; font-size: clamp(1.5rem, 2.4vw, 1.95rem); font-weight: 600; color: var(--admin-text); }
+.admin-section-head p { margin: 0.25rem 0 0; color: var(--admin-text-light); font-size: 0.92rem; }
+.admin-subtabs {
+  display: flex; gap: 0.35rem; padding: 0.3rem; width: fit-content; max-width: 100%; overflow-x: auto; scrollbar-width: none;
+  background: #fff; border: 1px solid #e3ebe7; border-radius: 14px;
+}
+.admin-subtabs::-webkit-scrollbar { display: none; }
+.admin-subtab {
+  flex: none; display: inline-flex; align-items: center; gap: 0.4rem; min-height: 38px; padding: 0.4rem 0.9rem;
+  border: 0; border-radius: 10px; background: transparent; color: #4b5d55; font-size: 0.87rem; font-weight: 600;
+  cursor: pointer; text-decoration: none; transition: background 0.15s, color 0.15s;
+}
+.admin-subtab:hover { background: #f2f7f4; color: var(--primary); }
+.admin-subtab.active { background: var(--primary); color: #fff; }
+.admin-subtab.link { color: var(--primary); }
+.admin-subtab:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* Tabs keep their own headers; drop their outer padding inside a section so spacing is not doubled. */
+.admin-section-body > .admin-tab-content { padding: 0; max-width: none; }
+.admin-section-body { animation: adminFade 0.18s ease; }
+@keyframes adminFade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .admin-section-body { animation: none; } }
+
+@media (max-width: 768px) {
+  .menu-item-text small { display: none; }
+  .admin-section-head { margin-bottom: 1rem; }
+  .admin-subtabs { width: 100%; mask-image: linear-gradient(90deg, #000 85%, transparent); padding-right: 1.25rem; }
+}
+/* Inside a section, page titles sit one level below the section title. */
+.admin-section-body .admin-page-header h1,
+.admin-section-body .section-header h2,
+.admin-section-body .admin-section > h2:first-child { font-size: clamp(1.15rem, 1.8vw, 1.35rem); font-weight: 600; }
+.admin-section-body .admin-page-header { margin-bottom: 1rem; }

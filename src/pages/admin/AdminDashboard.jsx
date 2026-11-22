@@ -2,9 +2,10 @@
 import { useState, useEffect, useRef } from "react"
 import { supabase } from "../../lib/supabaseClient"
 import { useAuth } from "../../context/AuthContext"
+import { useSearchParams } from "react-router-dom"
 import {
   BookOpen, Home, LogOut, Plus, Edit2, Trash2, Eye, EyeOff,
-  Save, GripVertical, AlertCircle, RefreshCw, FlaskConical, Users, Award, ExternalLink, Video, Building2, Tags, BarChart3, MessageSquare, Search, Trophy, ListChecks, ShieldCheck, Star
+  Save, GripVertical, AlertCircle, RefreshCw, FlaskConical, Users, Award, ExternalLink, Video, Building2, Tags, BarChart3, MessageSquare, Search, Trophy, ListChecks, ShieldCheck, Star, GraduationCap, Newspaper
 } from "lucide-react"
 import Pagination from "../../components/Pagination"
 import BlogContentRenderer from "../../components/BlogContentRenderer"
@@ -102,27 +103,86 @@ function buildCourseCategoryNames(managedRows = [], usedRows = [], extraValues =
   ).sort((first, second) => first.localeCompare(second))
 }
 
+// Admin navigation: a few sections in the sidebar; each section opens its own sub-tabs inside the page.
+// The open section and sub-tab live in the URL (?section=...&tab=...) so a refresh or shared link keeps your place.
+const ADMIN_SECTIONS = [
+  {
+    key: "learning", label: "Learning", icon: GraduationCap, blurb: "Courses, lessons, quizzes and certificates",
+    tabs: [
+      { key: "courses", label: "Courses", icon: BookOpen, render: () => <PaginatedCoursesTab /> },
+      { key: "course-categories", label: "Categories", icon: Tags, render: () => <CourseCategoriesTab /> },
+      { key: "quizzes", label: "Quizzes", icon: ListChecks, render: () => <QuizManagementTab /> },
+      { key: "simulations", label: "Simulations", icon: FlaskConical, render: () => <ScalableSimulationsTab /> },
+      { key: "certificate", label: "Certificate", icon: Award, superOnly: true, render: () => <CertificateSettingsTab /> },
+    ],
+  },
+  {
+    key: "tutors", label: "Tutors & WhatsApp", icon: MessageSquare, blurb: "Tutor profiles, WhatsApp links, tips and deliveries",
+    tabs: [
+      { key: "instructors", label: "Tutors", icon: Users, render: () => <InstructorsTab /> },
+      { key: "tips", label: "Tips & messages", icon: MessageSquare, render: () => <AdminTipsTab /> },
+      { key: "my-whatsapp", label: "My tutor WhatsApp", icon: ExternalLink, href: "/tutor/whatsapp" },
+    ],
+  },
+  {
+    key: "content", label: "Blog & site", icon: Newspaper, blurb: "Articles, categories, reviews and the homepage",
+    tabs: [
+      { key: "blog", label: "Posts", icon: Edit2, render: () => <BlogTab /> },
+      { key: "blog-categories", label: "Categories", icon: Tags, render: () => <BlogCategoriesTab /> },
+      { key: "testimonials", label: "Testimonials", icon: Star, render: () => <TestimonialsTab /> },
+      { key: "homepage", label: "Homepage", icon: Home, render: () => <HomepageTab /> },
+    ],
+  },
+  {
+    key: "events", label: "Workshops", icon: Video, blurb: "Live sessions and webinar replays",
+    tabs: [{ key: "workshops", label: "Workshops", icon: Video, render: () => <WorkshopsTab /> }],
+  },
+  {
+    key: "insights", label: "Analytics", icon: BarChart3, blurb: "Website traffic and learner leaderboard",
+    tabs: [
+      { key: "analytics", label: "Website traffic", icon: BarChart3, render: () => <WebsiteAnalyticsTab /> },
+      { key: "leaderboard", label: "Leaderboard", icon: Trophy, render: () => <LeaderboardTab /> },
+    ],
+  },
+  {
+    key: "access", label: "Team & access", icon: ShieldCheck, blurb: "Admin roles and team plans", superOnly: true,
+    tabs: [
+      { key: "admins", label: "Admins", icon: ShieldCheck, superOnly: true, render: () => <ScalableAdminUsersTab /> },
+      { key: "team-plans", label: "Team plans", icon: Building2, superOnly: true, render: () => <TeamPlansTab /> },
+    ],
+  },
+]
+
 export default function AdminDashboard() {
   const { user, profile, loading: authLoading, isAdmin, isSuperAdmin } = useAuth()
-  const [activeTab, setActiveTab] = useState("courses")
+  const [searchParams, setSearchParams] = useSearchParams()
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (authLoading) return
-
     if (!user || !isAdmin) {
       window.location.href = "/dashboard"
       return
     }
-
     if (profile) setLoading(false)
   }, [authLoading, user, profile, isAdmin])
 
-  useEffect(() => {
-    if (!isSuperAdmin && (activeTab === "admins" || activeTab === "certificate" || activeTab === "team-plans")) {
-      setActiveTab("courses")
-    }
-  }, [activeTab, isSuperAdmin])
+  // Content admins never see super-admin sections or tabs.
+  const sections = ADMIN_SECTIONS
+    .filter((section) => isSuperAdmin || !section.superOnly)
+    .map((section) => ({ ...section, tabs: section.tabs.filter((tab) => isSuperAdmin || !tab.superOnly) }))
+    .filter((section) => section.tabs.length > 0)
+  const section = sections.find((item) => item.key === searchParams.get("section")) || sections[0]
+  const pageTabs = section.tabs.filter((tab) => !tab.href)
+  const tab = pageTabs.find((item) => item.key === searchParams.get("tab")) || pageTabs[0]
+
+  function openSection(sectionKey) {
+    setSearchParams({ section: sectionKey }, { replace: false })
+    window.scrollTo({ top: 0 })
+  }
+  function openTab(tabKey) {
+    setSearchParams({ section: section.key, tab: tabKey }, { replace: false })
+  }
 
   async function logout() {
     await supabase.auth.signOut()
@@ -138,141 +198,28 @@ export default function AdminDashboard() {
           <h2>Pharmacourse Admin</h2>
           <p className="admin-user">{profile?.full_name}</p>
           {isAdmin && (
-            <span
-              className={`admin-role-badge${isSuperAdmin ? " super" : " content"}`}
-            >
+            <span className={`admin-role-badge${isSuperAdmin ? " super" : " content"}`}>
               {isSuperAdmin ? "Super Admin" : "Content Admin"}
             </span>
           )}
         </div>
 
-        <nav className="admin-menu">
-          <button
-            className={`menu-item ${activeTab === "courses" ? "active" : ""}`}
-            onClick={() => setActiveTab("courses")}
-          >
-            <BookOpen size={20} />
-            <span>Courses</span>
-          </button>
-          <button
-            className={`menu-item ${activeTab === "instructors" ? "active" : ""}`}
-            onClick={() => setActiveTab("instructors")}
-          >
-            <Users size={20} />
-            <span>Instructors</span>
-          </button>
-          <button
-            className={`menu-item ${activeTab === "workshops" ? "active" : ""}`}
-            onClick={() => setActiveTab("workshops")}
-          >
-            <Video size={20} />
-            <span>Workshops</span>
-          </button>
-          <button
-            className={`menu-item ${activeTab === "blog" ? "active" : ""}`}
-            onClick={() => setActiveTab("blog")}
-          >
-            <Edit2 size={20} />
-            <span>Blog</span>
-          </button>
-          <button
-            className={`menu-item ${activeTab === "blog-categories" ? "active" : ""}`}
-            onClick={() => setActiveTab("blog-categories")}
-          >
-            <Tags size={20} />
-            <span>Blog Categories</span>
-          </button>
-          <button
-            className={`menu-item ${activeTab === "course-categories" ? "active" : ""}`}
-            onClick={() => setActiveTab("course-categories")}
-          >
-            <Tags size={20} />
-            <span>Course Categories</span>
-          </button>
-          <button
-            className={`menu-item ${activeTab === "testimonials" ? "active" : ""}`}
-            onClick={() => setActiveTab("testimonials")}
-          >
-            <Star size={20} />
-            <span>Testimonials</span>
-          </button>
-          <button
-            className={`menu-item ${activeTab === "leaderboard" ? "active" : ""}`}
-            onClick={() => setActiveTab("leaderboard")}
-          >
-            <Trophy size={20} />
-            <span>Leaderboard</span>
-          </button>
-          <button
-            className={`menu-item ${activeTab === "analytics" ? "active" : ""}`}
-            onClick={() => setActiveTab("analytics")}
-          >
-            <BarChart3 size={20} />
-            <span>Analytics</span>
-          </button>
-          <button
-            className={`menu-item ${activeTab === "tips" ? "active" : ""}`}
-            onClick={() => setActiveTab("tips")}
-          >
-            <MessageSquare size={20} />
-            <span>Tips & WhatsApp</span>
-          </button>
-          {isSuperAdmin && (
+        <nav className="admin-menu" aria-label="Admin sections">
+          {sections.map((item) => (
             <button
-              className={`menu-item ${activeTab === "team-plans" ? "active" : ""}`}
-              onClick={() => setActiveTab("team-plans")}
+              key={item.key}
+              type="button"
+              className={`menu-item ${section.key === item.key ? "active" : ""}`}
+              aria-current={section.key === item.key ? "page" : undefined}
+              onClick={() => openSection(item.key)}
             >
-              <Building2 size={20} />
-              <span>Team Plans</span>
+              <item.icon size={20} />
+              <span className="menu-item-text">
+                <span>{item.label}</span>
+                {item.tabs.length > 1 ? <small>{item.tabs.length} pages</small> : null}
+              </span>
             </button>
-          )}
-          <button
-            type="button"
-            className="menu-item"
-            onClick={() => { window.location.assign("/tutor/whatsapp") }}
-          >
-            <ExternalLink size={20} />
-            <span>Tutor WhatsApp</span>
-          </button>
-          <button
-            className={`menu-item ${activeTab === "homepage" ? "active" : ""}`}
-            onClick={() => setActiveTab("homepage")}
-          >
-            <Home size={20} />
-            <span>Homepage</span>
-          </button>
-          <button
-            className={`menu-item ${activeTab === "quizzes" ? "active" : ""}`}
-            onClick={() => setActiveTab("quizzes")}
-          >
-            <ListChecks size={20} />
-            <span>Quizzes</span>
-          </button>
-          <button
-            className={`menu-item ${activeTab === "simulations" ? "active" : ""}`}
-            onClick={() => setActiveTab("simulations")}
-          >
-            <FlaskConical size={20} />
-            <span>Simulations</span>
-          </button>
-          {isSuperAdmin && (
-            <button
-              className={`menu-item ${activeTab === "admins" ? "active" : ""}`}
-              onClick={() => setActiveTab("admins")}
-            >
-              <ShieldCheck size={20} />
-              <span>Admins</span>
-            </button>
-          )}
-          {isSuperAdmin && (
-            <button
-              className={`menu-item ${activeTab === "certificate" ? "active" : ""}`}
-              onClick={() => setActiveTab("certificate")}
-            >
-              <Award size={20} />
-              <span>Certificate</span>
-            </button>
-          )}
+          ))}
         </nav>
 
         <button className="logout-btn" onClick={logout}>
@@ -282,22 +229,35 @@ export default function AdminDashboard() {
       </div>
 
       <div className="admin-content">
-        {activeTab === "courses" && <PaginatedCoursesTab />}
-        {activeTab === "course-categories" && <CourseCategoriesTab />}
-        {activeTab === "instructors" && <InstructorsTab />}
-        {activeTab === "workshops" && <WorkshopsTab />}
-        {activeTab === "blog" && <BlogTab />}
-        {activeTab === "blog-categories" && <BlogCategoriesTab />}
-        {activeTab === "testimonials" && <TestimonialsTab />}
-        {activeTab === "leaderboard" && <LeaderboardTab />}
-        {activeTab === "analytics" && <WebsiteAnalyticsTab />}
-        {activeTab === "tips" && <AdminTipsTab />}
-        {isSuperAdmin && activeTab === "team-plans" && <TeamPlansTab />}
-        {activeTab === "homepage" && <HomepageTab />}
-        {activeTab === "quizzes" && <QuizManagementTab />}
-        {activeTab === "simulations" && <ScalableSimulationsTab />}
-        {isSuperAdmin && activeTab === "admins" && <ScalableAdminUsersTab />}
-        {isSuperAdmin && activeTab === "certificate" && <CertificateSettingsTab />}
+        <header className="admin-section-head">
+          <div>
+            <h1>{section.label}</h1>
+            <p>{section.blurb}</p>
+          </div>
+          {section.tabs.length > 1 ? (
+            <div className="admin-subtabs" role="tablist" aria-label={`${section.label} pages`}>
+              {section.tabs.map((item) => (item.href ? (
+                <a key={item.key} href={item.href} className="admin-subtab link">
+                  <item.icon size={15} aria-hidden="true" /> {item.label}
+                </a>
+              ) : (
+                <button
+                  key={item.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={tab.key === item.key}
+                  className={`admin-subtab${tab.key === item.key ? " active" : ""}`}
+                  onClick={() => openTab(item.key)}
+                >
+                  <item.icon size={15} aria-hidden="true" /> {item.label}
+                </button>
+              )))}
+            </div>
+          ) : null}
+        </header>
+        <div key={`${section.key}:${tab.key}`} className="admin-section-body">
+          {tab.render()}
+        </div>
       </div>
     </div>
   )

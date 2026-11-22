@@ -202,12 +202,13 @@ function toSeries(events, days) {
   }))
 }
 
-function MetricCard({ icon: Icon, label, value, detail, tone = "default" }) {
+function MetricCard(props) {
+  const { label, value, detail, tone = "default" } = props
   return (
     <article className={`analytics-metric analytics-metric-${tone}`}>
       <div className="analytics-metric-top">
         <span className="analytics-metric-icon">
-          <Icon size={18} />
+          <props.icon size={18} />
         </span>
         <span className="analytics-metric-label">{label}</span>
       </div>
@@ -457,13 +458,13 @@ export default function WebsiteAnalyticsTab() {
         } catch {
           // Ignore storage failures.
         }
-        setPortalDataWarning("Patient portal tables are not deployed in this Supabase project yet, so those metrics are hidden for now.")
+        setPortalDataWarning("Patient portal numbers live in the RemedacarePOS project, so they are not shown here.")
       }
     } else {
       if (!schemaReady) {
         setPatientTablesAvailable(false)
       }
-      setPortalDataWarning("Patient portal tables are not deployed in this Supabase project yet, so those metrics are hidden for now.")
+      setPortalDataWarning("Patient portal numbers live in the RemedacarePOS project, so they are not shown here.")
     }
 
     const eventRows = Array.isArray(eventsResult.data?.events) ? eventsResult.data.events : []
@@ -658,10 +659,9 @@ export default function WebsiteAnalyticsTab() {
             <Sparkles size={15} />
             Website analytics
           </span>
-          <h2>Google-style traffic intelligence for your PharmCourse site</h2>
+          <h2>Website traffic</h2>
           <p>
-            Track page views, route popularity, device mix, referrers, and the real conversion signals your pharmacy
-            website generates across content, courses, patient requests, and leads.
+            Page views, popular pages, devices and where visitors come from. Only visitors who accept analytics are counted.
           </p>
         </div>
         <div className="analytics-hero-actions">
@@ -689,7 +689,7 @@ export default function WebsiteAnalyticsTab() {
       ) : null}
 
       {portalDataWarning ? (
-        <div className="analytics-warning">
+        <div className="analytics-note">
           {portalDataWarning}
         </div>
       ) : null}
