@@ -85,7 +85,7 @@ describe('Phase 5 admin MFA: after the fix', () => {
 
   it('the rollback script restores password-only admin access', async () => {
     await asSqlEditor(db)
-    await db.exec(read('../security/2026-11-27_phase5_admin_mfa_rollback.sql'))
+    await db.exec(read('../security/rollback-emergency-only/2026-11-27_phase5_admin_mfa_rollback.sql'))
     await asUser(db, SUPER, 'aal1')
     assert.equal((await one(db, `select is_admin() a`)).a, true)
   })

@@ -1,6 +1,6 @@
 -- PHASE 3 (part 1): paid lesson content is readable only by people who may study the course. Re-runnable.
 -- Requires Phase 1 (can_study_course) and Phase 2.
--- Rollback: 2026-11-25_phase3_content_rollback.sql
+-- Rollback: rollback-emergency-only/2026-11-25_phase3_content_rollback.sql
 --
 -- Problems (confirmed in the live snapshot):
 -- 1. "Anyone can view modules of published courses" lets anyone, signed out too, read every column of every module

@@ -141,7 +141,7 @@ describe('Phase 9 enrolments', () => {
 
   it('the rollback removes the functions and restores the old access rule', async () => {
     await asSqlEditor(db)
-    await db.exec(read('../security/2026-11-28_phase9_enrolments_rollback.sql'))
+    await db.exec(read('../security/rollback-emergency-only/2026-11-28_phase9_enrolments_rollback.sql'))
     assert.equal((await one(db, `select to_regprocedure('public.admin_list_enrolments(text,uuid,text,integer,integer)') f`)).f, null)
   })
 })

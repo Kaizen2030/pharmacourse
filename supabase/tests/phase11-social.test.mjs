@@ -67,7 +67,7 @@ describe('Phase 11 social', () => {
 
   it('rollback removes the scheduler function', async () => {
     await db.exec(`reset role`)
-    await db.exec(read('../security/2026-11-30_phase11_social_rollback.sql'))
+    await db.exec(read('../security/rollback-emergency-only/2026-11-30_phase11_social_rollback.sql'))
     assert.equal((await one(db, `select to_regprocedure('public.due_social_posts()') f`)).f, null)
   })
 })

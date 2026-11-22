@@ -1,5 +1,5 @@
 -- PHASE 11b: paste the auto-posting key in Admin (Blog & site > Social); stored encrypted in Supabase Vault. Re-runnable.
--- Pharmacourse project. Needs Phase 2 and Phase 11. Rollback: 2026-12-04_phase11b_social_keys_vault_rollback.sql
+-- Pharmacourse project. Needs Phase 2 and Phase 11. Rollback: rollback-emergency-only/2026-12-04_phase11b_social_keys_vault_rollback.sql
 --
 -- * A super admin pastes the Ayrshare API key, or a Make.com / Zapier / n8n webhook link, and clicks Save.
 -- * Values go into vault.secrets (encrypted). The admin page only ever sees "Saved ••••abcd".

@@ -105,7 +105,7 @@ describe('Phase 11b social keys', () => {
 
   it('the rollback runs cleanly, twice', async () => {
     await db.exec('reset role')
-    const rb = read('../security/2026-12-04_phase11b_social_keys_vault_rollback.sql')
+    const rb = read('../security/rollback-emergency-only/2026-12-04_phase11b_social_keys_vault_rollback.sql')
     await db.exec(rb); await db.exec(rb)
     assert.equal((await one(db, `select count(*)::int n from vault.secrets where name like 'sc\\_%' escape '\\'`)).n, 0)
   })

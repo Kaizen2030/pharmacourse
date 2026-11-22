@@ -4,7 +4,7 @@ Tutors build and manage their own courses at **/tutor**. They never see the admi
 
 ## Turn it on (once)
 Supabase project `nnjiutikutsjvggakvvv` > SQL Editor > run `supabase/security/2026-12-02_phase12_tutor_studio.sql`
-(Phases 1, 2, 3 and 9 first). Undo: `2026-12-02_phase12_tutor_studio_rollback.sql`.
+(Phases 1, 2, 3 and 9 first). Undo: `rollback-emergency-only/2026-12-02_phase12_tutor_studio_rollback.sql`.
 
 ## Add a tutor
 1. The tutor creates a normal Pharmacourse account (Register).

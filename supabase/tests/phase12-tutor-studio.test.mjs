@@ -124,7 +124,7 @@ describe('Phase 12 tutor studio', () => {
 
   it('rollback removes tutor powers', async () => {
     await asSqlEditor(db)
-    await db.exec(read('../security/2026-12-02_phase12_tutor_studio_rollback.sql'))
+    await db.exec(read('../security/rollback-emergency-only/2026-12-02_phase12_tutor_studio_rollback.sql'))
     assert.equal((await one(db, `select to_regprocedure('public.tutor_my_courses()') f`)).f, null)
   })
 })

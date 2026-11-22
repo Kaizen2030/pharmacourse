@@ -1,5 +1,5 @@
 -- PHASE 5: admin powers need two-step verification. Pharmacourse project. Re-runnable.
--- Rollback: 2026-11-27_phase5_admin_mfa_rollback.sql
+-- Rollback: rollback-emergency-only/2026-11-27_phase5_admin_mfa_rollback.sql
 --
 -- After this, is_admin() and is_super_admin() are true only for a session that passed the authenticator-app check
 -- (Supabase "aal2"). A stolen admin password alone gives no admin powers, in the website or through the API.

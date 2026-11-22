@@ -17,7 +17,7 @@ stolen admin password) is switched on separately:
    `supabase/security/2026-11-27_phase5_admin_mfa.sql`. Every admin should show `has_authenticator = true`.
 2. Then run the whole file. Admin powers now need a verified session.
 
-To undo, run `2026-11-27_phase5_admin_mfa_rollback.sql`.
+To undo, run `rollback-emergency-only/2026-11-27_phase5_admin_mfa_rollback.sql`.
 
 ## Lost phone or new phone
 In Supabase > SQL Editor (always allowed, no code needed):

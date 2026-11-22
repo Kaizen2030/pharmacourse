@@ -1,5 +1,5 @@
 -- PHASE 12: Tutor studio. Tutors manage only their own courses; admins approve publishing. Re-runnable.
--- Pharmacourse project. Needs Phase 1, 2, 3 and 9. Rollback: 2026-12-02_phase12_tutor_studio_rollback.sql
+-- Pharmacourse project. Needs Phase 1, 2, 3 and 9. Rollback: rollback-emergency-only/2026-12-02_phase12_tutor_studio_rollback.sql
 --
 -- A tutor is a signed-in user linked to an instructor profile (Admin > Tutors > "Linked account").
 -- Tutors CAN:    create courses (always as drafts, owned by themselves), edit their own courses, lessons, quizzes and

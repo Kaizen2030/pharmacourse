@@ -1,5 +1,5 @@
 -- PHASE 11: social channels and social posts (posters and videos). Pharmacourse project. Re-runnable.
--- Rollback: 2026-11-30_phase11_social_rollback.sql      Needs Phase 2 (is_admin) and Phase 9 (require_admin).
+-- Rollback: rollback-emergency-only/2026-11-30_phase11_social_rollback.sql      Needs Phase 2 (is_admin) and Phase 9 (require_admin).
 --
 -- 1. site_social_links: your channel links, shown as icons in the site footer (public read, admins edit).
 -- 2. social_posts: posts written in Admin > Blog & site > Social. Admins only. The social-publish Edge Function

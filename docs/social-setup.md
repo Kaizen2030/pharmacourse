@@ -8,7 +8,7 @@ In the Supabase SQL editor (project `nnjiutikutsjvggakvvv`), run these two files
 1. `supabase/security/2026-11-30_phase11_social.sql` (posts, channels, share buttons)
 2. `supabase/security/2026-12-04_phase11b_social_keys_vault.sql` (secure key storage, plus scheduled posts switched on automatically)
 
-Run the main files, not the ones ending in `_rollback` (those undo a step). Running a file twice is harmless.
+Running a file twice is harmless. (The folder `rollback-emergency-only` holds undo files: ignore it unless a step breaks something.)
 
 You can now add your channel links under **Channels** (they show as icons in the site footer). Every post also has
 **Share** buttons, **Copy caption** and **Download media** for posting by hand.

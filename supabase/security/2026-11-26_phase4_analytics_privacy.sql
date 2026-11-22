@@ -1,5 +1,5 @@
 -- PHASE 4: privacy-safe website analytics. Pharmacourse project. Re-runnable.
--- Rollback: 2026-11-26_phase4_analytics_privacy_rollback.sql
+-- Rollback: rollback-emergency-only/2026-11-26_phase4_analytics_privacy_rollback.sql
 -- Cleaning events already stored: 2026-11-26_phase4_scrub_existing_events.sql (review it, then run it separately).
 --
 -- Problems (confirmed in the live snapshot and websiteAnalytics.js):

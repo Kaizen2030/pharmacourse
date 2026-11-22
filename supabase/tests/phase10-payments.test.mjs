@@ -158,7 +158,7 @@ describe('Phase 10 payments', () => {
 
   it('rollback removes the functions and keeps the money records', async () => {
     await asSqlEditor(db)
-    await db.exec(read('../security/2026-11-29_phase10_payments_rollback.sql'))
+    await db.exec(read('../security/rollback-emergency-only/2026-11-29_phase10_payments_rollback.sql'))
     assert.equal((await one(db, `select to_regprocedure('public.start_payment(uuid,text,text,text)') f`)).f, null)
     assert.ok((await one(db, `select count(*)::int n from payments`)).n > 0)
   })

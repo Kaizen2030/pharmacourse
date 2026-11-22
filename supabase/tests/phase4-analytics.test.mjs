@@ -128,7 +128,7 @@ describe('Phase 4: after the fix', () => {
 
   it('the rollback script restores the old function', async () => {
     await asSqlEditor(db)
-    await db.exec(read('../security/2026-11-26_phase4_analytics_privacy_rollback.sql'))
+    await db.exec(read('../security/rollback-emergency-only/2026-11-26_phase4_analytics_privacy_rollback.sql'))
     await asVisitor(db, '1.1.1.1')
     assert.ok((await record(db, { path: '/reset-password', session: 'after-rollback' })).id)
   })

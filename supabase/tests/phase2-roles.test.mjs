@@ -161,7 +161,7 @@ describe('Phase 2 roles: after the fix', () => {
 
   it('the rollback script restores today\'s behaviour (and can be re-fixed)', async () => {
     await asSqlEditor(db)
-    await db.exec(read('../security/2026-11-23_phase2_roles_rollback.sql'))
+    await db.exec(read('../security/rollback-emergency-only/2026-11-23_phase2_roles_rollback.sql'))
     await asUser(db, STUDENT)
     await db.query(`update user_profiles set role = 'admin' where id = $1`, [STUDENT])
     assert.equal((await roleOf(db, STUDENT)).role, 'admin')

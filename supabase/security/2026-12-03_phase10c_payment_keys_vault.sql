@@ -1,5 +1,5 @@
 -- PHASE 10c: paste payment provider keys in Admin; store them encrypted in Supabase Vault. Re-runnable.
--- Pharmacourse project. Needs Phase 2, 9 (require_admin) and 10. Rollback: 2026-12-03_phase10c_payment_keys_vault_rollback.sql
+-- Pharmacourse project. Needs Phase 2, 9 (require_admin) and 10. Rollback: rollback-emergency-only/2026-12-03_phase10c_payment_keys_vault_rollback.sql
 --
 -- * Super admins save keys from Admin > Learning > Payments > Payment methods (M-Pesa prompt, Paystack).
 -- * Values go into vault.secrets (encrypted at rest). Nobody using the website can read them back: the admin page only

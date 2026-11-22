@@ -1,5 +1,5 @@
 -- PHASE 9: enrolment management, payments recorded by admins, learner detail and learning analytics.
--- Pharmacourse project (nnjiutikutsjvggakvvv). Re-runnable. Rollback: 2026-11-28_phase9_enrolments_rollback.sql
+-- Pharmacourse project (nnjiutikutsjvggakvvv). Re-runnable. Rollback: rollback-emergency-only/2026-11-28_phase9_enrolments_rollback.sql
 --
 -- What it adds
 -- 1. Enrolment fields: payment status/method/reference/amount, access expiry, admin note, revoked date.

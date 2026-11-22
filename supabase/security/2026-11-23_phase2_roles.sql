@@ -1,5 +1,5 @@
 -- PHASE 2: stop privilege escalation. Pharmacourse project (nnjiutikutsjvggakvvv). Re-runnable.
--- Rollback: 2026-11-23_phase2_roles_rollback.sql
+-- Rollback: rollback-emergency-only/2026-11-23_phase2_roles_rollback.sql
 --
 -- Problems (confirmed in the live snapshot):
 -- 1. "Users can update own profile" lets a user change every column of their row, including role and admin_role,

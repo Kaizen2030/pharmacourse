@@ -200,7 +200,7 @@ describe('Phase 1: after the fix', () => {
 
   it('the rollback script restores today\'s behaviour', async () => {
     await asSqlEditor(db)
-    await db.exec(read('../security/2026-11-24_phase1_quizzes_completion_rollback.sql'))
+    await db.exec(read('../security/rollback-emergency-only/2026-11-24_phase1_quizzes_completion_rollback.sql'))
     await asUser(db, null)
     assert.equal((await db.query(`select correct_answer from quiz_questions`)).rows.length, 2)
   })

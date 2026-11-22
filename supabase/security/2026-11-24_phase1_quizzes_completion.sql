@@ -1,6 +1,6 @@
 -- PHASE 1: server-enforced quizzes, module completion and certificates. Pharmacourse project. Re-runnable.
 -- Requires Phase 2 (is_super_admin, request_is_trusted_backend, admin_audit_log).
--- Rollback: 2026-11-24_phase1_quizzes_completion_rollback.sql
+-- Rollback: rollback-emergency-only/2026-11-24_phase1_quizzes_completion_rollback.sql
 --
 -- Problems (confirmed in the live snapshot and the course player code):
 -- 1. quiz_questions (including correct_answer and options[].is_correct) is readable by everyone, signed out too.

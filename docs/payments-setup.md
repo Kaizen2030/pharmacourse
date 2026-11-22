@@ -14,7 +14,7 @@ Pharmacourse takes payments through a set of methods you can switch on or off in
 ## 1. Database (once)
 
 Supabase project `nnjiutikutsjvggakvvv` → SQL Editor → run `supabase/security/2026-11-29_phase10_payments.sql`.
-Phase 9 (`2026-11-28_phase9_enrolments.sql`) must already be run. To undo: `2026-11-29_phase10_payments_rollback.sql`
+Phase 9 (`2026-11-28_phase9_enrolments.sql`) must already be run. To undo: `rollback-emergency-only/2026-11-29_phase10_payments_rollback.sql`
 (payment records are kept).
 
 ## 1b. Your Paybill, Till, bank and WhatsApp details (no developer needed)

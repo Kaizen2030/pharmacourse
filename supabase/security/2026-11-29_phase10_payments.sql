@@ -1,5 +1,5 @@
 -- PHASE 10: payment layer (provider-agnostic), coupons, receipts. Pharmacourse project. Re-runnable.
--- Rollback: 2026-11-29_phase10_payments_rollback.sql      Needs Phase 2 and Phase 9 first.
+-- Rollback: rollback-emergency-only/2026-11-29_phase10_payments_rollback.sql      Needs Phase 2 and Phase 9 first.
 --
 -- How money flows
 -- 1. The learner picks a method. start_payment() creates a 'pending' payment with the price computed HERE

@@ -102,7 +102,7 @@ describe('Phase 3: after the fix', () => {
 
   it('the rollback script restores today\'s behaviour', async () => {
     await asSqlEditor(db)
-    await db.exec(read('../security/2026-11-25_phase3_content_rollback.sql'))
+    await db.exec(read('../security/rollback-emergency-only/2026-11-25_phase3_content_rollback.sql'))
     await asUser(db, null)
     assert.equal((await db.query(`select video_url from course_modules where course_id = $1`, [PAID])).rows.length, 1)
   })
