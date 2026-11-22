@@ -129,9 +129,10 @@ export default defineConfig({
             // Pages: latest from the network; cached copy only when offline. /pos is a separate app and is not cached.
             urlPattern: ({ request, url }) => request.mode === "navigate" && !/^\/pos(?:\/|$)/i.test(url.pathname),
             handler: "NetworkFirst",
+            // No network timeout: a slow connection waits for the new page instead of showing an old copy whose
+            // file names no longer exist (that broke the styles after a deploy). The copy is used only when offline.
             options: {
               cacheName: "html-cache",
-              networkTimeoutSeconds: 5,
               expiration: { maxEntries: 30 },
             },
           },
@@ -143,6 +144,11 @@ export default defineConfig({
             options: {
               cacheName: "asset-cache",
               expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              // Never store a web page under a script/style/image name (a missing file must not be cached as HTML).
+              plugins: [{
+                cacheWillUpdate: async ({ response }) =>
+                  response && response.status === 200 && !(response.headers.get("content-type") || "").includes("text/html") ? response : null,
+              }],
             },
           },
           {

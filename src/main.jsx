@@ -25,17 +25,19 @@ if (import.meta.env.PROD) {
 
 // A tab opened before a deploy asks for page files that no longer exist on Vercel (their names change every build).
 // Reload once to pick up the new build instead of showing a broken page. The guard stops a reload loop.
+// Saved page copies are cleared first, so the reload really fetches the new build. At most one try per 30 seconds.
 window.addEventListener("vite:preloadError", (event) => {
-  let reloaded = false
-  try { reloaded = sessionStorage.getItem("pc-chunk-reload") === "1" } catch { /* storage blocked */ }
-  if (reloaded) return
+  let last = 0
+  try { last = Number(sessionStorage.getItem("pc-chunk-reload") || 0) } catch { /* storage blocked */ }
+  if (Date.now() - last < 30000) return
   event.preventDefault()
-  try { sessionStorage.setItem("pc-chunk-reload", "1") } catch { /* storage blocked */ }
-  window.location.reload()
-})
-window.addEventListener("load", () => {
-  // The new build loaded fine: allow one recovery reload again for the next deploy.
-  setTimeout(() => { try { sessionStorage.removeItem("pc-chunk-reload") } catch { /* storage blocked */ } }, 10000)
+  try { sessionStorage.setItem("pc-chunk-reload", String(Date.now())) } catch { /* storage blocked */ }
+  const clearCaches = "caches" in window
+    ? Promise.all(["html-cache", "asset-cache"].map((name) => caches.delete(name).catch(() => false)))
+    : Promise.resolve()
+  const updateWorker = navigator.serviceWorker?.getRegistration?.().then((r) => r?.update()).catch(() => {}) || Promise.resolve()
+  Promise.race([Promise.all([clearCaches, updateWorker]), new Promise((resolve) => setTimeout(resolve, 2000))])
+    .finally(() => window.location.reload())
 })
 
 // Error handler for debugging
