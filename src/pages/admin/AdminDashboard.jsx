@@ -4839,10 +4839,15 @@ function CourseEditorModal({ course, onClose, onSave }) {
   async function saveCourse() {
     setSaving(true)
     const normalizedCategory = normalizeCourseCategory(formData.category)
+    const cpdNumber = Number(formData.cpd_hours)
     const payload = {
       ...formData,
       category: normalizedCategory,
+      cpd_hours: formData.cpd_hours === "" || formData.cpd_hours == null || !(cpdNumber > 0) ? null : cpdNumber,
     }
+    // Only send CPD hours when they were changed (keeps saving working before the phase 13 SQL is run).
+    const originalCpd = course.cpd_hours == null || !(Number(course.cpd_hours) > 0) ? null : Number(course.cpd_hours)
+    if (payload.cpd_hours === originalCpd || (course.id === "new" && payload.cpd_hours == null)) delete payload.cpd_hours
 
     if (!payload.slug && payload.title) {
       payload.slug = payload.title.toLowerCase().replace(/ /g, "-")
@@ -4870,6 +4875,7 @@ function CourseEditorModal({ course, onClose, onSave }) {
 
     setSaving(false)
     if (!error) onSave()
+    else if (/cpd_hours/i.test(error.message || "")) alert("To clear CPD hours, run supabase/security/2026-12-05_phase13_cpd_hours.sql in the Supabase SQL editor once.")
     else alert("Error saving course: " + error.message)
   }
 
@@ -5002,6 +5008,13 @@ function CourseEditorModal({ course, onClose, onSave }) {
                   {" "}Free course
                 </label>
               </div>
+            </div>
+            <div className="form-group">
+              <label>CPD hours</label>
+              <input type="number" min="0" max="500" step="0.5" value={formData.cpd_hours ?? ""}
+                onChange={e => setFormData({ ...formData, cpd_hours: e.target.value })}
+                placeholder="e.g. 3 (leave empty if this course gives no CPD hours)" />
+              <small style={{ color: "var(--text-500)" }}>Shown on the course card and page, and added to the learner&apos;s CPD total when they finish.</small>
             </div>
           </div>
 
