@@ -41,7 +41,9 @@ export default defineConfig({
         enabled: false,
         type: "module",
       },
-      registerType: "prompt",
+      // autoUpdate: a new deploy takes over at once and open pages reload onto it. "prompt" left visitors on the old
+      // build because the refresh prompt was never shown.
+      registerType: "autoUpdate",
       injectRegister: false,
       includeAssets: ["favicon.svg", "apple-touch-icon.png"],
       manifest: {
@@ -113,21 +115,24 @@ export default defineConfig({
         ],
       },
       workbox: {
-        navigateFallback: "/index.html",
-        navigateFallbackDenylist: [/^\/pos(?:\/|$)/i],
+        // No HTML in the precache and no precached navigation fallback: pages always come from Vercel when online
+        // (html-cache below is only an offline fallback), so a deploy shows on the next load, not after extra refreshes.
+        navigateFallback: null,
         globIgnores: ["pos/**"],
-        globPatterns: ["**/*.{js,css,html,png,svg,woff2}"],
+        globPatterns: ["**/*.{js,css,png,svg,woff2}"],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true,
         sourcemap: false,
         runtimeCaching: [
           {
-            urlPattern: ({ request }) => request.mode === "navigate",
+            // Pages: latest from the network; cached copy only when offline. /pos is a separate app and is not cached.
+            urlPattern: ({ request, url }) => request.mode === "navigate" && !/^\/pos(?:\/|$)/i.test(url.pathname),
             handler: "NetworkFirst",
             options: {
               cacheName: "html-cache",
-              networkTimeoutSeconds: 10,
+              networkTimeoutSeconds: 5,
+              expiration: { maxEntries: 30 },
             },
           },
           {
