@@ -5,7 +5,8 @@ import SEO from "../components/SEO"
 import { friendlyError } from "../lib/friendlyError"
 
 function getSafeNextPath(nextPath) {
-  if (!nextPath || !nextPath.startsWith("/")) {
+  // Only same-site paths: "//evil.com" or "/\evil.com" would point at another site, which phishing links rely on.
+  if (!nextPath || !nextPath.startsWith("/") || nextPath.startsWith("//") || nextPath.startsWith("/\\")) {
     return "/dashboard"
   }
 
