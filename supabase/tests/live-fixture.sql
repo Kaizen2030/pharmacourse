@@ -6,6 +6,8 @@ create schema auth;
 create table auth.users (id uuid primary key, email text);
 create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
 create function auth.role() returns text language sql stable as $$ select nullif(current_setting('request.jwt.claim.role', true), '') $$;
+create function auth.jwt() returns jsonb language sql stable as $$ select jsonb_strip_nulls(jsonb_build_object('sub', auth.uid(), 'role', auth.role(), 'aal', nullif(current_setting('request.jwt.claim.aal', true), ''))) $$;
+create table auth.mfa_factors (id uuid primary key default gen_random_uuid(), user_id uuid, status text);
 grant usage on schema public, auth to anon, authenticated, service_role;
 grant select on auth.users to anon, authenticated;
 

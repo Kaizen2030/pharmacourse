@@ -11,6 +11,7 @@ import PatientLayout from "./components/PatientLayout"
 import PatientInstallPrompt from "./components/PatientInstallPrompt"
 import DialogHost from "./components/DialogHost"
 import lazyWithReload from "./lib/lazyWithReload"
+import AdminMfaGate from "./components/AdminMfaGate"
 
 const Blog = lazyWithReload(() => import("./pages/Blog"))
 const BlogPost = lazyWithReload(() => import("./pages/BlogPost"))
@@ -53,7 +54,7 @@ const CourseForm = lazyWithReload(() => import("./pages/admin/CourseForm"))
 const SimulationAdmin = lazyWithReload(() => import("./pages/admin/SimulationAdmin"))
 
 function RouteFallback() {
-  return <div className="route-loading" role="status" aria-live="polite"><span className="route-loading-bar" />Loading pageâ€¦</div>
+  return <div className="route-loading" role="status" aria-live="polite"><span className="route-loading-bar" />Loading page…</div>
 }
 
 function AdminRoute({ children }) {
@@ -61,7 +62,8 @@ function AdminRoute({ children }) {
 
   if (loading) return <RouteFallback />
   if (!user || !isAdmin) return <Navigate to="/dashboard" replace />
-  return children
+  // Admin pages need two-step verification on this device (the database enforces it too).
+  return <AdminMfaGate>{children}</AdminMfaGate>
 }
 
 // Discourages casual saving of images and lesson videos (drag-out and the right-click menu on media only).
