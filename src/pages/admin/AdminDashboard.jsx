@@ -5,7 +5,7 @@ import { useAuth } from "../../context/AuthContext"
 import { useSearchParams } from "react-router-dom"
 import {
   BookOpen, Home, LogOut, Plus, Edit2, Trash2, Eye, EyeOff,
-  Save, GripVertical, AlertCircle, RefreshCw, FlaskConical, Users, Award, ExternalLink, Video, Building2, Tags, BarChart3, MessageSquare, Search, Trophy, ListChecks, ShieldCheck, Star, GraduationCap, Newspaper, CreditCard
+  Save, GripVertical, AlertCircle, RefreshCw, FlaskConical, Users, Award, ExternalLink, Video, Building2, Tags, BarChart3, MessageSquare, Search, Trophy, ListChecks, ShieldCheck, Star, GraduationCap, Newspaper, CreditCard, Megaphone
 } from "lucide-react"
 import Pagination from "../../components/Pagination"
 import BlogContentRenderer from "../../components/BlogContentRenderer"
@@ -15,6 +15,7 @@ import WebsiteAnalyticsTab from "./AdminAnalyticsTab"
 import AdminEnrolmentsTab from "./AdminEnrolmentsTab"
 import AdminLearningAnalytics from "./AdminLearningAnalytics"
 import AdminPaymentsTab, { AdminCouponsTab } from "./AdminPaymentsTab"
+import AdminSocialTab from "./AdminSocialTab"
 import WhatsAppFields from "../../components/WhatsAppFields"
 import { waPayload } from "../../lib/tutorWhatsApp"
 import { DEFAULT_CERTIFICATE_SETTINGS, normalizeCertificateSettings } from "../../lib/certificateSettings"
@@ -131,8 +132,9 @@ const ADMIN_SECTIONS = [
     ],
   },
   {
-    key: "content", label: "Blog & site", icon: Newspaper, blurb: "Articles, categories, reviews and the homepage",
+    key: "content", label: "Blog & site", icon: Newspaper, blurb: "Articles, social posts, reviews and the homepage",
     tabs: [
+      { key: "social", label: "Social", icon: Megaphone, render: () => <AdminSocialTab /> },
       { key: "blog", label: "Posts", icon: Edit2, render: () => <BlogTab /> },
       { key: "blog-categories", label: "Categories", icon: Tags, render: () => <BlogCategoriesTab /> },
       { key: "testimonials", label: "Testimonials", icon: Star, render: () => <TestimonialsTab /> },

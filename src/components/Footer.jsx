@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom"
+import SocialLinks from "./SocialIcons"
 
 export default function Footer() {
   return (
@@ -14,6 +15,7 @@ export default function Footer() {
               <Link to="/courses" className="site-footer-pill">Explore Courses</Link>
               <Link to="/workshops" className="site-footer-pill">Upcoming Workshops</Link>
             </div>
+            <SocialLinks className="site-footer-social" />
           </div>
 
           <div className="site-footer-grid">
