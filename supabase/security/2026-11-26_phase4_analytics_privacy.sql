@@ -37,9 +37,13 @@ begin
 end $$;
 revoke all on function public.website_event_allowed(text, integer) from public, anon, authenticated;
 
-create or replace function public.record_website_event(
-  event_name text, path text, title text, referrer text, session_id text, device_category text,
-  viewport_width integer, viewport_height integer, metadata jsonb)
+-- The live function has parameter defaults, which create or replace cannot change: replace it in one transaction.
+begin;
+drop function if exists public.record_website_event(text, text, text, text, text, text, integer, integer, jsonb);
+create function public.record_website_event(
+  event_name text, path text default null, title text default null, referrer text default null, session_id text default null,
+  device_category text default null, viewport_width integer default null, viewport_height integer default null,
+  metadata jsonb default '{}'::jsonb)
 returns bigint language plpgsql security definer set search_path = public as $$
 declare
   v_event text := lower(btrim(coalesce(event_name, '')));
@@ -107,3 +111,4 @@ begin
 end $$;
 revoke all on function public.record_website_event(text, text, text, text, text, text, integer, integer, jsonb) from public;
 grant execute on function public.record_website_event(text, text, text, text, text, text, integer, integer, jsonb) to anon, authenticated;
+commit;

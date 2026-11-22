@@ -1,9 +1,13 @@
 -- ROLLBACK for 2026-11-26_phase4_analytics_privacy.sql: restores record_website_event as it was on 2026-11-23.
 -- Warning: the database will again store whatever the browser sends (full URLs with tokens, IP addresses).
 
-create or replace function public.record_website_event(
-  event_name text, path text, title text, referrer text, session_id text, device_category text,
-  viewport_width integer, viewport_height integer, metadata jsonb)
+-- The live function has parameter defaults, which create or replace cannot change: replace it in one transaction.
+begin;
+drop function if exists public.record_website_event(text, text, text, text, text, text, integer, integer, jsonb);
+create function public.record_website_event(
+  event_name text, path text default null, title text default null, referrer text default null, session_id text default null,
+  device_category text default null, viewport_width integer default null, viewport_height integer default null,
+  metadata jsonb default '{}'::jsonb)
 returns bigint language plpgsql security definer set search_path = public as $$
 declare
   inserted_id bigint;
@@ -20,6 +24,7 @@ begin
   return inserted_id;
 end; $$;
 grant execute on function public.record_website_event(text, text, text, text, text, text, integer, integer, jsonb) to anon, authenticated;
+commit;
 
 -- Kept (harmless): website_event_throttle, website_event_allowed(). To remove them too:
 --   drop function if exists public.website_event_allowed(text, integer);

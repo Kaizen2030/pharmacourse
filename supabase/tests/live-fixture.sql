@@ -144,8 +144,10 @@ create policy "Users can view modules of enrolled courses" on public.course_modu
 create table public.website_events (id bigserial primary key, event_name text, path text, title text, referrer text, session_id text,
   user_id uuid, user_role text, device_category text, viewport_width int, viewport_height int, metadata jsonb, created_at timestamptz default now());
 alter table public.website_events enable row level security;
-create function public.record_website_event(event_name text, path text, title text, referrer text, session_id text, device_category text,
-  viewport_width integer, viewport_height integer, metadata jsonb) returns bigint language plpgsql security definer set search_path = public as $$
+-- Like the live function, its parameters have defaults (create or replace cannot remove them).
+create function public.record_website_event(event_name text, path text default null, title text default null, referrer text default null,
+  session_id text default null, device_category text default null, viewport_width integer default null, viewport_height integer default null,
+  metadata jsonb default '{}'::jsonb) returns bigint language plpgsql security definer set search_path = public as $$
 declare inserted_id bigint; normalized_event_name text := nullif(btrim(event_name), '');
 begin
   if normalized_event_name is null then return null; end if;
