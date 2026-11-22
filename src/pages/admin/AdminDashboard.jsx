@@ -5,7 +5,7 @@ import { useAuth } from "../../context/AuthContext"
 import { useSearchParams } from "react-router-dom"
 import {
   BookOpen, Home, LogOut, Plus, Edit2, Trash2, Eye, EyeOff,
-  Save, GripVertical, AlertCircle, RefreshCw, FlaskConical, Users, Award, ExternalLink, Video, Building2, Tags, BarChart3, MessageSquare, Search, Trophy, ListChecks, ShieldCheck, Star, GraduationCap, Newspaper
+  Save, GripVertical, AlertCircle, RefreshCw, FlaskConical, Users, Award, ExternalLink, Video, Building2, Tags, BarChart3, MessageSquare, Search, Trophy, ListChecks, ShieldCheck, Star, GraduationCap, Newspaper, CreditCard
 } from "lucide-react"
 import Pagination from "../../components/Pagination"
 import BlogContentRenderer from "../../components/BlogContentRenderer"
@@ -14,6 +14,7 @@ import "./AdminDashboard.css"
 import WebsiteAnalyticsTab from "./AdminAnalyticsTab"
 import AdminEnrolmentsTab from "./AdminEnrolmentsTab"
 import AdminLearningAnalytics from "./AdminLearningAnalytics"
+import AdminPaymentsTab, { AdminCouponsTab } from "./AdminPaymentsTab"
 import WhatsAppFields from "../../components/WhatsAppFields"
 import { waPayload } from "../../lib/tutorWhatsApp"
 import { DEFAULT_CERTIFICATE_SETTINGS, normalizeCertificateSettings } from "../../lib/certificateSettings"
@@ -113,6 +114,8 @@ const ADMIN_SECTIONS = [
     tabs: [
       { key: "courses", label: "Courses", icon: BookOpen, render: () => <PaginatedCoursesTab /> },
       { key: "enrolments", label: "Enrolments", icon: Users, render: () => <AdminEnrolmentsTab /> },
+      { key: "payments", label: "Payments", icon: CreditCard, render: () => <AdminPaymentsTab /> },
+      { key: "coupons", label: "Coupons", icon: Tags, render: () => <AdminCouponsTab /> },
       { key: "course-categories", label: "Categories", icon: Tags, render: () => <CourseCategoriesTab /> },
       { key: "quizzes", label: "Quizzes", icon: ListChecks, render: () => <QuizManagementTab /> },
       { key: "simulations", label: "Simulations", icon: FlaskConical, render: () => <ScalableSimulationsTab /> },

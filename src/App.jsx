@@ -23,6 +23,8 @@ const CourseDetail = lazyWithReload(() => import("./pages/CourseDetail"))
 const CoursePlayer = lazyWithReload(() => import("./pages/CoursePlayer"))
 const Courses = lazyWithReload(() => import("./pages/Courses"))
 const Dashboard = lazyWithReload(() => import("./pages/Dashboard"))
+const MyPayments = lazyWithReload(() => import("./pages/MyPayments"))
+const PaymentReturn = lazyWithReload(() => import("./pages/MyPayments").then((m) => ({ default: m.PaymentReturn })))
 const DesktopAccountActivate = lazyWithReload(() => import("./pages/DesktopAccountActivate"))
 const ForgotPassword = lazyWithReload(() => import("./pages/ForgotPassword"))
 const Home = lazyWithReload(() => import("./pages/Home"))
@@ -120,6 +122,8 @@ function AppShell() {
         <Route path="/courses/:id" element={<CourseDetail />} />
         <Route path="/learn/:courseId/:lessonId" element={<CoursePlayer />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/payments" element={<MyPayments />} />
+        <Route path="/payments/return" element={<PaymentReturn />} />
         <Route path="/tutor/whatsapp" element={<TutorWhatsAppSettings />} />
         <Route path="/whatsapp-settings" element={<WhatsAppSettings />} />
         <Route path="/certificate/:courseId" element={<Certificate />} />

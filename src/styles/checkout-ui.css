@@ -1,0 +1,68 @@
+/* Checkout modal and My payments */
+.co-backdrop { position: fixed; inset: 0; z-index: 1100; display: grid; place-items: center; padding: 1rem; background: rgba(12, 28, 22, 0.55); }
+.co-modal { width: min(500px, 100%); max-height: calc(100dvh - 2rem); overflow-y: auto; background: #fff; border-radius: 20px; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.28); }
+.co-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; padding: 1.25rem 1.4rem 1rem; border-bottom: 1px solid #edf2ef; }
+.co-eyebrow { margin: 0 0 0.2rem; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--green, #0f6e56); }
+.co-head h3 { margin: 0; font-size: 1.2rem; font-weight: 600; line-height: 1.25; }
+.co-x { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 10px; background: #f2f6f4; cursor: pointer; }
+.co-x:disabled { opacity: 0.4; cursor: not-allowed; }
+.co-body { display: grid; gap: 0.9rem; padding: 1.2rem 1.4rem 1.4rem; }
+.co-center { justify-items: center; text-align: center; padding-top: 1.8rem; }
+.co-center h4 { margin: 0; font-size: 1.15rem; }
+.co-done { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: #dcfce7; color: #15803d; }
+.co-spin { color: var(--green, #0f6e56); animation: coSpin 1s linear infinite; }
+@keyframes coSpin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .co-spin { animation: none; } }
+.co-muted { margin: 0; color: var(--text-500, #607068); font-size: 0.92rem; line-height: 1.55; }
+.co-summary { display: grid; gap: 0.4rem; padding: 0.9rem 1rem; border-radius: 14px; background: #f7faf8; border: 1px solid #e6eeea; font-size: 0.92rem; }
+.co-summary > div { display: flex; justify-content: space-between; gap: 1rem; }
+.co-discount { color: #15803d; }
+.co-total { padding-top: 0.45rem; margin-top: 0.15rem; border-top: 1px dashed #d6e2dc; font-size: 1rem; }
+.co-total strong { font-size: 1.15rem; }
+.co-coupon { display: flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0.35rem 0.3rem 0.8rem; border: 1px solid #dde6e1; border-radius: 12px; color: #6b7c74; }
+.co-coupon input { flex: 1; min-width: 0; border: 0; outline: 0; font: inherit; font-size: 0.92rem; text-transform: uppercase; background: transparent; padding: 0; min-height: 36px; box-shadow: none; }
+.co-note { margin: -0.4rem 0 0; font-size: 0.82rem; }
+.co-note.ok { color: #15803d; }
+.co-note.bad { color: #b91c1c; }
+.co-label { margin: 0.2rem 0 -0.3rem; font-size: 0.8rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: #5f7068; }
+.co-methods { display: grid; gap: 0.5rem; }
+.co-method { display: flex; align-items: center; gap: 0.8rem; width: 100%; padding: 0.75rem 0.85rem; border: 1.5px solid #e1e9e5; border-radius: 14px; background: #fff; text-align: left; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+.co-method:hover { border-color: rgba(15, 110, 86, 0.4); }
+.co-method.active { border-color: var(--green, #0f6e56); background: #f1faf6; }
+.co-method:focus-visible { outline: 2px solid var(--green, #0f6e56); outline-offset: 2px; }
+.co-method-icon { flex: none; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 11px; background: #e8f5f0; color: var(--green, #0f6e56); }
+.co-method-text { display: grid; gap: 2px; min-width: 0; }
+.co-method-text strong { font-size: 0.93rem; color: #11231d; }
+.co-method-text small { font-size: 0.78rem; color: #6b7c74; line-height: 1.35; }
+.co-field { display: grid; gap: 0.35rem; }
+.co-field > span { font-size: 0.82rem; font-weight: 700; color: #11231d; }
+.co-field input { min-height: 46px; padding: 0.65rem 0.85rem; border: 1px solid #dde6e1; border-radius: 12px; font: inherit; font-size: 0.95rem; }
+.co-field input:focus { outline: none; border-color: var(--green, #0f6e56); box-shadow: 0 0 0 4px rgba(15, 110, 86, 0.1); }
+.co-field small { font-size: 0.78rem; color: #6b7c74; }
+.co-instructions { display: grid; gap: 0.5rem; padding: 0.95rem 1rem; border-radius: 14px; background: #f1faf6; border: 1px solid #cdeadc; }
+.co-instructions p { margin: 0; white-space: pre-line; font-size: 0.9rem; color: #1f2d27; line-height: 1.55; }
+.co-alert { margin: 0; padding: 0.7rem 0.9rem; border-radius: 12px; font-size: 0.88rem; color: #991b1b; background: #fef2f2; border: 1px solid #fecaca; }
+.co-btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem; min-height: 44px; padding: 0.55rem 1rem; border: 1px solid #dde6e1; border-radius: 12px; background: #fff; color: #11231d; font-weight: 700; font-size: 0.92rem; cursor: pointer; text-decoration: none; }
+.co-btn:hover:not(:disabled) { border-color: var(--green, #0f6e56); }
+.co-btn.primary { background: var(--green, #0f6e56); border-color: var(--green, #0f6e56); color: #fff; }
+.co-btn.primary:hover:not(:disabled) { background: var(--green-dark, #0a4e3d); }
+.co-btn.small { min-height: 36px; padding: 0.35rem 0.8rem; font-size: 0.84rem; }
+.co-btn.wide { width: 100%; }
+.co-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.co-fine { margin: -0.2rem 0 0; font-size: 0.76rem; color: #6b7c74; text-align: center; }
+
+/* My payments */
+.mp-page { padding: clamp(1.5rem, 4vw, 3rem) 0 4rem; }
+.mp-shell { width: min(100% - 2rem, 860px); margin: 0 auto; display: grid; gap: 1rem; }
+.mp-shell h1 { margin: 0; font-size: clamp(1.6rem, 3vw, 2.1rem); font-weight: 600; }
+.mp-list { display: grid; gap: 0.7rem; }
+.mp-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.1rem; background: #fff; border: 1px solid var(--border, #dfe8e3); border-radius: 16px; flex-wrap: wrap; }
+.mp-row strong { display: block; color: #11231d; }
+.mp-row small { color: #6b7c74; font-size: 0.82rem; }
+.mp-right { display: flex; align-items: center; gap: 0.75rem; }
+.mp-status { padding: 0.2rem 0.65rem; border-radius: 999px; font-size: 0.76rem; font-weight: 800; background: #eef3f0; color: #4b5d55; }
+.mp-status.paid { background: #dcfce7; color: #166534; }
+.mp-status.pending { background: #fef3c7; color: #92400e; }
+.mp-status.failed, .mp-status.expired, .mp-status.cancelled { background: #fee2e2; color: #991b1b; }
+.mp-status.refunded { background: #e5e7eb; color: #374151; }
+.mp-empty { padding: 2.5rem 1rem; text-align: center; color: #6b7c74; background: #fff; border: 1px dashed #d3e2db; border-radius: 18px; }

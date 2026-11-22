@@ -302,6 +302,7 @@ function EnrolmentPanel({ row, onClose, onOpenLearner, onChanged }) {
 }
 
 function EnrolModal({ courses, onClose, onDone }) {
+  const [mode, setMode] = useState("single")
   const [learner, setLearner] = useState("")
   const [courseId, setCourseId] = useState(courses[0]?.id || "")
   const [access, setAccess] = useState("paid")
@@ -346,6 +347,11 @@ function EnrolModal({ courses, onClose, onDone }) {
           <h3 id="enrol-title">Enrol learner</h3>
           <button type="button" className="al-icon-btn" onClick={onClose} aria-label="Close"><X size={18} /></button>
         </div>
+        <div className="al-pills" role="tablist">
+          <button type="button" role="tab" aria-selected={mode === "single"} className={`al-pill${mode === "single" ? " active" : ""}`} onClick={() => setMode("single")}>Single learner</button>
+          <button type="button" role="tab" aria-selected={mode === "bulk"} className={`al-pill${mode === "bulk" ? " active" : ""}`} onClick={() => setMode("bulk")}>Bulk CSV</button>
+        </div>
+        {mode === "bulk" ? <BulkEnrol courses={courses} onClose={onClose} onDone={onDone} /> : (<>
         <label className="al-field"><span>Learner email or phone</span>
           <input value={learner} onChange={(e) => setLearner(e.target.value)} placeholder="Registered learner's email or phone" required autoFocus />
           <small>The learner needs a Pharmacourse account first.</small>
@@ -390,7 +396,70 @@ function EnrolModal({ courses, onClose, onDone }) {
           <button type="button" className="al-btn" onClick={onClose}>Cancel</button>
           <button type="submit" className="al-btn primary" disabled={busy || !learner.trim() || !courseId}>{busy ? "Enrolling…" : "Enrol learner"}</button>
         </div>
+        </>)}
       </form>
+    </div>
+  )
+}
+
+// Bulk: one email or phone per line, or a CSV whose first column holds them (a header row is skipped).
+function BulkEnrol({ courses, onClose, onDone }) {
+  const [courseId, setCourseId] = useState(courses[0]?.id || "")
+  const [access, setAccess] = useState("waived")
+  const [text, setText] = useState("")
+  const [results, setResults] = useState([])
+  const [busy, setBusy] = useState(false)
+
+  const entries = [...new Set(text.split(/\r?\n/).map((line) => line.split(/[,;\t]/)[0].trim().replace(/^"|"$/g, "")).filter((v) => v && !/^(email|phone|learner)/i.test(v)))]
+
+  async function readFile(file) {
+    if (!file) return
+    if (file.size > 500000) { setResults([{ who: file.name, ok: false, note: "File is too large (max 500 KB)." }]); return }
+    setText(await file.text())
+  }
+
+  async function run() {
+    setBusy(true); setResults([])
+    const out = []
+    for (const who of entries.slice(0, 500)) {
+      const { error } = await supabase.rpc("admin_enrol_learner", { p_learner: who, p_course: courseId, p_access: access, p_method: null, p_reference: null, p_amount: null, p_expires: null, p_note: "Bulk enrolment" })
+      out.push({ who, ok: !error, note: error ? friendlyError(error, "Could not enrol.") : "Enrolled" })
+      setResults([...out])
+    }
+    setBusy(false)
+  }
+
+  const done = results.length > 0 && !busy
+  const okCount = results.filter((r) => r.ok).length
+  return (
+    <div className="al-bulk">
+      <div className="al-grid2">
+        <label className="al-field"><span>Course</span>
+          <select value={courseId} onChange={(e) => setCourseId(e.target.value)}>{courses.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}</select>
+        </label>
+        <label className="al-field"><span>Access</span>
+          <select value={access} onChange={(e) => setAccess(e.target.value)}>
+            <option value="waived">Free access (sponsored or waived)</option>
+            <option value="paid">Paid (invoice or team purchase)</option>
+            <option value="awaiting">Awaiting payment</option>
+          </select>
+        </label>
+      </div>
+      <label className="al-field"><span>Learner emails or phones</span>
+        <textarea rows={6} value={text} onChange={(e) => setText(e.target.value)} placeholder={"amina@example.com\n0712345678\n..."} />
+        <small>One per line, or upload a CSV with emails or phones in the first column. Learners need an account first. Max 500 per run.</small>
+      </label>
+      <input type="file" accept=".csv,text/csv,text/plain" onChange={(e) => void readFile(e.target.files?.[0])} aria-label="Upload CSV" />
+      {results.length ? (
+        <div className="al-bulk-results" aria-live="polite">
+          <p><strong>{okCount}</strong> of {results.length} enrolled{busy ? "…" : "."}</p>
+          <ul>{results.map((r, i) => <li key={i} className={r.ok ? "ok" : "bad"}><span>{r.who}</span><span>{r.ok ? "✓" : r.note}</span></li>)}</ul>
+        </div>
+      ) : null}
+      <div className="al-modal-foot">
+        <button type="button" className="al-btn" onClick={done ? onDone : onClose}>{done ? "Done" : "Cancel"}</button>
+        <button type="button" className="al-btn primary" disabled={busy || !entries.length || !courseId} onClick={() => void run()}>{busy ? "Enrolling…" : `Enrol ${entries.length || ""} learner${entries.length === 1 ? "" : "s"}`}</button>
+      </div>
     </div>
   )
 }

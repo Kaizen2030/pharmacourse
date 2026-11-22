@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import { Link, useNavigate, useLocation } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import { supabase } from "../lib/supabaseClient"
-import { BookOpen, Building2, CalendarDays, ChevronDown, LayoutDashboard, LogOut, MessageCircle, ShieldCheck, ShoppingCart, Users, X } from "lucide-react"
+import { BookOpen, Building2, CalendarDays, ChevronDown, LayoutDashboard, LogOut, MessageCircle, Receipt, ShieldCheck, ShoppingCart, Users, X } from "lucide-react"
 
 const learnLinks = [
   { to: "/courses", label: "Courses", detail: "Self-paced CPD courses with certificates", icon: BookOpen },
@@ -203,6 +203,9 @@ export default function Navbar() {
                     >
                       <MessageCircle size={17} aria-hidden="true" /> WhatsApp updates
                     </Link>
+                    <Link to="/payments" role="menuitem" className={`nav-dropdown-link${isActive("/payments") ? " active" : ""}`} onClick={() => setUserMenuOpen(false)}>
+                      <Receipt size={17} aria-hidden="true" /> My payments
+                    </Link>
                     {isAdmin ? (
                       <Link
                         to="/admin"
@@ -339,6 +342,9 @@ export default function Navbar() {
                 </Link>
                 <Link to="/whatsapp-settings" className={isActive("/whatsapp-settings") ? "active" : ""} onClick={() => setMenuOpen(false)}>
                   WhatsApp updates
+                </Link>
+                <Link to="/payments" className={isActive("/payments") ? "active" : ""} onClick={() => setMenuOpen(false)}>
+                  My payments
                 </Link>
                 {isAdmin ? (
                   <Link to="/admin" className={isActive("/admin") ? "active" : ""} onClick={() => setMenuOpen(false)}>

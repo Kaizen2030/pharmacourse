@@ -11,6 +11,7 @@ import WhatsAppOptInCard from "../components/WhatsAppOptInCard"
 import JoinGroupCard from "../components/JoinGroupCard"
 import { fetchMyCourseGroup } from "../lib/courseGroup"
 import { alertDialog } from "../lib/dialog"
+import CheckoutModal from "../components/CheckoutModal"
 import { normalizePhone } from "../lib/tutorWhatsApp"
 import { SUPPORT_WA_NUMBER, waLink } from "../lib/whatsappConfig"
 import { courseApplicationLink, tutorApplicationLink } from "../lib/courseAvailability"
@@ -49,6 +50,7 @@ export default function CourseDetail() {
   const [completedIds, setCompletedIds] = useState(new Set())
   const [enrolled, setEnrolled] = useState(false)
   const [enrolling, setEnrolling] = useState(false)
+  const [showCheckout, setShowCheckout] = useState(false)
   const [openMod, setOpenMod] = useState(0)
   const [loadError, setLoadError] = useState(null)
   const [bioExpanded, setBioExpanded] = useState(false)
@@ -135,7 +137,7 @@ export default function CourseDetail() {
     }
     // Paid courses cannot be self-enrolled; the database blocks it too. This just gives a clear message.
     if (isPaidCourse && !isAdmin) {
-      await alertDialog("Payment needed", "This course is paid. Use the “Pay & enrol on WhatsApp” button and your tutor will activate your access.")
+      setShowCheckout(true)
       return
     }
     setEnrolling(true)
@@ -218,9 +220,11 @@ export default function CourseDetail() {
         : <button type="button" className="btn btn-outline" disabled>Coming soon</button>
     }
     if (isPaidCourse) {
-      return payLink
-        ? <a href={payLink} target="_blank" rel="noreferrer noopener" className="btn btn-primary">{compact ? "Pay & enrol" : "Pay & enrol on WhatsApp"}</a>
-        : <button type="button" className="btn btn-primary" disabled>Contact us to enrol</button>
+      return (
+        <button type="button" className="btn btn-primary" onClick={() => (user ? setShowCheckout(true) : navigate("/login"))}>
+          {user ? (compact ? "Buy now" : `Buy now · ${priceLabel}`) : (compact ? "Sign in to buy" : "Sign in to buy")}
+        </button>
+      )
     }
     return (
       <button type="button" onClick={handleEnroll} disabled={enrolling} className="btn btn-primary">
@@ -231,6 +235,15 @@ export default function CourseDetail() {
 
   return (
     <div className="pc-page pcd-page-pad">
+      {showCheckout && course ? (
+        <CheckoutModal
+          course={course}
+          user={user}
+          whatsappLink={payLink}
+          onClose={() => setShowCheckout(false)}
+          onPaid={() => setEnrolled(true)}
+        />
+      ) : null}
       <SEO
         title={course.title}
         description={course.short_desc || course.description || "Pharmacy course with practical lessons, downloadable resources, and a completion certificate."}
@@ -389,7 +402,7 @@ export default function CourseDetail() {
                 <p className="pcd-buy-note">
                   {isComingSoon
                     ? (course.is_available ? "Send an application on WhatsApp and we will confirm the next steps." : "We are preparing the learning content.")
-                    : isPaidCourse ? "Your tutor activates access as soon as payment is confirmed." : "Free to join. Start the first lesson right away."}
+                    : isPaidCourse ? "Pay by M-Pesa, card or bank. Access starts as soon as your payment is confirmed." : "Free to join. Start the first lesson right away."}
                 </p>
               ) : null}
               <ul className="pcd-includes">
