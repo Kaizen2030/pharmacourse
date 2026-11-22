@@ -42,7 +42,7 @@ export default function TutorTicker() {
   if (hidden) return null
 
   // Mix the real course names in between the messages.
-  const items = []
+  const items = [{ text: "We're looking for tutors!", kind: "course" }]
   LINES.forEach((line, i) => {
     items.push({ text: line, kind: "line" })
     if (courses[i]) items.push({ text: `Tutors wanted: ${courses[i]}`, kind: "course" })
@@ -73,7 +73,9 @@ export default function TutorTicker() {
       <div className="tt-viewport" style={{ "--tt-duration": `${Math.max(40, items.length * 6)}s` }}>
         <div className="tt-track">{track(false)}{track(true)}</div>
       </div>
-      <a className="tt-cta" href={apply} {...(external ? { target: "_blank", rel: "noreferrer" } : {})}>Apply to teach</a>
+      <a className="tt-cta" href={apply} {...(external ? { target: "_blank", rel: "noreferrer" } : {})} aria-label="Apply to teach">
+        <span className="tt-cta-long">Apply to teach</span><span className="tt-cta-short" aria-hidden="true">Apply</span>
+      </a>
       <button type="button" className="tt-close" onClick={close} aria-label="Hide this message"><X size={15} /></button>
     </aside>
   )
