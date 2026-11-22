@@ -38,9 +38,9 @@ When they enter the M-Pesa code, the payment appears under **To confirm**; check
 **One-time server setup (about 3 minutes, once ever)**
 1. supabase.com > Account > Access tokens > Generate new token, copy it.
 2. GitHub > the pharmacourse repo > Settings > Secrets and variables > Actions > New repository secret:
-   name , value: the token.
+   name `SUPABASE_ACCESS_TOKEN`, value: the token.
 3. GitHub > Actions > **Deploy Supabase functions** > Run workflow. Later updates deploy by themselves.
-4. Run  in the Supabase SQL editor.
+4. Run `supabase/security/2026-12-03_phase10c_payment_keys_vault.sql` in the Supabase SQL editor.
 
 **M-Pesa prompt (Safaricom Daraja)**: Admin > Learning > Payments > Payment methods > M-Pesa > Edit
 1. Choose Test (sandbox) or Live, and Paybill or Till; type your shortcode (sandbox: 174379).
