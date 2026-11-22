@@ -6,6 +6,7 @@ import { jsPDF } from "jspdf"
 import QRCode from "qrcode"
 import { DEFAULT_CERTIFICATE_SETTINGS, normalizeCertificateSettings } from "../lib/certificateSettings"
 import SEO from "../components/SEO"
+import { SITE_URL } from "../lib/siteConfig"
 
 export default function Certificate() {
   const { courseId } = useParams()
@@ -92,7 +93,7 @@ export default function Certificate() {
       setCert(existingCert || null)
 
       if (existingCert?.id) {
-        const verifyUrl = `https://www.pharmacourse.co.ke/verify/${existingCert.id}`
+        const verifyUrl = `${SITE_URL}/verify/${encodeURIComponent(existingCert.id)}`
         const qr = await QRCode.toDataURL(verifyUrl, {
           width: 140,
           margin: 1,

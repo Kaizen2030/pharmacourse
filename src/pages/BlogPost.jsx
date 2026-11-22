@@ -467,7 +467,7 @@ export default function BlogPost() {
   }
 
   const categoryLabel = getBlogCategoryLabel(post.category)
-  const authorName = post.author_name || "RemedacarePOS Team"
+  const authorName = post.author_name || "Pharmacourse Team"
   const authorTitle = post.author_title || "Editorial Team"
   const contentSections = getPopulatedBlogSections(post.content_sections)
   const primarySiteRecommendation = getPrimarySiteRecommendation(post)

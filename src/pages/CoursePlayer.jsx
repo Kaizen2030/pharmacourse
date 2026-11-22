@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef } from "react"
 import { useParams, useNavigate, Link } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
+import { friendlyError } from "../lib/friendlyError"
 import { useAuth } from "../context/AuthContext"
 import { isEmbeddedVideo, parseLessonVideo } from "../lib/videoEmbed"
 
@@ -131,7 +132,7 @@ export default function CoursePlayer() {
         setLoading(false)
       } catch (err) {
         console.error("Error loading course player:", err)
-        setError(err.message || "Error loading course")
+        setError(friendlyError(err, "We could not load this course. Please refresh the page."))
         setLoading(false)
       }
     }
@@ -185,7 +186,7 @@ export default function CoursePlayer() {
     try {
       const { error } = await supabase.rpc("complete_module", { p_course: courseId, p_module: moduleId })
       if (error) {
-        alert(error.message || "This module could not be completed yet.")
+        alert(friendlyError(error, "This module could not be completed yet."))
         return false
       }
       return true
@@ -405,7 +406,7 @@ export default function CoursePlayer() {
       }
     } catch (err) {
       console.error("Unexpected error in markComplete:", err)
-      alert("Unexpected error: " + (err.message || "Unknown error"))
+      alert(friendlyError(err, "Something went wrong. Please try again."))
     } finally {
       setMarking(false)
     }

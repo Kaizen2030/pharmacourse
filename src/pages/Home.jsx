@@ -1,7 +1,7 @@
 ﻿import { useEffect, useState, useRef } from "react"
 import { Link } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
-import { useInView } from "framer-motion"
+import { useInView, useReducedMotion } from "framer-motion"
 import SEO from "../components/SEO"
 import BlogEngagementStats from "../components/BlogEngagementStats"
 import TrustStrip from "../components/TrustStrip"
@@ -268,7 +268,9 @@ function scrollToSnapItem(trackRef, index) {
 
 const AnimatedSection = ({ children, delay = 0 }) => {
   const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, margin: "-100px" })
+  const inView = useInView(ref, { once: true, margin: "-100px" })
+  const reduceMotion = useReducedMotion()
+  const isInView = inView || reduceMotion
 
   return (
     <div
@@ -276,7 +278,7 @@ const AnimatedSection = ({ children, delay = 0 }) => {
       style={{
         opacity: isInView ? 1 : 0,
         transform: isInView ? "translateY(0)" : "translateY(50px)",
-        transition: `opacity 0.6s ease ${delay}s, transform 0.6s ease ${delay}s`,
+        transition: reduceMotion ? "none" : `opacity 0.6s ease ${delay}s, transform 0.6s ease ${delay}s`,
       }}
     >
       {children}
@@ -424,8 +426,8 @@ const ProductMockup = ({ type, videoUrl, imageSrc, imageAlt }) => {
 }
 
 export default function Home() {
-  const homepageCacheRef = useRef(readHomepageCache())
-  const initialHomepage = homepageCacheRef.current
+  const [initialHomepage] = useState(readHomepageCache)
+  const homepageCacheRef = useRef(initialHomepage)
   const [courses, setCourses] = useState(() => Array.isArray(initialHomepage?.courses) ? initialHomepage.courses : [])
   const [coursesError, setCoursesError] = useState(false)
   const featuredCourses = courses.slice(0, 4)
@@ -933,7 +935,7 @@ export default function Home() {
                       {testimonials.map((testimonial) => (
                         <div key={testimonial.id} className="testimonial-card">
                           <div className="testimonial-rating" aria-label={`${testimonial.rating || 5} star rating`}>
-                            {"â˜…".repeat(Math.max(1, Math.min(5, testimonial.rating || 5)))}
+                            {"★".repeat(Math.max(1, Math.min(5, testimonial.rating || 5)))}
                           </div>
                           <p>"{getTruncatedReview(testimonial.review_text)}"</p>
                           <div className="testimonial-author">

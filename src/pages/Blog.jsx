@@ -39,7 +39,7 @@ function BlogCard({ post }) {
         />
 
         <div className="blog-card-footer">
-          <span className="blog-card-author">{post.author_name || "RemedacarePOS Team"}</span>
+          <span className="blog-card-author">{post.author_name || "Pharmacourse Team"}</span>
           <span>Read article</span>
         </div>
       </div>
@@ -53,7 +53,7 @@ export default function Blog() {
   const [categoryOptions, setCategoryOptions] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
-  const [activeCategory, setActiveCategory] = useState(() => getBlogCategoryLabel(searchParams.get("category")) || "All")
+  const [activeCategory, setActiveCategory] = useState(() => (searchParams.get("category") ? getBlogCategoryLabel(searchParams.get("category")) : "All"))
   const [currentPage, setCurrentPage] = useState(1)
   const [errorMessage, setErrorMessage] = useState("")
 
@@ -117,7 +117,7 @@ export default function Blog() {
   }, [activeCategory, categories])
 
   useEffect(() => {
-    const nextCategory = getBlogCategoryLabel(searchParams.get("category")) || "All"
+    const nextCategory = (searchParams.get("category") ? getBlogCategoryLabel(searchParams.get("category")) : "All")
 
     if (nextCategory === activeCategory) return
     if (nextCategory !== "All" && !categories.includes(nextCategory)) return
@@ -177,7 +177,7 @@ export default function Blog() {
     <div className="page blog-page">
       <SEO
         title="Blog"
-        description="Insights, practical guidance, and pharmacy operations articles from the RemedacarePOS team."
+        description="Insights, practical guidance, and pharmacy operations articles from the Pharmacourse team."
         path="/blog"
         type="website"
       />
@@ -186,7 +186,7 @@ export default function Blog() {
         <div className="card blog-toolbar">
           <div className="blog-toolbar-head">
             <div className="blog-toolbar-copy">
-              <h1>RemedacarePOS Blog</h1>
+              <h1>Pharmacourse Blog</h1>
               <p>Practical insights on pharmacy practice, healthcare operations, and professional learning.</p>
             </div>
           </div>

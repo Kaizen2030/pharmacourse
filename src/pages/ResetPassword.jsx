@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
 import SEO from "../components/SEO"
+import AuthAside from "../components/AuthAside"
 import { checkPassword, friendlyAuthError } from "../lib/passwordPolicy"
 
 function getRecoveryParams() {
@@ -79,7 +80,7 @@ export default function ResetPassword() {
         console.error("Password recovery setup failed:", recoveryError)
         if (!mounted) return
         setReady(false)
-        setError(recoveryError?.message || "Unable to validate your reset link.")
+        setError(friendlyAuthError(recoveryError, "This reset link has expired or was already used. Please request a new one."))
       } finally {
         if (mounted) setChecking(false)
       }
@@ -184,6 +185,7 @@ export default function ResetPassword() {
         noindex
       />
 
+      <AuthAside title="Choose a strong new password." />
       <div className="auth-card">
         <div className="auth-logo">Pharmacourse</div>
         <h1>Set a new password</h1>

@@ -2,6 +2,7 @@ import { useState } from "react"
 import { Link } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
 import SEO from "../components/SEO"
+import AuthAside from "../components/AuthAside"
 import TurnstileWidget from "../components/TurnstileWidget"
 import { PASSWORD_HINT, checkPassword, friendlyAuthError } from "../lib/passwordPolicy"
 
@@ -77,11 +78,12 @@ export default function Register() {
     <div className="auth-wrap">
       <SEO
         title="Register"
-        description="Create your RemedacarePOS account to start pharmacy learning and earn certificates."
+        description="Create your Pharmacourse account to start pharmacy learning and earn certificates."
         path="/register"
         noindex
       />
 
+      <AuthAside title="Join pharmacists building skills that matter at the counter." />
       <div className="auth-card">
         <div className="auth-logo">Pharmacourse</div>
         <h1>Create your account</h1>
@@ -107,7 +109,7 @@ export default function Register() {
           <div className="form-group">
             <label className="form-label">Password</label>
             <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-              <input className="form-input" type={showPassword ? "text" : "password"} value={form.password} onChange={set("password")} placeholder="At least 8 characters" required />
+              <input className="form-input" type={showPassword ? "text" : "password"} value={form.password} onChange={set("password")} placeholder="At least 10 characters" required />
               <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: "absolute", right: "12px", background: "none", border: "none", cursor: "pointer", fontSize: "12px", fontWeight: 700, color: "var(--text-500)" }} title={showPassword ? "Hide password" : "Show password"}>
                 {showPassword ? "Hide" : "Show"}
               </button>

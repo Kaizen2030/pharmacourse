@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
 import { getAuthRedirectUrl } from "../lib/authRedirect"
 import SEO from "../components/SEO"
+import AuthAside, { GoogleIcon } from "../components/AuthAside"
 import TurnstileWidget from "../components/TurnstileWidget"
 import { friendlyAuthError } from "../lib/passwordPolicy"
 
@@ -58,7 +59,7 @@ export default function Login() {
     })
 
     if (oauthError) {
-      setError(oauthError.message)
+      setError(friendlyAuthError(oauthError, "Google sign-in is not available right now. Use your email and password."))
       setGoogleLoading(false)
     }
   }
@@ -67,21 +68,22 @@ export default function Login() {
     <div className="auth-wrap">
       <SEO
         title="Sign In"
-        description="Sign in to your RemedacarePOS account to continue learning and manage your courses."
+        description="Sign in to your Pharmacourse account to continue learning and manage your courses."
         path="/login"
         noindex
       />
 
+      <AuthAside />
       <div className="auth-card">
         <div className="auth-logo">Pharmacourse</div>
         <h1>Welcome back</h1>
         <p>Sign in to continue your learning</p>
 
         <button onClick={handleGoogle} className="btn-google" type="button" disabled={googleLoading || loading}>
-          <span>G</span> {googleLoading ? "Connecting to Google..." : "Continue with Google"}
+          <GoogleIcon /> {googleLoading ? "Connecting to Google..." : "Continue with Google"}
         </button>
 
-        <p style={{ margin: ".75rem 0 0", color: "var(--text-500)", fontSize: ".8rem", lineHeight: 1.6 }}>
+        <p className="auth-note">
           Google users will confirm their certificate name on the next step before entering the dashboard.
         </p>
 
@@ -89,14 +91,16 @@ export default function Login() {
 
         <form onSubmit={handleLogin}>
           <div className="form-group">
-            <label className="form-label">Email</label>
-            <input className="form-input" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" required />
+            <label className="form-label" htmlFor="login-email">Email</label>
+            <input id="login-email" autoComplete="email" className="form-input" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" required />
           </div>
 
           <div className="form-group">
-            <label className="form-label">Password</label>
-            <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+            <label className="form-label" htmlFor="login-password">Password</label>
+            <div className="auth-field-password">
               <input
+                id="login-password"
+                autoComplete="current-password"
                 className="form-input"
                 type={showPassword ? "text" : "password"}
                 value={password}
@@ -107,22 +111,22 @@ export default function Login() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                style={{ position: "absolute", right: "12px", background: "none", border: "none", cursor: "pointer", fontSize: "12px", fontWeight: 700, color: "var(--text-500)" }}
-                title={showPassword ? "Hide password" : "Show password"}
+                className="auth-toggle-password"
+                aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? "Hide" : "Show"}
               </button>
             </div>
           </div>
 
-          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "-0.25rem", marginBottom: "1rem" }}>
-            <Link to="/forgot-password" style={{ color: "#0F6E56", fontSize: ".84rem", fontWeight: 700, textDecoration: "none" }}>
+          <div className="auth-row-end">
+            <Link to="/forgot-password" className="auth-link">
               Forgot password?
             </Link>
           </div>
 
           {info && (
-            <p style={{ marginBottom: "1rem", color: "#0F6E56", background: "#e8f5f0", border: "1px solid #b8dfd3", borderRadius: 10, padding: ".75rem .9rem", fontSize: ".9rem" }}>
+            <p className="auth-info">
               {info}
             </p>
           )}

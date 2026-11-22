@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import SEO from "../../components/SEO"
 import PatientAuthShell from "../../components/PatientAuthShell"
 import { pharmacyosClient } from "../../lib/pharmacyosClient"
+import { friendlyAuthError } from "../../lib/passwordPolicy"
 import { buildPatientRouteUrl } from "../../lib/patientPortalRoutes"
 
 function getRecoveryParams() {
@@ -84,7 +85,7 @@ export default function PatientResetPassword() {
         console.error("Patient password recovery setup failed:", recoveryError)
         if (!mounted) return
         setReady(false)
-        setError(recoveryError?.message || "Unable to validate your patient reset link.")
+        setError(friendlyAuthError(recoveryError, "This reset link has expired or was already used. Please request a new one."))
       } finally {
         if (mounted) setChecking(false)
       }
@@ -128,7 +129,7 @@ export default function PatientResetPassword() {
     const { error: updateError } = await pharmacyosClient.auth.updateUser({ password })
 
     if (updateError) {
-      setError(updateError.message || "We could not update your patient password.")
+      setError(friendlyAuthError(updateError, "We could not update your patient password."))
       setLoading(false)
       return
     }

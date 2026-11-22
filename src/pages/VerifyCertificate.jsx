@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { Link, useParams } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
+import { friendlyError } from "../lib/friendlyError"
 import SEO from "../components/SEO"
 
 export default function VerifyCertificate() {
@@ -25,7 +26,7 @@ export default function VerifyCertificate() {
       })
 
       if (rpcError) {
-        setError(rpcError.message || "Unable to verify this certificate right now.")
+        setError(friendlyError(rpcError, "Unable to verify this certificate right now."))
         setRecord(null)
       } else if (!data || data.length === 0) {
         setError("Certificate not found or no longer valid.")

@@ -2210,7 +2210,7 @@ function BlogRichTextEditor({ value, onChange }) {
 
 function BlogDraftPreview({ form }) {
   const normalizedCategory = normalizeBlogCategory(form.category) || "General"
-  const authorName = `${form.author_name || ""}`.trim() || "RemedacarePOS Team"
+  const authorName = `${form.author_name || ""}`.trim() || "Pharmacourse Team"
   const authorTitle = `${form.author_title || ""}`.trim() || "Editorial Team"
   const contentSections = getPopulatedBlogSections(form.content_sections)
   const previewDate = form.is_published && form.published_at ? formatBlogDate(form.published_at) : "Draft preview"

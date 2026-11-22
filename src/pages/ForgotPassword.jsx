@@ -3,6 +3,7 @@ import { Link } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
 import { getAuthRedirectUrl } from "../lib/authRedirect"
 import SEO from "../components/SEO"
+import AuthAside from "../components/AuthAside"
 import TurnstileWidget from "../components/TurnstileWidget"
 import { friendlyAuthError } from "../lib/passwordPolicy"
 
@@ -47,11 +48,12 @@ export default function ForgotPassword() {
     <div className="auth-wrap">
       <SEO
         title="Forgot Password"
-        description="Request a secure password reset link for your RemedacarePOS account."
+        description="Request a secure password reset link for your Pharmacourse account."
         path="/forgot-password"
         noindex
       />
 
+      <AuthAside title="Get back to your courses in a minute." />
       <div className="auth-card">
         <div className="auth-logo">Pharmacourse</div>
         <h1>Reset your password</h1>

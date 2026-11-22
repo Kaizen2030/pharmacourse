@@ -4,6 +4,7 @@ import SEO from "../../components/SEO"
 import PatientAuthShell from "../../components/PatientAuthShell"
 import { getAuthRedirectUrl } from "../../lib/authRedirect"
 import { pharmacyosClient } from "../../lib/pharmacyosClient"
+import { friendlyAuthError } from "../../lib/passwordPolicy"
 import { buildPatientRouteUrl } from "../../lib/patientPortalRoutes"
 
 export default function PatientForgotPassword() {
@@ -26,7 +27,7 @@ export default function PatientForgotPassword() {
     })
 
     if (resetError) {
-      setError(resetError.message || "We could not send your patient reset link.")
+      setError(friendlyAuthError(resetError, "We could not send your patient reset link."))
       setLoading(false)
       return
     }

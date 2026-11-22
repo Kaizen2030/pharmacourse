@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import SEO from "../../components/SEO"
 import PatientAuthShell from "../../components/PatientAuthShell"
 import { pharmacyosClient } from "../../lib/pharmacyosClient"
+import { friendlyAuthError } from "../../lib/passwordPolicy"
 import { buildPatientRouteUrl, getSafePatientRedirectPath } from "../../lib/patientPortalRoutes"
 
 export default function PatientLogin() {
@@ -48,7 +49,7 @@ export default function PatientLogin() {
     })
 
     if (signInError) {
-      setError(signInError.message || "We could not sign you in right now.")
+      setError(friendlyAuthError(signInError, "We could not sign you in right now."))
       setLoading(false)
       return
     }

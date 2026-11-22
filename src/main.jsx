@@ -39,5 +39,8 @@ try {
   )
 } catch (error) {
   console.error('React render error:', error)
-  document.getElementById('root').innerHTML = `<pre>Error: ${error.message}</pre>`
+  // textContent, never innerHTML: an error message must not be able to inject markup.
+  const pre = document.createElement('pre')
+  pre.textContent = 'Something went wrong while loading Pharmacourse. Please refresh the page.'
+  document.getElementById('root').replaceChildren(pre)
 }

@@ -131,10 +131,22 @@ export default defineConfig({
             },
           },
           {
-            urlPattern: ({ request }) => ["script", "style", "image"].includes(request.destination),
+            // Same-origin static files only. Supabase (API, auth, storage, signed URLs) and other sites are never cached.
+            urlPattern: ({ request, url, sameOrigin }) =>
+              sameOrigin && !url.pathname.startsWith("/pos") && ["script", "style", "image", "font"].includes(request.destination),
             handler: "StaleWhileRevalidate",
             options: {
               cacheName: "asset-cache",
+              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
+            },
+          },
+          {
+            urlPattern: ({ url }) => url.origin === "https://fonts.googleapis.com" || url.origin === "https://fonts.gstatic.com",
+            handler: "CacheFirst",
+            options: {
+              cacheName: "google-fonts",
+              expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              cacheableResponse: { statuses: [0, 200] },
             },
           },
         ],

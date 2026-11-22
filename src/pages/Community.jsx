@@ -3,6 +3,7 @@ import { useState, useEffect } from "react"
 import { useAuth } from "../context/AuthContext"
 import { useSearchParams } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
+import { friendlyError } from "../lib/friendlyError"
 import { MessageCircle, ThumbsUp, Plus, ChevronDown, ChevronUp, Pin, Lock, BookOpen, X } from "lucide-react"
 import Pagination from "../components/Pagination"
 
@@ -168,7 +169,7 @@ export default function Community() {
       upvotes: 0, downvotes: 0, reply_count: 0, is_pinned: false, is_locked: false,
     }])
     setSaving(false)
-    if (error) { alert("Error: " + error.message); return }
+    if (error) { alert(friendlyError(error, "We could not post that. Please try again.")); return }
     setTitle(""); setContent(""); setTag("General"); setShowForm(false)
     setPage(1)
     loadPosts(1)
@@ -218,7 +219,7 @@ export default function Community() {
       .select("id,content,user_id,upvotes,created_at")
       .single()
     setReplySaving(s => ({ ...s, [postId]: false }))
-    if (error) { alert("Error: " + error.message); return }
+    if (error) { alert(friendlyError(error, "We could not post that. Please try again.")); return }
     setReplies(r => ({ ...r, [postId]: [...(r[postId] || []), data] }))
     setReplyText(t => ({ ...t, [postId]: "" }))
     setPosts(ps => ps.map(p => p.id === postId ? { ...p, reply_count: (p.reply_count || 0) + 1 } : p))

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import SEO from "../components/SEO"
+import { friendlyError } from "../lib/friendlyError"
 
 function getSafeNextPath(nextPath) {
   if (!nextPath || !nextPath.startsWith("/")) {
@@ -56,7 +57,7 @@ export default function CompleteProfile() {
       })
       navigate(nextPath, { replace: true })
     } catch (saveError) {
-      setError(saveError.message || "Unable to save your profile right now.")
+      setError(friendlyError(saveError, "Unable to save your profile right now."))
       setSaving(false)
     }
   }
