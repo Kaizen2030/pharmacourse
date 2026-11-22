@@ -1,907 +1,405 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
+import { Download, Monitor, RefreshCw, Smartphone, Tablet } from "lucide-react"
 import { supabase } from "../../lib/supabaseClient"
-import {
-  BookOpen,
-  Globe2,
-  Layers3,
-  MousePointerClick,
-  RefreshCw,
-  Sparkles,
-  TrendingUp,
-  Truck,
-  Users,
-  Video,
-  Eye,
-} from "lucide-react"
+import { friendlyError } from "../../lib/friendlyError"
+import "./admin-learning.css"
 import "./AdminAnalytics.css"
 
-const PERIOD_OPTIONS = [
-  { value: 7, label: "7 days" },
-  { value: 30, label: "30 days" },
-  { value: 90, label: "90 days" },
-]
-
-const ROUTE_LABELS = {
-  home: "Home",
-  courses: "Courses",
-  blog: "Blog",
-  workshops: "Workshops",
-  community: "Community",
-  patient: "Patient Portal",
-  dashboard: "Learning Dashboard",
-  product: "Product Pages",
-  other: "Other",
-}
+const PERIODS = [7, 30, 90]
+const EVENT_CAP = 5000 // get_website_events returns at most this many rows
 
 const PATH_LABELS = {
   "/": "Home",
   "/courses": "Courses",
-  "/courses/:id": "Course detail",
-  "/courses/:id/:lessonId": "Lesson player",
   "/blog": "Blog",
-  "/blog/:slug": "Blog post",
   "/workshops": "Workshops",
   "/community": "Community",
-  "/dashboard": "Learning dashboard",
-  "/patient/*": "Patient portal",
-  "/patient/login": "Patient login",
-  "/patient/register": "Patient registration",
-  "/patient/prescription": "Prescription request",
-  "/patient/appointment": "Appointment booking",
-  "/patient/track": "Update tracker",
-  "/pharmacyos": "PharmacyOS",
-  "/remedacareos": "RemedacareOS",
-  "/activate/*": "Account activation",
-  "/verify/:id": "Certificate verification",
-  "/certificate/:id": "Certificate page",
+  "/team-plans": "Team plans",
+  "/login": "Sign in",
+  "/register": "Register",
+  "/dashboard": "My Learning",
+  "/remedacarepos": "RemedacarePOS",
+  "/pharmacyos": "RemedacarePOS",
+  "/remedacarehmis": "RemedacareHMIS",
+  "/remedacareos": "RemedacareHMIS",
+  "/patient-portal": "Patient portal",
 }
 
-const ROUTE_COLORS = [
-  "#0F6E56",
-  "#0B7DA8",
-  "#1F3A5F",
-  "#E09B00",
-  "#8B5CF6",
-  "#DC2626",
-  "#2563EB",
-  "#64748B",
-]
+const fmt = (v) => new Intl.NumberFormat("en").format(Math.round(v || 0))
+const fmtCompact = (v) => new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(v || 0)
+const dayLabel = (iso, long = false) => new Date(`${iso}T12:00:00`).toLocaleDateString("en-GB", long ? { weekday: "short", day: "numeric", month: "short" } : { day: "numeric", month: "short" })
+const csvEscape = (v) => { const s = String(v ?? ""); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s }
 
-function formatCompact(value) {
-  return new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(value || 0)
+function ago(value) {
+  const s = Math.max(1, Math.floor((Date.now() - new Date(value).getTime()) / 1000))
+  if (s < 60) return `${s}s ago`
+  if (s < 3600) return `${Math.floor(s / 60)}m ago`
+  if (s < 86400) return `${Math.floor(s / 3600)}h ago`
+  return `${Math.floor(s / 86400)}d ago`
 }
 
-function formatFull(value) {
-  return new Intl.NumberFormat("en").format(value || 0)
+function cleanPath(path) {
+  const raw = String(path || "/").split("?")[0].split("#")[0] || "/"
+  return raw.length > 1 ? raw.replace(/\/+$/, "") : raw
 }
 
-function formatPercent(value) {
-  if (!Number.isFinite(value)) return "0%"
-  return `${Math.round(value * 10) / 10}%`
+function pageLabel(path, title) {
+  if (PATH_LABELS[path]) return PATH_LABELS[path]
+  const t = String(title || "").replace(/\s*[|·-]\s*Pharmacourse.*$/i, "").trim()
+  if (t && t.toLowerCase() !== "pharmacourse") return t
+  if (path.startsWith("/courses/")) return "Course page"
+  if (path.startsWith("/blog/")) return "Blog post"
+  if (path.startsWith("/verify/")) return "Certificate check"
+  return path
 }
 
-function formatDateLabel(date) {
-  return new Date(date).toLocaleDateString("en-GB", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  })
+function sourceOf(referrer) {
+  if (!referrer) return "Direct"
+  let host = ""
+  try { host = new URL(referrer).host.replace(/^www\./, "").toLowerCase() } catch { return "Direct" }
+  if (!host || host.includes("pharmacourse")) return "Direct"
+  if (/google\./.test(host)) return "Google"
+  if (/bing\.|duckduckgo|yahoo\./.test(host)) return "Other search"
+  if (/facebook|fb\.|messenger/.test(host)) return "Facebook"
+  if (/whatsapp|wa\.me/.test(host)) return "WhatsApp"
+  if (/linkedin|lnkd/.test(host)) return "LinkedIn"
+  if (/instagram/.test(host)) return "Instagram"
+  if (/t\.co$|twitter|x\.com/.test(host)) return "X (Twitter)"
+  if (/tiktok/.test(host)) return "TikTok"
+  if (/youtube|youtu\.be/.test(host)) return "YouTube"
+  return host
 }
 
-function formatAgo(value) {
-  const timestamp = new Date(value).getTime()
-  if (!timestamp) return "just now"
-  const seconds = Math.max(1, Math.floor((Date.now() - timestamp) / 1000))
-  if (seconds < 60) return `${seconds}s ago`
-  const minutes = Math.floor(seconds / 60)
-  if (minutes < 60) return `${minutes}m ago`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}h ago`
-  return `${Math.floor(hours / 24)}d ago`
+function countryOf(event) {
+  const geo = event?.metadata?.geo && typeof event.metadata.geo === "object" ? event.metadata.geo : {}
+  return String(geo.country || geo.country_name || geo.country_code || geo.country_hint || "").trim() || "Unknown"
 }
 
-function isMissingTableError(error) {
-  const message = String(error?.message || "").toLowerCase()
-  return (
-    error?.status === 404 ||
-    message.includes("could not find the table") ||
-    (message.includes("relation") && message.includes("does not exist"))
-  )
-}
-
-async function loadOptionalQuery(queryPromise) {
-  const result = await queryPromise
-  if (result?.error && isMissingTableError(result.error)) {
-    return { data: [], error: null, missing: true }
-  }
-
-  return { ...result, missing: false }
-}
-
-function normalizePath(path) {
-  const raw = String(path || "/").split("?")[0] || "/"
-  if (raw === "/") return "/"
-  if (raw.startsWith("/courses/")) {
-    const parts = raw.split("/").filter(Boolean)
-    return parts.length > 2 ? "/courses/:id/:lessonId" : "/courses/:id"
-  }
-  if (raw.startsWith("/blog/")) return "/blog/:slug"
-  if (raw.startsWith("/verify/")) return "/verify/:id"
-  if (raw.startsWith("/certificate/")) return "/certificate/:id"
-  if (raw.startsWith("/learn/")) return "/learn/:courseId/:lessonId"
-  if (raw.startsWith("/patient/")) return "/patient/*"
-  if (raw.startsWith("/activate/")) return "/activate/*"
-  return raw
-}
-
-function getRouteGroup(path, metadata = {}) {
-  if (metadata.route_group) return metadata.route_group
-  if (path === "/") return "home"
-  if (path.startsWith("/courses")) return "courses"
-  if (path.startsWith("/blog")) return "blog"
-  if (path.startsWith("/workshops")) return "workshops"
-  if (path.startsWith("/community")) return "community"
-  if (path.startsWith("/patient") || path.startsWith("/activate")) return "patient"
-  if (path.startsWith("/dashboard")) return "dashboard"
-  if (path.startsWith("/pharmacyos") || path.startsWith("/remedacare")) return "product"
-  return "other"
-}
-
-function countBy(list, iteratee) {
-  return list.reduce((map, item) => {
-    const key = iteratee(item)
-    if (!key) return map
-    map.set(key, (map.get(key) || 0) + 1)
-    return map
-  }, new Map())
-}
-
-function getGeoMetadata(event) {
-  const geo = event?.metadata?.geo
-  return geo && typeof geo === "object" ? geo : {}
-}
-
-function cleanGeoLabel(value, fallback = "Unknown") {
-  const normalized = String(value || "").trim()
-  return normalized || fallback
-}
-
-function getGeoCountryLabel(geo) {
-  const label = cleanGeoLabel(geo.country || geo.country_name || geo.country_code || geo.country_hint || "", "")
-  return label || "Unknown"
-}
-
-function toSeries(events, days) {
-  const today = new Date()
-  const start = new Date(today)
-  start.setHours(0, 0, 0, 0)
-  start.setDate(start.getDate() - (days - 1))
-
+function tally(list, keyFn) {
   const map = new Map()
-  for (let index = 0; index < days; index += 1) {
-    const date = new Date(start)
-    date.setDate(start.getDate() + index)
-    const key = date.toISOString().slice(0, 10)
-    map.set(key, { date: key, views: 0, sessions: new Set() })
+  for (const item of list) {
+    const key = keyFn(item)
+    if (key) map.set(key, (map.get(key) || 0) + 1)
   }
-
-  events.forEach((event) => {
-    const stamp = new Date(event.created_at)
-    if (Number.isNaN(stamp.getTime()) || stamp < start) return
-    const key = stamp.toISOString().slice(0, 10)
-    if (!map.has(key)) return
-    const bucket = map.get(key)
-    bucket.views += 1
-    if (event.session_id) bucket.sessions.add(event.session_id)
-  })
-
-  return Array.from(map.values()).map((bucket) => ({
-    date: bucket.date,
-    views: bucket.views,
-    sessions: bucket.sessions.size,
-  }))
+  return [...map.entries()].map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value)
 }
 
-function MetricCard(props) {
-  const { label, value, detail, tone = "default" } = props
-  return (
-    <article className={`analytics-metric analytics-metric-${tone}`}>
-      <div className="analytics-metric-top">
-        <span className="analytics-metric-icon">
-          <props.icon size={18} />
-        </span>
-        <span className="analytics-metric-label">{label}</span>
-      </div>
-      <div className="analytics-metric-value">{value}</div>
-      {detail ? <p className="analytics-metric-detail">{detail}</p> : null}
-    </article>
-  )
+function change(now, prev) {
+  if (prev == null) return { text: "", tone: "" }
+  if (!prev) return { text: now ? "New this period" : "No change", tone: "" }
+  const pct = Math.round(((now - prev) / prev) * 100)
+  return { text: `${pct >= 0 ? "▲" : "▼"} ${Math.abs(pct)}% vs previous`, tone: pct >= 0 ? "up" : "down" }
 }
 
-function ChartCard({ title, subtitle, children, action }) {
-  return (
-    <section className="analytics-card">
-      <div className="analytics-card-head">
-        <div>
-          <h3>{title}</h3>
-          {subtitle ? <p>{subtitle}</p> : null}
-        </div>
-        {action}
-      </div>
-      {children}
-    </section>
-  )
+function buildSeries(events, days, now) {
+  const start = new Date(now); start.setHours(0, 0, 0, 0); start.setDate(start.getDate() - (days - 1))
+  const buckets = []
+  const index = new Map()
+  for (let i = 0; i < days; i += 1) {
+    const d = new Date(start); d.setDate(start.getDate() + i)
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+    index.set(key, buckets.length)
+    buckets.push({ date: key, views: 0, visitors: new Set() })
+  }
+  for (const e of events) {
+    const t = new Date(e.created_at)
+    const key = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`
+    const i = index.get(key)
+    if (i == null) continue
+    buckets[i].views += 1
+    if (e.session_id) buckets[i].visitors.add(e.session_id)
+  }
+  return buckets.map((b) => ({ date: b.date, views: b.views, visitors: b.visitors.size }))
 }
 
-function LineChart({ data }) {
-  const width = 980
-  const height = 280
-  const paddingX = 28
-  const paddingY = 26
-  const maxValue = Math.max(1, ...data.map((item) => item.views))
-  const stepX = data.length > 1 ? (width - paddingX * 2) / (data.length - 1) : width / 2
-
-  const points = data.map((item, index) => {
-    const x = paddingX + (index * stepX)
-    const y = height - paddingY - ((item.views / maxValue) * (height - paddingY * 2))
-    return `${x},${y}`
-  }).join(" ")
-
-  const area = [
-    `${paddingX},${height - paddingY}`,
-    ...data.map((item, index) => {
-      const x = paddingX + (index * stepX)
-      const y = height - paddingY - ((item.views / maxValue) * (height - paddingY * 2))
-      return `${x},${y}`
-    }),
-    `${width - paddingX},${height - paddingY}`,
-  ].join(" ")
+function TrafficChart({ series }) {
+  const [hover, setHover] = useState(null)
+  const W = 760, H = 240, PAD = { l: 40, r: 12, t: 12, b: 28 }
+  const max = Math.max(4, ...series.map((d) => d.views))
+  const niceMax = Math.ceil(max / 4) * 4
+  const x = (i) => PAD.l + (series.length <= 1 ? 0 : (i * (W - PAD.l - PAD.r)) / (series.length - 1))
+  const y = (v) => PAD.t + (H - PAD.t - PAD.b) * (1 - v / niceMax)
+  const line = (key) => series.map((d, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(d[key]).toFixed(1)}`).join(" ")
+  const area = `${line("views")} L${x(series.length - 1).toFixed(1)},${y(0)} L${x(0).toFixed(1)},${y(0)} Z`
+  const step = Math.max(1, Math.ceil(series.length / 7))
+  const h = hover != null ? series[hover] : null
 
   return (
-    <div className="analytics-chart-wrap">
-      <svg viewBox={`0 0 ${width} ${height}`} className="analytics-svg" role="img" aria-label="Page views trend">
-        {[0.25, 0.5, 0.75, 1].map((tick) => {
-          const y = paddingY + ((height - paddingY * 2) * tick)
-          return <line key={tick} x1={paddingX} x2={width - paddingX} y1={y} y2={y} className="analytics-grid-line" />
+    <div className="wt-chart">
+      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Daily page views and visitors" preserveAspectRatio="none" onMouseLeave={() => setHover(null)}>
+        <defs>
+          <linearGradient id="wtFill" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor="#10a37f" stopOpacity="0.28" />
+            <stop offset="100%" stopColor="#10a37f" stopOpacity="0.02" />
+          </linearGradient>
+        </defs>
+        {[0, 1, 2, 3, 4].map((g) => {
+          const v = (niceMax / 4) * g
+          return (
+            <g key={g}>
+              <line x1={PAD.l} x2={W - PAD.r} y1={y(v)} y2={y(v)} className="wt-grid" />
+              <text x={PAD.l - 8} y={y(v) + 4} textAnchor="end" className="wt-axis">{fmtCompact(v)}</text>
+            </g>
+          )
         })}
-        <polyline points={area} className="analytics-area" />
-        <polyline points={points} className="analytics-line" />
-        {data.map((item, index) => {
-          const x = paddingX + (index * stepX)
-          const y = height - paddingY - ((item.views / maxValue) * (height - paddingY * 2))
-          return <circle key={item.date} cx={x} cy={y} r="4.5" className="analytics-line-dot" />
-        })}
-      </svg>
-
-      <div className="analytics-axis-labels">
-        {data.filter((_, index) => index === 0 || index === data.length - 1 || index % Math.ceil(Math.max(1, data.length / 5)) === 0).map((item) => (
-          <span key={item.date}>{formatDateLabel(item.date)}</span>
+        <path d={area} fill="url(#wtFill)" />
+        <path d={line("views")} className="wt-line views" />
+        <path d={line("visitors")} className="wt-line visitors" />
+        {series.map((d, i) => (i % step === 0 || i === series.length - 1 ? (
+          <text key={d.date} x={x(i)} y={H - 8} textAnchor="middle" className="wt-axis">{dayLabel(d.date)}</text>
+        ) : null))}
+        {h ? (
+          <g>
+            <line x1={x(hover)} x2={x(hover)} y1={PAD.t} y2={y(0)} className="wt-cursor" />
+            <circle cx={x(hover)} cy={y(h.views)} r="4.5" className="wt-dot views" />
+            <circle cx={x(hover)} cy={y(h.visitors)} r="4" className="wt-dot visitors" />
+          </g>
+        ) : null}
+        {series.map((d, i) => (
+          <rect key={`hit-${d.date}`} x={x(i) - (W - PAD.l - PAD.r) / Math.max(1, series.length - 1) / 2} y={PAD.t} width={(W - PAD.l - PAD.r) / Math.max(1, series.length - 1)} height={H - PAD.t - PAD.b}
+            fill="transparent" onMouseEnter={() => setHover(i)} />
         ))}
-      </div>
-    </div>
-  )
-}
-
-function HorizontalBars({ items }) {
-  const maxValue = Math.max(1, ...items.map((item) => item.value))
-
-  return (
-    <div className="analytics-bars">
-      {items.map((item, index) => (
-        <div key={item.label} className="analytics-bar-row">
-          <div className="analytics-bar-meta">
-            <span className="analytics-bar-badge" style={{ background: `${ROUTE_COLORS[index % ROUTE_COLORS.length]}1A`, color: ROUTE_COLORS[index % ROUTE_COLORS.length] }}>
-              {item.rank}
-            </span>
-            <div>
-              <strong>{item.label}</strong>
-              <span>{item.detail}</span>
-            </div>
-          </div>
-          <div className="analytics-bar-track">
-            <span
-              className="analytics-bar-fill"
-              style={{
-                width: `${Math.max(8, (item.value / maxValue) * 100)}%`,
-                background: ROUTE_COLORS[index % ROUTE_COLORS.length],
-              }}
-            />
-          </div>
-          <div className="analytics-bar-value">{formatFull(item.value)}</div>
+      </svg>
+      {h ? (
+        <div className="wt-tooltip" style={{ left: `${(x(hover) / W) * 100}%` }}>
+          <strong>{dayLabel(h.date, true)}</strong>
+          <span><i className="views" /> {fmt(h.views)} page views</span>
+          <span><i className="visitors" /> {fmt(h.visitors)} visitors</span>
         </div>
-      ))}
+      ) : null}
     </div>
   )
 }
 
-function TrafficPillList({ items }) {
+function BarList({ items, total, empty = "No data yet.", max = 6 }) {
+  if (!items.length) return <p className="al-empty-cell">{empty}</p>
+  const top = items.slice(0, max)
+  const peak = Math.max(...top.map((i) => i.value), 1)
   return (
-    <div className="analytics-pill-list">
-      {items.map((item, index) => (
-        <div key={item.label} className="analytics-pill">
-          <span className="analytics-pill-swatch" style={{ background: ROUTE_COLORS[index % ROUTE_COLORS.length] }} />
-          <div>
-            <strong>{item.label}</strong>
-            <span>{formatFull(item.value)} events</span>
-          </div>
-        </div>
+    <ul className="wt-barlist">
+      {top.map((i) => (
+        <li key={i.label}>
+          <div className="wt-bar" style={{ width: `${(i.value / peak) * 100}%` }} />
+          <span className="wt-bar-label">{i.label}</span>
+          <span className="wt-bar-value">{fmt(i.value)}<small>{total ? `${Math.round((i.value / total) * 100)}%` : ""}</small></span>
+        </li>
       ))}
-    </div>
-  )
-}
-
-function RecentEventList({ events }) {
-  return (
-    <div className="analytics-feed">
-      {events.length === 0 ? (
-        <p className="analytics-empty">No website events were captured in this period yet.</p>
-      ) : events.map((event) => (
-        <article key={event.id} className="analytics-feed-item">
-          <div className="analytics-feed-icon">
-            <MousePointerClick size={16} />
-          </div>
-          <div className="analytics-feed-body">
-            <div className="analytics-feed-top">
-              <strong>{PATH_LABELS[normalizePath(event.path)] || ROUTE_LABELS[getRouteGroup(event.path, event.metadata)] || normalizePath(event.path)}</strong>
-              <span>{formatAgo(event.created_at)}</span>
-            </div>
-            <p>
-              {normalizePath(event.path)}
-              {event.device_category ? ` · ${event.device_category}` : ""}
-              {event.referrer ? ` · ${event.referrer}` : ""}
-            </p>
-          </div>
-        </article>
-      ))}
-    </div>
+    </ul>
   )
 }
 
 export default function WebsiteAnalyticsTab() {
-  const [period, setPeriod] = useState(30)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState("")
-  const [portalDataWarning, setPortalDataWarning] = useState("")
-  const [patientTablesAvailable, setPatientTablesAvailable] = useState(() => {
-    if (typeof window === "undefined") return true
-    try {
-      return window.localStorage.getItem("pharmacourse.analytics.patientTablesAvailable") !== "false"
-    } catch {
-      return true
-    }
-  })
+  const [days, setDays] = useState(30)
   const [events, setEvents] = useState([])
   const [blogs, setBlogs] = useState([])
-  const [courses, setCourses] = useState([])
-  const [enrollments, setEnrollments] = useState([])
-  const [certificates, setCertificates] = useState([])
-  const [workshops, setWorkshops] = useState([])
-  const [teamPlans, setTeamPlans] = useState([])
-  const [prescriptions, setPrescriptions] = useState([])
-  const [appointments, setAppointments] = useState([])
-  const [deliveries, setDeliveries] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+  const [loadedAt, setLoadedAt] = useState(0)
 
-  const loadAnalytics = useCallback(async () => {
-    setLoading(true)
-    setError("")
-    setPortalDataWarning("")
-
-    const since = new Date()
-    since.setDate(since.getDate() - (period - 1))
-    since.setHours(0, 0, 0, 0)
-    const sinceIso = since.toISOString()
-
-    const [
-      schemaResult,
-      eventsResult,
-      blogsResult,
-      coursesResult,
-      enrollmentsResult,
-      certificatesResult,
-      workshopsResult,
-      teamPlansResult,
-    ] = await Promise.all([
-      supabase.rpc("get_analytics_schema_state"),
-      supabase.rpc("get_website_events", { days: period }),
-      supabase.from("blog_posts").select("id, title, slug, view_count, like_count, is_published, created_at, published_at").order("view_count", { ascending: false }),
-      supabase.from("courses").select("id, title, created_at, cpd_hours").order("created_at", { ascending: false }),
-      supabase.from("course_enrollments").select("id, course_id, status, created_at, completed_at"),
-      supabase.from("certificates").select("id, course_id, issued_date"),
-      supabase.from("workshops").select("id, title, is_upcoming, created_at, date").order("created_at", { ascending: false }),
-      supabase.from("team_plan_enquiries").select("id, status, plan_tier, created_at").gte("created_at", sinceIso),
+  const load = useCallback(async () => {
+    setLoading(true); setError("")
+    const [ev, bl] = await Promise.all([
+      supabase.rpc("get_website_events", { days: days * 2 }),
+      supabase.from("blog_posts").select("id, title, slug, view_count, like_count, is_published").eq("is_published", true).order("view_count", { ascending: false }).limit(6),
     ])
-
-    const firstError =
-      schemaResult.error ||
-      eventsResult.error ||
-      blogsResult.error ||
-      coursesResult.error ||
-      enrollmentsResult.error ||
-      certificatesResult.error ||
-      workshopsResult.error ||
-      teamPlansResult.error
-
-    if (firstError) {
-      setError(firstError.message || "We could not load analytics right now.")
-      setLoading(false)
-      return
-    }
-
-    const schemaState = schemaResult.data || {}
-    const schemaReady = Boolean(schemaState.patient_portal_tables_ready)
-
-    let prescriptionsResult = { data: [], error: null, missing: false }
-    let appointmentsResult = { data: [], error: null, missing: false }
-    let deliveriesResult = { data: [], error: null, missing: false }
-
-    if (schemaReady && patientTablesAvailable) {
-      const optionalResults = await Promise.all([
-        loadOptionalQuery(supabase.from("prescription_requests").select("id, status, created_at").gte("created_at", sinceIso)),
-        loadOptionalQuery(supabase.from("appointments").select("id, status, created_at").gte("created_at", sinceIso)),
-        loadOptionalQuery(supabase.from("deliveries").select("id, status, created_at").gte("created_at", sinceIso)),
-      ])
-
-      ;[prescriptionsResult, appointmentsResult, deliveriesResult] = optionalResults
-
-      const optionalError = optionalResults.find((result) => result.error)
-      if (optionalError?.error) {
-        setError(optionalError.error.message || "We could not load analytics right now.")
-        setLoading(false)
-        return
-      }
-
-      const missingAny = optionalResults.some((result) => result.missing)
-      if (missingAny) {
-        setPatientTablesAvailable(false)
-        try {
-          window.localStorage.setItem("pharmacourse.analytics.patientTablesAvailable", "false")
-        } catch {
-          // Ignore storage failures.
-        }
-        setPortalDataWarning("Patient portal numbers live in the RemedacarePOS project, so they are not shown here.")
-      }
-    } else {
-      if (!schemaReady) {
-        setPatientTablesAvailable(false)
-      }
-      setPortalDataWarning("Patient portal numbers live in the RemedacarePOS project, so they are not shown here.")
-    }
-
-    const eventRows = Array.isArray(eventsResult.data?.events) ? eventsResult.data.events : []
-    setEvents(eventRows.map((event) => ({
-      ...event,
-      path: String(event.path || "/"),
-      metadata: typeof event.metadata === "object" && event.metadata ? event.metadata : {},
-    })))
-    setBlogs(Array.isArray(blogsResult.data) ? blogsResult.data : [])
-    setCourses(Array.isArray(coursesResult.data) ? coursesResult.data : [])
-    setEnrollments(Array.isArray(enrollmentsResult.data) ? enrollmentsResult.data : [])
-    setCertificates(Array.isArray(certificatesResult.data) ? certificatesResult.data : [])
-    setWorkshops(Array.isArray(workshopsResult.data) ? workshopsResult.data : [])
-    setTeamPlans(Array.isArray(teamPlansResult.data) ? teamPlansResult.data : [])
-    setPrescriptions(Array.isArray(prescriptionsResult.data) ? prescriptionsResult.data : [])
-    setAppointments(Array.isArray(appointmentsResult.data) ? appointmentsResult.data : [])
-    setDeliveries(Array.isArray(deliveriesResult.data) ? deliveriesResult.data : [])
     setLoading(false)
-  }, [period])
+    if (ev.error) { setError(friendlyError(ev.error, "We could not load website analytics.")); return }
+    const rows = Array.isArray(ev.data?.events) ? ev.data.events : []
+    setEvents(rows.filter((e) => e.event_name === "page_view").map((e) => ({ ...e, path: cleanPath(e.path), metadata: e.metadata && typeof e.metadata === "object" ? e.metadata : {} })))
+    setBlogs(bl.data || [])
+    setLoadedAt(Date.now())
+  }, [days])
 
-  useEffect(() => {
-    void loadAnalytics()
-  }, [loadAnalytics])
+  useEffect(() => { void load() }, [load])
 
-  const pageViewEvents = useMemo(
-    () => events.filter((event) => event.event_name === "page_view"),
-    [events],
-  )
-
-  const sessionStartEvents = useMemo(
-    () => events.filter((event) => event.event_name === "session_start"),
-    [events],
-  )
-
-  const totalSessions = useMemo(() => {
-    const sessionIds = new Set([
-      ...pageViewEvents.map((event) => event.session_id).filter(Boolean),
-      ...sessionStartEvents.map((event) => event.session_id).filter(Boolean),
-    ])
-    return sessionIds.size
-  }, [pageViewEvents, sessionStartEvents])
-
-  const dailySeries = useMemo(() => toSeries(pageViewEvents, period), [pageViewEvents, period])
-
-  const routeBreakdown = useMemo(() => {
-    const map = countBy(pageViewEvents, (event) => normalizePath(event.path))
-    return Array.from(map.entries())
-      .map(([path, value]) => ({
-        path,
-        label: PATH_LABELS[path] || ROUTE_LABELS[getRouteGroup(path)] || path,
-        value,
-      }))
-      .sort((first, second) => second.value - first.value)
-      .slice(0, 8)
-      .map((item, index) => ({
-        ...item,
-        rank: `#${index + 1}`,
-        detail: item.path,
-      }))
-  }, [pageViewEvents])
-
-  const routeGroupBreakdown = useMemo(() => {
-    const map = countBy(pageViewEvents, (event) => getRouteGroup(event.path, event.metadata))
-    return Array.from(map.entries())
-      .map(([group, value]) => ({
-        label: ROUTE_LABELS[group] || group,
-        value,
-      }))
-      .sort((first, second) => second.value - first.value)
-  }, [pageViewEvents])
-
-  const deviceBreakdown = useMemo(() => {
-    const map = countBy(pageViewEvents, (event) => String(event.device_category || "unknown"))
-    return Array.from(map.entries())
-      .map(([device, value]) => ({ label: device, value }))
-      .sort((first, second) => second.value - first.value)
-  }, [pageViewEvents])
-
-  const referrerBreakdown = useMemo(() => {
-    const map = countBy(pageViewEvents, (event) => {
-      if (!event.referrer) return "Direct"
-      try {
-        return new URL(event.referrer).host.replace(/^www\./, "")
-      } catch {
-        return "Direct"
+  const capped = events.length >= EVENT_CAP
+  const stats = useMemo(() => {
+    const split = loadedAt - days * 86400000
+    const current = events.filter((e) => new Date(e.created_at).getTime() >= split)
+    const previous = capped ? null : events.filter((e) => new Date(e.created_at).getTime() < split)
+    const visitors = (list) => new Set(list.map((e) => e.session_id).filter(Boolean)).size
+    const views = current.length
+    const vis = visitors(current)
+    const series = buildSeries(current, days, loadedAt)
+    const peak = series.reduce((best, d) => (d.views > (best?.views || 0) ? d : best), null)
+    const devices = tally(current, (e) => String(e.device_category || "unknown").toLowerCase())
+    const mobile = devices.find((d) => d.label === "mobile")?.value || 0
+    const pages = (() => {
+      const map = new Map()
+      for (const e of current) {
+        const row = map.get(e.path) || { path: e.path, title: e.title, views: 0, sessions: new Set() }
+        row.views += 1
+        if (e.session_id) row.sessions.add(e.session_id)
+        if (!row.title && e.title) row.title = e.title
+        map.set(e.path, row)
       }
-    })
+      return [...map.values()].map((r) => ({ path: r.path, label: pageLabel(r.path, r.title), views: r.views, visitors: r.sessions.size })).sort((a, b) => b.views - a.views)
+    })()
+    return {
+      views, visitors: vis, series, peak, devices, mobileShare: views ? Math.round((mobile / views) * 100) : 0,
+      pagesPerVisit: vis ? views / vis : 0,
+      courseViews: current.filter((e) => e.path.startsWith("/courses/")).length,
+      prevViews: previous ? previous.length : null,
+      prevVisitors: previous ? visitors(previous) : null,
+      prevCourseViews: previous ? previous.filter((e) => e.path.startsWith("/courses/")).length : null,
+      sources: tally(current, (e) => sourceOf(e.referrer)),
+      countries: tally(current, countryOf),
+      pages,
+      recent: [...current].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 10),
+    }
+  }, [events, days, capped, loadedAt])
 
-    return Array.from(map.entries())
-      .map(([label, value]) => ({ label, value }))
-      .sort((first, second) => second.value - first.value)
-      .slice(0, 5)
-  }, [pageViewEvents])
+  function exportCsv() {
+    const header = ["Page", "Path", "Page views", "Visitors"]
+    const lines = stats.pages.map((p) => [p.label, p.path, p.views, p.visitors].map(csvEscape).join(","))
+    const blob = new Blob([[header.join(","), ...lines].join("\n")], { type: "text/csv" })
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `top-pages-${days}d.csv`; a.click(); URL.revokeObjectURL(a.href)
+  }
 
-  const geoCountryBreakdown = useMemo(() => {
-    const map = countBy(pageViewEvents, (event) => {
-      const geo = getGeoMetadata(event)
-      return getGeoCountryLabel(geo)
-    })
-
-    return Array.from(map.entries())
-      .map(([label, value]) => ({ label, value }))
-      .sort((first, second) => second.value - first.value)
-      .slice(0, 6)
-  }, [pageViewEvents])
-
-  const geoTimezoneBreakdown = useMemo(() => {
-    const map = countBy(pageViewEvents, (event) => {
-      const geo = getGeoMetadata(event)
-      return cleanGeoLabel(geo.time_zone || geo.timezone, "Unknown")
-    })
-
-    return Array.from(map.entries())
-      .map(([label, value]) => ({ label, value }))
-      .sort((first, second) => second.value - first.value)
-      .slice(0, 6)
-  }, [pageViewEvents])
-
-  const geoRegionBreakdown = useMemo(() => {
-    const map = countBy(pageViewEvents, (event) => {
-      const geo = getGeoMetadata(event)
-      return cleanGeoLabel(geo.region || geo.city || geo.country_code || "Unknown", "Unknown")
-    })
-
-    return Array.from(map.entries())
-      .map(([label, value]) => ({ label, value }))
-      .sort((first, second) => second.value - first.value)
-      .slice(0, 6)
-  }, [pageViewEvents])
-
-  const geoLocaleBreakdown = useMemo(() => {
-    const map = countBy(pageViewEvents, (event) => {
-      const geo = getGeoMetadata(event)
-      return cleanGeoLabel(geo.locale || "Unknown", "Unknown")
-    })
-
-    return Array.from(map.entries())
-      .map(([label, value]) => ({ label, value }))
-      .sort((first, second) => second.value - first.value)
-      .slice(0, 6)
-  }, [pageViewEvents])
-
-  const blogPublishedCount = blogs.filter((blog) => blog.is_published).length
-  const blogViews = blogs.reduce((sum, blog) => sum + Number(blog.view_count || 0), 0)
-  const blogLikes = blogs.reduce((sum, blog) => sum + Number(blog.like_count || 0), 0)
-
-  const courseCompletions = enrollments.filter((enrollment) => String(enrollment.status || "").toLowerCase() === "completed").length
-  const activeEnrollments = enrollments.filter((enrollment) => String(enrollment.status || "").toLowerCase() !== "completed").length
-  const certificateCount = certificates.length
-  const patientRequests = prescriptions.length + appointments.length + deliveries.length
-  const leadCount = teamPlans.length
-  const highIntentActions = courseCompletions + patientRequests + leadCount
-  const pageViewTotal = pageViewEvents.length
-  const actionsPerSession = totalSessions > 0 ? highIntentActions / totalSessions : 0
-
-  const topCourseCards = useMemo(() => {
-    const enrollmentsByCourse = countBy(enrollments, (enrollment) => enrollment.course_id)
-    const completionsByCourse = countBy(
-      enrollments.filter((enrollment) => String(enrollment.status || "").toLowerCase() === "completed"),
-      (enrollment) => enrollment.course_id,
-    )
-    const certificateByCourse = countBy(certificates, (certificate) => certificate.course_id)
-
-    return courses
-      .map((course) => ({
-        ...course,
-        enrollments: enrollmentsByCourse.get(course.id) || 0,
-        completions: completionsByCourse.get(course.id) || 0,
-        certificates: certificateByCourse.get(course.id) || 0,
-      }))
-      .sort((first, second) => (second.enrollments + second.completions + second.certificates) - (first.enrollments + first.completions + first.certificates))
-      .slice(0, 6)
-  }, [courses, enrollments, certificates])
-
-  const peakDay = useMemo(() => {
-    const top = dailySeries.reduce((best, item) => (item.views > (best?.views || 0) ? item : best), null)
-    return top || null
-  }, [dailySeries])
-
-  const recentEvents = useMemo(
-    () => [...events]
-      .sort((first, second) => new Date(second.created_at) - new Date(first.created_at))
-      .slice(0, 12),
-    [events],
-  )
+  const deviceTotal = stats.devices.reduce((t, d) => t + d.value, 0)
+  const deviceColor = { desktop: "#0b5f45", mobile: "#10a37f", tablet: "#8fd3bb", unknown: "#cbd8d1" }
+  const DeviceIcon = { desktop: Monitor, mobile: Smartphone, tablet: Tablet }
+  const kpis = [
+    { label: "Page views", value: fmt(stats.views), delta: change(stats.views, stats.prevViews) },
+    { label: "Visitors", value: fmt(stats.visitors), delta: change(stats.visitors, stats.prevVisitors), hint: "Unique browser sessions" },
+    { label: "Pages per visit", value: stats.pagesPerVisit.toFixed(1), hint: "Average across visits" },
+    { label: "Course page views", value: fmt(stats.courseViews), delta: change(stats.courseViews, stats.prevCourseViews) },
+    { label: "On mobile", value: `${stats.mobileShare}%`, hint: "Share of page views" },
+    { label: "Busiest day", value: stats.peak?.views ? dayLabel(stats.peak.date) : "—", hint: stats.peak?.views ? `${fmt(stats.peak.views)} page views` : "No visits yet" },
+  ]
 
   return (
-    <div className="analytics-shell">
-      <section className="analytics-hero">
+    <div className="al-page">
+      <header className="al-head">
         <div>
-          <span className="analytics-hero-kicker">
-            <Sparkles size={15} />
-            Website analytics
-          </span>
           <h2>Website traffic</h2>
-          <p>
-            Page views, popular pages, devices and where visitors come from. Only visitors who accept analytics are counted.
-          </p>
+          <p>Visits, pages and where visitors come from. Only visitors who accept analytics are counted; no IP addresses are stored.</p>
         </div>
-        <div className="analytics-hero-actions">
-          <div className="analytics-period-switcher">
-            {PERIOD_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                className={period === option.value ? "active" : ""}
-                onClick={() => setPeriod(option.value)}
-              >
-                {option.label}
-              </button>
-            ))}
+        <div className="al-head-actions">
+          <div className="al-seg" role="radiogroup" aria-label="Period">
+            {PERIODS.map((p) => <button key={p} type="button" role="radio" aria-checked={days === p} className={days === p ? "active" : ""} onClick={() => setDays(p)}>{p} days</button>)}
           </div>
-          <button type="button" className="analytics-refresh" onClick={loadAnalytics} disabled={loading}>
-            <RefreshCw size={16} />
-            Refresh
-          </button>
+          <button type="button" className="al-btn" onClick={exportCsv} disabled={!stats.pages.length}><Download size={16} aria-hidden="true" /> Export CSV</button>
+          <button type="button" className="al-icon-btn" onClick={() => void load()} aria-label="Refresh" disabled={loading}><RefreshCw size={16} className={loading ? "wt-spin" : ""} /></button>
+        </div>
+      </header>
+
+      {error ? <p role="alert" className="al-alert">{error}</p> : null}
+      {capped ? <p className="al-setup">This period has more than {fmt(EVENT_CAP)} tracked page views, so only the most recent ones are shown and comparisons are hidden.</p> : null}
+
+      <section className="al-kpis" aria-busy={loading}>
+        {kpis.map((k) => (
+          <div key={k.label} className="al-card al-kpi">
+            <span>{k.label}</span>
+            <strong>{loading ? "—" : k.value}</strong>
+            <small className={k.delta?.tone ? `wt-delta ${k.delta.tone}` : "wt-hint"}>{loading ? "" : k.delta?.text || k.hint || ""}</small>
+          </div>
+        ))}
+      </section>
+
+      <div className="al-row-2">
+        <section className="al-card al-block">
+          <div className="al-block-head">
+            <div><h3>Traffic over time</h3><p className="al-muted">Daily page views and visitors, last {days} days.</p></div>
+            <span className="al-legend"><i className="wt-key views" /> Page views <i className="wt-key visitors" /> Visitors</span>
+          </div>
+          {loading ? <div className="wt-skeleton" /> : stats.views === 0 ? <p className="al-empty-cell">No visits recorded in this period yet.</p> : <TrafficChart series={stats.series} />}
+        </section>
+
+        <section className="al-card al-block">
+          <div className="al-block-head"><div><h3>Traffic sources</h3><p className="al-muted">Where visits came from.</p></div></div>
+          {loading ? <div className="wt-skeleton short" /> : <BarList items={stats.sources} total={stats.views} empty="No visits yet." />}
+        </section>
+      </div>
+
+      <section className="al-card al-block">
+        <div className="al-block-head"><div><h3>Top pages</h3><p className="al-muted">Most visited pages in the last {days} days.</p></div></div>
+        <div className="al-table-wrap">
+          <table className="al-table wt-table">
+            <thead><tr><th>Page</th><th>Page views</th><th>Visitors</th><th className="wt-share-col">Share of views</th></tr></thead>
+            <tbody>
+              {loading ? <tr><td colSpan={4} className="al-empty-cell">Loading…</td></tr>
+                : stats.pages.length === 0 ? <tr><td colSpan={4} className="al-empty-cell">No visits yet.</td></tr>
+                  : stats.pages.slice(0, 10).map((p) => {
+                    const share = stats.views ? (p.views / stats.views) * 100 : 0
+                    return (
+                      <tr key={p.path} style={{ cursor: "default" }}>
+                        <td><strong>{p.label}</strong><span className="al-sub">{p.path}</span></td>
+                        <td>{fmt(p.views)}</td>
+                        <td>{fmt(p.visitors)}</td>
+                        <td className="wt-share-col"><div className="wt-share"><div className="al-meter"><span style={{ width: `${share}%` }} /></div><span>{share.toFixed(1)}%</span></div></td>
+                      </tr>
+                    )
+                  })}
+            </tbody>
+          </table>
         </div>
       </section>
 
-      {error ? (
-        <div className="analytics-error">{error}</div>
-      ) : null}
-
-      {portalDataWarning ? (
-        <div className="analytics-note">
-          {portalDataWarning}
-        </div>
-      ) : null}
-
-      <div className="analytics-metrics-grid">
-        <MetricCard
-          icon={Eye}
-          label={`Page views (${period}d)`}
-          value={loading ? "…" : formatCompact(pageViewTotal)}
-          detail={`${formatFull(totalSessions)} sessions captured`}
-          tone="primary"
-        />
-        <MetricCard
-          icon={MousePointerClick}
-          label="High-intent actions"
-          value={loading ? "…" : formatCompact(highIntentActions)}
-          detail="Course completions, patient requests, and lead inquiries"
-        />
-        <MetricCard
-          icon={TrendingUp}
-          label="Actions per session"
-          value={loading ? "…" : actionsPerSession.toFixed(2)}
-          detail={peakDay ? `Peak day: ${formatDateLabel(peakDay.date)} (${formatFull(peakDay.views)} views)` : "No traffic yet"}
-        />
-        <MetricCard
-          icon={Globe2}
-          label="Traffic mix"
-          value={loading ? "…" : `${routeGroupBreakdown.length} groups`}
-          detail={routeGroupBreakdown[0] ? `Top group: ${routeGroupBreakdown[0].label}` : "No tracked traffic yet"}
-        />
-      </div>
-
-      <div className="analytics-grid analytics-grid-main">
-        <ChartCard
-          title="Traffic trend"
-          subtitle="Daily page views and sessions across the selected period."
-          action={<span className="analytics-chip">{formatFull(pageViewTotal)} views</span>}
-        >
-          {loading ? <div className="analytics-loading">Loading chart data...</div> : <LineChart data={dailySeries} />}
-        </ChartCard>
-
-        <ChartCard
-          title="Top routes"
-          subtitle="The pages and routes your audience actually touches most."
-          action={<span className="analytics-chip">{routeBreakdown.length} routes</span>}
-        >
-          {loading ? <div className="analytics-loading">Loading route data...</div> : <HorizontalBars items={routeBreakdown} />}
-        </ChartCard>
-      </div>
-
-      <div className="analytics-grid analytics-grid-secondary">
-        <ChartCard
-          title="Traffic mix"
-          subtitle="Route families split by content, patient portal, product pages, and more."
-          action={<span className="analytics-chip">Route groups</span>}
-        >
-          {loading ? <div className="analytics-loading">Loading mix data...</div> : <TrafficPillList items={routeGroupBreakdown} />}
-        </ChartCard>
-
-        <ChartCard
-          title="Device and source"
-          subtitle="How visitors arrive and what they use to browse the site."
-          action={<span className="analytics-chip">Referrers</span>}
-        >
-          <div className="analytics-dual-stack">
-            <div>
-              <h4>Devices</h4>
-              {loading ? <div className="analytics-loading compact">Loading devices...</div> : <TrafficPillList items={deviceBreakdown} />}
-            </div>
-            <div>
-              <h4>Top referrers</h4>
-              {loading ? <div className="analytics-loading compact">Loading sources...</div> : <TrafficPillList items={referrerBreakdown} />}
-            </div>
-          </div>
-        </ChartCard>
-      </div>
-
-      <div className="analytics-grid analytics-grid-single">
-        <ChartCard
-          title="Location signals"
-          subtitle="Country, region, and timezone are resolved from the visit IP when possible, with browser locale as a fallback."
-          action={<span className="analytics-chip">{formatFull(geoCountryBreakdown.length)} countries</span>}
-        >
-          <div className="analytics-dual-stack">
-            <div>
-              <h4>Countries</h4>
-              {loading ? <div className="analytics-loading compact">Loading location data...</div> : <TrafficPillList items={geoCountryBreakdown} />}
-            </div>
-            <div>
-              <h4>Time zones</h4>
-              {loading ? <div className="analytics-loading compact">Loading location data...</div> : <TrafficPillList items={geoTimezoneBreakdown} />}
-            </div>
-          </div>
-          <div style={{ marginTop: "1rem" }}>
-            <h4 style={{ margin: "0 0 0.8rem", fontSize: "0.92rem", color: "var(--gray-900)" }}>Locales</h4>
-            {loading ? <div className="analytics-loading compact">Loading locale data...</div> : <TrafficPillList items={geoLocaleBreakdown} />}
-          </div>
-          <div style={{ marginTop: "1rem" }}>
-            <h4 style={{ margin: "0 0 0.8rem", fontSize: "0.92rem", color: "var(--gray-900)" }}>Regions / cities</h4>
-            {loading ? <div className="analytics-loading compact">Loading region data...</div> : <TrafficPillList items={geoRegionBreakdown} />}
-          </div>
-          <p className="analytics-geo-note">
-            Visitors are counted only after they accept analytics. Country is estimated from the browser time zone and language: no IP addresses or precise locations are collected.
-          </p>
-        </ChartCard>
-      </div>
-
-      <div className="analytics-grid analytics-grid-secondary">
-        <ChartCard
-          title="Business snapshot"
-          subtitle="A quick read on the site’s real conversion engines."
-          action={<span className="analytics-chip">All-time + period</span>}
-        >
-          <div className="analytics-business-grid">
-            <div className="analytics-business-card">
-              <BookOpen size={18} />
-              <strong>{formatFull(blogPublishedCount)}</strong>
-              <span>Published blog posts</span>
-            </div>
-            <div className="analytics-business-card">
-              <Eye size={18} />
-              <strong>{formatFull(blogViews)}</strong>
-              <span>Blog views</span>
-            </div>
-            <div className="analytics-business-card">
-              <Users size={18} />
-              <strong>{formatFull(activeEnrollments)}</strong>
-              <span>Active course enrollments</span>
-            </div>
-            <div className="analytics-business-card">
-              <Layers3 size={18} />
-              <strong>{formatFull(certificateCount)}</strong>
-              <span>Certificates issued</span>
-            </div>
-            <div className="analytics-business-card">
-              <Video size={18} />
-              <strong>{formatFull(workshops.length)}</strong>
-              <span>Workshops listed</span>
-            </div>
-            <div className="analytics-business-card">
-              <Truck size={18} />
-              <strong>{formatFull(patientRequests)}</strong>
-              <span>Patient requests in period</span>
-            </div>
-          </div>
-
-          <div className="analytics-split-copy">
-            <div>
-              <h4>Top content by engagement</h4>
-              <div className="analytics-mini-list">
-                {topCourseCards.length === 0 ? (
-                  <p className="analytics-empty">No course data yet.</p>
-                ) : topCourseCards.map((course) => (
-                  <div key={course.id} className="analytics-mini-row">
-                    <div>
-                      <strong>{course.title}</strong>
-                      <span>{course.cpd_hours || 0} CPD hours</span>
-                    </div>
-                    <div className="analytics-mini-stats">
-                      <span>{formatFull(course.enrollments)} enrollments</span>
-                      <span>{formatFull(course.completions)} completions</span>
-                    </div>
-                  </div>
-                ))}
+      <div className="al-row-2 even">
+        <section className="al-card al-block">
+          <div className="al-block-head"><div><h3>Devices</h3><p className="al-muted">What visitors browse on.</p></div></div>
+          {loading ? <div className="wt-skeleton short" /> : deviceTotal === 0 ? <p className="al-empty-cell">No visits yet.</p> : (
+            <>
+              <div className="wt-stack" role="img" aria-label="Device split">
+                {stats.devices.map((d) => <span key={d.label} style={{ flexGrow: d.value, background: deviceColor[d.label] || "#94a3b8" }} title={`${d.label}: ${Math.round((d.value / deviceTotal) * 100)}%`} />)}
               </div>
-            </div>
+              <ul className="wt-devices">
+                {stats.devices.map((d) => {
+                  const Icon = DeviceIcon[d.label] || Monitor
+                  return (
+                    <li key={d.label}>
+                      <span className="wt-swatch" style={{ background: deviceColor[d.label] || "#94a3b8" }} />
+                      <Icon size={16} aria-hidden="true" />
+                      <span className="wt-device-name">{d.label}</span>
+                      <strong>{Math.round((d.value / deviceTotal) * 100)}%</strong>
+                      <small>{fmt(d.value)}</small>
+                    </li>
+                  )
+                })}
+              </ul>
+            </>
+          )}
+        </section>
 
-            <div>
-              <h4>Lead activity</h4>
-              <div className="analytics-mini-list">
-                <div className="analytics-mini-row">
-                  <div>
-                    <strong>Team plan enquiries</strong>
-                    <span>New inbound opportunities</span>
-                  </div>
-                  <div className="analytics-mini-stats">
-                    <span>{formatFull(leadCount)}</span>
-                    <span>{formatPercent(totalSessions > 0 ? (leadCount / totalSessions) * 100 : 0)}</span>
-                  </div>
-                </div>
-                <div className="analytics-mini-row">
-                  <div>
-                    <strong>Patient portal requests</strong>
-                    <span>Prescriptions, appointments, and delivery requests</span>
-                  </div>
-                  <div className="analytics-mini-stats">
-                    <span>{formatFull(patientRequests)}</span>
-                    <span>{formatFull(prescriptions.length)} prescriptions</span>
-                  </div>
-                </div>
-                <div className="analytics-mini-row">
-                  <div>
-                    <strong>Blog engagement</strong>
-                    <span>Views and likes</span>
-                  </div>
-                  <div className="analytics-mini-stats">
-                    <span>{formatFull(blogLikes)} likes</span>
-                    <span>{formatFull(blogViews)} views</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </ChartCard>
+        <section className="al-card al-block">
+          <div className="al-block-head"><div><h3>Countries</h3><p className="al-muted">Estimated from browser time zone and language.</p></div></div>
+          {loading ? <div className="wt-skeleton short" /> : <BarList items={stats.countries} total={stats.views} empty="No visits yet." />}
+        </section>
+      </div>
 
-        <ChartCard
-          title="Recent activity"
-          subtitle="The latest tracked website sessions and route hits."
-          action={<span className="analytics-chip">Live feed</span>}
-        >
-          {loading ? <div className="analytics-loading">Loading recent activity...</div> : <RecentEventList events={recentEvents} />}
-        </ChartCard>
+      <div className="al-row-2 even">
+        <section className="al-card al-block">
+          <div className="al-block-head"><div><h3>Most read articles</h3><p className="al-muted">All-time views of published blog posts.</p></div></div>
+          {blogs.length === 0 ? <p className="al-empty-cell">No published articles yet.</p> : (
+            <ul className="al-quiz-list">
+              {blogs.map((b, i) => (
+                <li key={b.id}>
+                  <div className="wt-rank-row"><span className="wt-rank">{i + 1}</span><div><strong>{b.title}</strong><span className="al-sub">{fmt(b.like_count)} likes</span></div></div>
+                  <strong>{fmt(b.view_count)} <small className="al-sub" style={{ display: "inline" }}>views</small></strong>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section className="al-card al-block">
+          <div className="al-block-head"><div><h3>Recent visits</h3><p className="al-muted">The latest pages people opened.</p></div></div>
+          {loading ? <div className="wt-skeleton short" /> : stats.recent.length === 0 ? <p className="al-empty-cell">No visits yet.</p> : (
+            <ul className="wt-recent">
+              {stats.recent.map((e) => {
+                const Icon = DeviceIcon[String(e.device_category || "").toLowerCase()] || Monitor
+                return (
+                  <li key={e.id || `${e.created_at}-${e.path}`}>
+                    <span className="wt-recent-icon"><Icon size={15} aria-hidden="true" /></span>
+                    <div><strong>{pageLabel(e.path, e.title)}</strong><span className="al-sub">{[sourceOf(e.referrer), countryOf(e) !== "Unknown" ? countryOf(e) : null].filter(Boolean).join(" · ")}</span></div>
+                    <small>{ago(e.created_at)}</small>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </section>
       </div>
     </div>
   )
