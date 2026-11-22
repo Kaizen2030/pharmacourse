@@ -17,6 +17,22 @@ Supabase project `nnjiutikutsjvggakvvv` → SQL Editor → run `supabase/securit
 Phase 9 (`2026-11-28_phase9_enrolments.sql`) must already be run. To undo: `2026-11-29_phase10_payments_rollback.sql`
 (payment records are kept).
 
+## 1b. Your Paybill, Till, bank and WhatsApp details (no developer needed)
+
+Run `supabase/security/2026-12-01_phase10b_payment_details.sql` once. Then in **Admin → Learning → Payments → Payment methods**:
+
+1. Click **Set up** on a method. Each one has its own form:
+   - **M-Pesa Paybill / Till**: choose Paybill or Till, type the business number, pick what learners enter as the
+     account number (their email is easiest to match in your statement), and the business name exactly as M-Pesa shows it.
+   - **Bank transfer**: bank, account name, account number, optional branch and SWIFT, and the reference rule.
+   - **Pay via WhatsApp**: optionally the number learners message (otherwise the site support number).
+2. Check the **What learners see at checkout** preview on the right, then **Save**.
+3. Switch the method **on**. A method cannot be switched on until its required details are filled in.
+4. Use the arrows to choose the order learners see.
+
+At checkout, learners see the details with copy buttons (and their own email filled in as the account number).
+When they enter the M-Pesa code, the payment appears under **To confirm**; check your M-Pesa statement and click **Confirm**.
+
 ## 2. M-Pesa prompt (Safaricom Daraja)
 
 1. Create an app at https://developer.safaricom.co.ke and get the consumer key and secret. Start in the sandbox.
@@ -36,7 +52,8 @@ supabase functions deploy payments-mpesa --project-ref nnjiutikutsjvggakvvv --no
 
 Use `CustomerBuyGoodsOnline` for a Till. The callback URL is built automatically and carries `MPESA_CALLBACK_TOKEN`;
 every callback is re-checked with Safaricom (STK query) before a payment is confirmed.
-4. Test with the sandbox number, then switch `MPESA_ENV=production` with your live keys, and turn on **M-Pesa** in admin.
+4. Open **Payment methods → M-Pesa → Edit**: the box turns green when the server keys are found.
+5. Test with the sandbox number, then switch `MPESA_ENV=production` with your live keys, and turn on **M-Pesa** in admin.
 
 ## 3. Cards (Paystack)
 

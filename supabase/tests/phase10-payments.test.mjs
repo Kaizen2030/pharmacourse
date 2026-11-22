@@ -36,6 +36,8 @@ async function freshDb() {
   await db.exec(read('../security/2026-11-28_phase9_enrolments.sql'))
   const sql = read('../security/2026-11-29_phase10_payments.sql')
   await db.exec(sql); await db.exec(sql) // re-runnable
+  const details = read('../security/2026-12-01_phase10b_payment_details.sql')
+  await db.exec(details); await db.exec(details)
   await asSqlEditor(db)
   await db.exec(`update payment_providers set enabled = true;
     insert into coupons (code, kind, value) values ('HALF', 'percent', 50), ('FREE100', 'percent', 100);
@@ -141,6 +143,17 @@ describe('Phase 10 payments', () => {
     const keys = (await db.query(`select key from payment_providers order by display_order`)).rows.map((r) => r.key)
     assert.ok(!keys.includes('paystack'))
     await refused(db.query(`select start_payment($1, 'paystack')`, [PAID]), /not available/)
+  })
+
+  it('payment details: learners read them for enabled methods but cannot change them', async () => {
+    await asSqlEditor(db)
+    await db.query(`update payment_providers set enabled = true, details = '{"kind":"paybill","business_number":"247247"}' where key = 'mpesa_manual'`)
+    await asUser(db, LEARNER)
+    assert.equal((await one(db, `select details->>'business_number' n from payment_providers where key = 'mpesa_manual'`)).n, '247247')
+    await db.query(`update payment_providers set details = '{"business_number":"999"}' where key = 'mpesa_manual'`)
+    await asSqlEditor(db)
+    assert.equal((await one(db, `select details->>'business_number' n from payment_providers where key = 'mpesa_manual'`)).n, '247247')
+    await refused(db.query(`update payment_providers set details = '[1,2]' where key = 'mpesa_manual'`), /check/)
   })
 
   it('rollback removes the functions and keeps the money records', async () => {

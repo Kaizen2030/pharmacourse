@@ -4,6 +4,7 @@ import { supabase } from "../../lib/supabaseClient"
 import { friendlyError } from "../../lib/friendlyError"
 import { confirmDialog } from "../../lib/dialog"
 import "./admin-learning.css"
+import AdminPaymentMethods from "./AdminPaymentMethods"
 
 const PAGE = 25
 const METHOD = { mpesa_stk: "M-Pesa", paystack: "Card (Paystack)", mpesa_manual: "M-Pesa Paybill/Till", bank_transfer: "Bank transfer", whatsapp: "WhatsApp", coupon: "Coupon" }
@@ -164,69 +165,8 @@ export default function AdminPaymentsTab() {
         </section>
       </div>
 
-      {!setupNeeded ? <PaymentMethods /> : null}
+      {!setupNeeded ? <AdminPaymentMethods /> : null}
     </div>
-  )
-}
-
-function PaymentMethods() {
-  const [rows, setRows] = useState([])
-  const [saving, setSaving] = useState("")
-  const [message, setMessage] = useState("")
-  const [error, setError] = useState("")
-
-  useEffect(() => {
-    supabase.from("payment_providers").select("*").order("display_order").then(({ data }) => setRows(data || []))
-  }, [])
-
-  const update = (key, patch) => setRows((list) => list.map((r) => (r.key === key ? { ...r, ...patch } : r)))
-
-  async function save(row) {
-    setSaving(row.key); setMessage(""); setError("")
-    const { error: e } = await supabase.from("payment_providers").update({
-      enabled: row.enabled, label: row.label, description: row.description, instructions: row.instructions, display_order: Number(row.display_order) || 100, updated_at: new Date().toISOString(),
-    }).eq("key", row.key)
-    setSaving("")
-    if (e) setError(friendlyError(e, "We could not save that payment method."))
-    else setMessage(`${row.label} saved.`)
-  }
-
-  return (
-    <section className="al-card al-block">
-      <div className="al-block-head">
-        <div>
-          <h3>Payment methods</h3>
-          <p className="al-muted">Switch methods on or off without a deploy. M-Pesa prompts and cards also need their keys set on the payment server (see docs/payments-setup.md).</p>
-        </div>
-      </div>
-      {error ? <p role="alert" className="al-alert">{error}</p> : null}
-      {message ? <p role="status" className="al-alert ok">{message}</p> : null}
-      <div className="al-methods">
-        {rows.map((r) => (
-          <div key={r.key} className={`al-method${r.enabled ? " on" : ""}`}>
-            <div className="al-method-top">
-              <label className="al-switch">
-                <input type="checkbox" checked={r.enabled} onChange={(e) => update(r.key, { enabled: e.target.checked })} />
-                <span aria-hidden="true" />
-                <strong>{r.label}</strong>
-              </label>
-              <span className="al-sub">{r.automatic ? "Confirms automatically" : "Admin confirms the reference"}</span>
-            </div>
-            <div className="al-grid2">
-              <label className="al-field"><span>Name shown to learners</span><input value={r.label || ""} onChange={(e) => update(r.key, { label: e.target.value })} /></label>
-              <label className="al-field"><span>Order</span><input type="number" value={r.display_order ?? 100} onChange={(e) => update(r.key, { display_order: e.target.value })} /></label>
-            </div>
-            <label className="al-field"><span>Short description</span><input value={r.description || ""} onChange={(e) => update(r.key, { description: e.target.value })} /></label>
-            {!r.automatic ? (
-              <label className="al-field"><span>Payment instructions</span>
-                <textarea rows={3} value={r.instructions || ""} onChange={(e) => update(r.key, { instructions: e.target.value })} placeholder={r.key === "bank_transfer" ? "Bank, account name, account number, branch" : "Paybill or Till number and account name"} />
-              </label>
-            ) : null}
-            <div><button type="button" className="al-btn primary" disabled={saving === r.key} onClick={() => void save(r)}>{saving === r.key ? "Saving…" : "Save"}</button></div>
-          </div>
-        ))}
-      </div>
-    </section>
   )
 }
 

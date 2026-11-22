@@ -85,10 +85,12 @@ Deno.serve(async (req) => {
   }
 
   // Learner calls ------------------------------------------------------------------------------------------------
-  const user = await requireUser(req)
-  if (!user) return json({ error: "Please sign in again." }, 401)
   let body: { action?: string; payment_id?: string }
   try { body = await req.json() } catch { return json({ error: "Bad request" }, 400) }
+  // Setup check for the admin settings page: says only whether the keys are present, never their values.
+  if (body.action === "health") return json({ configured: Boolean(env("MPESA_CONSUMER_KEY") && env("MPESA_CONSUMER_SECRET") && env("MPESA_SHORTCODE") && env("MPESA_PASSKEY") && env("MPESA_CALLBACK_TOKEN")), env: env("MPESA_ENV") || "sandbox" })
+  const user = await requireUser(req)
+  if (!user) return json({ error: "Please sign in again." }, 401)
   if (!body.payment_id) return json({ error: "Missing payment." }, 400)
   if (!env("MPESA_CONSUMER_KEY") || !env("MPESA_SHORTCODE") || !env("MPESA_PASSKEY") || !env("MPESA_CALLBACK_TOKEN")) {
     return json({ error: "M-Pesa is not set up yet. Choose another payment method." }, 503)

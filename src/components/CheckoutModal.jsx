@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import { Building2, CheckCircle2, CreditCard, Loader2, MessageCircle, Smartphone, Tag, X } from "lucide-react"
+import { Building2, Check, CheckCircle2, Copy, CreditCard, Loader2, MessageCircle, Smartphone, Tag, X } from "lucide-react"
 import { supabase } from "../lib/supabaseClient"
 import { friendlyError } from "../lib/friendlyError"
+import { paymentRows } from "../lib/paymentMethods"
 import "../styles/checkout-ui.css"
 
 const ICONS = { mpesa_stk: Smartphone, paystack: CreditCard, mpesa_manual: Smartphone, bank_transfer: Building2, whatsapp: MessageCircle }
@@ -35,11 +36,16 @@ export default function CheckoutModal({ course, user, whatsappLink, onClose, onP
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState("")
   const [info, setInfo] = useState("")
+  const [copied, setCopied] = useState("")
   const pollRef = useRef(null)
 
   useEffect(() => {
     let active = true
-    supabase.from("payment_providers").select("key, label, description, instructions, automatic, display_order").order("display_order").then(({ data, error: e }) => {
+    const base = "key, label, description, instructions, automatic, display_order"
+    // "details" exists once the Phase 10b SQL is run; fall back to the plain instructions before that.
+    supabase.from("payment_providers").select(`${base}, details`).order("display_order")
+      .then((res) => (res.error && /details/.test(res.error.message || "") ? supabase.from("payment_providers").select(base).order("display_order") : res))
+      .then(({ data, error: e }) => {
       if (!active) return
       if (e) { setSetupMissing(missingSql(e) || true); setProviders([]); return }
       setProviders(data || [])
@@ -120,7 +126,14 @@ export default function CheckoutModal({ course, user, whatsappLink, onClose, onP
   const waText = payment
     ? `Hi, I'm paying for "${course.title}" (${kes(payment.amount)}). Payment ID ${String(payment.payment_id).slice(0, 8)}. Account: ${user?.email || ""}.`
     : ""
-  const waHref = whatsappLink && payment ? whatsappLink.replace(/text=[^&]*/, `text=${encodeURIComponent(waText)}`) : whatsappLink
+  const waDigits = String(selected?.details?.whatsapp_number || "").replace(/\D/g, "")
+  const waNumber = waDigits ? (waDigits.startsWith("0") ? `254${waDigits.slice(1)}` : waDigits) : ""
+  const waHref = waNumber && payment ? `https://wa.me/${waNumber}?text=${encodeURIComponent(waText)}`
+    : whatsappLink && payment ? whatsappLink.replace(/text=[^&]*/, `text=${encodeURIComponent(waText)}`) : whatsappLink
+  const rows = selected ? paymentRows(selected.key, selected.details || {}, { email: user?.email }) : []
+  async function copy(value) {
+    try { await navigator.clipboard.writeText(String(value)); setCopied(String(value)); setTimeout(() => setCopied(""), 1500) } catch { /* ignore */ }
+  }
 
   return (
     <div className="co-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget && step !== "waiting") onClose() }}>
@@ -165,7 +178,17 @@ export default function CheckoutModal({ course, user, whatsappLink, onClose, onP
           <form className="co-body" onSubmit={submitReference}>
             <div className="co-instructions">
               <strong>Pay {kes(payment?.amount)}</strong>
-              <p>{selected?.instructions || selected?.description}</p>
+              {rows.length && method !== "whatsapp" ? (
+                <dl className="co-rows">
+                  {rows.map((r) => (
+                    <div key={r.label}>
+                      <dt>{r.label}</dt>
+                      <dd>{r.value}{r.copy ? <button type="button" className="co-copy" onClick={() => void copy(r.value)} aria-label={`Copy ${r.label}`}>{copied === String(r.value) ? <Check size={14} /> : <Copy size={14} />}</button> : null}</dd>
+                    </div>
+                  ))}
+                </dl>
+              ) : <p>{selected?.instructions || selected?.description}</p>}
+              {selected?.details?.note ? <p className="co-note-small">{selected.details.note}</p> : null}
               {method === "whatsapp" && waHref ? <a className="co-btn wide" href={waHref} target="_blank" rel="noreferrer noopener"><MessageCircle size={16} aria-hidden="true" /> Open WhatsApp</a> : null}
             </div>
             <label className="co-field"><span>{method === "bank_transfer" ? "Bank reference" : "M-Pesa code"}</span>

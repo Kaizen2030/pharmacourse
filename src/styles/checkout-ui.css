@@ -66,3 +66,10 @@
 .mp-status.failed, .mp-status.expired, .mp-status.cancelled { background: #fee2e2; color: #991b1b; }
 .mp-status.refunded { background: #e5e7eb; color: #374151; }
 .mp-empty { padding: 2.5rem 1rem; text-align: center; color: #6b7c74; background: #fff; border: 1px dashed #d3e2db; border-radius: 18px; }
+.co-rows { margin: 0; display: grid; gap: 0.5rem; }
+.co-rows > div { display: flex; justify-content: space-between; align-items: center; gap: 0.8rem; font-size: 0.9rem; }
+.co-rows dt { color: #4b5d55; }
+.co-rows dd { margin: 0; display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 800; color: #11231d; text-align: right; overflow-wrap: anywhere; }
+.co-copy { display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid #cdeadc; border-radius: 8px; background: #fff; color: #0f6e56; cursor: pointer; flex: none; }
+.co-copy:hover { background: #e8f5f0; }
+.co-note-small { margin: 0; font-size: 0.8rem !important; color: #4b5d55 !important; }

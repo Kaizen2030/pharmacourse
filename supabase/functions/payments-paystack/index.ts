@@ -38,10 +38,10 @@ async function verifyAndSettle(paymentId: string) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors })
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405)
-  if (!SECRET) return json({ error: "Card payments are not set up yet. Choose another payment method." }, 503)
 
   // Paystack webhook ---------------------------------------------------------------------------------------------
   const signature = req.headers.get("x-paystack-signature")
+  if (signature && !SECRET) return new Response("not configured", { status: 503 })
   if (signature) {
     const raw = await req.text()
     const expected = await hmacSha512Hex(SECRET, raw)
@@ -57,10 +57,13 @@ Deno.serve(async (req) => {
   }
 
   // Learner calls ------------------------------------------------------------------------------------------------
-  const user = await requireUser(req)
-  if (!user) return json({ error: "Please sign in again." }, 401)
   let body: { action?: string; payment_id?: string }
   try { body = await req.json() } catch { return json({ error: "Bad request" }, 400) }
+  // Setup check for the admin settings page: says only whether the key is present, and test or live mode.
+  if (body.action === "health") return json({ configured: Boolean(SECRET), env: SECRET.startsWith("sk_live") ? "live" : SECRET ? "test" : null })
+  if (!SECRET) return json({ error: "Card payments are not set up yet. Choose another payment method." }, 503)
+  const user = await requireUser(req)
+  if (!user) return json({ error: "Please sign in again." }, 401)
   if (!body.payment_id) return json({ error: "Missing payment." }, 400)
 
   try {
