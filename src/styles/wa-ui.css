@@ -78,3 +78,14 @@
 .wa-tips input:focus, .wa-tips textarea:focus, .wa-tips select:focus { outline: none; border-color: rgba(15, 110, 86, 0.5); box-shadow: 0 0 0 4px rgba(15, 110, 86, 0.1); }
 .wa-tips .btn { padding: 0.5rem 0.9rem; font-size: 0.84rem; }
 @media (max-width: 640px) { .wa-tips form > div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; } }
+
+/* Collapsible course cards on the tutor page */
+.wa-collapsible > summary { list-style: none; cursor: pointer; border-radius: 12px; }
+.wa-collapsible > summary::-webkit-details-marker { display: none; }
+.wa-collapsible > summary:focus-visible { outline: 2px solid var(--green); outline-offset: 4px; }
+.wa-collapsible:not([open]) > summary { border-bottom: 0 !important; padding-bottom: 0 !important; }
+.wa-collapsible > summary > div { flex: 1; min-width: 0; }
+.wa-collapsible > summary:hover h3 { color: var(--green); }
+.wa-tips-chevron { flex: none; color: var(--text-500); transition: transform 0.2s ease; }
+.wa-collapsible[open] .wa-tips-chevron { transform: rotate(180deg); }
+.wa-collapsible:not([open]):hover { border-color: rgba(15, 110, 86, 0.35); }

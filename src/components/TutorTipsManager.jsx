@@ -5,9 +5,11 @@ import { SITE_URL } from "../lib/siteConfig"
 import { waGateway } from "../lib/waGateway"
 import { confirmDialog } from "../lib/dialog"
 import TutorGroupPanel from "./TutorGroupPanel"
+import { ChevronDown } from "lucide-react"
 import "../styles/wa-ui.css"
 
-export default function TutorTipsManager({ courseId, courseTitle, courseSlug, instructorId = null, gatewayInstanceId = "" }) {
+// collapsible: render as a <details> card whose header (title + student count) stays visible when closed.
+export default function TutorTipsManager({ courseId, courseTitle, courseSlug, instructorId = null, gatewayInstanceId = "", collapsible = false, defaultOpen = false }) {
   const [posts, setPosts] = useState([])
   const [title, setTitle] = useState("")
   const [body, setBody] = useState("")
@@ -198,9 +200,12 @@ export default function TutorTipsManager({ courseId, courseTitle, courseSlug, in
 
   if (!courseId) return <p style={{ color: "var(--text-500)" }}>Save the course first to add WhatsApp tips.</p>
 
+  const Root = collapsible ? "details" : "div"
+  const Head = collapsible ? "summary" : "div"
+
   return (
-    <div className="card wa-tips" style={{ padding: "1.25rem", display: "grid", gap: "1rem" }}>
-      <div style={{ borderBottom: "1px solid var(--border)", paddingBottom: "0.7rem", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
+    <Root className={`card wa-tips${collapsible ? " wa-collapsible" : ""}`} style={{ padding: "1.25rem", display: "grid", gap: "1rem" }} {...(collapsible ? { open: defaultOpen || undefined } : {})}>
+      <Head className="wa-tips-head" style={{ borderBottom: "1px solid var(--border)", paddingBottom: "0.7rem", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
         <div>
           <h3 style={{ margin: 0, fontSize: "1rem" }}>{courseTitle || "Untitled course"}</h3>
           <p style={{ margin: "0.35rem 0 0", color: "var(--text-500)", fontSize: "0.85rem" }}>
@@ -210,7 +215,8 @@ export default function TutorTipsManager({ courseId, courseTitle, courseSlug, in
         <span style={{ display: "inline-flex", alignItems: "center", padding: "0.35rem 0.65rem", borderRadius: 999, background: "rgba(15, 110, 86, 0.08)", color: "var(--green)", fontSize: "0.8rem", fontWeight: 700 }}>
           {studentCount} students
         </span>
-      </div>
+        {collapsible ? <ChevronDown size={18} className="wa-tips-chevron" aria-hidden="true" /> : null}
+      </Head>
       <TutorGroupPanel courseId={courseId} gatewayInstanceId={gatewayInstanceId} onChange={setGroup} />
       <div>
         <h3 style={{ margin: 0, fontSize: "1rem" }}>WhatsApp tips</h3>
@@ -260,6 +266,6 @@ export default function TutorTipsManager({ courseId, courseTitle, courseSlug, in
           {sendMessage ? <p role="status" style={{ margin: 0, color: "var(--text-500)", fontSize: ".82rem" }}>{sendMessage}</p> : null}
         </div>
       ))}
-    </div>
+    </Root>
   )
 }

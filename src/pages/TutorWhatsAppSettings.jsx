@@ -269,9 +269,12 @@ export default function TutorWhatsAppSettings() {
             </section>
 
             <section style={{ display: "grid", gap: "1rem" }}>
-              <h2 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 600 }}>Tips for my courses</h2>
-              {courses.map((course) => (
-                <TutorTipsManager key={course.id} courseId={course.id} courseTitle={course.title} courseSlug={course.slug} instructorId={instructor.id} gatewayInstanceId={gatewayInstance?.status === "connected" ? instructor.id : ""} />
+              <div className="wa-card-head">
+                <h2 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 600 }}>Tips for my courses</h2>
+                {courses.length > 1 ? <span className="wa-hint">Tap a course to open its group and tips.</span> : null}
+              </div>
+              {courses.map((course, index) => (
+                <TutorTipsManager collapsible defaultOpen={index === 0} key={course.id} courseId={course.id} courseTitle={course.title} courseSlug={course.slug} instructorId={instructor.id} gatewayInstanceId={gatewayInstance?.status === "connected" ? instructor.id : ""} />
               ))}
               {courses.length === 0 ? <p className="wa-empty">No courses are assigned to your tutor profile yet.</p> : null}
             </section>
