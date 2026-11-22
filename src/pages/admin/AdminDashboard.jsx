@@ -12,6 +12,8 @@ import BlogContentRenderer from "../../components/BlogContentRenderer"
 import MarkdownContent from "../../components/MarkdownContent"
 import "./AdminDashboard.css"
 import WebsiteAnalyticsTab from "./AdminAnalyticsTab"
+import AdminEnrolmentsTab from "./AdminEnrolmentsTab"
+import AdminLearningAnalytics from "./AdminLearningAnalytics"
 import WhatsAppFields from "../../components/WhatsAppFields"
 import { waPayload } from "../../lib/tutorWhatsApp"
 import { DEFAULT_CERTIFICATE_SETTINGS, normalizeCertificateSettings } from "../../lib/certificateSettings"
@@ -107,9 +109,10 @@ function buildCourseCategoryNames(managedRows = [], usedRows = [], extraValues =
 // The open section and sub-tab live in the URL (?section=...&tab=...) so a refresh or shared link keeps your place.
 const ADMIN_SECTIONS = [
   {
-    key: "learning", label: "Learning", icon: GraduationCap, blurb: "Courses, lessons, quizzes and certificates",
+    key: "learning", label: "Learning", icon: GraduationCap, blurb: "Courses, enrolments, quizzes and certificates",
     tabs: [
       { key: "courses", label: "Courses", icon: BookOpen, render: () => <PaginatedCoursesTab /> },
+      { key: "enrolments", label: "Enrolments", icon: Users, render: () => <AdminEnrolmentsTab /> },
       { key: "course-categories", label: "Categories", icon: Tags, render: () => <CourseCategoriesTab /> },
       { key: "quizzes", label: "Quizzes", icon: ListChecks, render: () => <QuizManagementTab /> },
       { key: "simulations", label: "Simulations", icon: FlaskConical, render: () => <ScalableSimulationsTab /> },
@@ -138,8 +141,9 @@ const ADMIN_SECTIONS = [
     tabs: [{ key: "workshops", label: "Workshops", icon: Video, render: () => <WorkshopsTab /> }],
   },
   {
-    key: "insights", label: "Analytics", icon: BarChart3, blurb: "Website traffic and learner leaderboard",
+    key: "insights", label: "Analytics", icon: BarChart3, blurb: "Learning, website traffic and the learner leaderboard",
     tabs: [
+      { key: "learning-stats", label: "Learning", icon: GraduationCap, render: () => <AdminLearningAnalytics /> },
       { key: "analytics", label: "Website traffic", icon: BarChart3, render: () => <WebsiteAnalyticsTab /> },
       { key: "leaderboard", label: "Leaderboard", icon: Trophy, render: () => <LeaderboardTab /> },
     ],
