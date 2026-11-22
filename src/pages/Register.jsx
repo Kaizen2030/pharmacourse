@@ -83,7 +83,7 @@ export default function Register() {
         noindex
       />
 
-      <AuthAside title="Join pharmacists building skills that matter at the counter." />
+      <AuthAside title="Join pharmacy professionals building skills for every part of practice." />
       <div className="auth-card">
         <div className="auth-logo">Pharmacourse</div>
         <h1>Create your account</h1>

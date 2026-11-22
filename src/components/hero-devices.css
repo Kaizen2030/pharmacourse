@@ -1,0 +1,96 @@
+/* Laptop + phone hero illustration (decorative). Sizes scale with --hd-w so it fits any column. */
+.hd {
+  --hd-w: min(560px, 100%);
+  position: relative;
+  width: var(--hd-w);
+  aspect-ratio: 560 / 430;
+  margin: 0 auto;
+  font-family: "Manrope", system-ui, sans-serif;
+  color: #12302a;
+  container-type: inline-size;
+}
+.hd * { box-sizing: border-box; }
+
+.hd-glow {
+  position: absolute; left: 50%; top: 46%; width: 92cqw; aspect-ratio: 1; transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(159, 240, 207, 0.22) 0%, rgba(29, 158, 117, 0.16) 45%, transparent 70%);
+  border: 1.5px solid rgba(159, 240, 207, 0.35);
+  box-shadow: 0 0 60px rgba(159, 240, 207, 0.25), inset 0 0 60px rgba(159, 240, 207, 0.12);
+}
+
+/* Laptop */
+.hd-laptop { position: absolute; right: 0; top: 10%; width: 86cqw; }
+.hd-screen {
+  position: relative; aspect-ratio: 16 / 10; padding: 2.2cqw 2.2cqw 2.6cqw; border-radius: 2.6cqw 2.6cqw 0 0;
+  background: #1b2421; box-shadow: 0 30px 60px rgba(0, 0, 0, 0.35);
+}
+.hd-camera { position: absolute; top: 0.8cqw; left: 50%; width: 0.9cqw; height: 0.9cqw; border-radius: 50%; background: #3a4a45; transform: translateX(-50%); }
+.hd-base {
+  height: 2.6cqw; margin: 0 -6cqw; border-radius: 0 0 2.4cqw 2.4cqw;
+  background: linear-gradient(180deg, #c9d1ce 0%, #8f9a96 100%);
+  box-shadow: 0 18px 30px rgba(0, 0, 0, 0.3);
+  position: relative;
+}
+.hd-base::before { content: ""; position: absolute; left: 50%; top: 0; width: 16cqw; height: 0.9cqw; transform: translateX(-50%); border-radius: 0 0 1cqw 1cqw; background: #7c8783; }
+
+.hd-app { height: 100%; border-radius: 0.8cqw; background: #f6f9f7; display: grid; grid-template-columns: 27% 1fr; overflow: hidden; }
+.hd-side { background: #0f5a47; padding: 2.6cqw 1.8cqw; display: flex; flex-direction: column; gap: 1.1cqw; }
+.hd-side span { font-size: 1.6cqw; font-weight: 700; color: rgba(255, 255, 255, 0.75); padding: 0.8cqw 1.2cqw; border-radius: 0.9cqw; }
+.hd-side span.active { background: rgba(255, 255, 255, 0.14); color: #fff; }
+.hd-brand { font-family: "Fraunces", Georgia, serif; font-size: 2.2cqw; color: #fff; margin-bottom: 1cqw; }
+.hd-main { padding: 2.4cqw 2.6cqw; display: grid; grid-template-rows: auto 1fr; gap: 1.6cqw; min-width: 0; }
+.hd-app-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 2cqw; }
+.hd-kicker { display: block; font-size: 1.9cqw; font-weight: 700; color: #0f6e56; letter-spacing: 0.02em; }
+.hd-app-title { display: block; font-family: "Fraunces", Georgia, serif; font-size: 3.1cqw; line-height: 1.15; margin-top: 0.4cqw; }
+.hd-cpd { display: inline-flex; align-items: center; gap: 0.8cqw; white-space: nowrap; padding: 0.8cqw 1.6cqw; border-radius: 99px; background: #dcf5ea; color: #0a5c3e; font-size: 1.8cqw; font-weight: 800; }
+.hd-cpd svg { width: 2.2cqw; height: 2.2cqw; }
+
+.hd-courses { list-style: none; margin: 0; padding: 0; display: grid; gap: 1.3cqw; align-content: start; }
+.hd-course {
+  background: #fff; border: 1px solid #e3ece8; border-radius: 1.4cqw; padding: 1.4cqw 1.8cqw;
+  display: grid; grid-template-columns: 1fr auto; grid-template-areas: "pill note" "title title" "bar bar"; gap: 0.8cqw 1.2cqw; align-items: center;
+}
+.hd-course .hd-pill { grid-area: pill; }
+.hd-course small { grid-area: note; justify-self: end; }
+.hd-course strong { grid-area: title; font-size: 2.05cqw; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hd-course .hd-bar { grid-area: bar; }
+.hd-pill { width: fit-content; max-width: 100%; padding: 0.4cqw 1.1cqw; border-radius: 99px; background: #e9f7f1; color: #0f6e56; font-size: 1.5cqw; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hd-bar { height: 1.1cqw; border-radius: 99px; background: #dfe9e5; overflow: hidden; }
+.hd-bar span { display: block; height: 100%; border-radius: inherit; background: #0f6e56; }
+.hd-course small { font-size: 1.55cqw; color: #5b6f68; display: inline-flex; align-items: center; gap: 0.6cqw; }
+.hd-course small.done { color: #0a7a4e; font-weight: 800; }
+.hd-course small svg { width: 1.9cqw; height: 1.9cqw; }
+
+/* Phone */
+.hd-phone {
+  position: absolute; left: 1cqw; bottom: 0; width: 25cqw; aspect-ratio: 9 / 18.5;
+  padding: 1.3cqw; border-radius: 4.4cqw; background: #141b19;
+  box-shadow: 0 26px 50px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+}
+.hd-notch { position: absolute; top: 1.3cqw; left: 50%; width: 8cqw; height: 1.8cqw; border-radius: 0 0 1.2cqw 1.2cqw; background: #141b19; transform: translateX(-50%); z-index: 1; }
+.hd-phone-app { height: 100%; border-radius: 3.3cqw; background: #f6f9f7; padding: 4.2cqw 2cqw 2cqw; display: flex; flex-direction: column; gap: 1.2cqw; overflow: hidden; }
+.hd-phone-app .hd-kicker { font-size: 1.45cqw; }
+.hd-phone-title { font-family: "Fraunces", Georgia, serif; font-size: 2.3cqw; line-height: 1.15; }
+.hd-phone-app .hd-bar { height: 0.8cqw; }
+.hd-muted { font-size: 1.3cqw; color: #5b6f68; }
+.hd-lessons { list-style: none; margin: 0.4cqw 0 0; padding: 0; display: grid; gap: 0.9cqw; }
+.hd-lessons li { display: flex; justify-content: space-between; align-items: center; gap: 0.6cqw; background: #fff; border: 1px solid #e3ece8; border-radius: 1.1cqw; padding: 1cqw 1.1cqw; font-size: 1.3cqw; font-weight: 700; line-height: 1.25; }
+.hd-lessons li.current { border: 1.5px solid #0f5a47; }
+.hd-lessons em { font-style: normal; color: #0f6e56; font-weight: 800; }
+.hd-lessons svg { width: 1.8cqw; height: 1.8cqw; color: #0f6e56; flex: none; }
+.hd-phone-btn { margin-top: auto; text-align: center; padding: 1.4cqw; border-radius: 1.4cqw; background: #0f5a47; color: #fff; font-size: 1.45cqw; font-weight: 800; }
+
+/* Floating certificate */
+.hd-cert {
+  position: absolute; right: -2cqw; bottom: -4%; width: 34cqw; padding: 2.2cqw 2.4cqw; border-radius: 2.2cqw;
+  background: #fff; box-shadow: 0 22px 44px rgba(0, 0, 0, 0.28); display: grid; gap: 0.8cqw;
+  animation: hd-float 6s ease-in-out infinite;
+}
+.hd-cert-kicker { display: inline-flex; align-items: center; gap: 0.8cqw; font-size: 1.75cqw; font-weight: 800; color: #0f6e56; }
+.hd-cert-kicker svg { width: 2.4cqw; height: 2.4cqw; }
+.hd-cert strong { font-family: "Fraunces", Georgia, serif; font-size: 2.7cqw; line-height: 1.15; }
+.hd-cert small { font-size: 1.6cqw; color: #5b6f68; line-height: 1.4; }
+
+@keyframes hd-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1.2cqw); } }
+@media (prefers-reduced-motion: reduce) { .hd-cert { animation: none; } }

@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useSearchParams } from "react-router-dom"
-import { Award, BadgeCheck, Search, SearchX, Smartphone, Sparkles, Timer } from "lucide-react"
+import { Award, BadgeCheck, MonitorSmartphone, Search, SearchX, Sparkles, Timer } from "lucide-react"
 import { supabase } from "../lib/supabaseClient"
 import CourseCard, { CourseCardSkeleton } from "../components/CourseCard"
 import SEO from "../components/SEO"
 import Pagination from "../components/Pagination"
+import HeroDevices from "../components/HeroDevices"
 import { getCourseCategoryLabel } from "../lib/courseCategoryHelpers"
 import "../styles/courses-ui.css"
 
@@ -185,17 +186,22 @@ export default function Courses() {
 
       <section className="pc-hero">
         <div className="pc-wrap">
+          <div className="pc-hero-grid">
           <div className="pc-hero-inner">
             <span className="pc-eyebrow"><Sparkles size={14} aria-hidden="true" /> CPD courses for pharmacy professionals</span>
-            <h1>Learn what you will <em>use at the counter</em> tomorrow.</h1>
-            <p className="pc-lead">Short, practical courses built by practising pharmacists. Study on your phone, at your own pace, and earn a verifiable certificate.</p>
+            <h1>Build the skills <em>your pharmacy career</em> needs.</h1>
+            <p className="pc-lead">Clinical pharmacy, dispensing, regulation, management and business. Practical courses built by practising pharmacists. Learn on your laptop or phone, at your own pace, and earn a verifiable certificate.</p>
+            <div className="pc-hero-actions">
+              <button type="button" className="pc-hero-btn primary" onClick={() => { updateParams({ price: null }); resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }) }}>Browse all courses</button>
+              <button type="button" className="pc-hero-btn ghost" onClick={() => { updateParams({ price: "free" }); resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }) }}>Start with a free course</button>
+            </div>
             <form className="pc-search" role="search" onSubmit={submitSearch}>
               <Search size={20} aria-hidden="true" />
               <label htmlFor="course-search" className="sr-only">Search courses</label>
               <input
                 id="course-search"
                 type="search"
-                placeholder="Search courses, e.g. antibiotics, dispensing, compliance"
+                placeholder="Search: clinical, dispensing, compliance, business"
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 autoComplete="off"
@@ -206,8 +212,10 @@ export default function Courses() {
               <span className="pc-hero-chip"><BadgeCheck size={15} aria-hidden="true" /> Verifiable certificate</span>
               <span className="pc-hero-chip"><Award size={15} aria-hidden="true" /> CPD hours</span>
               <span className="pc-hero-chip"><Timer size={15} aria-hidden="true" /> Self-paced</span>
-              <span className="pc-hero-chip"><Smartphone size={15} aria-hidden="true" /> Works on any phone</span>
+              <span className="pc-hero-chip"><MonitorSmartphone size={15} aria-hidden="true" /> Laptop or phone</span>
             </div>
+          </div>
+          <div className="pc-hero-visual"><HeroDevices /></div>
           </div>
         </div>
       </section>
