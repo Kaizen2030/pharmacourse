@@ -5,7 +5,7 @@ import { supabase } from "../lib/supabaseClient"
 import { friendlyError } from "../lib/friendlyError"
 import { useAuth } from "../context/AuthContext"
 import { isEmbeddedVideo, parseLessonVideo } from "../lib/videoEmbed"
-import { Award, Check, ChevronLeft, ChevronRight, CircleCheck, Clock, Download, FileText, Lock, MessageCircle, PlayCircle, RotateCcw } from "lucide-react"
+import { Award, Check, ChevronLeft, ChevronRight, CircleCheck, Download, FileText, ListChecks, ListVideo, Lock, Maximize, MessageCircle, Minimize, Minimize2, PanelLeft, PlayCircle, RectangleHorizontal, RotateCcw, X } from "lucide-react"
 import "../styles/player-ui.css"
 
 export default function CoursePlayer() {
@@ -65,6 +65,44 @@ export default function CoursePlayer() {
     }
 
     return { data: null, error: lastError }
+  }
+
+  // Layout: lesson list on/off (remembered), wide (theatre) view, phone drawer, lesson tab, fullscreen.
+  const [menuOpen, setMenuOpen] = useState(() => {
+    try { return localStorage.getItem("pc-player-menu") !== "closed" } catch { return true }
+  })
+  const [wideView, setWideView] = useState(false)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [lessonTab, setLessonTab] = useState("overview")
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const frameRef = useRef(null)
+
+  useEffect(() => {
+    try { localStorage.setItem("pc-player-menu", menuOpen ? "open" : "closed") } catch { /* storage blocked */ }
+  }, [menuOpen])
+
+  useEffect(() => { setLessonTab("overview") }, [lessonId])
+
+  useEffect(() => {
+    const onChange = () => setIsFullscreen(Boolean(document.fullscreenElement || document.webkitFullscreenElement))
+    document.addEventListener("fullscreenchange", onChange)
+    document.addEventListener("webkitfullscreenchange", onChange)
+    return () => {
+      document.removeEventListener("fullscreenchange", onChange)
+      document.removeEventListener("webkitfullscreenchange", onChange)
+    }
+  }, [])
+
+  // Full screen on the video frame (not the bare <video>), so the account watermark stays on screen.
+  function toggleFullscreen() {
+    const frame = frameRef.current
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
+      (document.exitFullscreen || document.webkitExitFullscreen)?.call(document)
+      return
+    }
+    if (frame?.requestFullscreen) frame.requestFullscreen().catch(() => {})
+    else if (frame?.webkitRequestFullscreen) frame.webkitRequestFullscreen()
+    else videoRef.current?.webkitEnterFullscreen?.() // iPhone Safari only allows the video itself
   }
 
   // Course title and link for the lesson sidebar.
@@ -483,18 +521,16 @@ export default function CoursePlayer() {
 
   if (loading) {
     return (
-      <div className="cp-page">
-        <div className="cp-layout" aria-busy="true">
-          <aside className="cp-sidebar"><div className="cp-skel" style={{ height: 120 }} /><div className="cp-skel" style={{ height: 320 }} /></aside>
-          <main className="cp-main"><div className="cp-skel cp-skel-video" /><div className="cp-skel" style={{ height: 90, margin: "1.5rem" }} /></main>
-        </div>
+      <div className="cp-app" aria-busy="true">
+        <div className="cp-topbar"><div className="cp-skel" style={{ width: 260, height: 18, margin: 0 }} /></div>
+        <div className="cp-stage"><div className="cp-frame cp-skel" style={{ margin: "0 auto" }} /></div>
       </div>
     )
   }
 
   if (error || !currentModule) {
     return (
-      <div className="cp-page">
+      <div className="cp-app">
         <div className="cp-empty">
           <span className="cp-empty-icon"><Lock size={26} aria-hidden="true" /></span>
           <p>{error || "This lesson was not found."}</p>
@@ -509,82 +545,102 @@ export default function CoursePlayer() {
   const minutesOf = (mod) => Number(mod?.duration_minutes ?? mod?.duration ?? 0)
   const prevModule = currentIndex > 0 ? modules[currentIndex - 1] : null
   const nextModule = currentIndex < modules.length - 1 ? modules[currentIndex + 1] : null
-  const nextLocked = nextModule && !isAdmin && !isCompleted && !completedIds.has(nextModule.id)
+  const nextLocked = Boolean(nextModule && !isAdmin && !isCompleted && !completedIds.has(nextModule.id))
   const lockedFor = (idx) => !isAdmin && idx > 0 && !completedIds.has(modules[idx - 1]?.id) && !completedIds.has(modules[idx].id)
+  const courseHref = courseInfo?.slug ? `/courses/${courseInfo.slug}` : "/dashboard"
+  const tabs = [
+    { key: "overview", label: "Overview" },
+    ...(attachments.length ? [{ key: "materials", label: `Materials (${attachments.length})` }] : []),
+    ...(quizAvailable ? [{ key: "quiz", label: quizPassed ? "Quiz · passed" : "Quiz" }] : []),
+  ]
+  const activeTab = tabs.some((t) => t.key === lessonTab) ? lessonTab : "overview"
+  const showSidebar = menuOpen && !wideView
 
   function goTo(mod) {
     if (videoRef.current && !completedIdsRef.current.has(lessonId)) savePosition(videoRef.current.currentTime)
+    setDrawerOpen(false)
     navigate(`/learn/${courseId}/${mod.id}`)
   }
 
+  const lessonList = (
+    <>
+      <div className="cp-course">
+        <Link to={courseHref} className="cp-back"><ChevronLeft size={16} aria-hidden="true" /> Course overview</Link>
+        <p className="cp-course-title">{courseInfo?.title || "Course"}</p>
+        <div className="cp-course-progress" aria-label={`${coursePct}% of the course complete`}><span style={{ width: `${coursePct}%` }} /></div>
+        <p className="cp-course-meta">{doneCount} of {modules.length} lessons complete · {coursePct}%</p>
+      </div>
+      <ol className="cp-lessons">
+        {modules.map((mod, idx) => {
+          const active = mod.id === lessonId
+          const done = completedIds.has(mod.id)
+          const locked = lockedFor(idx)
+          const mins = minutesOf(mod)
+          return (
+            <li key={mod.id}>
+              <button
+                type="button"
+                className={`cp-lesson${active ? " active" : ""}${done ? " done" : ""}${locked ? " locked" : ""}`}
+                aria-current={active ? "step" : undefined}
+                disabled={locked}
+                title={locked ? "Finish the previous lesson to unlock this one" : undefined}
+                onClick={() => goTo(mod)}
+              >
+                <span className="cp-lesson-mark" aria-hidden="true">
+                  {done ? <Check size={14} strokeWidth={3} /> : locked ? <Lock size={13} /> : <PlayCircle size={15} />}
+                </span>
+                <span className="cp-lesson-text">
+                  <span className="cp-lesson-title">{mod.title}</span>
+                  <span className="cp-lesson-sub">Video{mins > 0 ? ` · ${mins} min` : ""}{done ? " · Completed" : ""}</span>
+                </span>
+              </button>
+            </li>
+          )
+        })}
+      </ol>
+    </>
+  )
+
   return (
-    <div className="cp-page">
-      <div className="cp-layout">
-        <aside className="cp-sidebar" aria-label="Course lessons">
-          <div className="cp-course">
-            <Link to={courseInfo?.slug ? `/courses/${courseInfo.slug}` : "/dashboard"} className="cp-back">
-              <ChevronLeft size={16} aria-hidden="true" /> Course overview
-            </Link>
-            <h1 className="cp-course-title">{courseInfo?.title || "Course"}</h1>
-            <div className="cp-course-progress" aria-label={`${coursePct}% of the course complete`}><span style={{ width: `${coursePct}%` }} /></div>
-            <p className="cp-course-meta">{doneCount} of {modules.length} lessons complete · {coursePct}%</p>
+    <div className={`cp-app${showSidebar ? " with-menu" : ""}${wideView ? " wide" : ""}`}>
+      {showSidebar ? <aside className="cp-sidebar" aria-label="Course lessons">{lessonList}</aside> : null}
+
+      {drawerOpen ? (
+        <div className="cp-drawer-backdrop" onClick={() => setDrawerOpen(false)}>
+          <aside className="cp-drawer" aria-label="Course lessons" onClick={(e) => e.stopPropagation()}>
+            <button type="button" className="cp-drawer-close" onClick={() => setDrawerOpen(false)} aria-label="Close lessons"><X size={20} /></button>
+            {lessonList}
+          </aside>
+        </div>
+      ) : null}
+
+      <main className="cp-main">
+        <div className="cp-topbar">
+          <button
+            type="button"
+            className="cp-tool desktop-only"
+            onClick={() => { setWideView(false); setMenuOpen((v) => !v) }}
+            aria-pressed={showSidebar}
+          >
+            <PanelLeft size={18} aria-hidden="true" /> {showSidebar ? "Hide lessons" : "Show lessons"}
+          </button>
+          <button type="button" className="cp-tool mobile-only" onClick={() => setDrawerOpen(true)}>
+            <ListVideo size={18} aria-hidden="true" /> Lessons
+          </button>
+          <div className="cp-crumb">
+            <Link to={courseHref}>{courseInfo?.title || "Course"}</Link>
+            <ChevronRight size={14} aria-hidden="true" />
+            <span>Lesson {currentIndex + 1} of {modules.length}</span>
           </div>
+          <button type="button" className="cp-tool desktop-only" onClick={() => setWideView((v) => !v)} aria-pressed={wideView}>
+            {wideView ? <Minimize2 size={17} aria-hidden="true" /> : <RectangleHorizontal size={17} aria-hidden="true" />}
+            {wideView ? "Default view" : "Wide view"}
+          </button>
+        </div>
 
-          <ol className="cp-lessons">
-            {modules.map((mod, idx) => {
-              const active = mod.id === lessonId
-              const done = completedIds.has(mod.id)
-              const locked = lockedFor(idx)
-              const mins = minutesOf(mod)
-              return (
-                <li key={mod.id}>
-                  <button
-                    type="button"
-                    className={`cp-lesson${active ? " active" : ""}${done ? " done" : ""}${locked ? " locked" : ""}`}
-                    aria-current={active ? "step" : undefined}
-                    disabled={locked}
-                    title={locked ? "Finish the previous lesson to unlock this one" : undefined}
-                    onClick={() => goTo(mod)}
-                  >
-                    <span className="cp-lesson-mark" aria-hidden="true">
-                      {done ? <Check size={14} strokeWidth={3} /> : locked ? <Lock size={13} /> : idx + 1}
-                    </span>
-                    <span className="cp-lesson-text">
-                      <span className="cp-lesson-title">{mod.title}</span>
-                      <span className="cp-lesson-sub">
-                        {done ? "Completed" : locked ? "Locked" : active ? "Now playing" : "Lesson " + (idx + 1)}
-                        {mins > 0 ? ` · ${mins} min` : ""}
-                      </span>
-                    </span>
-                  </button>
-                </li>
-              )
-            })}
-          </ol>
-        </aside>
-
-        <main className="cp-main">
-          <div className="cp-mobile-nav">
-            <label htmlFor="mobile-module-select">Lesson {currentIndex + 1} of {modules.length} · {coursePct}% complete</label>
-            <select
-              id="mobile-module-select"
-              value={lessonId}
-              onChange={(e) => {
-                const nextIndex = modules.findIndex((mod) => mod.id === e.target.value)
-                if (nextIndex < 0 || lockedFor(nextIndex)) return
-                goTo(modules[nextIndex])
-              }}
-            >
-              {modules.map((mod, idx) => (
-                <option key={mod.id} value={mod.id} disabled={lockedFor(idx)}>
-                  {idx + 1}. {mod.title}{completedIds.has(mod.id) ? " (done)" : lockedFor(idx) ? " (locked)" : ""}
-                </option>
-              ))}
-            </select>
-          </div>
-
+        <div className="cp-stage">
           {isLocked ? (
-            <div className="cp-video cp-video-locked">
+            <div className="cp-frame cp-frame-locked">
               <div className="cp-locked">
                 <span className="cp-empty-icon dark"><Lock size={26} aria-hidden="true" /></span>
                 <p>Finish the previous lesson to unlock this one.</p>
@@ -596,220 +652,235 @@ export default function CoursePlayer() {
               </div>
             </div>
           ) : (
-            <>
-              <div className="cp-video video-container">
-                {currentModule.video_url && lessonVideo.kind !== "unsupported" && user?.email ? (
-                  <div className="lesson-watermark" aria-hidden="true">{user.email} · {String(user.id).slice(0, 8)}</div>
-                ) : null}
-                {currentModule.video_url ? (
-                  lessonVideo.kind === "unsupported" ? (
-                    <div className="video-placeholder">
-                      <div>
-                        <p>This lesson's video link cannot be played.</p>
-                        <small>Please let your tutor know so they can fix it.</small>
-                      </div>
-                    </div>
-                  ) : isEmbeddedVideo(lessonVideo.kind) ? (
-                    <iframe
-                      key={lessonVideo.src}
-                      src={lessonVideo.src}
-                      title={currentModule.title}
-                      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0, backgroundColor: "#000" }}
-                      allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-                      allowFullScreen
-                      referrerPolicy="strict-origin-when-cross-origin"
-                      sandbox="allow-scripts allow-same-origin allow-presentation"
-                      loading="lazy"
-                      onLoad={() => {
-                        if (isAdmin || completedIdsRef.current.has(lessonId)) {
-                          setVideoWatched(true)
-                          setWatchProgress(100)
-                        }
-                      }}
-                    />
-                  ) : (
-                    <video
-                      ref={videoRef}
-                      src={lessonVideo.src}
-                      controls
-                      controlsList="nodownload noremoteplayback noplaybackrate"
-                      disablePictureInPicture
-                      playsInline
-                      onContextMenu={e => e.preventDefault()}
-                      style={{ width: "100%", height: "100%", objectFit: "contain", backgroundColor: "#000" }}
-                    />
-                  )
-                ) : (
+            <div className="cp-frame" ref={frameRef}>
+              {currentModule.video_url && lessonVideo.kind !== "unsupported" && user?.email ? (
+                <div className="lesson-watermark" aria-hidden="true">{user.email} · {String(user.id).slice(0, 8)}</div>
+              ) : null}
+              {currentModule.video_url ? (
+                lessonVideo.kind === "unsupported" ? (
                   <div className="video-placeholder">
                     <div>
-                      <PlayCircle size={36} aria-hidden="true" />
-                      <p>The video for this lesson is not uploaded yet.</p>
-                      <small>Check back soon.</small>
+                      <p>This lesson's video link cannot be played.</p>
+                      <small>Please let your tutor know so they can fix it.</small>
                     </div>
                   </div>
-                )}
-              </div>
-
-              {currentModule.video_url && !isCompleted && !isAdmin ? (
-                <div className="cp-watch">
-                  <div className="cp-watch-bar"><span className={videoWatched ? "ready" : ""} style={{ width: `${watchProgress}%` }} /></div>
-                  <span>{videoWatched ? "Ready to complete" : `Watched ${watchProgress}% · keep watching to unlock completion`}</span>
+                ) : isEmbeddedVideo(lessonVideo.kind) ? (
+                  <iframe
+                    key={lessonVideo.src}
+                    src={lessonVideo.src}
+                    title={currentModule.title}
+                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0, backgroundColor: "#000" }}
+                    allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+                    allowFullScreen
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    sandbox="allow-scripts allow-same-origin allow-presentation"
+                    loading="lazy"
+                    onLoad={() => {
+                      if (isAdmin || completedIdsRef.current.has(lessonId)) {
+                        setVideoWatched(true)
+                        setWatchProgress(100)
+                      }
+                    }}
+                  />
+                ) : (
+                  <video
+                    ref={videoRef}
+                    src={lessonVideo.src}
+                    controls
+                    controlsList="nodownload noremoteplayback noplaybackrate nofullscreen"
+                    disablePictureInPicture
+                    playsInline
+                    onContextMenu={e => e.preventDefault()}
+                    onDoubleClick={toggleFullscreen}
+                    style={{ width: "100%", height: "100%", objectFit: "contain", backgroundColor: "#000" }}
+                  />
+                )
+              ) : (
+                <div className="video-placeholder">
+                  <div>
+                    <PlayCircle size={36} aria-hidden="true" />
+                    <p>The video for this lesson is not uploaded yet.</p>
+                    <small>Check back soon.</small>
+                  </div>
                 </div>
+              )}
+              {currentModule.video_url && lessonVideo.kind !== "unsupported" ? (
+                <button type="button" className="cp-fs-btn" onClick={toggleFullscreen} aria-label={isFullscreen ? "Exit full screen" : "Full screen"} title={isFullscreen ? "Exit full screen (Esc)" : "Full screen"}>
+                  {isFullscreen ? <Minimize size={18} aria-hidden="true" /> : <Maximize size={18} aria-hidden="true" />}
+                </button>
               ) : null}
+            </div>
+          )}
 
-              <section className="cp-lesson-head">
+          {!isLocked && currentModule.video_url && !isCompleted && !isAdmin ? (
+            <div className="cp-watch">
+              <div className="cp-watch-bar"><span className={videoWatched ? "ready" : ""} style={{ width: `${watchProgress}%` }} /></div>
+              <span>{videoWatched ? "Ready to complete" : `Watched ${watchProgress}% · keep watching to unlock completion`}</span>
+            </div>
+          ) : null}
+        </div>
+
+        {!isLocked ? (
+          <div className="cp-body">
+            <div className="cp-head">
+              <div className="cp-head-text">
+                <h1>{currentModule.title}</h1>
                 <div className="cp-chips">
-                  <span className="cp-chip">Lesson {currentIndex + 1} of {modules.length}</span>
-                  {minutesOf(currentModule) > 0 ? <span className="cp-chip"><Clock size={13} aria-hidden="true" /> {minutesOf(currentModule)} min</span> : null}
-                  {isCompleted ? <span className="cp-chip ok"><Check size={13} strokeWidth={3} aria-hidden="true" /> Completed · rewatch freely</span> : null}
+                  <span className="cp-chip"><PlayCircle size={13} aria-hidden="true" /> Video{minutesOf(currentModule) > 0 ? ` · ${minutesOf(currentModule)} min` : ""}</span>
+                  {isCompleted ? <span className="cp-chip ok"><Check size={13} strokeWidth={3} aria-hidden="true" /> Completed</span> : null}
                   {resumePosition > 0 && !isCompleted && !isAdmin ? (
                     <span className="cp-chip warn"><RotateCcw size={13} aria-hidden="true" /> Resumed at {Math.floor(resumePosition / 60)}:{String(Math.floor(resumePosition % 60)).padStart(2, "0")}</span>
                   ) : null}
                   {isAdmin ? <span className="cp-chip admin" title="All lessons unlocked, free scrubbing and certificate preview">Admin preview</span> : null}
                 </div>
-                <h2>{currentModule.title}</h2>
-                {currentModule.description ? <p className="cp-desc">{currentModule.description}</p> : null}
-
-                <div className="cp-actions">
-                  {!isCompleted ? (
-                    <button
-                      type="button"
-                      onClick={markComplete}
-                      disabled={marking || (!videoWatched && !isAdmin)}
-                      className="btn btn-primary"
-                      title={!videoWatched && !isAdmin ? "Watch the video first" : ""}
-                    >
-                      <CircleCheck size={17} aria-hidden="true" />
-                      {marking ? "Saving…" : isAdmin ? "Mark complete (preview)" : videoWatched ? "Mark as complete" : `Watch to unlock (${watchProgress}%)`}
-                    </button>
-                  ) : nextModule ? (
-                    <button type="button" className="btn btn-primary" onClick={() => goTo(nextModule)}>
-                      Next lesson <ChevronRight size={17} aria-hidden="true" />
-                    </button>
-                  ) : (
-                    <button type="button" className="btn btn-primary" onClick={() => navigate(`/certificate/${courseId}`)}>
-                      <Award size={17} aria-hidden="true" /> {isAdmin ? "Preview certificate" : "Get your certificate"}
-                    </button>
-                  )}
-                  <button type="button" onClick={askAboutLesson} className="btn btn-outline">
-                    <MessageCircle size={17} aria-hidden="true" /> Ask about this lesson
+              </div>
+              <div className="cp-actions">
+                {!isCompleted ? (
+                  <button
+                    type="button"
+                    onClick={markComplete}
+                    disabled={marking || (!videoWatched && !isAdmin)}
+                    className="btn btn-primary"
+                    title={!videoWatched && !isAdmin ? "Watch the video first" : ""}
+                  >
+                    <CircleCheck size={17} aria-hidden="true" />
+                    {marking ? "Saving…" : isAdmin ? "Mark complete" : videoWatched ? "Mark as complete" : `Watch to unlock (${watchProgress}%)`}
                   </button>
+                ) : nextModule ? (
+                  <button type="button" className="btn btn-primary" onClick={() => goTo(nextModule)}>
+                    Go to next lesson <ChevronRight size={17} aria-hidden="true" />
+                  </button>
+                ) : (
+                  <button type="button" className="btn btn-primary" onClick={() => navigate(`/certificate/${courseId}`)}>
+                    <Award size={17} aria-hidden="true" /> {isAdmin ? "Preview certificate" : "Get your certificate"}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="cp-tabs" role="tablist" aria-label="Lesson sections">
+              {tabs.map((t) => (
+                <button key={t.key} type="button" role="tab" aria-selected={activeTab === t.key} className={`cp-tab${activeTab === t.key ? " active" : ""}`} onClick={() => setLessonTab(t.key)}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            {activeTab === "overview" ? (
+              <section className="cp-panel">
+                {currentModule.description ? <p className="cp-desc">{currentModule.description}</p> : <p className="cp-muted">No notes for this lesson yet.</p>}
+                {quizAvailable && !quizPassed ? (
+                  <div className="cp-callout">
+                    <ListChecks size={20} aria-hidden="true" />
+                    <span><strong>This lesson has a quiz.</strong> Pass it with {quizMeta?.passing_score ?? 70}% to complete the lesson.</span>
+                    <button type="button" className="btn btn-outline" onClick={() => setLessonTab("quiz")}>Take the quiz</button>
+                  </div>
+                ) : null}
+                <button type="button" onClick={askAboutLesson} className="cp-ask">
+                  <MessageCircle size={17} aria-hidden="true" /> Ask a question about this lesson
+                </button>
+              </section>
+            ) : null}
+
+            {activeTab === "materials" ? (
+              <section className="cp-panel">
+                <div className="cp-files">
+                  {attachments.map(att => (
+                    <a key={att.id} href={att.file_url} target="_blank" rel="noreferrer noopener" className="cp-file">
+                      <span className="cp-file-icon"><FileText size={18} aria-hidden="true" /></span>
+                      <span className="cp-file-text">
+                        <strong>{att.title || att.file_name || "Attachment"}</strong>
+                        <span>{att.description || att.file_type || "Download file"}</span>
+                      </span>
+                      <Download size={16} aria-hidden="true" className="cp-file-dl" />
+                    </a>
+                  ))}
                 </div>
               </section>
+            ) : null}
 
-              {attachments.length > 0 && (
-                <section className="cp-card">
-                  <div className="cp-card-head">
-                    <div>
-                      <h3>Lesson materials</h3>
-                      <p className="cp-muted">Download supporting files for this lesson.</p>
-                    </div>
-                    <span className="cp-muted">{attachments.length} item{attachments.length === 1 ? "" : "s"}</span>
+            {activeTab === "quiz" ? (
+              <section className="cp-panel">
+                <div className="cp-quiz-head">
+                  <div>
+                    <h2>Lesson quiz</h2>
+                    <p className="cp-muted">Pass with {quizMeta?.passing_score ?? 70}% to complete this lesson.</p>
                   </div>
-                  <div className="cp-files">
-                    {attachments.map(att => (
-                      <a key={att.id} href={att.file_url} target="_blank" rel="noreferrer noopener" className="cp-file">
-                        <span className="cp-file-icon"><FileText size={18} aria-hidden="true" /></span>
-                        <span className="cp-file-text">
-                          <strong>{att.title || att.file_name || "Attachment"}</strong>
-                          <span>{att.description || att.file_type || "Download file"}</span>
-                        </span>
-                        <Download size={16} aria-hidden="true" className="cp-file-dl" />
-                      </a>
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              {quizAvailable && (
-                <section className="cp-card">
-                  <div className="cp-card-head">
-                    <div>
-                      <span className="cp-eyebrow">Lesson quiz</span>
-                      <h3>Pass with {quizMeta?.passing_score ?? 70}% to complete this lesson</h3>
+                  <strong className="cp-quiz-count">{quizSubmitted ? `Score: ${quizScore}%` : `${quizQuestions.length} question${quizQuestions.length === 1 ? "" : "s"}`}</strong>
+                </div>
+                {quizLoading ? (
+                  <p className="cp-muted">Loading quiz…</p>
+                ) : quizSubmitted ? (
+                  <div className="cp-quiz-result-wrap">
+                    <div className={`cp-quiz-result ${quizPassed ? "pass" : "fail"}`}>
+                      <strong>{quizPassed ? "Passed" : "Not passed yet"}</strong>
+                      <p>{quizPassed ? "You can now mark this lesson complete." : "Review the lesson and try again."}</p>
                     </div>
-                    <strong className="cp-quiz-count">{quizSubmitted ? `Score: ${quizScore}%` : `${quizQuestions.length} question${quizQuestions.length === 1 ? "" : "s"}`}</strong>
-                  </div>
-
-                  {quizLoading ? (
-                    <p className="cp-muted">Loading quiz…</p>
-                  ) : quizSubmitted ? (
-                    <div className="cp-quiz-result-wrap">
-                      <div className={`cp-quiz-result ${quizPassed ? "pass" : "fail"}`}>
-                        <strong>{quizPassed ? "Passed" : "Not passed yet"}</strong>
-                        <p>{quizPassed ? "You can now mark this lesson complete." : "Review the lesson and try again."}</p>
-                      </div>
-                      {!quizPassed && (
-                        <button
-                          type="button"
-                          className="btn btn-outline"
-                          onClick={() => {
-                            setQuizSubmitted(false)
-                            setQuizScore(null)
-                            setQuizPassed(false)
-                            setUserAnswers({})
-                          }}
-                        >
-                          <RotateCcw size={16} aria-hidden="true" /> Retake quiz
-                        </button>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="cp-quiz">
-                      {quizQuestions.map((question, idx) => (
-                        <fieldset key={question.id} className="cp-question">
-                          <legend>{idx + 1}. {question.question_text}</legend>
-                          {(question.options || []).map((opt, optIndex) => {
-                            const optionText = String(opt.text || opt.label || opt.value || "").trim()
-                            const checked = userAnswers[question.id] === optionText
-                            return (
-                              <label key={optIndex} className={`cp-option${checked ? " checked" : ""}`}>
-                                <input
-                                  type="radio"
-                                  name={`quiz-${question.id}`}
-                                  value={optionText}
-                                  checked={checked}
-                                  onChange={() => setUserAnswers(prev => ({ ...prev, [question.id]: optionText }))}
-                                />
-                                <span>{optionText}</span>
-                              </label>
-                            )
-                          })}
-                        </fieldset>
-                      ))}
-
-                      {quizMessage && <p role="alert" className="cp-alert">{quizMessage}</p>}
+                    {!quizPassed && (
                       <button
                         type="button"
-                        className="btn btn-primary"
-                        onClick={submitQuiz}
-                        disabled={quizQuestions.some(q => !userAnswers[q.id])}
+                        className="btn btn-outline"
+                        onClick={() => {
+                          setQuizSubmitted(false)
+                          setQuizScore(null)
+                          setQuizPassed(false)
+                          setUserAnswers({})
+                        }}
                       >
-                        Submit quiz
+                        <RotateCcw size={16} aria-hidden="true" /> Retake quiz
                       </button>
-                    </div>
-                  )}
-                </section>
-              )}
+                    )}
+                  </div>
+                ) : (
+                  <div className="cp-quiz">
+                    {quizQuestions.map((question, idx) => (
+                      <fieldset key={question.id} className="cp-question">
+                        <legend>{idx + 1}. {question.question_text}</legend>
+                        {(question.options || []).map((opt, optIndex) => {
+                          const optionText = String(opt.text || opt.label || opt.value || "").trim()
+                          const checked = userAnswers[question.id] === optionText
+                          return (
+                            <label key={optIndex} className={`cp-option${checked ? " checked" : ""}`}>
+                              <input
+                                type="radio"
+                                name={`quiz-${question.id}`}
+                                value={optionText}
+                                checked={checked}
+                                onChange={() => setUserAnswers(prev => ({ ...prev, [question.id]: optionText }))}
+                              />
+                              <span>{optionText}</span>
+                            </label>
+                          )
+                        })}
+                      </fieldset>
+                    ))}
+                    {quizMessage && <p role="alert" className="cp-alert">{quizMessage}</p>}
+                    <button type="button" className="btn btn-primary" onClick={submitQuiz} disabled={quizQuestions.some(q => !userAnswers[q.id])}>
+                      Submit quiz
+                    </button>
+                  </div>
+                )}
+              </section>
+            ) : null}
+          </div>
+        ) : null}
 
-              <nav className="cp-pager" aria-label="Lesson navigation">
-                {prevModule ? (
-                  <button type="button" className="cp-pager-btn" onClick={() => goTo(prevModule)}>
-                    <ChevronLeft size={18} aria-hidden="true" />
-                    <span><small>Previous</small>{prevModule.title}</span>
-                  </button>
-                ) : <span />}
-                {nextModule ? (
-                  <button type="button" className="cp-pager-btn next" onClick={() => goTo(nextModule)} disabled={nextLocked} title={nextLocked ? "Complete this lesson to unlock the next one" : undefined}>
-                    <span><small>{nextLocked ? "Next (complete this lesson first)" : "Next"}</small>{nextModule.title}</span>
-                    {nextLocked ? <Lock size={16} aria-hidden="true" /> : <ChevronRight size={18} aria-hidden="true" />}
-                  </button>
-                ) : null}
-              </nav>
-            </>
-          )}
-        </main>
-      </div>
+        <nav className="cp-bottombar" aria-label="Lesson navigation">
+          <button type="button" className="cp-nav-btn" onClick={() => prevModule && goTo(prevModule)} disabled={!prevModule}>
+            <ChevronLeft size={18} aria-hidden="true" /> <span>Previous</span>
+          </button>
+          <span className="cp-bottom-meta">Lesson {currentIndex + 1} of {modules.length} · {coursePct}% of course complete</span>
+          <button
+            type="button"
+            className="cp-nav-btn next"
+            onClick={() => nextModule && goTo(nextModule)}
+            disabled={!nextModule || nextLocked}
+            title={nextLocked ? "Complete this lesson to unlock the next one" : undefined}
+          >
+            <span>Next</span> {nextLocked ? <Lock size={16} aria-hidden="true" /> : <ChevronRight size={18} aria-hidden="true" />}
+          </button>
+        </nav>
+      </main>
     </div>
   )
 }
