@@ -93,6 +93,7 @@ function AppShell() {
   const isPatientRoute = location.pathname.startsWith("/patient") || location.pathname === "/patient-portal" || isPosRoute
   const isFlyerRoute = location.pathname === "/patient-flyer"
   const isActivationRoute = location.pathname.startsWith("/activate/")
+  const isAdminRoute = location.pathname.startsWith("/admin")
 
   return (
     <>
@@ -163,7 +164,7 @@ function AppShell() {
         <Route path="/reset/pharmacyos" element={<ResetRedirect app="remedacarepos" />} />
         </Routes>
       </Suspense>
-      {!isPatientRoute && !isFlyerRoute && !isActivationRoute ? <Footer /> : null}
+      {!isPatientRoute && !isFlyerRoute && !isActivationRoute && !isAdminRoute ? <Footer /> : null}
       {!isPatientRoute && !isFlyerRoute && !isActivationRoute ? <ChatWidget /> : null}
     </>
   )

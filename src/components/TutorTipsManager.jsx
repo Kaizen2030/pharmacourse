@@ -5,6 +5,7 @@ import { SITE_URL } from "../lib/siteConfig"
 import { waGateway } from "../lib/waGateway"
 import { confirmDialog } from "../lib/dialog"
 import TutorGroupPanel from "./TutorGroupPanel"
+import "../styles/wa-ui.css"
 
 export default function TutorTipsManager({ courseId, courseTitle, courseSlug, instructorId = null, gatewayInstanceId = "" }) {
   const [posts, setPosts] = useState([])
@@ -198,7 +199,7 @@ export default function TutorTipsManager({ courseId, courseTitle, courseSlug, in
   if (!courseId) return <p style={{ color: "var(--text-500)" }}>Save the course first to add WhatsApp tips.</p>
 
   return (
-    <div className="card" style={{ padding: "1.25rem", display: "grid", gap: "1rem" }}>
+    <div className="card wa-tips" style={{ padding: "1.25rem", display: "grid", gap: "1rem" }}>
       <div style={{ borderBottom: "1px solid var(--border)", paddingBottom: "0.7rem", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
         <div>
           <h3 style={{ margin: 0, fontSize: "1rem" }}>{courseTitle || "Untitled course"}</h3>
@@ -219,8 +220,8 @@ export default function TutorTipsManager({ courseId, courseTitle, courseSlug, in
       </div>
       {error ? <div role="alert" style={{ color: "var(--danger)", fontSize: "0.85rem" }}>{error}</div> : null}
       <form onSubmit={add} style={{ display: "grid", gap: "0.6rem" }}>
-        <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Tip title" maxLength={120} />
-        <textarea value={body} onChange={(event) => setBody(event.target.value)} placeholder="Write the tip (max 1500 characters)" rows={4} maxLength={1500} />
+        <input value={title} onChange={(event) => setTitle(event.target.value)} aria-label="Tip title" placeholder="Tip title" maxLength={120} />
+        <textarea value={body} onChange={(event) => setBody(event.target.value)} aria-label="Tip text" placeholder="Write the tip (max 1500 characters)" rows={4} maxLength={1500} />
         <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: "0.6rem" }}>
           <label style={{ display: "grid", gap: ".3rem", fontSize: ".8rem", color: "var(--text-500)" }}>
             Workflow

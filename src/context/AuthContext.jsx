@@ -76,7 +76,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let isActive = true
 
-    async function applySession(session, isInitial = false) {
+    async function applySession(session) {
       if (!isActive) return
 
       const nextUser = session?.user ?? null
@@ -88,8 +88,8 @@ export function AuthProvider({ children }) {
         return
       }
 
-      if (!isInitial) setLoading(false)
-
+      // Keep `loading` true until the profile has arrived: AdminRoute reads isAdmin from the profile, and ending loading
+      // early sent admins who opened /admin directly (or refreshed it) to /dashboard.
       try {
         const nextProfile = await ensureProfile(nextUser)
         if (!isActive) return
@@ -111,7 +111,7 @@ export function AuthProvider({ children }) {
         )
 
         if (error) throw error
-        await applySession(data?.session ?? null, true)
+        await applySession(data?.session ?? null)
       } catch (error) {
         console.error("[Auth] Load failed:", error)
         if (!isActive) return
@@ -124,7 +124,7 @@ export function AuthProvider({ children }) {
     restoreSession()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
-      window.setTimeout(() => { void applySession(session, false) }, 0)
+      window.setTimeout(() => { void applySession(session) }, 0)
     })
 
     return () => {

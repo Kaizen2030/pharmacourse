@@ -79,9 +79,10 @@ export default function ChatWidget() {
       {open ? (
         <section className="cw-panel" aria-label="Pharmacourse help chat">
           <header className="cw-head">
-            <div>
+            <span className="cw-avatar" aria-hidden="true"><MessageCircle size={18} /></span>
+            <div className="cw-title">
               <strong>Pharmacourse help</strong>
-              <span>Website assistant</span>
+              <span>Instant answers to common questions</span>
             </div>
             <button type="button" className="cw-icon-btn" onClick={() => setOpen(false)} aria-label="Close chat">
               <X size={18} />
@@ -113,7 +114,7 @@ export default function ChatWidget() {
 
           {handoff ? (
             <footer className="cw-foot">
-              <a href={handoff} target="_blank" rel="noreferrer">Chat with general support</a>
+              <a href={handoff} target="_blank" rel="noreferrer" className="cw-wa-btn"><MessageCircle size={16} aria-hidden="true" /> Chat with us on WhatsApp</a>
             </footer>
           ) : null}
         </section>

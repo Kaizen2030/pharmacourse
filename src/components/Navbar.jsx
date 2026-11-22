@@ -2,16 +2,17 @@ import { useState, useEffect, useRef } from "react"
 import { Link, useNavigate, useLocation } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import { supabase } from "../lib/supabaseClient"
+import { BookOpen, Building2, CalendarDays, ChevronDown, LayoutDashboard, LogOut, MessageCircle, ShieldCheck, ShoppingCart, Users, X } from "lucide-react"
 
 const learnLinks = [
-  { to: "/courses", label: "Explore" },
-  { to: "/workshops", label: "Workshops" },
-  { to: "/team-plans", label: "Team Plans" },
+  { to: "/courses", label: "Courses", detail: "Self-paced CPD courses with certificates", icon: BookOpen },
+  { to: "/workshops", label: "Workshops", detail: "Live sessions and webinar replays", icon: CalendarDays },
+  { to: "/team-plans", label: "Team Plans", detail: "Train your whole pharmacy team", icon: Users },
 ]
 
 const productLinks = [
-  { to: "/remedacarepos", label: "RemedacarePOS", detail: "Telepharmacy, dispensing, inventory, claims, and branch pharmacy operations" },
-  { to: "/remedacarehmis", label: "RemedacareHMIS", detail: "Clinical workflows, chronic care, finance, AMS, and hospital-wide control" },
+  { to: "/remedacarepos", label: "RemedacarePOS", detail: "Dispensing, inventory, claims and branch pharmacy operations", icon: ShoppingCart },
+  { to: "/remedacarehmis", label: "RemedacareHMIS", detail: "Clinical workflows, chronic care, finance and hospital-wide control", icon: Building2 },
 ]
 
 export default function Navbar() {
@@ -100,10 +101,11 @@ export default function Navbar() {
           className={`nav-dropdown-trigger${active ? " active" : ""}`}
           aria-haspopup="menu"
           aria-expanded={isOpen}
-          onClick={() => handleDesktopDropdownToggle(name)}
+          // A mouse click right after hover-open must not close it again; keyboard (detail 0) toggles.
+          onClick={(event) => (event.detail === 0 ? handleDesktopDropdownToggle(name) : setOpenDropdown(name))}
         >
           <span>{label}</span>
-          <span className={`nav-chevron${isOpen ? " open" : ""}`}>v</span>
+          <ChevronDown size={16} aria-hidden="true" className={`nav-chevron${isOpen ? " open" : ""}`} />
         </button>
 
         {isOpen ? (
@@ -122,12 +124,11 @@ export default function Navbar() {
                 className={`nav-dropdown-link${isActive(link.to) ? " active" : ""}`}
                 onClick={() => setOpenDropdown(null)}
               >
-                <span style={{ display: "block", fontWeight: 800 }}>{link.label}</span>
-                {link.detail ? (
-                  <span style={{ display: "block", marginTop: 4, fontSize: 12, lineHeight: 1.45, color: "var(--text-500)" }}>
-                    {link.detail}
-                  </span>
-                ) : null}
+                {link.icon ? <span className="nav-item-icon"><link.icon size={18} aria-hidden="true" /></span> : null}
+                <span className="nav-item-text">
+                  <span className="nav-item-label">{link.label}</span>
+                  {link.detail ? <span className="nav-item-detail">{link.detail}</span> : null}
+                </span>
               </Link>
             ))}
           </div>
@@ -177,18 +178,30 @@ export default function Navbar() {
                 >
                   <span className="nav-user-avatar">{firstName.charAt(0).toUpperCase()}</span>
                   <span>{firstName}</span>
-                  <span className={`nav-chevron${userMenuOpen ? " open" : ""}`}>v</span>
+                  <ChevronDown size={16} aria-hidden="true" className={`nav-chevron${userMenuOpen ? " open" : ""}`} />
                 </button>
 
                 {userMenuOpen ? (
                   <div className="nav-dropdown-panel nav-user-panel" role="menu" aria-label="User menu">
+                    <div className="nav-user-head">
+                      <strong>{profile?.full_name || "Your account"}</strong>
+                      <span>{user.email}</span>
+                    </div>
                     <Link
                       to="/dashboard"
                       role="menuitem"
                       className={`nav-dropdown-link${isActive("/dashboard") ? " active" : ""}`}
                       onClick={() => setUserMenuOpen(false)}
                     >
-                      My Learning
+                      <LayoutDashboard size={17} aria-hidden="true" /> My Learning
+                    </Link>
+                    <Link
+                      to="/whatsapp-settings"
+                      role="menuitem"
+                      className={`nav-dropdown-link${isActive("/whatsapp-settings") ? " active" : ""}`}
+                      onClick={() => setUserMenuOpen(false)}
+                    >
+                      <MessageCircle size={17} aria-hidden="true" /> WhatsApp updates
                     </Link>
                     {isAdmin ? (
                       <Link
@@ -197,7 +210,7 @@ export default function Navbar() {
                         className={`nav-dropdown-link${isActive("/admin") ? " active" : ""}`}
                         onClick={() => setUserMenuOpen(false)}
                       >
-                        Admin
+                        <ShieldCheck size={17} aria-hidden="true" /> Admin
                       </Link>
                     ) : null}
                     <button
@@ -206,7 +219,7 @@ export default function Navbar() {
                       className="nav-dropdown-link nav-dropdown-danger"
                       onClick={handleLogout}
                     >
-                      Sign Out
+                      <LogOut size={17} aria-hidden="true" /> Sign Out
                     </button>
                   </div>
                 ) : null}
@@ -238,7 +251,7 @@ export default function Navbar() {
       <div ref={drawerRef} id="mobile-nav-drawer" className={`nav-drawer ${menuOpen ? "open" : ""}`}>
         <div className="nav-drawer-header">
           <Link to="/" className="nav-logo" onClick={() => setMenuOpen(false)}>Pharmacourse</Link>
-          <button className="nav-drawer-close" onClick={() => setMenuOpen(false)} aria-label="Close menu">x</button>
+          <button className="nav-drawer-close" onClick={() => setMenuOpen(false)} aria-label="Close menu"><X size={20} aria-hidden="true" /></button>
         </div>
 
         <ul className="nav-drawer-links">
@@ -260,13 +273,14 @@ export default function Navbar() {
               onClick={() => toggleMobileSection("learn")}
             >
               <span>Learn</span>
-              <span className={`nav-chevron${mobileSections.learn ? " open" : ""}`}>v</span>
+              <ChevronDown size={18} aria-hidden="true" className={`nav-chevron${mobileSections.learn ? " open" : ""}`} />
             </button>
             {mobileSections.learn ? (
               <div className="nav-drawer-subgroup">
-                {learnLinks.map(({ to, label }) => (
-                  <Link key={to} to={to} className={isActive(to) ? "active" : ""} onClick={() => setMenuOpen(false)}>
-                    {label}
+                {learnLinks.map((link) => (
+                  <Link key={link.to} to={link.to} className={isActive(link.to) ? "active" : ""} onClick={() => setMenuOpen(false)}>
+                    <link.icon size={18} aria-hidden="true" />
+                    <span>{link.label}</span>
                   </Link>
                 ))}
               </div>
@@ -281,18 +295,14 @@ export default function Navbar() {
               onClick={() => toggleMobileSection("products")}
             >
               <span>Products</span>
-              <span className={`nav-chevron${mobileSections.products ? " open" : ""}`}>v</span>
+              <ChevronDown size={18} aria-hidden="true" className={`nav-chevron${mobileSections.products ? " open" : ""}`} />
             </button>
             {mobileSections.products ? (
               <div className="nav-drawer-subgroup">
-                {productLinks.map(({ to, label, detail }) => (
-                  <Link key={to} to={to} className={isActive(to) ? "active" : ""} onClick={() => setMenuOpen(false)}>
-                    <span style={{ display: "block", fontWeight: 800 }}>{label}</span>
-                    {detail ? (
-                      <span style={{ display: "block", marginTop: 4, fontSize: 12, lineHeight: 1.45, color: "var(--text-500)" }}>
-                        {detail}
-                      </span>
-                    ) : null}
+                {productLinks.map((link) => (
+                  <Link key={link.to} to={link.to} className={isActive(link.to) ? "active" : ""} onClick={() => setMenuOpen(false)}>
+                    <link.icon size={18} aria-hidden="true" />
+                    <span>{link.label}</span>
                   </Link>
                 ))}
               </div>
@@ -326,6 +336,9 @@ export default function Navbar() {
               <div className="nav-drawer-user-links">
                 <Link to="/dashboard" className={isActive("/dashboard") ? "active" : ""} onClick={() => setMenuOpen(false)}>
                   My Learning
+                </Link>
+                <Link to="/whatsapp-settings" className={isActive("/whatsapp-settings") ? "active" : ""} onClick={() => setMenuOpen(false)}>
+                  WhatsApp updates
                 </Link>
                 {isAdmin ? (
                   <Link to="/admin" className={isActive("/admin") ? "active" : ""} onClick={() => setMenuOpen(false)}>
@@ -613,32 +626,6 @@ export default function Navbar() {
           color: var(--text-900, #111);
         }
 
-        .nav-drawer-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 1rem 1.25rem;
-          border-bottom: 1px solid #eee;
-        }
-
-        .nav-drawer-close {
-          width: 32px;
-          height: 32px;
-          border: none;
-          border-radius: 8px;
-          color: var(--text-500, #888);
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 1rem;
-          transition: background 0.2s ease;
-        }
-
-        .nav-drawer-close:hover {
-          background: #f0f0f0;
-        }
-
         .nav-drawer-links {
           list-style: none;
           padding: 1rem 0;
@@ -744,6 +731,26 @@ export default function Navbar() {
           border-color: rgba(220, 38, 38, 0.28);
           color: var(--danger, #dc2626);
         }
+
+        .nav-dropdown-panel { animation: navPop 0.16s ease; }
+        @keyframes navPop { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+        .nav-dropdown-link { flex-direction: row; align-items: flex-start; gap: 0.75rem; }
+        .nav-item-icon { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 11px; background: var(--green-light, #e9f7f1); color: var(--green, #0f6e56); }
+        .nav-item-text { display: grid; gap: 2px; }
+        .nav-item-label { font-weight: 700; color: var(--text-900, #11231d); }
+        .nav-item-detail { font-size: 12px; line-height: 1.45; font-weight: 500; color: var(--text-500, #607068); }
+        .nav-dropdown-link:hover .nav-item-label, .nav-dropdown-link.active .nav-item-label { color: var(--green, #0f6e56); }
+        .nav-dropdown-link:focus-visible, .nav-dropdown-trigger:focus-visible, .nav-user-trigger:focus-visible { outline: 2px solid var(--green, #0f6e56); outline-offset: 2px; }
+        .nav-user-panel { width: 250px; min-width: 250px; }
+        .nav-user-panel .nav-dropdown-link { gap: 0.6rem; font-weight: 600; justify-content: flex-start; text-align: left; }
+        .nav-user-panel .nav-dropdown-link svg { color: var(--text-500, #607068); }
+        .nav-user-panel .nav-dropdown-link:hover svg, .nav-user-panel .nav-dropdown-link.active svg, .nav-user-panel .nav-dropdown-danger svg { color: currentColor; }
+        .nav-user-head { display: grid; gap: 2px; padding: 0.6rem 0.85rem 0.7rem; margin-bottom: 0.2rem; border-bottom: 1px solid var(--border, #dfe8e3); }
+        .nav-user-head strong { font-size: 0.9rem; color: var(--text-900, #11231d); }
+        .nav-user-head span { font-size: 0.78rem; color: var(--text-500, #607068); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .nav-drawer-subgroup a { display: flex; align-items: center; gap: 0.7rem; }
+        .nav-drawer-subgroup a svg { flex: none; color: var(--green, #0f6e56); opacity: 0.85; }
+        .nav-drawer-close svg { display: block; }
 
         @media (max-width: 768px) {
           .nav-hamburger { display: flex; }

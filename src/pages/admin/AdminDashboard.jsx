@@ -4,7 +4,7 @@ import { supabase } from "../../lib/supabaseClient"
 import { useAuth } from "../../context/AuthContext"
 import {
   BookOpen, Home, LogOut, Plus, Edit2, Trash2, Eye, EyeOff,
-  Save, GripVertical, AlertCircle, RefreshCw, FlaskConical, Users, Award, ExternalLink, Video, Building2, Tags, BarChart3, MessageSquare, Search
+  Save, GripVertical, AlertCircle, RefreshCw, FlaskConical, Users, Award, ExternalLink, Video, Building2, Tags, BarChart3, MessageSquare, Search, Trophy, ListChecks, ShieldCheck, Star
 } from "lucide-react"
 import Pagination from "../../components/Pagination"
 import BlogContentRenderer from "../../components/BlogContentRenderer"
@@ -193,14 +193,14 @@ export default function AdminDashboard() {
             className={`menu-item ${activeTab === "testimonials" ? "active" : ""}`}
             onClick={() => setActiveTab("testimonials")}
           >
-            <Award size={20} />
+            <Star size={20} />
             <span>Testimonials</span>
           </button>
           <button
             className={`menu-item ${activeTab === "leaderboard" ? "active" : ""}`}
             onClick={() => setActiveTab("leaderboard")}
           >
-            <RefreshCw size={20} />
+            <Trophy size={20} />
             <span>Leaderboard</span>
           </button>
           <button
@@ -245,7 +245,7 @@ export default function AdminDashboard() {
             className={`menu-item ${activeTab === "quizzes" ? "active" : ""}`}
             onClick={() => setActiveTab("quizzes")}
           >
-            <Plus size={20} />
+            <ListChecks size={20} />
             <span>Quizzes</span>
           </button>
           <button
@@ -260,7 +260,7 @@ export default function AdminDashboard() {
               className={`menu-item ${activeTab === "admins" ? "active" : ""}`}
               onClick={() => setActiveTab("admins")}
             >
-              <Users size={20} />
+              <ShieldCheck size={20} />
               <span>Admins</span>
             </button>
           )}
