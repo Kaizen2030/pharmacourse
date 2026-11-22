@@ -7,6 +7,7 @@ import AnalyticsConsentBanner from "./components/AnalyticsConsentBanner"
 import ChatWidget from "./components/ChatWidget"
 import Footer from "./components/Footer"
 import Navbar from "./components/Navbar"
+import TutorTicker from "./components/TutorTicker"
 import PatientLayout from "./components/PatientLayout"
 import PatientInstallPrompt from "./components/PatientInstallPrompt"
 import DialogHost from "./components/DialogHost"
@@ -107,6 +108,7 @@ function AppShell() {
       <AnalyticsConsentBanner />
       {isPatientRoute ? <PatientInstallPrompt /> : null}
       {!isPatientRoute && !isFlyerRoute && !isActivationRoute ? <Navbar /> : null}
+      {!isPatientRoute && !isFlyerRoute && !isActivationRoute && !isAdminRoute && !isLearnRoute && !location.pathname.startsWith("/tutor") ? <TutorTicker /> : null}
       <Suspense fallback={<RouteFallback />}>
         <Routes>
         <Route path="/" element={<Home />} />

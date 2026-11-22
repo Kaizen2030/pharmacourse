@@ -1,0 +1,56 @@
+/* Running tutor recruitment banner (under the menu). */
+.tt {
+  position: relative; z-index: 5; display: flex; align-items: center; gap: 0.6rem;
+  min-height: 44px; padding: 0 0.5rem 0 clamp(0.6rem, 2vw, 1.2rem);
+  background: linear-gradient(90deg, #0a3d30 0%, #0f6e56 55%, #129474 100%);
+  color: #fff; overflow: hidden;
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.08);
+}
+.tt-badge {
+  flex: none; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.7rem; border-radius: 999px;
+  background: #9ff0cf; color: #0a3d30; font-size: 0.78rem; font-weight: 800; letter-spacing: 0.02em; white-space: nowrap;
+  box-shadow: 0 0 0 0 rgba(159, 240, 207, 0.6); animation: tt-pulse 2.4s ease-out infinite;
+}
+.tt-viewport {
+  flex: 1; min-width: 0; overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent 0, #000 40px, #000 calc(100% - 40px), transparent 100%);
+}
+.tt-track { display: flex; width: max-content; animation: tt-scroll var(--tt-duration, 60s) linear infinite; }
+.tt:hover .tt-track, .tt:focus-within .tt-track { animation-play-state: paused; }
+.tt-list { display: flex; flex: none; margin: 0; padding: 0; list-style: none; }
+.tt-item { display: inline-flex; align-items: center; gap: 0.7rem; padding: 0 1.4rem 0 0; white-space: nowrap; font-size: 0.9rem; font-weight: 600; color: rgba(255, 255, 255, 0.92); }
+.tt-item.course { color: #fff; font-weight: 800; }
+.tt-item.course::after { content: ""; }
+.tt-dot { color: #9ff0cf; font-size: 0.75rem; }
+.tt-cta {
+  flex: none; padding: 0.45rem 0.95rem; border-radius: 999px; background: #fff; color: #0a5c3e;
+  font-size: 0.84rem; font-weight: 800; text-decoration: none; white-space: nowrap; transition: transform 0.15s ease, background 0.15s ease;
+}
+.tt-cta:hover { background: #e9fff5; transform: translateY(-1px); }
+.tt-cta:focus-visible, .tt-close:focus-visible { outline: 3px solid #9ff0cf; outline-offset: 2px; }
+.tt-close {
+  flex: none; display: grid; place-items: center; width: 30px; height: 30px; border: 0; border-radius: 50%;
+  background: transparent; color: rgba(255, 255, 255, 0.75); cursor: pointer;
+}
+.tt-close:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
+
+@keyframes tt-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes tt-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(159, 240, 207, 0.55); }
+  70% { box-shadow: 0 0 0 9px rgba(159, 240, 207, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(159, 240, 207, 0); }
+}
+
+@media (max-width: 640px) {
+  .tt-badge span { display: none; }
+  .tt-badge { padding: 0.35rem; }
+  .tt-item { font-size: 0.84rem; }
+  .tt-cta { padding: 0.4rem 0.75rem; font-size: 0.8rem; }
+}
+
+/* Visitors who prefer less motion: no scrolling; the list can be swiped sideways instead. */
+@media (prefers-reduced-motion: reduce) {
+  .tt-track { animation: none; }
+  .tt-viewport { overflow-x: auto; mask-image: none; }
+  .tt-badge { animation: none; }
+}
