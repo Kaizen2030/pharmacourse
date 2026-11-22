@@ -1,69 +1,47 @@
 # Social posting setup
 
 Admin → **Blog & site → Social** lets you write a post once (caption, link, poster or video) and send it to your
-channels. It works at three levels.
+channels. Everything is done in Admin. You never edit code or type commands.
 
-## Level 1: no setup (works after the SQL)
-Run `supabase/security/2026-11-30_phase11_social.sql` in the Supabase SQL editor (project `nnjiutikutsjvggakvvv`).
-Then:
-- Add your channel links under **Channels**. They appear as icons in the site footer.
-- Every post gets **Share** buttons (Facebook, LinkedIn, X, WhatsApp), **Copy caption** and **Download media**,
-  so you can post by hand in seconds.
+## Step 1: database (once)
+In the Supabase SQL editor (project `nnjiutikutsjvggakvvv`), run these two files in order:
+1. `supabase/security/2026-11-30_phase11_social.sql` (posts, channels, share buttons)
+2. `supabase/security/2026-12-04_phase11b_social_keys_vault.sql` (secure key storage, plus scheduled posts switched on automatically)
 
-## Why a link alone cannot auto-post
-Facebook, Instagram, LinkedIn, TikTok, X and YouTube only accept posts from approved apps with a sign-in token for
-your account. A publishing service holds those approvals for you; you connect your accounts once and Pharmacourse
-posts through it.
+Run the main files, not the ones ending in `_rollback` (those undo a step). Running a file twice is harmless.
 
-## Level 2: automatic posting with Ayrshare (closest to Wix)
-1. Create an account at https://www.ayrshare.com (paid plans; pick one that includes the networks you use).
-2. In the Ayrshare dashboard, link your Facebook Page, Instagram Business account, LinkedIn page, TikTok, X and YouTube.
-3. Copy your API key and set it on the server, then deploy:
+You can now add your channel links under **Channels** (they show as icons in the site footer). Every post also has
+**Share** buttons, **Copy caption** and **Download media** for posting by hand.
 
-```
-supabase secrets set --project-ref nnjiutikutsjvggakvvv AYRSHARE_API_KEY=... APP_ORIGIN=https://www.pharmacourse.co.ke
-supabase functions deploy social-publish --project-ref nnjiutikutsjvggakvvv --no-verify-jwt
-```
+## Step 2: automatic posting: paste your key in Admin
+Admin → Blog & site → Social → **Auto-posting**:
 
-The Social page then shows **Auto-posting on**, marks networks that are not linked, and **Publish post** sends
-the post straight away. Results (with links to the live posts) appear on each post.
+**Ayrshare (easiest, paid)**
+1. Create an account at ayrshare.com and link your Facebook Page, Instagram, LinkedIn, TikTok, X and YouTube there.
+2. Copy your **API Key** from the Ayrshare dashboard.
+3. Paste it in Auto-posting, then click **Save securely**. The box turns green and shows how many networks are linked.
 
-Network rules to know: Instagram needs a poster or video; TikTok and YouTube need a video; X allows 280 characters.
-The composer warns you before posting.
+**Make.com or Zapier (free)**
+1. In Make.com, create a scenario whose first module is **Webhooks › Custom webhook**, then copy its address.
+2. Paste that link in Auto-posting (choose "Make.com / Zapier"), then click **Save securely**.
+3. In Make, add a "Create a post" module for each network. Use the `text` and `media_url` fields, then turn the scenario on.
+   The webhook receives `title, caption, link, text, media_url, media_type, networks`.
 
-## Level 2 (free alternative): Make.com, Zapier or n8n
-1. Create a scenario that starts with a **Custom webhook** and continues with "Create a post" steps for each network
-   (Facebook Pages, Instagram for Business, LinkedIn, etc.). Route by the `networks` field.
-2. The webhook receives JSON: `title, caption, link, text (caption + link), media_url, media_type, networks`.
-   It carries `X-Pharmacourse-Signature` (HMAC-SHA256 of the body with your secret) if you want to verify it.
-3. Set the secrets and deploy:
+**Scheduled posts** go out by themselves. Step 1 set up a check every 10 minutes.
 
-```
-supabase secrets set --project-ref nnjiutikutsjvggakvvv SOCIAL_WEBHOOK_URL=https://hook.make.com/... SOCIAL_WEBHOOK_SECRET=<random> \
-  APP_ORIGIN=https://www.pharmacourse.co.ke
-supabase functions deploy social-publish --project-ref nnjiutikutsjvggakvvv --no-verify-jwt
-```
+**One-time server setup** (skip this if you already did it for payments): supabase.com › Account › Access tokens ›
+Generate new token. Then GitHub › pharmacourse repo › Settings › Secrets and variables › Actions › New repository secret
+named `SUPABASE_ACCESS_TOKEN`. Then GitHub › Actions › "Deploy Supabase functions" › Run workflow.
 
-## Scheduled posts
-Scheduled posts are published when the scheduler calls the function. Set `SOCIAL_CRON_TOKEN=<random>` as a secret,
-then in the SQL editor (needs the pg_cron and pg_net extensions, available in Supabase → Database → Extensions):
+## Where the key goes
+- It is encrypted in Supabase Vault. Admin only ever shows "Saved ••••abcd".
+- Only a super admin can save or disconnect it. Visitors, learners, tutors and other admins cannot read it.
+- Only the posting server can use it. It is never in the website code or in GitHub.
+- Every save and every disconnect is written to the audit log.
 
-```
-select cron.schedule('social-posts', '*/10 * * * *', $$
-  select net.http_post(
-    url := 'https://nnjiutikutsjvggakvvv.supabase.co/functions/v1/social-publish',
-    headers := jsonb_build_object('Content-Type', 'application/json', 'x-cron-token', '<SOCIAL_CRON_TOKEN>'),
-    body := '{"action":"run-scheduled"}'::jsonb
-  );
-$$);
-```
+## Network rules
+Instagram needs a poster or video. TikTok and YouTube need a video. X allows 280 characters. The composer warns you before posting.
 
 ## Paid ads
-Paid campaigns (boosting a post, targeting, budgets) are created in Meta Ads Manager, TikTok Ads or LinkedIn Campaign
-Manager; they cannot be created by posting. Publish the post here, then use "Boost post" in Meta Business Suite.
-A later step can add the Meta Pixel (with the visitor's consent) so ads can measure course sign-ups.
-
-## Security
-- Only admins can create, see or publish posts; the database enforces it.
-- Uploaded posters and videos are public (they are public posts) and limited to images and videos up to 100 MB.
-- The Ayrshare key and webhook secret live only in Edge Function secrets, never in the website code.
+Paid campaigns are created in Meta Ads Manager, TikTok Ads or LinkedIn Campaign Manager. Publish the post here,
+then use "Boost post" in Meta Business Suite.

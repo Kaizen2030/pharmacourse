@@ -5,6 +5,7 @@ import { friendlyError } from "../../lib/friendlyError"
 import { confirmDialog } from "../../lib/dialog"
 import { SITE_URL } from "../../lib/siteConfig"
 import { BrandIcon } from "../../components/SocialIcons"
+import AdminSocialKeys from "./AdminSocialKeys"
 import { NETWORK_COLORS, NETWORK_NAMES } from "../../lib/socialNetworks"
 import "./admin-learning.css"
 import "./admin-social.css"
@@ -53,12 +54,16 @@ export default function AdminSocialTab() {
     setSetupNeeded(false); setPosts(data || [])
   }, [])
 
+  const checkConnection = useCallback(() => {
+    invokeSocial({ action: "status" })
+      .then((r) => setConnection(r.publisher ? { state: "on", publisher: r.publisher, linked: r.linked || [], key_ok: r.key_ok } : { state: "off", reachable: true }))
+      .catch(() => setConnection({ state: "off", reachable: false }))
+  }, [])
+
   useEffect(() => {
     void loadPosts()
-    invokeSocial({ action: "status" })
-      .then((r) => setConnection(r.publisher ? { state: "on", publisher: r.publisher, linked: r.linked || [] } : { state: "off" }))
-      .catch(() => setConnection({ state: "off" }))
-  }, [loadPosts])
+    checkConnection()
+  }, [loadPosts, checkConnection])
 
   async function publishNow(post) {
     setError(""); setNotice("")
@@ -91,12 +96,7 @@ export default function AdminSocialTab() {
       </header>
 
       {setupNeeded ? <div className="al-setup"><strong>One database step is needed.</strong> Run <code>supabase/security/2026-11-30_phase11_social.sql</code> in the Supabase SQL editor, then refresh.</div> : null}
-      {connection.state === "off" ? (
-        <div className="so-info">
-          <strong>Want posts to go out automatically?</strong> Connect your accounts once in Ayrshare, or a free Make.com or Zapier scenario,
-          then add the key on the server (see <code>docs/social-setup.md</code>). Until then, use the share buttons on each post.
-        </div>
-      ) : null}
+      {!setupNeeded ? <AdminSocialKeys connection={connection} onChanged={checkConnection} /> : null}
       {error ? <p role="alert" className="al-alert">{error}</p> : null}
       {notice ? <p role="status" className="al-alert ok">{notice}</p> : null}
 
