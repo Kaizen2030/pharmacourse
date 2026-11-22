@@ -35,3 +35,13 @@ export const waGateway = {
   postToGroup: (id, courseId, text, tipId = null) => request(`/instances/${encodeURIComponent(id)}/groups/post`, { method: "POST", body: { courseId, text, tipId } }),
   job: (jobId) => request(`/jobs/${encodeURIComponent(jobId)}`),
 }
+
+// Plain-language text for gateway problems shown to tutors (no addresses or env names).
+export function gatewayError(error) {
+  const message = String(error?.message || "")
+  if (!message) return "Something went wrong with WhatsApp. Please try again."
+  if (/VITE_WA_GATEWAY_URL/.test(message)) return "WhatsApp sending is not set up for this site yet. Ask an administrator."
+  if (/failed to fetch|networkerror|load failed/i.test(message)) return "We could not reach the WhatsApp gateway. Check it is running, then try again."
+  if (/^Gateway error \(5\d\d\)/.test(message)) return "The WhatsApp gateway had a problem. Try again in a minute."
+  return message
+}

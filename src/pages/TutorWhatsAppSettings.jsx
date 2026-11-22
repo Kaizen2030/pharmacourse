@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext"
 import WhatsAppFields from "../components/WhatsAppFields"
 import TutorTipsManager from "../components/TutorTipsManager"
 import { waPayload } from "../lib/tutorWhatsApp"
-import { gatewayConfigured, waGateway } from "../lib/waGateway"
+import { gatewayConfigured, gatewayError, waGateway } from "../lib/waGateway"
 import { confirmDialog } from "../lib/dialog"
 import SEO from "../components/SEO"
 import { MessageCircle } from "lucide-react"
@@ -83,8 +83,8 @@ export default function TutorWhatsAppSettings() {
       const pairing = await waGateway.qr(instructorId)
       setGatewayInstance(pairing)
       setQrImage(pairing.qr || "")
-    } catch (gatewayError) {
-      setError(/failed to fetch|network/i.test(String(gatewayError?.message)) ? "We could not reach the WhatsApp gateway. Check it is running, then try again." : gatewayError.message)
+    } catch (refreshError) {
+      setError(gatewayError(refreshError))
     }
   }, [instructor?.id])
 
@@ -169,7 +169,7 @@ export default function TutorWhatsAppSettings() {
       await waGateway.create(instructor.id, instructor.name)
       await refreshGateway(instructor.id)
     } catch (connectError) {
-      setError(connectError?.code ? friendlyError(connectError, "We could not save your number.") : /failed to fetch|network/i.test(String(connectError?.message)) ? "We could not reach the WhatsApp gateway. Check it is running, then try again." : connectError.message)
+      setError(connectError?.code ? friendlyError(connectError, "We could not save your number.") : gatewayError(connectError))
     } finally {
       setGatewayBusy(false)
     }
@@ -183,7 +183,7 @@ export default function TutorWhatsAppSettings() {
       setGatewayInstance(null)
       setQrImage("")
     } catch (disconnectError) {
-      setError(/failed to fetch|network/i.test(String(disconnectError?.message)) ? "We could not reach the WhatsApp gateway. Check it is running, then try again." : disconnectError.message)
+      setError(gatewayError(disconnectError))
     } finally {
       setGatewayBusy(false)
     }

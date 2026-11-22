@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
+import { MessageCircle, UsersRound } from "lucide-react"
 import { fetchMyCourseGroup } from "../lib/courseGroup"
 
 const STATUS_COPY = {
@@ -26,16 +27,16 @@ export default function JoinGroupCard({ courseId, highlight = false, children })
 
   return (
     <div
-      className="whatsapp-optin-card compact"
-      style={{ flexDirection: "column", alignItems: "stretch", gap: ".6rem", ...(highlight ? { border: "2px solid #25D366" } : null) }}
+      className={`whatsapp-optin-card compact wa-student${highlight ? " highlight" : ""}`}
     >
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
+      <div className="wa-student-row">
+        <span className="wa-student-icon" aria-hidden="true"><UsersRound size={22} /></span>
         <div className="whatsapp-optin-copy">
           <p className="whatsapp-optin-title">{highlight ? "You're in! Join your class WhatsApp group" : "Your class WhatsApp group"}</p>
           <p className="whatsapp-optin-text">{group.welcome_text || "Ask questions, get tutor tips and learn with your classmates."}</p>
         </div>
-        <a href={group.invite_url} target="_blank" rel="noreferrer noopener" className="btn btn-primary whatsapp-optin-button" style={{ background: "#128C7E" }}>
-          Join group
+        <a href={group.invite_url} target="_blank" rel="noreferrer noopener" className="wa-student-btn">
+          <MessageCircle size={16} aria-hidden="true" /> Join group
         </a>
       </div>
       {note ? <p style={{ margin: 0, fontSize: ".8rem", color: "var(--text-500)" }}>{note}</p> : null}
@@ -59,8 +60,8 @@ export function GroupLink({ courseId }) {
   }, [courseId])
   if (!url) return null
   return (
-    <a href={url} target="_blank" rel="noreferrer noopener" style={{ display: "inline-block", marginTop: ".4rem", fontSize: ".8rem", fontWeight: 700, color: "#128C7E" }}>
-      Class WhatsApp group →
+    <a href={url} target="_blank" rel="noreferrer noopener" className="wa-group-link">
+      <MessageCircle size={14} aria-hidden="true" /> Class WhatsApp group
     </a>
   )
 }

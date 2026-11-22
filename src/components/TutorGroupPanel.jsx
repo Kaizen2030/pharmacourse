@@ -3,8 +3,9 @@ import { supabase } from "../lib/supabaseClient"
 import { isGroupInviteUrl } from "../lib/courseGroup"
 import { waGateway } from "../lib/waGateway"
 import { confirmDialog } from "../lib/dialog"
-
-const labelStyle = { display: "grid", gap: ".3rem", fontSize: ".8rem", color: "var(--text-500)" }
+import { friendlyError } from "../lib/friendlyError"
+import { gatewayError } from "../lib/waGateway"
+import { Link2, UsersRound } from "lucide-react"
 
 export default function TutorGroupPanel({ courseId, gatewayInstanceId = "", onChange }) {
   const [group, setGroup] = useState(null)
@@ -19,7 +20,7 @@ export default function TutorGroupPanel({ courseId, gatewayInstanceId = "", onCh
   const load = useCallback(async () => {
     const { data, error: loadError } = await supabase.from("course_whatsapp_groups").select("*").eq("course_id", courseId).maybeSingle()
     if (loadError) {
-      setError(/course_whatsapp_groups/i.test(loadError.message) ? "Run supabase/group_invites_setup.sql to enable class groups." : loadError.message)
+      setError(/course_whatsapp_groups/i.test(loadError.message) ? "Class WhatsApp groups are not switched on for this site yet. Ask an administrator." : friendlyError(loadError, "We could not load the class group."))
       return
     }
     setGroup(data || null)
@@ -46,7 +47,7 @@ export default function TutorGroupPanel({ courseId, gatewayInstanceId = "", onCh
       ...(changedLink ? { group_jid: null } : null),
       updated_at: new Date().toISOString(),
     })
-    if (saveError) setError(saveError.message)
+    if (saveError) setError(friendlyError(saveError, "We could not save the class group. Please try again."))
     else { setNote("Class group saved. New students will get the invite automatically."); await load() }
     setBusy(false)
   }
@@ -61,7 +62,7 @@ export default function TutorGroupPanel({ courseId, gatewayInstanceId = "", onCh
       setNote(`Group connected${result.subject ? `: ${result.subject}` : ""}. Tips can now be posted into it.`)
       await load()
     } catch (verifyError) {
-      setError(verifyError.message)
+      setError(verifyError?.code ? friendlyError(verifyError, "We could not save the connection.") : gatewayError(verifyError))
     } finally { setBusy(false) }
   }
 
@@ -69,45 +70,75 @@ export default function TutorGroupPanel({ courseId, gatewayInstanceId = "", onCh
     if (!(await confirmDialog({ title: "Invite current students?", message: "Queue the group invite for every student already enrolled. Students without a WhatsApp number and consent are skipped.", confirmLabel: "Queue invites" }))) return
     setError(""); setNote(""); setBusy(true)
     const { data, error: rpcError } = await supabase.rpc("queue_group_invites_for_course", { p_course: courseId })
-    if (rpcError) setError(rpcError.message)
+    if (rpcError) setError(friendlyError(rpcError, "We could not queue the invites. Please try again."))
     else { setNote(`${data} invite${data === 1 ? "" : "s"} queued.`); await load() }
     setBusy(false)
   }
 
   const pending = stats.queued || 0
+  const state = !group ? "none" : group.group_jid ? "connected" : "saved"
+  const stateLabel = { none: "Not set up", saved: "Saved · not connected for tips", connected: "Connected for tips" }[state]
+
   return (
-    <div style={{ border: "1px solid var(--border)", borderLeft: "4px solid #25D366", borderRadius: 8, padding: ".9rem", display: "grid", gap: ".7rem" }}>
-      <div>
-        <strong style={{ fontSize: ".95rem" }}>Class WhatsApp group</strong>
-        <p style={{ margin: ".25rem 0 0", color: "var(--text-500)", fontSize: ".82rem" }}>
-          Students see the invite the moment they enroll, and it is also sent to their WhatsApp if they added a number and consented. The link is hidden from people who have not enrolled.
-        </p>
+    <section className="wa-block">
+      <div className="wa-block-head">
+        <span className="wa-block-icon group" aria-hidden="true"><UsersRound size={18} /></span>
+        <div>
+          <h4>Class WhatsApp group</h4>
+          <p className="wa-muted">Enrolled students see the invite straight away, and get it on WhatsApp if they added a number and agreed. The link stays hidden from everyone else.</p>
+        </div>
+        <span className={`wa-status ${state === "connected" ? "connected" : state === "saved" ? "pending" : ""}`}>{stateLabel}</span>
       </div>
-      {error ? <div role="alert" style={{ color: "var(--danger)", fontSize: ".85rem" }}>{error}</div> : null}
-      <label style={labelStyle}>
-        Group invite link
-        <input value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://chat.whatsapp.com/..." />
+
+      {error ? <p role="alert" className="wa-alert error">{error}</p> : null}
+
+      <div className="wa-row">
+        <div className="wa-field">
+          <label htmlFor={`group-url-${courseId}`}>Group invite link</label>
+          <input id={`group-url-${courseId}`} type="url" value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://chat.whatsapp.com/..." />
+        </div>
+        <div className="wa-field">
+          <label htmlFor={`group-welcome-${courseId}`}>Welcome message (optional)</label>
+          <input id={`group-welcome-${courseId}`} value={welcome} maxLength={200} onChange={(event) => setWelcome(event.target.value)} placeholder="Welcome! Introduce yourself and ask questions here." />
+        </div>
+      </div>
+
+      <label className="wa-toggle">
+        <input type="checkbox" checked={auto} onChange={(event) => setAuto(event.target.checked)} />
+        <span className="wa-switch" aria-hidden="true" />
+        <span>
+          <strong>Invite students automatically when they enrol</strong>
+          <span className="wa-hint">Only students who added a WhatsApp number and agreed to messages.</span>
+        </span>
       </label>
-      <label style={labelStyle}>
-        Welcome message (optional)
-        <input value={welcome} maxLength={200} onChange={(event) => setWelcome(event.target.value)} placeholder="Welcome! Introduce yourself and ask questions here." />
-      </label>
-      <label style={{ display: "flex", gap: ".5rem", alignItems: "center", fontSize: ".85rem" }}>
-        <input type="checkbox" checked={auto} onChange={(event) => setAuto(event.target.checked)} style={{ accentColor: "#0F6E56" }} />
-        Invite students automatically when they enroll
-      </label>
-      <div style={{ display: "flex", gap: ".6rem", flexWrap: "wrap" }}>
+
+      <div className="wa-actions">
         <button type="button" className="btn btn-primary" onClick={() => void save()} disabled={busy}>{busy ? "Saving…" : "Save group"}</button>
-        {group && gatewayInstanceId ? <button type="button" className="btn btn-outline" onClick={() => void verify()} disabled={busy}>{group.group_jid ? "Re-check group" : "Connect group for tips"}</button> : null}
+        {group && gatewayInstanceId ? (
+          <button type="button" className="btn btn-outline" onClick={() => void verify()} disabled={busy}>
+            <Link2 size={16} aria-hidden="true" /> {group.group_jid ? "Re-check group" : "Connect group for tips"}
+          </button>
+        ) : null}
         {group ? <button type="button" className="btn btn-outline" onClick={() => void inviteEveryone()} disabled={busy}>Invite current students</button> : null}
       </div>
-      {group && !group.group_jid ? <p style={{ margin: 0, fontSize: ".8rem", color: "var(--text-500)" }}>{gatewayInstanceId ? "Tap “Connect group for tips” so tips can be posted into the group (your linked number must be a member, ideally an admin)." : "Link your WhatsApp above to post tips into the group."}</p> : null}
-      {group ? (
-        <p style={{ margin: 0, fontSize: ".8rem", color: "var(--text-500)" }}>
-          Invites: {stats.sent || 0} sent · {pending} waiting · {stats.skipped || 0} skipped (no number/consent) · {stats.failed || 0} failed
+
+      {state === "saved" ? (
+        <p className="wa-hint">
+          {gatewayInstanceId
+            ? "Tap “Connect group for tips” so tips can be posted into the group. Your linked number must be a member (ideally an admin)."
+            : "Link your WhatsApp above to post tips into the group."}
         </p>
       ) : null}
-      {note ? <p role="status" style={{ margin: 0, color: "#0F6E56", fontSize: ".82rem" }}>{note}</p> : null}
-    </div>
+
+      {group ? (
+        <div className="wa-stats" aria-label="Group invites">
+          <div><strong>{stats.sent || 0}</strong><span>Sent</span></div>
+          <div><strong>{pending}</strong><span>Waiting</span></div>
+          <div title="No WhatsApp number or no consent"><strong>{stats.skipped || 0}</strong><span>Skipped</span></div>
+          <div className={stats.failed ? "bad" : ""}><strong>{stats.failed || 0}</strong><span>Failed</span></div>
+        </div>
+      ) : null}
+      {note ? <p role="status" className="wa-alert ok">{note}</p> : null}
+    </section>
   )
 }

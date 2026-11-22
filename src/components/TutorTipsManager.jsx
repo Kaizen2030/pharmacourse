@@ -5,7 +5,9 @@ import { SITE_URL } from "../lib/siteConfig"
 import { waGateway } from "../lib/waGateway"
 import { confirmDialog } from "../lib/dialog"
 import TutorGroupPanel from "./TutorGroupPanel"
-import { ChevronDown } from "lucide-react"
+import { BookOpen, CalendarClock, Check, ChevronDown, Copy, Eye, EyeOff, FileText, Lightbulb, Send, Trash2, Users, UsersRound } from "lucide-react"
+import { friendlyError } from "../lib/friendlyError"
+import { gatewayError } from "../lib/waGateway"
 import "../styles/wa-ui.css"
 
 // collapsible: render as a <details> card whose header (title + student count) stays visible when closed.
@@ -29,14 +31,14 @@ export default function TutorTipsManager({ courseId, courseTitle, courseSlug, in
       .select("*")
       .eq("course_id", courseId)
       .order("created_at", { ascending: false })
-    if (loadError) setError(loadError.message)
+    if (loadError) setError(friendlyError(loadError, "We could not load tips for this course."))
     else setPosts(data || [])
 
     const { count, error: countError } = await supabase
       .from("course_enrollments")
       .select("id", { count: "exact", head: true })
       .eq("course_id", courseId)
-    if (countError) setError((current) => current || countError.message)
+    if (countError) setStudentCount(0)
     else setStudentCount(count || 0)
   }, [courseId])
 
@@ -87,13 +89,13 @@ export default function TutorTipsManager({ courseId, courseTitle, courseSlug, in
       insertError = legacyResult.error
     }
     if (workflowColumnsMissing && tipStatus !== "draft") {
-      setError("Run supabase/tutor_tips_v2_setup.sql before scheduling or publishing workflow tips.")
+      setError("Scheduling and publishing are not switched on for this site yet. Save it as a draft, or ask an administrator.")
       setBusy(false)
       return
     }
 
     if (insertError) {
-      setError(insertError.message)
+      setError(friendlyError(insertError, "We could not save this tip. Please try again."))
       setBusy(false)
       return
     }
@@ -121,7 +123,7 @@ export default function TutorTipsManager({ courseId, courseTitle, courseSlug, in
       setScheduledFor("")
       await load()
     } catch (sendError) {
-      setSendMessage(`Saved and published, but sending failed: ${sendError.message}`)
+      setSendMessage(`Saved and published, but sending on WhatsApp failed: ${gatewayError(sendError)}`)
       await load()
     } finally {
       setBusy(false)
@@ -142,14 +144,14 @@ export default function TutorTipsManager({ courseId, courseTitle, courseSlug, in
       const legacyUpdate = await supabase.from("tutor_whatsapp_posts").update({ is_published: nextPublished }).eq("id", post.id)
       updateError = legacyUpdate.error
     }
-    if (updateError) setError(updateError.message)
+    if (updateError) setError(friendlyError(updateError, "We could not update this tip."))
     else await load()
   }
 
   async function remove(post) {
     if (!(await confirmDialog({ title: "Delete this tip?", message: "This cannot be undone.", confirmLabel: "Delete", danger: true }))) return
     const { error: deleteError } = await supabase.from("tutor_whatsapp_posts").delete().eq("id", post.id)
-    if (deleteError) setError(deleteError.message)
+    if (deleteError) setError(friendlyError(deleteError, "We could not delete this tip."))
     else await load()
   }
 
@@ -175,7 +177,7 @@ export default function TutorTipsManager({ courseId, courseTitle, courseSlug, in
       setSendMessage("Posted to the class group.")
       await load()
     } catch (sendError) {
-      setSendMessage(sendError.message)
+      setError(gatewayError(sendError))
     } finally {
       setSendingId("")
     }
@@ -192,80 +194,128 @@ export default function TutorTipsManager({ courseId, courseTitle, courseSlug, in
       await supabase.from("tutor_whatsapp_posts").update({ tip_status: "sent", is_published: true, sent_at: new Date().toISOString() }).eq("id", post.id)
       await load()
     } catch (sendError) {
-      setSendMessage(sendError.message)
+      setError(gatewayError(sendError))
     } finally {
       setSendingId("")
     }
   }
 
-  if (!courseId) return <p style={{ color: "var(--text-500)" }}>Save the course first to add WhatsApp tips.</p>
+  if (!courseId) return <p className="wa-muted">Save the course first to add WhatsApp tips.</p>
 
   const Root = collapsible ? "details" : "div"
   const Head = collapsible ? "summary" : "div"
+  const canPostToGroup = Boolean(gatewayInstanceId && group?.group_jid)
+  const submitLabel = tipStatus === "sent" ? "Publish tip" : tipStatus === "scheduled" ? "Schedule tip" : "Save draft"
+  const statusOf = (post) => post.tip_status || (post.is_published ? "sent" : "draft")
+  const statusLabel = { draft: "Draft", scheduled: "Scheduled", sent: "Published" }
+  const when = (value) => (value ? new Date(value).toLocaleString("en-KE", { dateStyle: "medium", timeStyle: "short" }) : "")
 
   return (
-    <Root className={`card wa-tips${collapsible ? " wa-collapsible" : ""}`} style={{ padding: "1.25rem", display: "grid", gap: "1rem" }} {...(collapsible ? { open: defaultOpen || undefined } : {})}>
-      <Head className="wa-tips-head" style={{ borderBottom: "1px solid var(--border)", paddingBottom: "0.7rem", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
-        <div>
-          <h3 style={{ margin: 0, fontSize: "1rem" }}>{courseTitle || "Untitled course"}</h3>
-          <p style={{ margin: "0.35rem 0 0", color: "var(--text-500)", fontSize: "0.85rem" }}>
-            Audience: students enrolled in this course only.
-          </p>
-        </div>
-        <span style={{ display: "inline-flex", alignItems: "center", padding: "0.35rem 0.65rem", borderRadius: 999, background: "rgba(15, 110, 86, 0.08)", color: "var(--green)", fontSize: "0.8rem", fontWeight: 700 }}>
-          {studentCount} students
+    <Root className={`wa-course${collapsible ? " wa-collapsible" : ""}`} {...(collapsible ? { open: defaultOpen || undefined } : {})}>
+      <Head className="wa-course-head">
+        <span className="wa-course-icon" aria-hidden="true"><BookOpen size={18} /></span>
+        <span className="wa-course-title">
+          <strong>{courseTitle || "Untitled course"}</strong>
+          <span>Messages reach students enrolled in this course only</span>
         </span>
+        <span className="wa-pill"><Users size={13} aria-hidden="true" /> {studentCount} student{studentCount === 1 ? "" : "s"}</span>
+        <span className="wa-pill subtle">{posts.length} tip{posts.length === 1 ? "" : "s"}</span>
         {collapsible ? <ChevronDown size={18} className="wa-tips-chevron" aria-hidden="true" /> : null}
       </Head>
-      <TutorGroupPanel courseId={courseId} gatewayInstanceId={gatewayInstanceId} onChange={setGroup} />
-      <div>
-        <h3 style={{ margin: 0, fontSize: "1rem" }}>WhatsApp tips</h3>
-        <p style={{ margin: "0.3rem 0 0", color: "var(--text-500)", fontSize: "0.85rem" }}>
-          Published tips appear on this course page. Copy a tip to share it manually in your channel or group.
-        </p>
+
+      <div className="wa-course-body">
+        <TutorGroupPanel courseId={courseId} gatewayInstanceId={gatewayInstanceId} onChange={setGroup} />
+
+        <section className="wa-block">
+          <div className="wa-block-head">
+            <span className="wa-block-icon tips" aria-hidden="true"><Lightbulb size={18} /></span>
+            <div>
+              <h4>WhatsApp tips</h4>
+              <p className="wa-muted">Published tips show on the course page. You can also copy them, post them to the class group or send them privately.</p>
+            </div>
+          </div>
+
+          <form onSubmit={add} className="wa-composer">
+            <div className="wa-field">
+              <label htmlFor={`tip-title-${courseId}`}>Tip title</label>
+              <input id={`tip-title-${courseId}`} value={title} onChange={(event) => setTitle(event.target.value)} placeholder="e.g. Counselling on amoxicillin doses" maxLength={120} />
+            </div>
+            <div className="wa-field">
+              <label htmlFor={`tip-body-${courseId}`}>Message</label>
+              <textarea id={`tip-body-${courseId}`} value={body} onChange={(event) => setBody(event.target.value)} placeholder="Write a short, practical tip for your students." rows={4} maxLength={1500} />
+              <small className="wa-counter">{body.length} / 1500</small>
+            </div>
+            <div className="wa-field">
+              <span className="wa-label">When</span>
+              <div className="wa-segment" role="radiogroup" aria-label="When to publish">
+                {[{ value: "draft", label: "Save as draft", icon: FileText }, { value: "scheduled", label: "Schedule", icon: CalendarClock }, { value: "sent", label: "Publish now", icon: Send }].map((item) => (
+                  <button key={item.value} type="button" role="radio" aria-checked={tipStatus === item.value} className={`wa-seg${tipStatus === item.value ? " active" : ""}`} onClick={() => setTipStatus(item.value)}>
+                    <item.icon size={15} aria-hidden="true" /> {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {tipStatus === "scheduled" ? (
+              <div className="wa-field wa-narrow">
+                <label htmlFor={`tip-when-${courseId}`}>Send at</label>
+                <input id={`tip-when-${courseId}`} type="datetime-local" value={scheduledFor} onChange={(event) => setScheduledFor(event.target.value)} />
+              </div>
+            ) : null}
+            {tipStatus === "sent" && gatewayInstanceId ? (
+              <p className="wa-hint">{canPostToGroup ? "It will also be posted into your class WhatsApp group." : "It will also be sent privately to opted-in students."}</p>
+            ) : null}
+            <div className="wa-actions">
+              <button type="submit" className="btn btn-primary" disabled={busy || !title.trim() || !body.trim()}>{busy ? "Saving…" : submitLabel}</button>
+            </div>
+          </form>
+
+          {error ? <p role="alert" className="wa-alert error">{error}</p> : null}
+          {sendMessage ? <p role="status" className="wa-alert ok">{sendMessage}</p> : null}
+
+          {posts.length === 0 ? (
+            <p className="wa-empty">No tips yet. Your first tip will appear here.</p>
+          ) : (
+            <ul className="wa-tip-list">
+              {posts.map((post) => {
+                const status = statusOf(post)
+                return (
+                  <li key={post.id} className={`wa-tip${post.is_published ? "" : " muted"}`}>
+                    <div className="wa-tip-top">
+                      <strong>{post.title}</strong>
+                      <span className={`wa-status ${status === "sent" ? "connected" : status === "scheduled" ? "pending" : ""}`}>{statusLabel[status] || status}</span>
+                    </div>
+                    <p className="wa-tip-body">{post.body}</p>
+                    <p className="wa-tip-meta">
+                      {status === "scheduled" && post.scheduled_for ? `Scheduled for ${when(post.scheduled_for)}` : post.sent_at ? `Published ${when(post.sent_at)}` : `Created ${when(post.created_at)}`}
+                    </p>
+                    <div className="wa-tip-actions">
+                      <button type="button" className="wa-mini" onClick={() => void copy(post)}>
+                        {copiedId === post.id ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />} {copiedId === post.id ? "Copied" : "Copy"}
+                      </button>
+                      {canPostToGroup ? (
+                        <button type="button" className="wa-mini green" onClick={() => void postToClassGroup(post)} disabled={Boolean(sendingId)}>
+                          <UsersRound size={14} aria-hidden="true" /> {sendingId === post.id ? "Posting…" : "Post to group"}
+                        </button>
+                      ) : null}
+                      {gatewayInstanceId && post.is_published ? (
+                        <button type="button" className="wa-mini" onClick={() => void sendToOptedIn(post)} disabled={Boolean(sendingId)}>
+                          <Send size={14} aria-hidden="true" /> {sendingId === post.id ? "Starting…" : "Send privately"}
+                        </button>
+                      ) : null}
+                      <button type="button" className="wa-mini" onClick={() => void togglePublished(post)}>
+                        {post.is_published ? <EyeOff size={14} aria-hidden="true" /> : <Eye size={14} aria-hidden="true" />} {post.is_published ? "Hide from course" : "Publish"}
+                      </button>
+                      <button type="button" className="wa-mini danger" onClick={() => void remove(post)} aria-label={`Delete ${post.title}`}>
+                        <Trash2 size={14} aria-hidden="true" /> Delete
+                      </button>
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </section>
       </div>
-      {error ? <div role="alert" style={{ color: "var(--danger)", fontSize: "0.85rem" }}>{error}</div> : null}
-      <form onSubmit={add} style={{ display: "grid", gap: "0.6rem" }}>
-        <input value={title} onChange={(event) => setTitle(event.target.value)} aria-label="Tip title" placeholder="Tip title" maxLength={120} />
-        <textarea value={body} onChange={(event) => setBody(event.target.value)} aria-label="Tip text" placeholder="Write the tip (max 1500 characters)" rows={4} maxLength={1500} />
-        <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: "0.6rem" }}>
-          <label style={{ display: "grid", gap: ".3rem", fontSize: ".8rem", color: "var(--text-500)" }}>
-            Workflow
-            <select value={tipStatus} onChange={(event) => setTipStatus(event.target.value)}>
-              <option value="draft">Save as draft</option>
-              <option value="scheduled">Schedule for later</option>
-              <option value="sent">Publish now</option>
-            </select>
-          </label>
-          {tipStatus === "scheduled" ? (
-            <label style={{ display: "grid", gap: ".3rem", fontSize: ".8rem", color: "var(--text-500)" }}>
-              Send at
-              <input type="datetime-local" value={scheduledFor} onChange={(event) => setScheduledFor(event.target.value)} />
-            </label>
-          ) : <span />}
-        </div>
-        <button type="submit" className="btn btn-primary" disabled={busy || !title.trim() || !body.trim()} style={{ justifySelf: "start" }}>{busy ? "Saving…" : "Add tip"}</button>
-      </form>
-      {posts.map((post) => (
-        <div key={post.id} style={{ border: "1px solid var(--border)", borderRadius: 8, padding: "0.8rem", display: "grid", gap: "0.4rem", opacity: post.is_published ? 1 : 0.6 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".6rem", flexWrap: "wrap" }}>
-            <strong>{post.title}</strong>
-            <span style={{ display: "inline-flex", padding: ".2rem .5rem", borderRadius: 999, background: post.tip_status === "sent" || post.is_published ? "rgba(15, 110, 86, .1)" : "rgba(96, 112, 104, .1)", color: "var(--text-700)", fontSize: ".72rem", fontWeight: 700, textTransform: "capitalize" }}>
-              {post.tip_status || (post.is_published ? "sent" : "draft")}
-            </span>
-          </div>
-          <span style={{ whiteSpace: "pre-line", fontSize: "0.9rem", color: "var(--text-700)" }}>{post.body}</span>
-          {post.scheduled_for ? <span style={{ color: "var(--text-500)", fontSize: ".8rem" }}>Scheduled for {new Date(post.scheduled_for).toLocaleString()}</span> : null}
-          <div style={{ display: "flex", gap: "0.8rem", flexWrap: "wrap", fontSize: "0.82rem" }}>
-            <button type="button" className="btn btn-outline" onClick={() => void copy(post)}>{copiedId === post.id ? "Copied" : "Copy for WhatsApp"}</button>
-            {gatewayInstanceId && group?.group_jid ? <button type="button" className="btn btn-primary" onClick={() => void postToClassGroup(post)} disabled={Boolean(sendingId)}>{sendingId === post.id ? "Posting…" : "Post to class group"}</button> : null}
-            {gatewayInstanceId && post.is_published ? <button type="button" className="btn btn-outline" onClick={() => void sendToOptedIn(post)} disabled={Boolean(sendingId)}>{sendingId === post.id ? "Starting…" : "Message opted-in learners privately"}</button> : null}
-            <button type="button" className="btn btn-outline" onClick={() => void togglePublished(post)}>{post.is_published ? "Hide from course page" : "Publish"}</button>
-            <button type="button" className="btn btn-outline" onClick={() => void remove(post)}>Delete</button>
-          </div>
-          {sendMessage ? <p role="status" style={{ margin: 0, color: "var(--text-500)", fontSize: ".82rem" }}>{sendMessage}</p> : null}
-        </div>
-      ))}
     </Root>
   )
 }
