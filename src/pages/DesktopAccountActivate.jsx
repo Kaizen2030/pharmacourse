@@ -40,6 +40,8 @@ export default function DesktopAccountActivate({ app = "remedacarepos" }) {
       const accessToken = searchParams.get("access_token") || hashParams.get("access_token") || ""
       const refreshToken = searchParams.get("refresh_token") || hashParams.get("refresh_token") || ""
       const type = searchParams.get("type") || hashParams.get("type") || "signup"
+      // Confirmation details leave the address bar (and browser history) straight away.
+      window.history.replaceState({}, document.title, window.location.pathname)
 
       try {
         let resolvedEmail = ""

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
 import SEO from "../components/SEO"
+import { checkPassword, friendlyAuthError } from "../lib/passwordPolicy"
 
 function getRecoveryParams() {
   const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""))
@@ -110,8 +111,9 @@ export default function ResetPassword() {
       return
     }
 
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters.")
+    const passwordProblem = checkPassword(password, { email: recoveryEmail })
+    if (passwordProblem) {
+      setError(passwordProblem)
       return
     }
 
@@ -120,7 +122,7 @@ export default function ResetPassword() {
     const { error: updateError } = await supabase.auth.updateUser({ password })
 
     if (updateError) {
-      setError(updateError.message)
+      setError(friendlyAuthError(updateError, "Your password could not be changed. Please request a new reset link."))
       setLoading(false)
       return
     }

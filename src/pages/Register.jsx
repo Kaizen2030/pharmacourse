@@ -2,6 +2,8 @@ import { useState } from "react"
 import { Link } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
 import SEO from "../components/SEO"
+import TurnstileWidget from "../components/TurnstileWidget"
+import { PASSWORD_HINT, checkPassword, friendlyAuthError } from "../lib/passwordPolicy"
 
 export default function Register() {
   const [form, setForm] = useState({ full_name: "", professional_id: "", email: "", password: "", confirm: "" })
@@ -10,6 +12,8 @@ export default function Register() {
   const [done, setDone] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
+  const [captchaToken, setCaptchaToken] = useState("")
+  const [captchaReset, setCaptchaReset] = useState(0)
 
   function set(key) {
     return (event) => setForm((current) => ({ ...current, [key]: event.target.value }))
@@ -24,8 +28,14 @@ export default function Register() {
       return
     }
 
-    if (form.password.length < 8) {
-      setError("Password must be at least 8 characters.")
+    const passwordProblem = checkPassword(form.password, { email: form.email, name: form.full_name })
+    if (passwordProblem) {
+      setError(passwordProblem)
+      return
+    }
+
+    if (!captchaToken) {
+      setError("Please complete the security check.")
       return
     }
 
@@ -34,12 +44,14 @@ export default function Register() {
     const { error: err } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
-      options: { data: { full_name: form.full_name, professional_id: form.professional_id } },
+      options: { data: { full_name: form.full_name, professional_id: form.professional_id }, captchaToken },
     })
 
     if (err) {
-      setError(err.message)
+      setError(friendlyAuthError(err, "We could not create your account. Please try again."))
       setLoading(false)
+      setCaptchaToken("")
+      setCaptchaReset((count) => count + 1)
       return
     }
 
@@ -112,9 +124,12 @@ export default function Register() {
             </div>
           </div>
 
+          <p className="form-hint" style={{ margin: "-0.25rem 0 0.9rem", fontSize: "0.82rem", color: "var(--text-500)" }}>{PASSWORD_HINT}</p>
+          <TurnstileWidget formId="register" resetSignal={captchaReset} onVerify={setCaptchaToken} onExpire={() => setCaptchaToken("")} />
+
           {error && <p className="error-msg" style={{ marginBottom: "1rem" }}>{error}</p>}
 
-          <button type="submit" disabled={loading} className="btn btn-primary form-submit">
+          <button type="submit" disabled={loading || !captchaToken} className="btn btn-primary form-submit">
             {loading ? "Creating account..." : "Create Free Account"}
           </button>
         </form>

@@ -3,25 +3,39 @@ import { Link } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
 import { getAuthRedirectUrl } from "../lib/authRedirect"
 import SEO from "../components/SEO"
+import TurnstileWidget from "../components/TurnstileWidget"
+import { friendlyAuthError } from "../lib/passwordPolicy"
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [sent, setSent] = useState(false)
+  const [captchaToken, setCaptchaToken] = useState("")
+  const [captchaReset, setCaptchaReset] = useState(0)
 
   async function handleSubmit(event) {
     event.preventDefault()
     setError("")
     setLoading(true)
 
+    if (!captchaToken) {
+      setError("Please complete the security check.")
+      setLoading(false)
+      return
+    }
+
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: getAuthRedirectUrl("/reset-password"),
+      captchaToken,
     })
 
-    if (resetError) {
-      setError(resetError.message)
+    // Only security-check and rate-limit problems are shown; whether the email has an account is never revealed.
+    if (resetError && /captcha|rate limit|too many/i.test(resetError.message || "")) {
+      setError(friendlyAuthError(resetError))
       setLoading(false)
+      setCaptchaToken("")
+      setCaptchaReset((count) => count + 1)
       return
     }
 
@@ -46,7 +60,7 @@ export default function ForgotPassword() {
         {sent ? (
           <div style={{ textAlign: "center" }}>
             <p style={{ color: "var(--text-500)", lineHeight: 1.7 }}>
-              A password reset link has been sent to <strong>{email}</strong>.
+              If an account exists for <strong>{email}</strong>, a password reset link is on its way.
               <br />Open the email, follow the link, and choose a new password.
             </p>
             <Link to="/login" className="btn btn-primary" style={{ marginTop: "1.5rem", display: "inline-flex" }}>
@@ -67,9 +81,11 @@ export default function ForgotPassword() {
               />
             </div>
 
+            <TurnstileWidget formId="forgot-password" resetSignal={captchaReset} onVerify={setCaptchaToken} onExpire={() => setCaptchaToken("")} />
+
             {error && <p className="error-msg" style={{ marginBottom: "1rem" }}>{error}</p>}
 
-            <button type="submit" disabled={loading} className="btn btn-primary form-submit">
+            <button type="submit" disabled={loading || !captchaToken} className="btn btn-primary form-submit">
               {loading ? "Sending reset link..." : "Send Reset Link"}
             </button>
           </form>

@@ -3,6 +3,8 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
 import { getAuthRedirectUrl } from "../lib/authRedirect"
 import SEO from "../components/SEO"
+import TurnstileWidget from "../components/TurnstileWidget"
+import { friendlyAuthError } from "../lib/passwordPolicy"
 
 export default function Login() {
   const navigate = useNavigate()
@@ -15,6 +17,8 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [captchaToken, setCaptchaToken] = useState("")
+  const [captchaReset, setCaptchaReset] = useState(0)
   const [info] = useState(() =>
     resetStatus === "success" ? "Password updated. Sign in with your email and new password." : ""
   )
@@ -24,11 +28,20 @@ export default function Login() {
     setError("")
     setLoading(true)
 
-    const { error: err } = await supabase.auth.signInWithPassword({ email, password })
+    if (!captchaToken) {
+      setError("Please complete the security check.")
+      setLoading(false)
+      return
+    }
+
+    const { error: err } = await supabase.auth.signInWithPassword({ email, password, options: { captchaToken } })
 
     if (err) {
-      setError(err.message)
+      setError(friendlyAuthError(err, "We could not sign you in. Please try again."))
       setLoading(false)
+      // A captcha token works once: get a fresh one for the next try.
+      setCaptchaToken("")
+      setCaptchaReset((count) => count + 1)
       return
     }
 
@@ -114,9 +127,11 @@ export default function Login() {
             </p>
           )}
 
+          <TurnstileWidget formId="login" resetSignal={captchaReset} onVerify={setCaptchaToken} onExpire={() => setCaptchaToken("")} />
+
           {error && <p className="error-msg" style={{ marginBottom: "1rem" }}>{error}</p>}
 
-          <button type="submit" disabled={loading} className="btn btn-primary form-submit">
+          <button type="submit" disabled={loading || !captchaToken} className="btn btn-primary form-submit">
             {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
