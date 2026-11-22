@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom"
-import { ArrowRight, Award, BookOpen, Clock, GraduationCap, Pill } from "lucide-react"
+import { ArrowRight, Award, BookOpen, Clock, GraduationCap, Pill, Stethoscope } from "lucide-react"
 import "../styles/courses-ui.css"
 import { hasCourseModules, tutorApplicationLink } from "../lib/courseAvailability"
 
@@ -13,7 +13,7 @@ function categoryArt(category) {
   return CATEGORY_ART[(category || "").trim().toLowerCase()] || ["#3f2f9e", "#7F77DD"]
 }
 
-export function formatCoursePrice(course) {
+function formatCoursePrice(course) {
   if (!hasCourseModules(course)) return { label: "Coming soon", free: false }
   if (course.is_free || !(Number(course.price) > 0)) return { label: "Free", free: true }
   return { label: Number(course.price).toLocaleString("en-KE"), currency: "KES", free: false }
@@ -40,7 +40,7 @@ export default function CourseCard({ course }) {
         ) : (
           <div className="pc-card-art" style={{ background: `linear-gradient(135deg, ${from} 0%, ${to} 100%)` }} aria-hidden="true">
             <Pill />
-            <span>{category}</span>
+            <Stethoscope className="pc-art-icon" strokeWidth={1.6} />
           </div>
         )}
         <div className="pc-badges">

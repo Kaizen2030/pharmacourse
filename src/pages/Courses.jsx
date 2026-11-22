@@ -1,27 +1,37 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useSearchParams } from "react-router-dom"
+import { Award, BadgeCheck, Search, SearchX, Smartphone, Sparkles, Timer } from "lucide-react"
 import { supabase } from "../lib/supabaseClient"
-import CourseCard from "../components/CourseCard"
+import CourseCard, { CourseCardSkeleton } from "../components/CourseCard"
 import SEO from "../components/SEO"
 import Pagination from "../components/Pagination"
 import { getCourseCategoryLabel } from "../lib/courseCategoryHelpers"
+import "../styles/courses-ui.css"
 
 const PAGE_SIZE = 12
-
-function normalizeValue(value) {
-  return (value || "").trim().toLowerCase()
+const SORTS = {
+  newest: { label: "Newest", column: "created_at", ascending: false },
+  "price-low": { label: "Price: low to high", column: "price", ascending: true },
+  "price-high": { label: "Price: high to low", column: "price", ascending: false },
+  title: { label: "A to Z", column: "title", ascending: true },
 }
 
-function buildCategoryList(values) {
-  const uniqueCategories = Array.from(
-    new Set(
-      (values || [])
-        .map((value) => getCourseCategoryLabel(value))
-        .filter(Boolean)
-    )
-  )
+const normalizeValue = (value) => (value || "").trim().toLowerCase()
+const cleanFilterText = (value) => String(value || "").replace(/[%_,()\\*"]/g, " ").trim()
 
-  return uniqueCategories.sort((a, b) => a.localeCompare(b))
+function buildCategoryList(values) {
+  return Array.from(new Set((values || []).map((value) => getCourseCategoryLabel(value)).filter(Boolean)))
+    .sort((a, b) => a.localeCompare(b))
+}
+
+function usePlatformStats() {
+  const [stats, setStats] = useState(null)
+  useEffect(() => {
+    let active = true
+    supabase.rpc("platform_stats").then(({ data, error }) => { if (active && !error && data) setStats(data) })
+    return () => { active = false }
+  }, [])
+  return stats
 }
 
 export default function Courses() {
@@ -29,51 +39,48 @@ export default function Courses() {
   const [categoryTabs, setCategoryTabs] = useState(["All"])
   const [loading, setLoading] = useState(true)
   const [totalCourses, setTotalCourses] = useState(0)
+  const [stuck, setStuck] = useState(false)
   // Filters live in the URL so a filtered list can be shared (e.g. on WhatsApp).
   const [searchParams, setSearchParams] = useSearchParams()
   const page = Math.max(1, Number.parseInt(searchParams.get("page") || "1", 10) || 1)
   const activeCategory = searchParams.get("category") || "All"
   const priceFilter = ["free", "paid"].includes(searchParams.get("price")) ? searchParams.get("price") : "all"
+  const sort = SORTS[searchParams.get("sort")] ? searchParams.get("sort") : "newest"
   const urlQuery = searchParams.get("q") || ""
   const [searchQuery, setSearchQuery] = useState(urlQuery)
   const requestId = useRef(0)
+  const sentinelRef = useRef(null)
+  const resultsRef = useRef(null)
+  const stats = usePlatformStats()
 
   const updateParams = useCallback((changes, { resetPage = true } = {}) => {
     setSearchParams((current) => {
       const next = new URLSearchParams(current)
       Object.entries(changes).forEach(([key, value]) => {
-        if (value === null || value === "" || value === "All" || value === "all") next.delete(key)
+        if (value === null || value === "" || value === "All" || value === "all" || (key === "sort" && value === "newest")) next.delete(key)
         else next.set(key, String(value))
       })
       if (resetPage) next.delete("page")
       return next
     }, { replace: true })
   }, [setSearchParams])
-  const categoryTabsRef = useRef(null)
-  const [categoryScrollState, setCategoryScrollState] = useState({
-    hasOverflow: false,
-    canScrollLeft: false,
-    canScrollRight: false,
-  })
 
   const loadCourses = useCallback(async () => {
     const currentRequest = ++requestId.current
     setLoading(true)
-
     const from = (page - 1) * PAGE_SIZE
     const to = from + PAGE_SIZE - 1
+    const order = SORTS[sort]
 
-    let query = supabase
-      .from("courses")
-      .select("*", { count: "exact" })
-      .eq("is_published", true)
-    if (activeCategory !== "All") query = query.ilike("category", activeCategory.replace(/[%_,()]/g, " ").trim())
+    let query = supabase.from("courses").select("*", { count: "exact" }).eq("is_published", true)
+    if (activeCategory !== "All") query = query.ilike("category", cleanFilterText(activeCategory))
     if (priceFilter === "free") query = query.eq("is_free", true)
     if (priceFilter === "paid") query = query.eq("is_free", false)
-    const cleanQuery = urlQuery.replace(/[%_,()]/g, " ").trim()
-    if (cleanQuery) query = query.ilike("title", `%${cleanQuery}%`)
+    const cleanQuery = cleanFilterText(urlQuery)
+    if (cleanQuery) query = query.or(`title.ilike.%${cleanQuery}%,short_desc.ilike.%${cleanQuery}%,category.ilike.%${cleanQuery}%`)
 
     const { data, count, error } = await query
+      .order(order.column, { ascending: order.ascending, nullsFirst: false })
       .order("created_at", { ascending: false })
       .range(from, to)
 
@@ -90,54 +97,38 @@ export default function Courses() {
         ? await supabase.from("course_modules").select("course_id").in("course_id", courseIds)
         : { data: [], error: null }
       if (moduleError) console.error("Failed to load course module counts:", moduleError)
-      const moduleCounts = (moduleRows || []).reduce((counts, module) => ({
-        ...counts,
-        [module.course_id]: (counts[module.course_id] || 0) + 1,
-      }), {})
+      const moduleCounts = (moduleRows || []).reduce((counts, module) => {
+        counts[module.course_id] = (counts[module.course_id] || 0) + 1
+        return counts
+      }, {})
+      if (currentRequest !== requestId.current) return
       setCourses(courseRows.map((course) => ({ ...course, module_count: moduleCounts[course.id] || 0 })))
       setTotalCourses(count || 0)
     }
-
     setLoading(false)
-  }, [page, activeCategory, priceFilter, urlQuery])
+  }, [page, activeCategory, priceFilter, sort, urlQuery])
 
-  async function loadCategories() {
-    const [managedResponse, usedResponse] = await Promise.all([
-      supabase
-        .from("course_categories")
-        .select("name")
-        .eq("is_active", true)
-        .order("name", { ascending: true }),
-      supabase
-        .from("courses")
-        .select("category")
-        .eq("is_published", true),
-    ])
-
-    const managedCategories = managedResponse.error
-      ? []
-      : buildCategoryList((managedResponse.data || []).map((row) => row.name))
-
-    const usedCategories = usedResponse.error
-      ? []
-      : buildCategoryList((usedResponse.data || []).map((row) => row.category))
-
-    if (managedResponse.error && usedResponse.error) {
-      console.error("Failed to load course categories:", managedResponse.error, usedResponse.error)
-      setCategoryTabs(["All"])
-      return
-    }
-
-    const nextCategories = Array.from(
-      new Set([...managedCategories, ...usedCategories])
-    ).sort((first, second) => first.localeCompare(second))
-
-    setCategoryTabs(["All", ...nextCategories])
-  }
+  useEffect(() => { loadCourses() }, [loadCourses])
 
   useEffect(() => {
-    loadCourses()
-  }, [loadCourses])
+    let active = true
+    Promise.all([
+      supabase.from("course_categories").select("name").eq("is_active", true).order("name", { ascending: true }),
+      supabase.from("courses").select("category").eq("is_published", true),
+    ]).then(([managed, used]) => {
+      if (!active) return
+      if (managed.error && used.error) {
+        console.error("Failed to load course categories:", managed.error, used.error)
+        return
+      }
+      const names = new Set([
+        ...(managed.error ? [] : buildCategoryList((managed.data || []).map((row) => row.name))),
+        ...(used.error ? [] : buildCategoryList((used.data || []).map((row) => row.category))),
+      ])
+      setCategoryTabs(["All", ...Array.from(names).sort((a, b) => a.localeCompare(b))])
+    })
+    return () => { active = false }
+  }, [])
 
   // Debounce typing into the URL (one request per pause, not per keystroke).
   useEffect(() => {
@@ -149,207 +140,158 @@ export default function Courses() {
   // Keep the input in sync if the URL changes (back button, shared link).
   useEffect(() => { setSearchQuery(urlQuery) }, [urlQuery])
 
+  // Ignore categories that no longer exist (only once the list has loaded).
   useEffect(() => {
-    loadCategories()
-  }, [])
-
-  const totalPages = Math.max(1, Math.ceil(totalCourses / PAGE_SIZE))
-  const hasActiveFilters = activeCategory !== "All" || priceFilter !== "all" || urlQuery.length > 0
-
-  useEffect(() => {
-    // Ignore categories that no longer exist (only once the list has loaded).
     if (categoryTabs.length > 1 && activeCategory !== "All" && !categoryTabs.some((tab) => normalizeValue(tab) === normalizeValue(activeCategory))) {
       updateParams({ category: null })
     }
   }, [activeCategory, categoryTabs, updateParams])
 
+  // Show a hairline under the filter bar once it sticks to the top.
   useEffect(() => {
-    const rail = categoryTabsRef.current
-    if (!rail) return
+    const sentinel = sentinelRef.current
+    if (!sentinel || typeof IntersectionObserver === "undefined") return undefined
+    const observer = new IntersectionObserver(([entry]) => setStuck(!entry.isIntersecting), { threshold: 0, rootMargin: "-72px 0px 0px 0px" })
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [])
 
-    function updateCategoryScrollState() {
-      const maxScrollLeft = rail.scrollWidth - rail.clientWidth
-      const hasOverflow = maxScrollLeft > 8
+  const totalPages = Math.max(1, Math.ceil(totalCourses / PAGE_SIZE))
+  const hasActiveFilters = activeCategory !== "All" || priceFilter !== "all" || urlQuery.length > 0
+  const firstLoad = loading && courses.length === 0
+  const statItems = stats
+    ? [["courses", "courses"], ["learners", "learners"], ["certificates", "certificates issued"]].filter(([key]) => Number(stats[key]) > 0)
+    : []
 
-      setCategoryScrollState({
-        hasOverflow,
-        canScrollLeft: hasOverflow && rail.scrollLeft > 8,
-        canScrollRight: hasOverflow && rail.scrollLeft < maxScrollLeft - 8,
-      })
-    }
-
-    updateCategoryScrollState()
-
-    rail.addEventListener("scroll", updateCategoryScrollState, { passive: true })
-    window.addEventListener("resize", updateCategoryScrollState)
-
-    return () => {
-      rail.removeEventListener("scroll", updateCategoryScrollState)
-      window.removeEventListener("resize", updateCategoryScrollState)
-    }
-  }, [categoryTabs])
-
-  function togglePriceFilter(nextFilter) {
-    updateParams({ price: priceFilter === nextFilter ? null : nextFilter })
+  function clearFilters() {
+    setSearchQuery("")
+    setSearchParams({}, { replace: true })
   }
 
-  function scrollCategoryTabs(direction) {
-    const rail = categoryTabsRef.current
-    if (!rail) return
-
-    const scrollAmount = Math.max(rail.clientWidth * 0.72, 180) * direction
-    rail.scrollBy({ left: scrollAmount, behavior: "smooth" })
+  function submitSearch(event) {
+    event.preventDefault()
+    updateParams({ q: searchQuery.trim() })
+    resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
   }
 
   return (
-    <div className="page">
+    <div className="pc-page">
       <SEO
         title="Pharmacy Courses"
-        description="Explore self-paced pharmacy CPD courses with practical lessons, downloadable resources, and completion certificates from RemedacarePOS."
+        description="Explore self-paced pharmacy CPD courses with practical lessons, downloadable resources, and completion certificates."
         path="/courses"
         type="website"
       />
 
-      <div className="page-header">
-        <div className="container-wide">
-          <h1>Explore Courses</h1>
-          <p>Self-paced pharmacy professional development courses with downloadable resources and certificates.</p>
+      <section className="pc-hero">
+        <div className="pc-wrap">
+          <div className="pc-hero-inner">
+            <span className="pc-eyebrow"><Sparkles size={14} aria-hidden="true" /> CPD courses for pharmacy professionals</span>
+            <h1>Learn what you will <em>use at the counter</em> tomorrow.</h1>
+            <p className="pc-lead">Short, practical courses built by practising pharmacists. Study on your phone, at your own pace, and earn a verifiable certificate.</p>
+            <form className="pc-search" role="search" onSubmit={submitSearch}>
+              <Search size={20} aria-hidden="true" />
+              <label htmlFor="course-search" className="sr-only">Search courses</label>
+              <input
+                id="course-search"
+                type="search"
+                placeholder="Search courses, e.g. antibiotics, dispensing, compliance"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                autoComplete="off"
+              />
+              <button type="submit" className="btn btn-primary"><Search size={16} aria-hidden="true" /><span>Search</span></button>
+            </form>
+            <div className="pc-hero-chips" aria-label="What every course includes">
+              <span className="pc-hero-chip"><BadgeCheck size={15} aria-hidden="true" /> Verifiable certificate</span>
+              <span className="pc-hero-chip"><Award size={15} aria-hidden="true" /> CPD hours</span>
+              <span className="pc-hero-chip"><Timer size={15} aria-hidden="true" /> Self-paced</span>
+              <span className="pc-hero-chip"><Smartphone size={15} aria-hidden="true" /> Works on any phone</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="pc-wrap">
+        {statItems.length ? (
+          <div className="pc-stats" role="list" aria-label="Pharmacourse in numbers">
+            {statItems.map(([key, label]) => (
+              <div key={key} className="pc-stat" role="listitem">
+                <strong>{Number(stats[key]).toLocaleString("en-KE")}</strong>
+                <span>{label}</span>
+              </div>
+            ))}
+          </div>
+        ) : null}
+        <div ref={sentinelRef} aria-hidden="true" />
+      </div>
+
+      <div className={`pc-toolbar${stuck ? " is-stuck" : ""}`}>
+        <div className="pc-wrap pc-toolbar-row">
+          <div className="pc-chips" role="tablist" aria-label="Course categories">
+            {categoryTabs.map((category) => (
+              <button
+                key={category}
+                type="button"
+                role="tab"
+                aria-selected={normalizeValue(activeCategory) === normalizeValue(category)}
+                className="pc-chip"
+                onClick={() => updateParams({ category })}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+          <div className="pc-toolbar-controls">
+            <div className="pc-segment" role="group" aria-label="Price">
+              {[["all", "All"], ["free", "Free"], ["paid", "Paid"]].map(([value, label]) => (
+                <button key={value} type="button" aria-pressed={priceFilter === value} onClick={() => updateParams({ price: value })}>{label}</button>
+              ))}
+            </div>
+            <label htmlFor="course-sort" className="sr-only">Sort courses</label>
+            <select id="course-sort" className="pc-select" value={sort} onChange={(event) => updateParams({ sort: event.target.value })}>
+              {Object.entries(SORTS).map(([value, option]) => <option key={value} value={value}>{option.label}</option>)}
+            </select>
+          </div>
         </div>
       </div>
 
-      <div className="container-wide" style={{ paddingTop: "2rem" }}>
-        {loading && courses.length === 0 && categoryTabs.length <= 1 && !hasActiveFilters ? (
-          <p style={{ color: "var(--text-500)" }}>Loading courses...</p>
+      <div className="pc-wrap" ref={resultsRef}>
+        <div className="pc-results" aria-live="polite">
+          <p>
+            {loading ? "Finding courses…" : <><strong>{totalCourses}</strong> {totalCourses === 1 ? "course" : "courses"}{urlQuery ? <> for “{urlQuery}”</> : null}</>}
+          </p>
+          {hasActiveFilters ? <button type="button" className="pc-link-btn" onClick={clearFilters}>Clear filters</button> : null}
+        </div>
+
+        {firstLoad ? (
+          <div className="pc-grid" aria-busy="true">
+            {Array.from({ length: 6 }, (_, index) => <CourseCardSkeleton key={index} />)}
+          </div>
+        ) : !loading && courses.length === 0 ? (
+          <div className="pc-empty">
+            <div className="pc-empty-icon"><SearchX size={26} aria-hidden="true" /></div>
+            <h2>{hasActiveFilters ? "No courses match that" : "Courses are on their way"}</h2>
+            <p>{hasActiveFilters ? "Try another word, or clear the filters to see every course." : "No courses are published yet. Check back soon."}</p>
+            {hasActiveFilters ? <button type="button" className="btn btn-outline" onClick={clearFilters}>Show all courses</button> : null}
+          </div>
         ) : (
-          <>
-            <div className="card courses-filter-bar">
-              <div className="courses-filter-row">
-                <div className="courses-filter-group category-filter-group">
-                  <span className="courses-filter-label">Category</span>
-                  <div className={`courses-filter-scroller${categoryScrollState.hasOverflow ? " has-overflow" : ""}`}>
-                    <button
-                      type="button"
-                      className="courses-filter-scroll-btn"
-                      aria-label="Scroll categories left"
-                      onClick={() => scrollCategoryTabs(-1)}
-                      disabled={!categoryScrollState.canScrollLeft}
-                    >
-                      <span aria-hidden="true">‹</span>
-                    </button>
-
-                    <div
-                      ref={categoryTabsRef}
-                      className="courses-filter-tabs"
-                      role="tablist"
-                      aria-label="Course categories"
-                    >
-                      {categoryTabs.map((category) => {
-                        const isActive = activeCategory === category
-
-                        return (
-                          <button
-                            key={category}
-                            type="button"
-                            role="tab"
-                            aria-selected={isActive}
-                            className={`btn ${isActive ? "btn-primary" : "btn-outline"}`}
-                            onClick={() => updateParams({ category })}
-                          >
-                            {category}
-                          </button>
-                        )
-                      })}
-                    </div>
-
-                    <button
-                      type="button"
-                      className="courses-filter-scroll-btn"
-                      aria-label="Scroll categories right"
-                      onClick={() => scrollCategoryTabs(1)}
-                      disabled={!categoryScrollState.canScrollRight}
-                    >
-                      <span aria-hidden="true">›</span>
-                    </button>
-                  </div>
-                  {categoryScrollState.hasOverflow ? (
-                    <p className="courses-filter-scroll-hint">Swipe or use the arrows to see more categories</p>
-                  ) : null}
-                </div>
-
-                <div className="courses-filter-search">
-                  <label className="courses-filter-label" htmlFor="course-search">
-                    Search courses
-                  </label>
-                  <input
-                    id="course-search"
-                    type="search"
-                    className="courses-search-input"
-                    placeholder="Search by course title"
-                    value={searchQuery}
-                    onChange={(event) => setSearchQuery(event.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="courses-filter-row courses-filter-row-bottom">
-                <div className="courses-filter-group">
-                  <span className="courses-filter-label">Pricing</span>
-                  <div className="courses-price-toggle" aria-label="Filter by pricing">
-                    <button
-                      type="button"
-                      className={`btn ${priceFilter === "free" ? "btn-primary" : "btn-outline"}`}
-                      aria-pressed={priceFilter === "free"}
-                      onClick={() => togglePriceFilter("free")}
-                    >
-                      Free
-                    </button>
-                    <button
-                      type="button"
-                      className={`btn ${priceFilter === "paid" ? "btn-primary" : "btn-outline"}`}
-                      aria-pressed={priceFilter === "paid"}
-                      onClick={() => togglePriceFilter("paid")}
-                    >
-                      Paid
-                    </button>
-                  </div>
-                  <p className="courses-filter-scroll-hint">Swipe left or right to view filter options</p>
-                </div>
-
-                <p className="courses-filter-summary">
-                  {loading ? "Searching…" : `${totalCourses} ${totalCourses === 1 ? "course" : "courses"} found`}
-                  {hasActiveFilters ? (
-                    <button type="button" className="btn btn-ghost btn-sm" style={{ marginLeft: "0.5rem" }} onClick={() => { setSearchQuery(""); setSearchParams({}, { replace: true }) }}>Clear filters</button>
-                  ) : null}
-                </p>
-              </div>
-            </div>
-
-            {!loading && courses.length === 0 ? (
-              <div className="card" style={{ padding: "2.5rem", textAlign: "center" }}>
-                <p style={{ color: "var(--text-500)" }}>
-                  {hasActiveFilters
-                    ? "No courses match these filters."
-                    : "No courses published yet. Check back soon."}
-                </p>
-              </div>
-            ) : (
-              <div className="courses-full-grid" style={loading ? { opacity: 0.55, transition: "opacity .15s" } : undefined}>
-                {courses.map((course) => (
-                  <CourseCard key={course.id} course={course} compact />
-                ))}
-              </div>
-            )}
-
-            <Pagination
-              currentPage={page}
-              totalPages={totalPages}
-              totalItems={totalCourses}
-              pageSize={PAGE_SIZE}
-              onPageChange={(nextPage) => { updateParams({ page: nextPage > 1 ? nextPage : null }, { resetPage: false }); window.scrollTo({ top: 0, behavior: "smooth" }) }}
-              label="courses"
-            />
-          </>
+          <div className={`pc-grid${loading ? " is-loading" : ""}`}>
+            {courses.map((course) => <CourseCard key={course.id} course={course} />)}
+          </div>
         )}
+
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          totalItems={totalCourses}
+          pageSize={PAGE_SIZE}
+          onPageChange={(nextPage) => {
+            updateParams({ page: nextPage > 1 ? nextPage : null }, { resetPage: false })
+            resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+          }}
+          label="courses"
+        />
       </div>
     </div>
   )

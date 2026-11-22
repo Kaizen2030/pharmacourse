@@ -295,3 +295,28 @@
   .pc-card, .pc-card-media img, .pc-go svg, .pc-skeleton > div { transition: none; animation: none; }
   .pc-card:hover { transform: none; }
 }
+
+/* The site makes every .btn full width on phones; these buttons must keep their size. */
+.pc-search .btn, .pcd-mobile-cta .btn { width: auto; flex: 0 0 auto; }
+.pc-card-actions .btn { width: auto; flex: 1 1 auto; }
+.pc-card-art .pc-art-icon { position: relative; width: 52px; height: 52px; opacity: 0.9; }
+
+@media (max-width: 760px) {
+  /* Lift the chat button and its teaser above the course enrol bar. */
+  body:has(.pcd-mobile-cta) .cw-fab { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+  body:has(.pcd-mobile-cta) .cw-teaser { bottom: calc(94px + env(safe-area-inset-bottom, 0px)); }
+  body:has(.pcd-mobile-cta) .cw-panel { bottom: calc(152px + env(safe-area-inset-bottom, 0px)); }
+
+  /* Module rows: duration goes under the title so titles have room. */
+  .pcd-mod button { display: grid; grid-template-columns: 30px minmax(0, 1fr) 18px; column-gap: 0.7rem; row-gap: 0.15rem; align-items: center; }
+  .pcd-mod-num { grid-row: 1 / span 2; }
+  .pcd-mod-title { grid-column: 2; }
+  .pcd-mod-time { grid-column: 2; grid-row: 2; font-size: 0.78rem; }
+  .pcd-mod-chev { grid-column: 3; grid-row: 1 / span 2; }
+  .pcd-mod-body { padding-left: 1rem; }
+}
+
+/* The site header (.nav) is sticky and 72px tall: sticky course elements sit just below it. */
+.pc-toolbar { top: 72px; }
+.pcd-buy { top: calc(72px + 1rem); }
+.pc-search .btn svg { color: #fff; }
