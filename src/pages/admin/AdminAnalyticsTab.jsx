@@ -792,7 +792,7 @@ export default function WebsiteAnalyticsTab() {
             {loading ? <div className="analytics-loading compact">Loading region data...</div> : <TrafficPillList items={geoRegionBreakdown} />}
           </div>
           <p className="analytics-geo-note">
-            Location data is cached and collected passively, so the dashboard can show both exact GeoIP country data and browser fallback signals.
+            Visitors are counted only after they accept analytics. Country is estimated from the browser time zone and language: no IP addresses or precise locations are collected.
           </p>
         </ChartCard>
       </div>

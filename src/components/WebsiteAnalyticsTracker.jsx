@@ -1,43 +1,33 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useLocation } from "react-router-dom"
-import { recordWebsiteEvent } from "../lib/websiteAnalytics"
+import { CONSENT_EVENT, getAnalyticsConsent, recordWebsiteEvent } from "../lib/websiteAnalytics"
 
+// Counts page views on public pages once the visitor has accepted analytics. Only the path is sent.
 export default function WebsiteAnalyticsTracker() {
-  const location = useLocation()
+  const { pathname } = useLocation()
+  const [consent, setConsent] = useState(getAnalyticsConsent)
 
   useEffect(() => {
-    if (typeof window === "undefined") return
+    const update = () => setConsent(getAnalyticsConsent())
+    window.addEventListener(CONSENT_EVENT, update)
+    return () => window.removeEventListener(CONSENT_EVENT, update)
+  }, [])
 
-    const pathname = location.pathname || "/"
-    const search = location.search || ""
-    const title = typeof document !== "undefined" ? document.title : ""
+  useEffect(() => {
+    if (consent !== "granted") return
+    const path = pathname || "/"
+    void recordWebsiteEvent({ eventName: "page_view", pathname: path })
 
-    void recordWebsiteEvent({
-      eventName: "page_view",
-      pathname,
-      title,
-      search,
-      metadata: {
-        hash: location.hash || "",
-      },
-    })
-
-    const sessionStartFlag = "pharmacourse.website.session_started"
+    const flag = "pharmacourse.website.session_started"
     try {
-      if (!window.sessionStorage.getItem(sessionStartFlag)) {
-        window.sessionStorage.setItem(sessionStartFlag, "1")
-        void recordWebsiteEvent({
-          eventName: "session_start",
-          pathname,
-          title,
-          search,
-        })
+      if (!window.sessionStorage.getItem(flag)) {
+        window.sessionStorage.setItem(flag, "1")
+        void recordWebsiteEvent({ eventName: "session_start", pathname: path })
       }
     } catch {
-      // Ignore storage failures.
+      // Storage blocked: skip the session marker.
     }
-  }, [location.hash, location.pathname, location.search])
+  }, [pathname, consent])
 
   return null
 }
-

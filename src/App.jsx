@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-route
 import { AuthProvider } from "./context/AuthContext"
 import { useAuth } from "./context/AuthContext"
 import WebsiteAnalyticsTracker from "./components/WebsiteAnalyticsTracker"
+import AnalyticsConsentBanner from "./components/AnalyticsConsentBanner"
 import ChatWidget from "./components/ChatWidget"
 import Footer from "./components/Footer"
 import Navbar from "./components/Navbar"
@@ -96,6 +97,7 @@ function AppShell() {
       <MediaProtection />
       <DialogHost />
       <WebsiteAnalyticsTracker />
+      <AnalyticsConsentBanner />
       {isPatientRoute ? <PatientInstallPrompt /> : null}
       {!isPatientRoute && !isFlyerRoute && !isActivationRoute ? <Navbar /> : null}
       <Suspense fallback={<RouteFallback />}>

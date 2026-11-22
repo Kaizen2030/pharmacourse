@@ -139,3 +139,20 @@ create policy "Anyone can read attachments" on public.lesson_attachments for sel
 create policy "Users can view modules of enrolled courses" on public.course_modules for select to authenticated
   using ((course_id in (select ce.course_id from course_enrollments ce where ce.user_id = auth.uid()))
          or (course_id in (select c.id from courses c where c.instructor_id = auth.uid())) or is_admin());
+
+-- Phase 4: website analytics, live function of 2026-11-23 (no table grants for anon/authenticated).
+create table public.website_events (id bigserial primary key, event_name text, path text, title text, referrer text, session_id text,
+  user_id uuid, user_role text, device_category text, viewport_width int, viewport_height int, metadata jsonb, created_at timestamptz default now());
+alter table public.website_events enable row level security;
+create function public.record_website_event(event_name text, path text, title text, referrer text, session_id text, device_category text,
+  viewport_width integer, viewport_height integer, metadata jsonb) returns bigint language plpgsql security definer set search_path = public as $$
+declare inserted_id bigint; normalized_event_name text := nullif(btrim(event_name), '');
+begin
+  if normalized_event_name is null then return null; end if;
+  insert into public.website_events (event_name, path, title, referrer, session_id, user_id, user_role, device_category, viewport_width, viewport_height, metadata)
+  values (normalized_event_name, nullif(btrim(path), ''), nullif(btrim(title), ''), nullif(btrim(referrer), ''), nullif(btrim(session_id), ''), auth.uid(),
+    case when auth.uid() is not null and public.is_admin() then 'admin' when auth.uid() is not null then 'authenticated' else 'visitor' end,
+    nullif(btrim(device_category), ''), viewport_width, viewport_height, coalesce(metadata, '{}'::jsonb)) returning id into inserted_id;
+  return inserted_id;
+end; $$;
+grant execute on function public.record_website_event(text, text, text, text, text, text, integer, integer, jsonb) to anon, authenticated;

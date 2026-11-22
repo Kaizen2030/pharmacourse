@@ -1521,3 +1521,33 @@ code {
 @media (prefers-reduced-motion: reduce) {
   .lesson-watermark { animation: none; top: auto; bottom: 12%; left: auto; right: 4%; }
 }
+
+/* Analytics consent: asked once, before anything is recorded. */
+.consent-banner {
+  position: fixed;
+  z-index: 70;
+  left: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  width: min(520px, calc(100vw - 32px));
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.6rem 0.75rem;
+  align-items: start;
+  padding: 1rem 1.1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: var(--shadow-lg);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--text-700);
+}
+.consent-banner .consent-icon { color: var(--green); margin-top: 0.1rem; }
+.consent-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 0.5rem; }
+.consent-actions .btn { width: auto; min-height: 40px; padding: 0.55rem 1.1rem; }
+@media (max-width: 640px) {
+  .consent-banner { left: 12px; right: 12px; width: auto; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+  .consent-actions .btn { flex: 1 1 0; }
+  body:has(.consent-banner) .cw-fab { bottom: calc(190px + env(safe-area-inset-bottom, 0px)); }
+  body:has(.consent-banner) .cw-teaser { display: none; }
+}
