@@ -5,6 +5,8 @@ import { supabase } from "../lib/supabaseClient"
 import { friendlyError } from "../lib/friendlyError"
 import { useAuth } from "../context/AuthContext"
 import { isEmbeddedVideo, parseLessonVideo } from "../lib/videoEmbed"
+import { Award, Check, ChevronLeft, ChevronRight, CircleCheck, Clock, Download, FileText, Lock, MessageCircle, PlayCircle, RotateCcw } from "lucide-react"
+import "../styles/player-ui.css"
 
 export default function CoursePlayer() {
   const { courseId, lessonId } = useParams()
@@ -29,6 +31,7 @@ export default function CoursePlayer() {
   const [quizLoading, setQuizLoading] = useState(false)
   const [quizMeta, setQuizMeta] = useState(null)
   const [quizMessage, setQuizMessage] = useState("")
+  const [courseInfo, setCourseInfo] = useState(null)
   const videoRef = useRef(null)
   const lastTimeRef = useRef(0)
   const saveIntervalRef = useRef(null)
@@ -63,6 +66,14 @@ export default function CoursePlayer() {
 
     return { data: null, error: lastError }
   }
+
+  // Course title and link for the lesson sidebar.
+  useEffect(() => {
+    let active = true
+    supabase.from("courses").select("title, slug").eq("id", courseId).maybeSingle()
+      .then(({ data }) => { if (active) setCourseInfo(data || null) })
+    return () => { active = false }
+  }, [courseId])
 
   useEffect(() => {
     async function load() {
@@ -472,102 +483,121 @@ export default function CoursePlayer() {
 
   if (loading) {
     return (
-      <div className="page" style={{ padding: "2rem", textAlign: "center", color: "var(--text-500)" }}>
-        <p>Loading course...</p>
+      <div className="cp-page">
+        <div className="cp-layout" aria-busy="true">
+          <aside className="cp-sidebar"><div className="cp-skel" style={{ height: 120 }} /><div className="cp-skel" style={{ height: 320 }} /></aside>
+          <main className="cp-main"><div className="cp-skel cp-skel-video" /><div className="cp-skel" style={{ height: 90, margin: "1.5rem" }} /></main>
+        </div>
       </div>
     )
   }
 
   if (error || !currentModule) {
     return (
-      <div className="page" style={{ padding: "2rem", textAlign: "center" }}>
-        <p style={{ color: "var(--danger)", marginBottom: "1rem" }}>
-          {error || "Module not found"}
-        </p>
-        <Link to="/courses" style={{ color: "var(--blue)", textDecoration: "underline" }}>
-          ← Back to courses
-        </Link>
+      <div className="cp-page">
+        <div className="cp-empty">
+          <span className="cp-empty-icon"><Lock size={26} aria-hidden="true" /></span>
+          <p>{error || "This lesson was not found."}</p>
+          <Link to={courseInfo?.slug ? `/courses/${courseInfo.slug}` : "/courses"} className="btn btn-primary">Back to the course</Link>
+        </div>
       </div>
     )
   }
 
+  const doneCount = modules.filter((m) => completedIds.has(m.id)).length
+  const coursePct = modules.length ? Math.round((doneCount / modules.length) * 100) : 0
+  const minutesOf = (mod) => Number(mod?.duration_minutes ?? mod?.duration ?? 0)
+  const prevModule = currentIndex > 0 ? modules[currentIndex - 1] : null
+  const nextModule = currentIndex < modules.length - 1 ? modules[currentIndex + 1] : null
+  const nextLocked = nextModule && !isAdmin && !isCompleted && !completedIds.has(nextModule.id)
+  const lockedFor = (idx) => !isAdmin && idx > 0 && !completedIds.has(modules[idx - 1]?.id) && !completedIds.has(modules[idx].id)
+
+  function goTo(mod) {
+    if (videoRef.current && !completedIdsRef.current.has(lessonId)) savePosition(videoRef.current.currentTime)
+    navigate(`/learn/${courseId}/${mod.id}`)
+  }
+
   return (
-    <div className="page" style={{ padding: 0 }}>
-      <div className="player-layout">
-        <aside className="player-sidebar">
-          <div className="player-sidebar-title">Course Modules ({modules.length})</div>
-          {modules.map((mod, idx) => {
-            const active = mod.id === lessonId
-            const done = completedIds.has(mod.id)
-            const prevDone = idx === 0 || completedIds.has(modules[idx - 1]?.id)
-            const locked = !isAdmin && !prevDone && !done
-            return (
-              <div
-                key={mod.id}
-                onClick={() => {
-                  if (locked) { alert("Complete the previous module first."); return }
-                  if (videoRef.current && !completedIdsRef.current.has(lessonId)) {
-                    savePosition(videoRef.current.currentTime)
-                  }
-                  navigate(`/learn/${courseId}/${mod.id}`)
-                }}
-                className={`player-lesson${active ? " active" : ""}${done ? " done" : ""}${locked ? " locked" : ""}`}
-                style={{ cursor: locked ? "not-allowed" : "pointer", opacity: locked ? 0.5 : 1 }}
-              >
-                <div className={`lesson-check${done ? " done" : active ? " active" : ""}`}>
-                  {done ? "✓" : locked ? "🔒" : mod.duration ? `${mod.duration}'` : idx + 1}
-                </div>
-                <span style={{ flex: 1 }}>{mod.title}</span>
-              </div>
-            )
-          })}
+    <div className="cp-page">
+      <div className="cp-layout">
+        <aside className="cp-sidebar" aria-label="Course lessons">
+          <div className="cp-course">
+            <Link to={courseInfo?.slug ? `/courses/${courseInfo.slug}` : "/dashboard"} className="cp-back">
+              <ChevronLeft size={16} aria-hidden="true" /> Course overview
+            </Link>
+            <h1 className="cp-course-title">{courseInfo?.title || "Course"}</h1>
+            <div className="cp-course-progress" aria-label={`${coursePct}% of the course complete`}><span style={{ width: `${coursePct}%` }} /></div>
+            <p className="cp-course-meta">{doneCount} of {modules.length} lessons complete · {coursePct}%</p>
+          </div>
+
+          <ol className="cp-lessons">
+            {modules.map((mod, idx) => {
+              const active = mod.id === lessonId
+              const done = completedIds.has(mod.id)
+              const locked = lockedFor(idx)
+              const mins = minutesOf(mod)
+              return (
+                <li key={mod.id}>
+                  <button
+                    type="button"
+                    className={`cp-lesson${active ? " active" : ""}${done ? " done" : ""}${locked ? " locked" : ""}`}
+                    aria-current={active ? "step" : undefined}
+                    disabled={locked}
+                    title={locked ? "Finish the previous lesson to unlock this one" : undefined}
+                    onClick={() => goTo(mod)}
+                  >
+                    <span className="cp-lesson-mark" aria-hidden="true">
+                      {done ? <Check size={14} strokeWidth={3} /> : locked ? <Lock size={13} /> : idx + 1}
+                    </span>
+                    <span className="cp-lesson-text">
+                      <span className="cp-lesson-title">{mod.title}</span>
+                      <span className="cp-lesson-sub">
+                        {done ? "Completed" : locked ? "Locked" : active ? "Now playing" : "Lesson " + (idx + 1)}
+                        {mins > 0 ? ` · ${mins} min` : ""}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              )
+            })}
+          </ol>
         </aside>
 
-        <main className="player-main">
-          <div className="player-mobile-nav">
-            <label htmlFor="mobile-module-select">Jump to module</label>
+        <main className="cp-main">
+          <div className="cp-mobile-nav">
+            <label htmlFor="mobile-module-select">Lesson {currentIndex + 1} of {modules.length} · {coursePct}% complete</label>
             <select
               id="mobile-module-select"
               value={lessonId}
               onChange={(e) => {
-                const nextId = e.target.value
-                const nextIndex = modules.findIndex((mod) => mod.id === nextId)
-                const locked = !isAdmin && nextIndex > 0 && !completedIds.has(modules[nextIndex - 1]?.id) && !completedIds.has(nextId)
-
-                if (locked) return
-
-                if (videoRef.current && !completedIdsRef.current.has(lessonId)) {
-                  savePosition(videoRef.current.currentTime)
-                }
-
-                navigate(`/learn/${courseId}/${nextId}`)
+                const nextIndex = modules.findIndex((mod) => mod.id === e.target.value)
+                if (nextIndex < 0 || lockedFor(nextIndex)) return
+                goTo(modules[nextIndex])
               }}
             >
-              {modules.map((mod, idx) => {
-                const done = completedIds.has(mod.id)
-                const prevDone = idx === 0 || completedIds.has(modules[idx - 1]?.id)
-                const locked = !isAdmin && !prevDone && !done
-
-                return (
-                  <option key={mod.id} value={mod.id} disabled={locked}>
-                    {locked ? "Locked: " : done ? "Done: " : ""}{mod.title}
-                  </option>
-                )
-              })}
+              {modules.map((mod, idx) => (
+                <option key={mod.id} value={mod.id} disabled={lockedFor(idx)}>
+                  {idx + 1}. {mod.title}{completedIds.has(mod.id) ? " (done)" : lockedFor(idx) ? " (locked)" : ""}
+                </option>
+              ))}
             </select>
           </div>
 
           {isLocked ? (
-            <div className="video-placeholder" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "400px", gap: "1rem" }}>
-              <span style={{ fontSize: "3rem" }}>🔒</span>
-              <p style={{ color: "var(--text-500)", fontWeight: 600 }}>Complete the previous module to unlock this one.</p>
-              <button className="btn btn-primary" onClick={() => navigate(`/learn/${courseId}/${modules[currentIndex - 1].id}`)}>
-                ← Go to Previous Module
-              </button>
+            <div className="cp-video cp-video-locked">
+              <div className="cp-locked">
+                <span className="cp-empty-icon dark"><Lock size={26} aria-hidden="true" /></span>
+                <p>Finish the previous lesson to unlock this one.</p>
+                {prevModule ? (
+                  <button type="button" className="btn btn-primary" onClick={() => goTo(prevModule)}>
+                    <ChevronLeft size={16} aria-hidden="true" /> Go to previous lesson
+                  </button>
+                ) : null}
+              </div>
             </div>
           ) : (
             <>
-              <div className="video-container" style={{ position: "relative" }}>
+              <div className="cp-video video-container">
                 {currentModule.video_url && lessonVideo.kind !== "unsupported" && user?.email ? (
                   <div className="lesson-watermark" aria-hidden="true">{user.email} · {String(user.id).slice(0, 8)}</div>
                 ) : null}
@@ -612,145 +642,79 @@ export default function CoursePlayer() {
                 ) : (
                   <div className="video-placeholder">
                     <div>
-                      <p>🎥 Video not uploaded yet</p>
-                      <small>Check back soon!</small>
+                      <PlayCircle size={36} aria-hidden="true" />
+                      <p>The video for this lesson is not uploaded yet.</p>
+                      <small>Check back soon.</small>
                     </div>
                   </div>
                 )}
               </div>
 
-              {resumePosition > 0 && !isCompleted && !isAdmin && (
-                <div style={{ padding: "0.5rem 2rem", background: "#fef9c3", borderBottom: "1px solid #fde68a", fontSize: "0.85rem", color: "#92400e", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  ▶ Resuming from {Math.floor(resumePosition / 60)}m {Math.floor(resumePosition % 60)}s — where you left off
+              {currentModule.video_url && !isCompleted && !isAdmin ? (
+                <div className="cp-watch">
+                  <div className="cp-watch-bar"><span className={videoWatched ? "ready" : ""} style={{ width: `${watchProgress}%` }} /></div>
+                  <span>{videoWatched ? "Ready to complete" : `Watched ${watchProgress}% · keep watching to unlock completion`}</span>
                 </div>
-              )}
+              ) : null}
 
-              {isCompleted && (
-                <div style={{ padding: "0.5rem 2rem", background: "#dcfce7", borderBottom: "1px solid #bbf7d0", fontSize: "0.85rem", color: "#15803d", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  ✅ You completed this module — rewatch freely and scrub anywhere
+              <section className="cp-lesson-head">
+                <div className="cp-chips">
+                  <span className="cp-chip">Lesson {currentIndex + 1} of {modules.length}</span>
+                  {minutesOf(currentModule) > 0 ? <span className="cp-chip"><Clock size={13} aria-hidden="true" /> {minutesOf(currentModule)} min</span> : null}
+                  {isCompleted ? <span className="cp-chip ok"><Check size={13} strokeWidth={3} aria-hidden="true" /> Completed · rewatch freely</span> : null}
+                  {resumePosition > 0 && !isCompleted && !isAdmin ? (
+                    <span className="cp-chip warn"><RotateCcw size={13} aria-hidden="true" /> Resumed at {Math.floor(resumePosition / 60)}:{String(Math.floor(resumePosition % 60)).padStart(2, "0")}</span>
+                  ) : null}
+                  {isAdmin ? <span className="cp-chip admin" title="All lessons unlocked, free scrubbing and certificate preview">Admin preview</span> : null}
                 </div>
-              )}
+                <h2>{currentModule.title}</h2>
+                {currentModule.description ? <p className="cp-desc">{currentModule.description}</p> : null}
 
-              {isAdmin && (
-                <div style={{ padding: "0.5rem 2rem", background: "#e8f5f0", borderBottom: "1px solid #b8dfd3", fontSize: "0.85rem", color: "#0F6E56", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  Admin preview mode - all modules unlocked, free scrubbing enabled, and certificate preview available.
-                </div>
-              )}
-
-              {currentModule.video_url && !isCompleted && !isAdmin && (
-                <div style={{ padding: "0.75rem 2rem", background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.4rem" }}>
-                    <span style={{ fontSize: "0.8rem", color: "var(--text-500)" }}>
-                      {videoWatched ? "✅ Ready to complete" : `Watch ${Math.max(90 - watchProgress, 0)}% more to unlock completion`}
-                    </span>
-                    <span style={{ fontSize: "0.8rem", color: "var(--text-500)" }}>{watchProgress}%</span>
-                  </div>
-                  <div style={{ height: "4px", background: "var(--border)", borderRadius: "2px" }}>
-                    <div style={{
-                      height: "100%",
-                      width: `${watchProgress}%`,
-                      background: videoWatched ? "var(--green, #16a34a)" : "var(--blue, #2563eb)",
-                      borderRadius: "2px",
-                      transition: "width 0.5s ease"
-                    }} />
-                  </div>
-                </div>
-              )}
-
-              <div className="lesson-title-bar">
-                <div>
-                  <h2>{currentModule.title}</h2>
-                  {currentModule.duration && (
-                    <p style={{ color: "var(--text-500)", fontSize: "0.9rem", margin: "0.25rem 0 0 0" }}>
-                      ⏱️ {currentModule.duration} minutes
-                    </p>
-                  )}
-                </div>
-                <div className="lesson-actions" style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", alignItems: "center" }}>
-                  <button
-                    onClick={askAboutLesson}
-                    className="btn btn-secondary"
-                    style={{ minWidth: "12rem" }}
-                  >
-                    Ask about this lesson
-                  </button>
-                  {!isCompleted && (
+                <div className="cp-actions">
+                  {!isCompleted ? (
                     <button
+                      type="button"
                       onClick={markComplete}
                       disabled={marking || (!videoWatched && !isAdmin)}
                       className="btn btn-primary"
-                      title={!videoWatched && !isAdmin ? "Watch at least 90% of the video first" : ""}
-                      style={{ opacity: videoWatched || isAdmin ? 1 : 0.5, cursor: videoWatched || isAdmin ? "pointer" : "not-allowed" }}
+                      title={!videoWatched && !isAdmin ? "Watch the video first" : ""}
                     >
-                      {marking ? "Saving…" : isAdmin ? "Mark Complete (Admin Preview)" : videoWatched ? "Mark as Complete →" : `Watch video to unlock (${watchProgress}%)`}
+                      <CircleCheck size={17} aria-hidden="true" />
+                      {marking ? "Saving…" : isAdmin ? "Mark complete (preview)" : videoWatched ? "Mark as complete" : `Watch to unlock (${watchProgress}%)`}
+                    </button>
+                  ) : nextModule ? (
+                    <button type="button" className="btn btn-primary" onClick={() => goTo(nextModule)}>
+                      Next lesson <ChevronRight size={17} aria-hidden="true" />
+                    </button>
+                  ) : (
+                    <button type="button" className="btn btn-primary" onClick={() => navigate(`/certificate/${courseId}`)}>
+                      <Award size={17} aria-hidden="true" /> {isAdmin ? "Preview certificate" : "Get your certificate"}
                     </button>
                   )}
-                  {isCompleted && (
-                    <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-                      <span style={{ color: "var(--success, #16a34a)", fontWeight: 600 }}>✅ Completed</span>
-                      {currentIndex < modules.length - 1 ? (
-                        <button
-                          className="btn btn-primary"
-                          onClick={() => navigate(`/learn/${courseId}/${modules[currentIndex + 1].id}`)}
-                          style={{ background: "#16a34a", borderColor: "#16a34a" }}
-                        >
-                          Next Module →
-                        </button>
-                      ) : (
-                        <button
-                          className="btn btn-primary"
-                          onClick={() => navigate(`/certificate/${courseId}`)}
-                          style={{ background: "#16a34a", borderColor: "#16a34a" }}
-                        >
-                          {isAdmin ? "Preview Certificate" : "Get Certificate 🎓"}
-                        </button>
-                      )}
-                    </div>
-                  )}
+                  <button type="button" onClick={askAboutLesson} className="btn btn-outline">
+                    <MessageCircle size={17} aria-hidden="true" /> Ask about this lesson
+                  </button>
                 </div>
-              </div>
-
-              {currentModule.description && (
-                <p className="lesson-desc">{currentModule.description}</p>
-              )}
+              </section>
 
               {attachments.length > 0 && (
-                <section style={{ marginTop: "1.5rem", padding: "1.75rem", borderRadius: "18px", background: "#f8faf9", border: "1px solid var(--border)" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem", flexWrap: "wrap" }}>
+                <section className="cp-card">
+                  <div className="cp-card-head">
                     <div>
-                      <h3 style={{ margin: 0, fontSize: "1.05rem" }}>Lesson Materials</h3>
-                      <p style={{ margin: "0.35rem 0 0", color: "var(--text-500)", fontSize: "0.93rem" }}>
-                        Download supporting files for this lesson.
-                      </p>
+                      <h3>Lesson materials</h3>
+                      <p className="cp-muted">Download supporting files for this lesson.</p>
                     </div>
-                    <span style={{ color: "var(--text-500)", fontSize: "0.9rem" }}>
-                      {attachments.length} item{attachments.length === 1 ? "" : "s"}
-                    </span>
+                    <span className="cp-muted">{attachments.length} item{attachments.length === 1 ? "" : "s"}</span>
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1rem", marginTop: "1.25rem" }}>
+                  <div className="cp-files">
                     {attachments.map(att => (
-                      <a
-                        key={att.id}
-                        href={att.file_url}
-                        target="_blank"
-                        rel="noreferrer noopener"
-                        style={{
-                          padding: "1rem 1.1rem",
-                          background: "#fff",
-                          borderRadius: "14px",
-                          border: "1px solid var(--border)",
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "0.35rem",
-                          textDecoration: "none",
-                          color: "inherit"
-                        }}
-                      >
-                        <span style={{ fontWeight: 600 }}>{att.title || att.file_name || "Attachment"}</span>
-                        <span style={{ fontSize: "0.85rem", color: "var(--text-500)" }}>
-                          {att.description || att.file_type || "Download file"}
+                      <a key={att.id} href={att.file_url} target="_blank" rel="noreferrer noopener" className="cp-file">
+                        <span className="cp-file-icon"><FileText size={18} aria-hidden="true" /></span>
+                        <span className="cp-file-text">
+                          <strong>{att.title || att.file_name || "Attachment"}</strong>
+                          <span>{att.description || att.file_type || "Download file"}</span>
                         </span>
-                        <span style={{ alignSelf: "flex-start", fontSize: "0.8rem", color: "var(--primary)" }}>Download</span>
+                        <Download size={16} aria-hidden="true" className="cp-file-dl" />
                       </a>
                     ))}
                   </div>
@@ -758,30 +722,22 @@ export default function CoursePlayer() {
               )}
 
               {quizAvailable && (
-                <section style={{ marginTop: "1.5rem", padding: "1.75rem", borderRadius: "18px", background: "#f8faf9", border: "1px solid var(--border)" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
+                <section className="cp-card">
+                  <div className="cp-card-head">
                     <div>
-                      <span style={{ display: "inline-block", fontSize: "0.78rem", fontWeight: 700, letterSpacing: "0.09em", textTransform: "uppercase", color: "#0F6E56" }}>
-                        Lesson Quiz
-                      </span>
-                      <h3 style={{ margin: "0.5rem 0 0", fontSize: "1.2rem" }}>
-                        Pass with {quizMeta?.passing_score ?? 70}% to complete this module.
-                      </h3>
+                      <span className="cp-eyebrow">Lesson quiz</span>
+                      <h3>Pass with {quizMeta?.passing_score ?? 70}% to complete this lesson</h3>
                     </div>
-                    <div style={{ fontWeight: 700, color: "#0F6E56" }}>
-                      {quizSubmitted ? `Score: ${quizScore}%` : `${quizQuestions.length} questions`}
-                    </div>
+                    <strong className="cp-quiz-count">{quizSubmitted ? `Score: ${quizScore}%` : `${quizQuestions.length} question${quizQuestions.length === 1 ? "" : "s"}`}</strong>
                   </div>
 
                   {quizLoading ? (
-                    <p style={{ marginTop: "1rem", color: "var(--text-500)" }}>Loading quiz...</p>
+                    <p className="cp-muted">Loading quiz…</p>
                   ) : quizSubmitted ? (
-                    <div style={{ marginTop: "1.5rem", display: "grid", gap: "1rem" }}>
-                      <div style={{ padding: "1rem", borderRadius: "14px", background: quizPassed ? "#dcfce7" : "#fee2e2", color: quizPassed ? "#166534" : "#991b1b" }}>
-                        <strong>{quizPassed ? "✅ Passed!" : "❌ Quiz incomplete"}</strong>
-                        <p style={{ margin: "0.5rem 0 0" }}>
-                          {quizPassed ? "You can now mark this module complete." : "Review your answers and try again."}
-                        </p>
+                    <div className="cp-quiz-result-wrap">
+                      <div className={`cp-quiz-result ${quizPassed ? "pass" : "fail"}`}>
+                        <strong>{quizPassed ? "Passed" : "Not passed yet"}</strong>
+                        <p>{quizPassed ? "You can now mark this lesson complete." : "Review the lesson and try again."}</p>
                       </div>
                       {!quizPassed && (
                         <button
@@ -794,56 +750,62 @@ export default function CoursePlayer() {
                             setUserAnswers({})
                           }}
                         >
-                          Retake Quiz
+                          <RotateCcw size={16} aria-hidden="true" /> Retake quiz
                         </button>
                       )}
                     </div>
                   ) : (
-                    <div style={{ marginTop: "1.5rem", display: "grid", gap: "1.5rem" }}>
+                    <div className="cp-quiz">
                       {quizQuestions.map((question, idx) => (
-                        <div key={question.id} style={{ padding: "1rem", borderRadius: "14px", background: "#fff", border: "1px solid var(--border)" }}>
-                          <div style={{ marginBottom: "0.75rem", fontWeight: 700 }}>{idx + 1}. {question.question_text}</div>
-                          <div style={{ display: "grid", gap: "0.75rem" }}>
-                            {(question.options || []).map((opt, optIndex) => {
-                              const optionText = String(opt.text || opt.label || opt.value || "").trim()
-                              return (
-                                <label key={optIndex} style={{ display: "flex", alignItems: "center", gap: "0.75rem", cursor: "pointer", color: "var(--text-900)" }}>
-                                  <input
-                                    type="radio"
-                                    name={`quiz-${question.id}`}
-                                    value={optionText}
-                                    checked={userAnswers[question.id] === optionText}
-                                    onChange={() => setUserAnswers(prev => ({ ...prev, [question.id]: optionText }))}
-                                  />
-                                  <span>{optionText}</span>
-                                </label>
-                              )
-                            })}
-                          </div>
-                        </div>
+                        <fieldset key={question.id} className="cp-question">
+                          <legend>{idx + 1}. {question.question_text}</legend>
+                          {(question.options || []).map((opt, optIndex) => {
+                            const optionText = String(opt.text || opt.label || opt.value || "").trim()
+                            const checked = userAnswers[question.id] === optionText
+                            return (
+                              <label key={optIndex} className={`cp-option${checked ? " checked" : ""}`}>
+                                <input
+                                  type="radio"
+                                  name={`quiz-${question.id}`}
+                                  value={optionText}
+                                  checked={checked}
+                                  onChange={() => setUserAnswers(prev => ({ ...prev, [question.id]: optionText }))}
+                                />
+                                <span>{optionText}</span>
+                              </label>
+                            )
+                          })}
+                        </fieldset>
                       ))}
 
-                      {quizMessage && (
-                        <p role="alert" style={{ margin: 0, color: "#991b1b" }}>{quizMessage}</p>
-                      )}
+                      {quizMessage && <p role="alert" className="cp-alert">{quizMessage}</p>}
                       <button
                         type="button"
                         className="btn btn-primary"
                         onClick={submitQuiz}
                         disabled={quizQuestions.some(q => !userAnswers[q.id])}
                       >
-                        Submit Quiz
+                        Submit quiz
                       </button>
                     </div>
                   )}
                 </section>
               )}
 
-              <div style={{ marginTop: "2rem", padding: "0 2rem 2rem", borderTop: "1px solid var(--border)", paddingTop: "2rem" }}>
-                <p style={{ color: "var(--text-500)", fontSize: "0.9rem" }}>
-                  Module {currentIndex + 1} of {modules.length}
-                </p>
-              </div>
+              <nav className="cp-pager" aria-label="Lesson navigation">
+                {prevModule ? (
+                  <button type="button" className="cp-pager-btn" onClick={() => goTo(prevModule)}>
+                    <ChevronLeft size={18} aria-hidden="true" />
+                    <span><small>Previous</small>{prevModule.title}</span>
+                  </button>
+                ) : <span />}
+                {nextModule ? (
+                  <button type="button" className="cp-pager-btn next" onClick={() => goTo(nextModule)} disabled={nextLocked} title={nextLocked ? "Complete this lesson to unlock the next one" : undefined}>
+                    <span><small>{nextLocked ? "Next (complete this lesson first)" : "Next"}</small>{nextModule.title}</span>
+                    {nextLocked ? <Lock size={16} aria-hidden="true" /> : <ChevronRight size={18} aria-hidden="true" />}
+                  </button>
+                ) : null}
+              </nav>
             </>
           )}
         </main>
