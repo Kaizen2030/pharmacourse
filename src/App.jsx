@@ -48,6 +48,7 @@ const ResetPassword = lazyWithReload(() => import("./pages/ResetPassword"))
 const ResetRedirect = lazyWithReload(() => import("./pages/ResetRedirect"))
 const TeamPlans = lazyWithReload(() => import("./pages/TeamPlans"))
 const TutorWhatsAppSettings = lazyWithReload(() => import("./pages/TutorWhatsAppSettings"))
+const TutorStudio = lazyWithReload(() => import("./pages/tutor/TutorStudio"))
 const WhatsAppSettings = lazyWithReload(() => import("./pages/WhatsAppSettings"))
 const VerifyCertificate = lazyWithReload(() => import("./pages/VerifyCertificate"))
 const Workshops = lazyWithReload(() => import("./pages/Workshops"))
@@ -125,6 +126,8 @@ function AppShell() {
         <Route path="/payments" element={<MyPayments />} />
         <Route path="/payments/return" element={<PaymentReturn />} />
         <Route path="/tutor/whatsapp" element={<TutorWhatsAppSettings />} />
+        <Route path="/tutor" element={<TutorStudio />} />
+        <Route path="/tutor/courses/:courseId" element={<TutorStudio />} />
         <Route path="/whatsapp-settings" element={<WhatsAppSettings />} />
         <Route path="/certificate/:courseId" element={<Certificate />} />
         <Route path="/verify/:certificateId" element={<VerifyCertificate />} />

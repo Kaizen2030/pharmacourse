@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from "react"
 import { Link, useNavigate, useLocation } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import { supabase } from "../lib/supabaseClient"
-import { BookOpen, Building2, CalendarDays, ChevronDown, LayoutDashboard, LogOut, MessageCircle, Receipt, ShieldCheck, ShoppingCart, Users, X } from "lucide-react"
+import { useTutorProfile } from "../lib/useTutorProfile"
+import { BookOpen, Building2, CalendarDays, ChevronDown, GraduationCap, LayoutDashboard, LogOut, MessageCircle, Receipt, ShieldCheck, ShoppingCart, Users, X } from "lucide-react"
 
 const learnLinks = [
   { to: "/courses", label: "Courses", detail: "Self-paced CPD courses with certificates", icon: BookOpen },
@@ -17,6 +18,7 @@ const productLinks = [
 
 export default function Navbar() {
   const { user, profile, isAdmin } = useAuth()
+  const tutor = useTutorProfile()
   const navigate = useNavigate()
   const location = useLocation()
   const isPatientRoute = location.pathname.startsWith("/patient")
@@ -203,6 +205,11 @@ export default function Navbar() {
                     >
                       <MessageCircle size={17} aria-hidden="true" /> WhatsApp updates
                     </Link>
+                    {tutor.instructorId ? (
+                      <Link to="/tutor" role="menuitem" className={`nav-dropdown-link${location.pathname.startsWith("/tutor") ? " active" : ""}`} onClick={() => setUserMenuOpen(false)}>
+                        <GraduationCap size={17} aria-hidden="true" /> Tutor studio
+                      </Link>
+                    ) : null}
                     <Link to="/payments" role="menuitem" className={`nav-dropdown-link${isActive("/payments") ? " active" : ""}`} onClick={() => setUserMenuOpen(false)}>
                       <Receipt size={17} aria-hidden="true" /> My payments
                     </Link>
@@ -343,6 +350,7 @@ export default function Navbar() {
                 <Link to="/whatsapp-settings" className={isActive("/whatsapp-settings") ? "active" : ""} onClick={() => setMenuOpen(false)}>
                   WhatsApp updates
                 </Link>
+                {tutor.instructorId ? <Link to="/tutor" onClick={() => setMenuOpen(false)}>Tutor studio</Link> : null}
                 <Link to="/payments" className={isActive("/payments") ? "active" : ""} onClick={() => setMenuOpen(false)}>
                   My payments
                 </Link>

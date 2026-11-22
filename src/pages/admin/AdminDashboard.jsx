@@ -5,7 +5,7 @@ import { useAuth } from "../../context/AuthContext"
 import { useSearchParams } from "react-router-dom"
 import {
   BookOpen, Home, LogOut, Plus, Edit2, Trash2, Eye, EyeOff,
-  Save, GripVertical, AlertCircle, RefreshCw, FlaskConical, Users, Award, ExternalLink, Video, Building2, Tags, BarChart3, MessageSquare, Search, Trophy, ListChecks, ShieldCheck, Star, GraduationCap, Newspaper, CreditCard, Megaphone
+  Save, GripVertical, AlertCircle, RefreshCw, FlaskConical, Users, Award, ExternalLink, Video, Building2, Tags, BarChart3, MessageSquare, Search, Trophy, ListChecks, ShieldCheck, Star, GraduationCap, Newspaper, CreditCard, Megaphone, ClipboardCheck
 } from "lucide-react"
 import Pagination from "../../components/Pagination"
 import BlogContentRenderer from "../../components/BlogContentRenderer"
@@ -16,6 +16,7 @@ import AdminEnrolmentsTab from "./AdminEnrolmentsTab"
 import AdminLearningAnalytics from "./AdminLearningAnalytics"
 import AdminPaymentsTab, { AdminCouponsTab } from "./AdminPaymentsTab"
 import AdminSocialTab from "./AdminSocialTab"
+import AdminCourseReviews from "./AdminCourseReviews"
 import WhatsAppFields from "../../components/WhatsAppFields"
 import { waPayload } from "../../lib/tutorWhatsApp"
 import { DEFAULT_CERTIFICATE_SETTINGS, normalizeCertificateSettings } from "../../lib/certificateSettings"
@@ -114,6 +115,7 @@ const ADMIN_SECTIONS = [
     key: "learning", label: "Learning", icon: GraduationCap, blurb: "Courses, enrolments, quizzes and certificates",
     tabs: [
       { key: "courses", label: "Courses", icon: BookOpen, render: () => <PaginatedCoursesTab /> },
+      { key: "reviews", label: "Course reviews", icon: ClipboardCheck, render: () => <AdminCourseReviews /> },
       { key: "enrolments", label: "Enrolments", icon: Users, render: () => <AdminEnrolmentsTab /> },
       { key: "payments", label: "Payments", icon: CreditCard, render: () => <AdminPaymentsTab /> },
       { key: "coupons", label: "Coupons", icon: Tags, render: () => <AdminCouponsTab /> },

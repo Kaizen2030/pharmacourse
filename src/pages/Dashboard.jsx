@@ -242,7 +242,7 @@ export default function Dashboard() {
               </p>
               <div className="ml-hero-actions">
                 <Link to="/courses" className="ml-btn-light">Browse courses <ArrowRight size={16} aria-hidden="true" /></Link>
-                {hasTutorProfile ? <Link to="/tutor/whatsapp" className="ml-btn-ghost">Tutor WhatsApp settings</Link> : null}
+                {hasTutorProfile ? <Link to="/tutor" className="ml-btn-ghost">Open Tutor studio</Link> : null}
               </div>
             </div>
           </div>
