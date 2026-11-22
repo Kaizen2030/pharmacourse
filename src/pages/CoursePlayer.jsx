@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from "react"
 import { useParams, useNavigate, Link } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
 import { useAuth } from "../context/AuthContext"
+import { isEmbeddedVideo, parseLessonVideo } from "../lib/videoEmbed"
 
 export default function CoursePlayer() {
   const { courseId, lessonId } = useParams()
@@ -85,7 +86,7 @@ export default function CoursePlayer() {
         if (modsErr) throw modsErr
 
         if (!mods || mods.length === 0) {
-          setError("This course has no learning content yet")
+          setError("This course's lessons open after you enrol. Visit the course page to join.")
           setLoading(false)
           return
         }
@@ -305,8 +306,7 @@ export default function CoursePlayer() {
   // Embedded players do not report playback, so while the lesson is open and the tab is visible the page sends a
   // heartbeat every 15 s. The server credits real elapsed time only, and decides when the module may complete.
   useEffect(() => {
-    const url = currentModule?.video_url || ""
-    const isEmbed = /drive\.google\.com|youtube\.com|youtu\.be|vimeo\.com/i.test(url)
+    const isEmbed = isEmbeddedVideo(parseLessonVideo(currentModule?.video_url).kind)
     if (!isEmbed || isAdmin || !user?.id || completedIdsRef.current.has(lessonId)) return undefined
 
     let cancelled = false
@@ -453,6 +453,7 @@ export default function CoursePlayer() {
   }
 
   const isCompleted = currentModule && completedIds.has(currentModule.id)
+  const lessonVideo = parseLessonVideo(currentModule?.video_url, { start: resumePosition > 0 && !isCompleted ? resumePosition : 0 })
   const currentIndex = modules.findIndex(m => m.id === lessonId)
   const prevModuleDone = currentIndex === 0 || completedIds.has(modules[currentIndex - 1]?.id)
   const isLocked = !isAdmin && !prevModuleDone && !isCompleted
@@ -566,58 +567,43 @@ export default function CoursePlayer() {
           ) : (
             <>
               <div className="video-container" style={{ position: "relative" }}>
+                {currentModule.video_url && lessonVideo.kind !== "unsupported" && user?.email ? (
+                  <div className="lesson-watermark" aria-hidden="true">{user.email} · {String(user.id).slice(0, 8)}</div>
+                ) : null}
                 {currentModule.video_url ? (
-                  currentModule.video_url.includes("drive.google.com") ? (
-                    <div style={{ position: "relative", width: "100%", height: "100%", backgroundColor: "#000", overflow: "hidden" }}>
-                      <iframe
-                        src={(() => {
-                          const match = currentModule.video_url.match(/\/d\/([a-zA-Z0-9_-]+)/)
-                          return match
-                            ? `https://drive.google.com/file/d/${match[1]}/preview?rm=minimal`
-                            : currentModule.video_url
-                        })()}
-                        style={{
-                          position: "absolute",
-                          top: "-46px",
-                          left: 0,
-                          width: "100%",
-                          height: "calc(100% + 92px)",
-                          border: "none"
-                        }}
-                        allow="autoplay; fullscreen"
-                        allowFullScreen
-                        title={currentModule.title}
-                        onLoad={() => {
-                          if (isAdmin || completedIdsRef.current.has(lessonId)) {
-                            setVideoWatched(true)
-                            setWatchProgress(100)
-                          }
-                        }}
-                      />
+                  lessonVideo.kind === "unsupported" ? (
+                    <div className="video-placeholder">
+                      <div>
+                        <p>This lesson's video link cannot be played.</p>
+                        <small>Please let your tutor know so they can fix it.</small>
+                      </div>
                     </div>
-                  ) : currentModule.video_url.includes("youtube") ||
-                    currentModule.video_url.includes("youtu.be") ||
-                    currentModule.video_url.includes("vimeo") ? (
+                  ) : isEmbeddedVideo(lessonVideo.kind) ? (
                     <iframe
-                      src={
-                        currentModule.video_url
-                          .replace("watch?v=", "embed/")
-                          .replace("youtu.be/", "youtube.com/embed/")
-                          .replace(/^http:/, "https:") +
-                        "?modestbranding=1&rel=0&disablekb=1" +
-                        (resumePosition > 0 && !isCompleted ? `&start=${Math.floor(resumePosition)}` : "")
-                      }
-                      style={{ width: "100%", height: "100%", border: "none" }}
-                      allowFullScreen
+                      key={lessonVideo.src}
+                      src={lessonVideo.src}
                       title={currentModule.title}
+                      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0, backgroundColor: "#000" }}
+                      allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+                      allowFullScreen
+                      referrerPolicy="strict-origin-when-cross-origin"
+                      sandbox="allow-scripts allow-same-origin allow-presentation"
+                      loading="lazy"
+                      onLoad={() => {
+                        if (isAdmin || completedIdsRef.current.has(lessonId)) {
+                          setVideoWatched(true)
+                          setWatchProgress(100)
+                        }
+                      }}
                     />
                   ) : (
                     <video
                       ref={videoRef}
-                      src={currentModule.video_url}
+                      src={lessonVideo.src}
                       controls
                       controlsList="nodownload noremoteplayback noplaybackrate"
                       disablePictureInPicture
+                      playsInline
                       onContextMenu={e => e.preventDefault()}
                       style={{ width: "100%", height: "100%", objectFit: "contain", backgroundColor: "#000" }}
                     />

@@ -127,3 +127,15 @@ create policy "Users can create own certificates" on public.certificates for ins
   and (select count(*) from course_progress cp where cp.user_id = auth.uid() and cp.course_id = certificates.course_id and cp.completed = true)
       >= (select count(*) from course_modules cm where cm.course_id = certificates.course_id));
 create policy "Admins can manage certificates" on public.certificates for all to authenticated using (is_admin()) with check (is_admin());
+
+-- Phase 3 tables: lesson attachments, live rules of 2026-11-23 (course_modules policies are above).
+create table public.lesson_attachments (id uuid primary key default gen_random_uuid(), lesson_id uuid, title text, file_url text,
+  file_type text, file_size bigint, is_required boolean, order_index int, created_at timestamptz default now());
+alter table public.lesson_attachments enable row level security;
+grant select on public.lesson_attachments to anon, authenticated;
+create policy "Students can read attachments" on public.lesson_attachments for select to public using (true);
+create policy "public read attachments" on public.lesson_attachments for select to public using (true);
+create policy "Anyone can read attachments" on public.lesson_attachments for select to public using (true);
+create policy "Users can view modules of enrolled courses" on public.course_modules for select to authenticated
+  using ((course_id in (select ce.course_id from course_enrollments ce where ce.user_id = auth.uid()))
+         or (course_id in (select c.id from courses c where c.instructor_id = auth.uid())) or is_admin());

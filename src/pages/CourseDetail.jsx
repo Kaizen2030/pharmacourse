@@ -85,7 +85,7 @@ export default function CourseDetail() {
           c.instructor_id
             ? supabase.from("instructors").select("*").eq("id", c.instructor_id).maybeSingle()
             : Promise.resolve({ data: null, error: null }),
-          supabase.from("course_modules").select("id, title, description, order_index, duration_minutes").eq("course_id", c.id).order("order_index"),
+          supabase.from("course_outline").select("id, title, description, order_index, duration_minutes").eq("course_id", c.id).order("order_index"),
           user?.id
             ? supabase.from("course_enrollments").select("id").eq("user_id", user.id).eq("course_id", c.id).maybeSingle()
             : Promise.resolve({ data: null, error: null }),

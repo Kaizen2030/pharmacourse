@@ -63,55 +63,18 @@ function AdminRoute({ children }) {
   return children
 }
 
+// Discourages casual saving of images and lesson videos (drag-out and the right-click menu on media only).
+// This is not real protection; paid lessons are protected by the database (Phase 3). Text stays selectable and
+// icons stay usable, and there is no page-wide observer, which kept low-end phones busy.
 function MediaProtection() {
   useEffect(() => {
-    const protectedMediaSelector = "img, picture, figure, video, canvas, svg"
-
-    function isProtectedMediaTarget(target) {
-      return target instanceof Element && !!target.closest(protectedMediaSelector)
-    }
-
-    function applyDragProtection(root = document) {
-      root.querySelectorAll("img, video, canvas, svg").forEach((node) => {
-        node.setAttribute("draggable", "false")
-      })
-    }
-
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        mutation.addedNodes.forEach((node) => {
-          if (!(node instanceof Element)) return
-          if (node.matches("img, video, canvas, svg")) {
-            node.setAttribute("draggable", "false")
-          }
-          applyDragProtection(node)
-        })
-      })
-    })
-
-    function handleContextMenu(event) {
-      if (isProtectedMediaTarget(event.target)) event.preventDefault()
-    }
-
-    function handleDragStart(event) {
-      if (isProtectedMediaTarget(event.target)) event.preventDefault()
-    }
-
-    function handleSelectStart(event) {
-      if (isProtectedMediaTarget(event.target)) event.preventDefault()
-    }
-
-    applyDragProtection()
-    observer.observe(document.body, { childList: true, subtree: true })
-    document.addEventListener("contextmenu", handleContextMenu, true)
-    document.addEventListener("dragstart", handleDragStart, true)
-    document.addEventListener("selectstart", handleSelectStart, true)
-
+    const isMedia = (target) => target instanceof Element && !!target.closest("img, video, canvas")
+    const block = (event) => { if (isMedia(event.target)) event.preventDefault() }
+    document.addEventListener("contextmenu", block, true)
+    document.addEventListener("dragstart", block, true)
     return () => {
-      observer.disconnect()
-      document.removeEventListener("contextmenu", handleContextMenu, true)
-      document.removeEventListener("dragstart", handleDragStart, true)
-      document.removeEventListener("selectstart", handleSelectStart, true)
+      document.removeEventListener("contextmenu", block, true)
+      document.removeEventListener("dragstart", block, true)
     }
   }, [])
 

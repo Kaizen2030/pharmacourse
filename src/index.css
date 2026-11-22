@@ -1492,3 +1492,32 @@ code {
 .trust-stat { text-align: center; }
 .trust-stat strong { display: block; font-size: 1.4rem; line-height: 1.1; color: var(--text-900); }
 .trust-stat span { font-size: 0.78rem; color: var(--text-500); }
+
+/* Lesson watermark: the student's email drifts over the video so screen recordings identify the account. */
+.lesson-watermark {
+  position: absolute;
+  z-index: 3;
+  top: 8%;
+  left: 6%;
+  pointer-events: none;
+  user-select: none;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  font-size: clamp(0.62rem, 1.4vw, 0.8rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.55);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+  white-space: nowrap;
+  animation: lesson-watermark-drift 48s linear infinite;
+}
+@keyframes lesson-watermark-drift {
+  0%   { top: 8%;  left: 6%; }
+  25%  { top: 70%; left: 55%; }
+  50%  { top: 30%; left: 62%; }
+  75%  { top: 78%; left: 8%; }
+  100% { top: 8%;  left: 6%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lesson-watermark { animation: none; top: auto; bottom: 12%; left: auto; right: 4%; }
+}

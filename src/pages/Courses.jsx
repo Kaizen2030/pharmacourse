@@ -94,7 +94,7 @@ export default function Courses() {
       const courseRows = data || []
       const courseIds = courseRows.map((course) => course.id)
       const { data: moduleRows, error: moduleError } = courseIds.length
-        ? await supabase.from("course_modules").select("course_id").in("course_id", courseIds)
+        ? await supabase.from("course_outline").select("course_id").in("course_id", courseIds)
         : { data: [], error: null }
       if (moduleError) console.error("Failed to load course module counts:", moduleError)
       const moduleCounts = (moduleRows || []).reduce((counts, module) => {
