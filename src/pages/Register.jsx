@@ -3,6 +3,7 @@ import { Link } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
 import SEO from "../components/SEO"
 import AuthAside from "../components/AuthAside"
+import AuthCloseButton from "../components/AuthCloseButton"
 import TurnstileWidget from "../components/TurnstileWidget"
 import { PASSWORD_HINT, checkPassword, friendlyAuthError } from "../lib/passwordPolicy"
 
@@ -85,6 +86,7 @@ export default function Register() {
 
       <AuthAside title="Join pharmacy professionals building skills for every part of practice." />
       <div className="auth-card">
+        <AuthCloseButton />
         <div className="auth-logo">Pharmacourse</div>
         <h1>Create your account</h1>
         <p>Free access to pharmacy CPD courses</p>

@@ -3,6 +3,8 @@ import { Link } from "react-router-dom"
 import pharmacyosDashboard from "../assets/pharmacyos-dashboard.svg"
 import pharmacyosCopilot from "../assets/pharmacyos-copilot.svg"
 import SEO from "../components/SEO"
+import ProductHero from "../components/productHero/ProductHero"
+import posHeroImage from "../assets/promo/pos-hero.jpg"
 import {
   Activity,
   ArrowRight,
@@ -297,32 +299,25 @@ export default function PharmacyOS() {
 
       <style>{css}</style>
 
-      <section className="po-hero" style={{ position: "relative", overflow: "hidden", background: "linear-gradient(135deg, #062318 0%, #0F6E56 58%, #1a9e7a 100%)", color: "#fff", padding: "96px 24px 72px", textAlign: "center" }}>
-        <div style={{ position: "absolute", inset: 0, backgroundImage: DOT_PATTERN, backgroundSize: "20px 20px", opacity: 0.05, pointerEvents: "none" }} />
-        <div style={{ position: "absolute", top: "-10%", left: "50%", transform: "translateX(-50%)", width: 700, height: 400, borderRadius: "50%", background: "radial-gradient(ellipse, rgba(26,158,122,0.35) 0%, transparent 70%)", pointerEvents: "none" }} />
-
-        <div style={{ position: "relative", maxWidth: 820, margin: "0 auto" }}>
-          <span className="po-hero-badge" style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.22)", borderRadius: 99, fontSize: 11, fontWeight: 700, letterSpacing: 1.8, padding: "7px 18px", marginBottom: 28, textTransform: "uppercase" }}>
-            RemedacarePOS - Dispensary Manager
-          </span>
-
-          <h1 style={{ fontSize: "clamp(2.2rem, 5.5vw, 3.6rem)", fontWeight: 800, lineHeight: 1.12, margin: "0 0 22px", letterSpacing: "-0.02em" }}>
-            A connected pharmacy workflow<br />from request to dispense to delivery.
-          </h1>
-          <p className="po-hero-copy" style={{ fontSize: 18, opacity: 0.82, maxWidth: 650, margin: "0 auto 40px", lineHeight: 1.65 }}>
-            RemedacarePOS combines live dispensing, telepharmacy response workflows, patient self-service, delivery coordination, claims visibility, branch operations, and business analytics in one connected pharmacy system.
-          </p>
-
-          <div className="po-hero-actions" style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-            <a href={WHATSAPP} target="_blank" rel="noreferrer" className="po-btn-white" style={{ background: "#fff", color: GREEN, fontWeight: 700, padding: "15px 30px", borderRadius: 10, textDecoration: "none", fontSize: 15, display: "flex", alignItems: "center", gap: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.15)" }}>
-              Book Live Walkthrough <ArrowRight size={16} />
-            </a>
-            <a href={WHATSAPP} target="_blank" rel="noreferrer" className="po-btn-ghost" style={{ background: "transparent", color: "#fff", fontWeight: 600, padding: "15px 30px", borderRadius: 10, textDecoration: "none", fontSize: 15, border: "1.5px solid rgba(255,255,255,0.35)" }}>
-              Discuss Rollout
-            </a>
-          </div>
-        </div>
-      </section>
+      <ProductHero
+        badge="RemedacarePOS · Dispensary manager"
+        title={<>A connected pharmacy workflow, <em>from request to dispense to delivery.</em></>}
+        copy="RemedacarePOS combines live dispensing, telepharmacy response workflows, patient self-service, delivery coordination, claims visibility, branch operations, and business analytics in one connected pharmacy system."
+        primary={{ label: "Book Live Walkthrough", href: WHATSAPP }}
+        secondary={{ label: "Discuss Rollout", href: WHATSAPP }}
+        chips={[
+          { icon: Shield, label: "Look-alike guard" },
+          { icon: CreditCard, label: "M-Pesa, cash & credit" },
+          { icon: FileText, label: "SHA & insurance claims" },
+          { icon: Clock3, label: "Expiry alerts" },
+        ]}
+        image={posHeroImage}
+        imageAlt="RemedacarePOS sales screen with look-alike drug warning, expiry alerts and M-Pesa payment"
+        floatCards={[
+          { icon: Shield, title: "Wrong pick stopped", text: "Varinil 10 looks like Varinil 5mg" },
+          { icon: CreditCard, title: "M-Pesa paid", text: "Prompt sent and confirmed" },
+        ]}
+      />
 
       <section className="po-section" style={{ padding: "80px 24px", background: "#f8faf9" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>

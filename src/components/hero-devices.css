@@ -94,3 +94,11 @@
 
 @keyframes hd-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1.2cqw); } }
 @media (prefers-reduced-motion: reduce) { .hd-cert { animation: none; } }
+
+/* On the white courses hero the ring sits over the green shapes, so make it a frosted white halo. */
+.pc-hero .hd-glow {
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.08) 55%, transparent 70%);
+  border-color: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 60px rgba(255, 255, 255, 0.25), inset 0 0 60px rgba(255, 255, 255, 0.15);
+}
+.pc-hero .hd-laptop, .pc-hero .hd-phone { filter: drop-shadow(0 24px 40px rgba(10, 61, 48, 0.28)); }

@@ -10,19 +10,48 @@
   overflow: hidden;
   padding: clamp(2.25rem, 6vw, 4.5rem) 0 clamp(4.5rem, 9vw, 6.5rem);
   background:
-    radial-gradient(1100px 420px at 85% -10%, rgba(29, 158, 117, 0.35), transparent 60%),
-    radial-gradient(700px 380px at 0% 110%, rgba(26, 107, 181, 0.22), transparent 60%),
-    linear-gradient(160deg, #0a3d30 0%, #0f5a47 55%, #0f6e56 100%);
-  color: #fff;
+    radial-gradient(900px 420px at 10% 0%, rgba(233, 247, 241, 0.9), transparent 65%),
+    linear-gradient(180deg, #ffffff 0%, #f7faf8 100%);
+  color: var(--text-900);
 }
+/* Faint green dot grid on the white, fading out towards the shapes. */
 .pc-hero::after {
   content: "";
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(15, 110, 86, 0.12) 1px, transparent 1px);
   background-size: 22px 22px;
-  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.6), transparent 85%);
+  mask-image: linear-gradient(100deg, rgba(0, 0, 0, 0.7), transparent 55%);
   pointer-events: none;
+}
+
+/* Organic green shapes flowing down the right edge, like a leaf of colour behind the devices. */
+.pc-hero-blobs {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: min(54vw, 760px);
+  height: 100%;
+  pointer-events: none;
+}
+.pcb { transform-box: fill-box; transform-origin: center; }
+.pcb-1 { opacity: 0.55; animation: pcb-drift 16s ease-in-out infinite; }
+.pcb-2 { opacity: 0.7; animation: pcb-drift 13s ease-in-out -4s infinite reverse; }
+.pcb-3 { opacity: 0.9; animation: pcb-sway 11s ease-in-out -2s infinite; }
+.pcb-4 { opacity: 0.55; animation: pcb-float 9s ease-in-out infinite; }
+.pcb-5 { opacity: 0.6; animation: pcb-float 10s ease-in-out -5s infinite reverse; }
+.pcb-line { fill: none; stroke: rgba(255, 255, 255, 0.55); stroke-width: 2; stroke-dasharray: 6 10; animation: pcb-dash 18s linear infinite; }
+@keyframes pcb-drift { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-14px, 10px) scale(1.03); } }
+@keyframes pcb-sway { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-2.5deg) translateX(-8px); } }
+@keyframes pcb-float { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-14px) rotate(8deg); } }
+@keyframes pcb-dash { to { stroke-dashoffset: -320; } }
+@media (prefers-reduced-motion: reduce) {
+  .pcb, .pcb-line { animation: none; }
+}
+/* Phones: text on top, devices below; the shapes sit behind the devices at the bottom. */
+@media (max-width: 759px) {
+  .pc-hero-blobs { top: auto; bottom: 0; width: 100%; height: 62%; }
+  .pc-hero::after { mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.7), transparent 45%); }
 }
 .pc-hero-grid { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(2rem, 4vw, 3rem); align-items: center; }
 .pc-hero-inner { position: relative; z-index: 1; display: grid; gap: 1.1rem; max-width: 760px; }
@@ -44,29 +73,38 @@
   min-height: 48px; padding: 0.75rem 1.35rem; border-radius: 12px; font: inherit; font-weight: 800; font-size: 0.98rem; cursor: pointer;
   transition: transform 0.15s ease, background 0.15s ease;
 }
-.pc-hero-btn.primary { background: #9ff0cf; color: #0a3d30; border: 1px solid #9ff0cf; }
-.pc-hero-btn.primary:hover { background: #b8f5dc; transform: translateY(-1px); }
-.pc-hero-btn.ghost { background: transparent; color: #fff; border: 1px solid rgba(255, 255, 255, 0.45); }
-.pc-hero-btn.ghost:hover { background: rgba(255, 255, 255, 0.08); }
-.pc-hero-btn:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.pc-hero-btn.primary {
+  background: linear-gradient(90deg, #0f6e56 0%, #1d9e75 60%, #4cc38a 100%);
+  color: #fff; border: 0; border-radius: 999px;
+  box-shadow: 0 12px 26px rgba(15, 110, 86, 0.3);
+}
+.pc-hero-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 16px 32px rgba(15, 110, 86, 0.36); }
+.pc-hero-btn.ghost { background: #fff; color: var(--green); border: 1.5px solid var(--green-mid); border-radius: 999px; }
+.pc-hero-btn.ghost:hover { border-color: var(--green); background: var(--green-light); }
+.pc-hero-btn:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
 @media (max-width: 520px) { .pc-hero-btn { flex: 1 1 100%; } }
 .pc-eyebrow {
   display: inline-flex; align-items: center; gap: 0.45rem; width: fit-content;
   padding: 0.35rem 0.8rem; border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.18);
+  background: var(--green-light); border: 1px solid var(--green-mid); color: var(--green);
   font-size: 0.78rem; font-weight: 700; letter-spacing: 0.04em;
 }
 .pc-hero h1 {
   font-family: "Fraunces", "DM Serif Display", Georgia, serif;
   font-size: clamp(2rem, 5.2vw, 3.4rem); line-height: 1.05; letter-spacing: -0.02em; font-weight: 700;
 }
-.pc-hero h1 em { font-style: normal; color: #9ff0cf; }
-.pc-hero p.pc-lead { font-size: clamp(1rem, 2vw, 1.12rem); line-height: 1.6; color: rgba(255, 255, 255, 0.82); max-width: 620px; }
+.pc-hero h1 { color: #10231d; }
+.pc-hero h1 em {
+  font-style: normal;
+  background: linear-gradient(90deg, #0f6e56, #1d9e75 55%, #4cc38a);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.pc-hero p.pc-lead { font-size: clamp(1rem, 2vw, 1.12rem); line-height: 1.6; color: var(--text-500); max-width: 620px; }
 
 .pc-search {
   display: flex; align-items: center; gap: 0.6rem;
   margin-top: 0.4rem; padding: 0.45rem 0.45rem 0.45rem 1.1rem;
-  background: #fff; border-radius: 999px; box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
+  background: #fff; border-radius: 999px; border: 1px solid var(--border); box-shadow: 0 16px 36px rgba(15, 42, 32, 0.1);
   max-width: 640px;
 }
 .pc-search svg { color: var(--text-500); flex: 0 0 auto; }
@@ -81,8 +119,9 @@
 .pc-hero-chip {
   display: inline-flex; align-items: center; gap: 0.4rem;
   padding: 0.4rem 0.75rem; border-radius: 999px; font-size: 0.82rem; font-weight: 600;
-  background: rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.92);
+  background: #fff; color: var(--text-700); border: 1px solid var(--border);
 }
+.pc-hero-chip svg { color: var(--green); }
 
 /* ---------- Stats strip overlapping the hero ---------- */
 .pc-stats {

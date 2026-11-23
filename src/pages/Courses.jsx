@@ -185,6 +185,29 @@ export default function Courses() {
       />
 
       <section className="pc-hero">
+        {/* Flowing green shapes behind the laptop and phone (decorative). */}
+        <svg className="pc-hero-blobs" viewBox="0 0 640 720" preserveAspectRatio="xMaxYMid slice" aria-hidden="true" focusable="false">
+          <defs>
+            <linearGradient id="pcb-a" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stopColor="#7fd8a8" />
+              <stop offset="1" stopColor="#1d9e75" />
+            </linearGradient>
+            <linearGradient id="pcb-b" x1="1" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor="#2fb58a" />
+              <stop offset="1" stopColor="#0f6e56" />
+            </linearGradient>
+            <linearGradient id="pcb-c" x1="0" y1="1" x2="1" y2="0">
+              <stop offset="0" stopColor="#c8f0b4" />
+              <stop offset="1" stopColor="#5cc98f" />
+            </linearGradient>
+          </defs>
+          <path className="pcb pcb-1" fill="url(#pcb-c)" d="M640 0H330c-40 70 30 120 10 190-24 84-130 96-120 190 9 86 120 92 150 170 18 48-6 110 30 170h240z" />
+          <path className="pcb pcb-2" fill="url(#pcb-a)" d="M640 40c-90 10-170 60-170 150 0 80 70 110 60 190-12 92-130 120-110 220 10 50 50 90 110 120h110z" />
+          <path className="pcb pcb-3" fill="url(#pcb-b)" d="M640 0c-50 60-120 80-130 170-12 104 90 150 60 250-24 80-110 110-80 210 8 30 30 60 60 90h90z" />
+          <path className="pcb pcb-4" fill="url(#pcb-a)" d="M300 70c40-30 100-20 120 25 18 42-14 80-56 84-46 5-96-20-98-58-1-22 14-39 34-51z" />
+          <path className="pcb pcb-5" fill="url(#pcb-c)" d="M250 560c30-34 92-40 120-6 26 32 6 82-38 94-50 14-100-4-104-40-2-18 8-34 22-48z" />
+          <path className="pcb-line" d="M520 0c-60 120 40 200-20 320s-140 160-90 290c12 32 32 70 60 110" />
+        </svg>
         <div className="pc-wrap">
           <div className="pc-hero-grid">
           <div className="pc-hero-inner">

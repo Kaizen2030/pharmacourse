@@ -4,6 +4,7 @@ import { supabase } from "../lib/supabaseClient"
 import { getAuthRedirectUrl } from "../lib/authRedirect"
 import SEO from "../components/SEO"
 import AuthAside, { GoogleIcon } from "../components/AuthAside"
+import AuthCloseButton from "../components/AuthCloseButton"
 import TurnstileWidget from "../components/TurnstileWidget"
 import { friendlyAuthError } from "../lib/passwordPolicy"
 
@@ -75,6 +76,7 @@ export default function Login() {
 
       <AuthAside />
       <div className="auth-card">
+        <AuthCloseButton />
         <div className="auth-logo">Pharmacourse</div>
         <h1>Welcome back</h1>
         <p>Sign in to continue your learning</p>

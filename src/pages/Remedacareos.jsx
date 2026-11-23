@@ -2,6 +2,8 @@ import { useState } from "react"
 import { Link } from "react-router-dom"
 import remedacareDashboard from "../assets/remedacare-dashboard.svg"
 import SEO from "../components/SEO"
+import ProductHero from "../components/productHero/ProductHero"
+import hmisHeroImage from "../assets/promo/hmis-hero.jpg"
 import {
   ClipboardList, BarChart3, Users, Link2, Calendar,
   FileText, Shield, Activity, Pill, BedDouble,
@@ -303,33 +305,25 @@ export default function RemedacareOS() {
 
       <style>{css}</style>
 
-      <section className="rc-hero" style={{ position: "relative", overflow: "hidden", background: "linear-gradient(135deg, #062318 0%, #0F6E56 58%, #1a9e7a 100%)", color: "#fff", padding: "96px 24px 72px", textAlign: "center" }}>
-        <div style={{ position: "absolute", inset: 0, backgroundImage: DOT_PATTERN, backgroundSize: "20px 20px", opacity: 0.05, pointerEvents: "none" }} />
-        <div style={{ position: "absolute", top: "-10%", left: "50%", transform: "translateX(-50%)", width: 700, height: 400, borderRadius: "50%", background: "radial-gradient(ellipse, rgba(26,158,122,0.35) 0%, transparent 70%)", pointerEvents: "none" }} />
-
-        <div style={{ position: "relative", maxWidth: 820, margin: "0 auto" }}>
-          <span className="rc-hero-badge" style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.22)", borderRadius: 99, fontSize: 11, fontWeight: 700, letterSpacing: 1.8, padding: "7px 18px", marginBottom: 28, textTransform: "uppercase" }}>
-            RemedacareHMIS - Hospital Management Information System
-          </span>
-
-          <h1 style={{ fontSize: "clamp(2.2rem, 5.5vw, 3.6rem)", fontWeight: 800, lineHeight: 1.12, margin: "0 0 22px", letterSpacing: "-0.02em" }}>
-            A complete hospital information system.
-          </h1>
-          <p className="rc-hero-copy" style={{ fontSize: 18, opacity: 0.82, maxWidth: 640, margin: "0 auto 40px", lineHeight: 1.65 }}>
-            A full Hospital Management Information System built for Kenyan hospitals with chronic disease follow-up, care pathways, antibiogram intelligence, AMS support, finance workflows, SHA claims, and native RemedacarePOS integration.
-          </p>
-
-          <div className="rc-hero-actions" style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-            <a href={WHATSAPP} target="_blank" rel="noreferrer" className="rc-btn-white" style={{ background: "#fff", color: GREEN, fontWeight: 700, padding: "15px 30px", borderRadius: 10, textDecoration: "none", fontSize: 15, display: "flex", alignItems: "center", gap: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.15)" }}>
-              Book HMIS Walkthrough <ArrowRight size={16} />
-            </a>
-            <a href={WHATSAPP} target="_blank" rel="noreferrer" className="rc-btn-ghost" style={{ background: "transparent", color: "#fff", fontWeight: 600, padding: "15px 30px", borderRadius: 10, textDecoration: "none", fontSize: 15, border: "1.5px solid rgba(255,255,255,0.35)" }}>
-              Discuss Deployment
-            </a>
-          </div>
-
-        </div>
-      </section>
+      <ProductHero
+        badge="RemedacareHMIS · Hospital management"
+        title={<>A complete hospital information system, <em>from triage to billing.</em></>}
+        copy="A full Hospital Management Information System built for Kenyan hospitals with chronic disease follow-up, care pathways, antibiogram intelligence, AMS support, finance workflows, SHA claims, and native RemedacarePOS integration."
+        primary={{ label: "Book HMIS Walkthrough", href: WHATSAPP }}
+        secondary={{ label: "Discuss Deployment", href: WHATSAPP }}
+        chips={[
+          { icon: Users, label: "Patients & triage" },
+          { icon: Activity, label: "Lab & radiology" },
+          { icon: Pill, label: "Pharmacy & stock" },
+          { icon: Shield, label: "SHA & M-Pesa billing" },
+        ]}
+        image={hmisHeroImage}
+        imageAlt="RemedacareHMIS hospital workflow board showing triage, consultation, lab, pharmacy and billing"
+        floatCards={[
+          { icon: Bell, title: "Critical lab result", text: "Doctor alerted instantly" },
+          { icon: CheckCircle, title: "SHA claim ready", text: "Billing in one click" },
+        ]}
+      />
 
       <section className="rc-section" style={{ padding: "80px 24px", background: "#f8faf9" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
