@@ -64,15 +64,14 @@ export default function CourseCard({ course }) {
           <span className={`pc-price${price.free ? " is-free" : ""}`}>
             {price.currency ? <small>{price.currency}</small> : null}{price.label}
           </span>
-          {hasModules ? <span className="pc-go">View course <ArrowRight size={16} aria-hidden="true" /></span> : null}
+          <span className="pc-go">View course <ArrowRight size={16} aria-hidden="true" /></span>
         </div>
 
-        {!hasModules ? (
-          <div className="pc-card-actions">
-            {course.is_available ? <Link to={href} className="btn btn-primary">Apply to enrol</Link> : null}
-            <a href={tutorApplicationLink(course)} target="_blank" rel="noreferrer noopener" className="btn btn-outline">Apply as tutor</a>
-          </div>
-        ) : null}
+        {/* Every course invites tutors, whether or not its lessons are ready yet. */}
+        <div className="pc-card-actions">
+          {!hasModules && course.is_available ? <Link to={href} className="btn btn-primary">Apply to enrol</Link> : null}
+          <a href={tutorApplicationLink(course)} target="_blank" rel="noreferrer noopener" className="btn btn-outline">Apply as tutor</a>
+        </div>
       </div>
     </article>
   )

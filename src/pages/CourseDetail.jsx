@@ -12,6 +12,7 @@ import JoinGroupCard from "../components/JoinGroupCard"
 import { fetchMyCourseGroup } from "../lib/courseGroup"
 import { alertDialog } from "../lib/dialog"
 import CheckoutModal from "../components/CheckoutModal"
+import ComingSoonPopup from "../components/ComingSoonPopup"
 import { normalizePhone } from "../lib/tutorWhatsApp"
 import { SUPPORT_WA_NUMBER, waLink } from "../lib/whatsappConfig"
 import { courseApplicationLink, tutorApplicationLink } from "../lib/courseAvailability"
@@ -56,6 +57,7 @@ export default function CourseDetail() {
   const [bioExpanded, setBioExpanded] = useState(false)
   const [justEnrolled, setJustEnrolled] = useState(false)
   const [shareState, setShareState] = useState("")
+  const [showComingSoon, setShowComingSoon] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -128,7 +130,9 @@ export default function CourseDetail() {
   const payLink = course
     ? waLink(`Hi, I want to enroll in "${course.title}" (KES ${course.price}). My account email is ${user?.email || "(not signed in)"}.`, payNumber)
     : ""
-  const priceLabel = isComingSoon ? "Coming soon" : isPaidCourse ? `KES ${Number(course?.price || 0).toLocaleString("en-KE")}` : "Free"
+  // Courses without lessons still show their normal price; enrolling opens the "coming soon" pop-up.
+  const showsApplication = isComingSoon && Boolean(course?.is_available)
+  const priceLabel = showsApplication ? "Coming soon" : isPaidCourse ? `KES ${Number(course?.price || 0).toLocaleString("en-KE")}` : "Free"
 
   async function handleEnroll() {
     if (!user) {
@@ -214,10 +218,14 @@ export default function CourseDetail() {
       )
     }
     if (isAdmin && hasModules) return <Link to={`/learn/${course.id}/${modules[0].id}`} className="btn btn-primary">Preview course</Link>
+    if (showsApplication) {
+      return <a href={courseApplicationLink({ ...course, whatsapp_number: course.whatsapp_number || instructor?.whatsapp_number }, user?.email)} target="_blank" rel="noreferrer noopener" className="btn btn-primary">Apply to enrol</a>
+    }
     if (isComingSoon) {
-      return course.is_available
-        ? <a href={courseApplicationLink({ ...course, whatsapp_number: course.whatsapp_number || instructor?.whatsapp_number }, user?.email)} target="_blank" rel="noreferrer noopener" className="btn btn-primary">Apply to enrol</a>
-        : <button type="button" className="btn btn-outline" disabled>Coming soon</button>
+      const label = isPaidCourse
+        ? (user ? (compact ? "Buy now" : `Buy now · ${priceLabel}`) : "Sign in to buy")
+        : user ? (compact ? "Enrol free" : "Enrol for free") : (compact ? "Register" : "Register to enrol")
+      return <button type="button" className="btn btn-primary" onClick={() => setShowComingSoon(true)}>{label}</button>
     }
     if (isPaidCourse) {
       return (
@@ -235,6 +243,14 @@ export default function CourseDetail() {
 
   return (
     <div className="pc-page pcd-page-pad">
+      {showComingSoon ? (
+        <ComingSoonPopup
+          courseTitle={course.title}
+          notifyHref={waLink(`Hi, please let me know when "${course.title}" opens for enrolment.${user?.email ? ` My account email is ${user.email}.` : ""}`, normalizePhone(course.whatsapp_number || instructor?.whatsapp_number) || SUPPORT_WA_NUMBER || "254790059584")}
+          tutorHref={tutorApplicationLink({ ...course, whatsapp_number: course.whatsapp_number || instructor?.whatsapp_number })}
+          onClose={() => setShowComingSoon(false)}
+        />
+      ) : null}
       {showCheckout && course ? (
         <CheckoutModal
           course={course}
@@ -391,17 +407,17 @@ export default function CourseDetail() {
               )}
             </div>
             <div className="pcd-buy-inner">
-              <div className={`pcd-buy-price${!isPaidCourse && !isComingSoon ? " is-free" : ""}`}>{priceLabel}</div>
+              <div className={`pcd-buy-price${!isPaidCourse && !showsApplication ? " is-free" : ""}`}>{priceLabel}</div>
               {renderPrimaryAction()}
               {!enrolled && isAdmin && hasModules ? <Link to={`/certificate/${course.id}`} className="btn btn-outline">Preview certificate</Link> : null}
-              {!enrolled && isComingSoon ? (
+              {!enrolled ? (
                 <a href={tutorApplicationLink({ ...course, whatsapp_number: course.whatsapp_number || instructor?.whatsapp_number })} target="_blank" rel="noreferrer noopener" className="btn btn-outline">Apply as tutor</a>
               ) : null}
               {!enrolled && isPaidCourse && !isComingSoon && !user ? <Link to="/register" className="btn btn-outline">Create your account first</Link> : null}
               {!enrolled ? (
                 <p className="pcd-buy-note">
                   {isComingSoon
-                    ? (course.is_available ? "Send an application on WhatsApp and we will confirm the next steps." : "We are preparing the learning content.")
+                    ? (course.is_available ? "Send an application on WhatsApp and we will confirm the next steps." : "New course: the lessons are being prepared.")
                     : isPaidCourse ? "Pay by M-Pesa, card or bank. Access starts as soon as your payment is confirmed." : "Free to join. Start the first lesson right away."}
                 </p>
               ) : null}
@@ -424,7 +440,7 @@ export default function CourseDetail() {
       </div>
 
       <div className="pcd-mobile-cta">
-        <span className={`pc-price${!isPaidCourse && !isComingSoon ? " is-free" : ""}`}>{enrolled ? `${progressPct}% done` : priceLabel}</span>
+        <span className={`pc-price${!isPaidCourse && !showsApplication ? " is-free" : ""}`}>{enrolled ? `${progressPct}% done` : priceLabel}</span>
         {renderPrimaryAction(true)}
       </div>
     </div>

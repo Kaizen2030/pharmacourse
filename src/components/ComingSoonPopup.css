@@ -1,0 +1,169 @@
+.csp-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(10, 30, 24, 0.45);
+  backdrop-filter: blur(3px);
+  animation: csp-fade 0.2s ease;
+}
+
+.csp-card {
+  position: relative;
+  width: min(340px, 100%);
+  padding: 1.5rem 1.4rem 1.2rem;
+  border-radius: 20px;
+  background: var(--surface, #fff);
+  box-shadow: 0 24px 60px rgba(10, 30, 24, 0.3);
+  text-align: center;
+  animation: csp-pop 0.38s cubic-bezier(.2, 1.3, .4, 1);
+}
+
+.csp-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--gray-100, #f2f6f4);
+  color: var(--text-500, #607068);
+  cursor: pointer;
+}
+
+.csp-close:hover { color: var(--text-900, #11231d); }
+
+/* A capsule that wobbles inside a slowly turning dotted orbit, with sparks popping. */
+.csp-art {
+  position: relative;
+  width: 92px;
+  height: 92px;
+  margin: 0 auto 0.6rem;
+  display: grid;
+  place-items: center;
+}
+
+.csp-orbit {
+  position: absolute;
+  inset: 0;
+  border: 2px dashed var(--green-mid, #c8e7da);
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--green-light, #e9f7f1) 0 58%, transparent 60%);
+  animation: csp-spin 9s linear infinite;
+}
+
+.csp-capsule {
+  position: relative;
+  display: flex;
+  width: 52px;
+  height: 22px;
+  border-radius: 999px;
+  overflow: hidden;
+  transform: rotate(-35deg);
+  box-shadow: 0 6px 14px rgba(15, 110, 86, 0.3);
+  animation: csp-wobble 2.4s ease-in-out infinite;
+}
+
+.csp-half { flex: 1; }
+.csp-half:first-child { background: linear-gradient(180deg, #2fb58a, var(--green, #0f6e56)); }
+.csp-half:last-child { background: linear-gradient(180deg, #ffffff, #dfe8e3); }
+
+.csp-spark {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #f5a524;
+  opacity: 0;
+  animation: csp-spark 2.4s ease-out infinite;
+}
+
+.csp-spark.s1 { top: 10px; right: 14px; }
+.csp-spark.s2 { bottom: 14px; left: 10px; background: var(--green, #0f6e56); animation-delay: 0.8s; }
+.csp-spark.s3 { top: 18px; left: 16px; background: #1a6bb5; animation-delay: 1.6s; }
+
+.csp-tag {
+  display: inline-block;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  background: #fff4e0;
+  color: #b45d00;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.csp-card h2 {
+  margin: 0.45rem 0 0.3rem;
+  font-size: 1.25rem;
+  color: var(--text-900, #11231d);
+}
+
+.csp-card p {
+  margin: 0 0 1rem;
+  font-size: 0.87rem;
+  line-height: 1.5;
+  color: var(--text-500, #607068);
+}
+
+.csp-card p strong { color: var(--text-700, #2b4a3f); }
+
+.csp-actions { display: grid; gap: 0.4rem; }
+
+.csp-notify {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+}
+
+.csp-later {
+  padding: 0.5rem;
+  border: 0;
+  background: none;
+  color: var(--text-500, #607068);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.csp-later:hover { color: var(--text-900, #11231d); }
+
+.csp-tutor {
+  display: block;
+  margin-top: 0.4rem;
+  padding-top: 0.7rem;
+  border-top: 1px dashed var(--border, #dfe8e3);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--green, #0f6e56);
+  text-decoration: none;
+}
+
+.csp-tutor:hover { text-decoration: underline; }
+
+@keyframes csp-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes csp-pop { from { opacity: 0; transform: translateY(14px) scale(0.92); } to { opacity: 1; transform: none; } }
+@keyframes csp-spin { to { transform: rotate(360deg); } }
+@keyframes csp-wobble {
+  0%, 100% { transform: rotate(-35deg) translateY(0); }
+  50% { transform: rotate(-20deg) translateY(-5px); }
+}
+@keyframes csp-spark {
+  0% { opacity: 0; transform: scale(0.3); }
+  20% { opacity: 1; transform: scale(1); }
+  60%, 100% { opacity: 0; transform: scale(0.2) translateY(-10px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .csp-backdrop, .csp-card, .csp-orbit, .csp-capsule, .csp-spark { animation: none; }
+  .csp-spark { display: none; }
+}
