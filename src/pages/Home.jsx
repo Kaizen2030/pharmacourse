@@ -10,6 +10,8 @@ import ProductShowcase from "../components/productShowcase/ProductShowcase"
 import FeaturesCapsule from "../components/capsuleSections/FeaturesCapsule"
 import FaqCapsule from "../components/capsuleSections/FaqCapsule"
 import CtaBanner from "../components/ctaBanner/CtaBanner"
+import PromoCarousel from "../components/promoCarousel/PromoCarousel"
+import { PROMO_SECTION_KEY } from "../lib/promoBanners"
 import { SITE_URL } from "../lib/siteConfig"
 import { formatBlogDate, getBlogCategoryLabel, getBlogCoverFallback, getBlogExcerpt } from "../lib/blogHelpers"
 import pharmacyosDashboard from "../assets/pharmacyos-dashboard.svg"
@@ -469,6 +471,7 @@ export default function Home() {
         if (!sectionError && sectionData?.length) {
           const sectionsObj = {}
           sectionData.forEach((s) => {
+            if (s.section_key === PROMO_SECTION_KEY) return // rendered by PromoCarousel
             sectionsObj[s.section_key] = normalizeHomepageSection(s.section_key, {
               enabled: s.enabled,
               order: s.order_index,
@@ -598,10 +601,13 @@ export default function Home() {
         switch (key) {
           case "hero":
             return (
-              <CapsuleHero key={key}>
-                <h1>Remedacare<br /><span>CARE +</span></h1>
-                <p>Learning, pharmacy operations and hospital management connected for better care.</p>
-              </CapsuleHero>
+              <div key={key}>
+                <PromoCarousel />
+                <CapsuleHero>
+                  <h1>Remedacare<br /><span>CARE +</span></h1>
+                  <p>Learning, pharmacy operations and hospital management connected for better care.</p>
+                </CapsuleHero>
+              </div>
             )
           case "ecosystem":
             return <ProductShowcase key={key} />

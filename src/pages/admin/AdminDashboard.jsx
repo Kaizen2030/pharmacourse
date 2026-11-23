@@ -17,6 +17,7 @@ import AdminLearningAnalytics from "./AdminLearningAnalytics"
 import AdminPaymentsTab, { AdminCouponsTab } from "./AdminPaymentsTab"
 import AdminSocialTab from "./AdminSocialTab"
 import AdminCourseReviews from "./AdminCourseReviews"
+import AdminPromoBanners from "./AdminPromoBanners"
 import WhatsAppFields from "../../components/WhatsAppFields"
 import { waPayload } from "../../lib/tutorWhatsApp"
 import { DEFAULT_CERTIFICATE_SETTINGS, normalizeCertificateSettings } from "../../lib/certificateSettings"
@@ -5497,7 +5498,7 @@ function HomepageTab() {
         .order("order_index")
 
       if (error) throw error
-      setSections(data || [])
+      setSections((data || []).filter((s) => s.section_key !== "promoBanners"))
     } catch (err) {
       console.error("Error loading sections:", err)
       setError(err.message)
@@ -5651,6 +5652,8 @@ ON CONFLICT (section_key) DO NOTHING;`}
           <RefreshCw size={14} /> Refresh
         </button>
       </div>
+
+      <AdminPromoBanners />
 
       <div className="homepage-sections-list">
         {sections.map((section) => (
